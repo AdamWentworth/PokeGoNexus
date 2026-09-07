@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { webCssVarTokens } from '@pokemongonexus/shared-ui-tokens';
+import { Animated, Easing } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { ComponentProps } from 'react';
 import { NativeRankingsScreen } from '../../../src/screens/NativeRankingsScreen';
@@ -51,6 +53,37 @@ describe('NativeRankingsScreen', () => {
     expect(props.onChangeMode).toHaveBeenCalledWith('rarest');
     fireEvent.press(screen.getByLabelText('View wishlist, rank 1, Shiny Bulbasaur'));
     expect(props.onOpenEntry).toHaveBeenCalledWith(row);
+  });
+
+  it('slides the ranking-mode indicator immediately with Vite motion timing', () => {
+    const timing = jest.spyOn(Animated, 'timing');
+    const onChangeMode = jest.fn();
+    renderRankings({ onChangeMode });
+    timing.mockClear();
+
+    fireEvent(
+      screen.getByTestId('native-rankings-mode-switcher'),
+      'layout',
+      { nativeEvent: { layout: { height: 56, width: 374, x: 0, y: 0 } } },
+    );
+    fireEvent.press(screen.getByText('Rarest owned'));
+
+    expect(screen.getByTestId('native-rankings-mode-indicator', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(timing).toHaveBeenCalledWith(
+      expect.any(Animated.Value),
+      expect.objectContaining({
+        duration: webCssVarTokens.motionSeconds.fast * 1000,
+        easing: Easing.ease,
+        isInteraction: false,
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+    );
+    expect(timing.mock.invocationCallOrder[0])
+      .toBeLessThan(onChangeMode.mock.invocationCallOrder[0]);
+    timing.mockRestore();
   });
 
   it('keeps public ranking rows informational like Vite', () => {

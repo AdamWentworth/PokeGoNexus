@@ -103,6 +103,14 @@ it tracks the lower transition without moving the header itself. A
 cross-renderer structure contract and 23 focused Trades tests protect this
 boundary.
 
+The Rankings Most wanted/Rarest owned control now uses one moving native-driven
+selection indicator instead of replacing two static active backgrounds. It
+starts on the press before the parent recomputes ranking rows and uses Vite's
+200 ms fast-motion duration, so a large ranking projection cannot delay or turn
+the acknowledgement into an instant visual jump. Reduced-motion preferences
+still resolve the indicator immediately. The focused Rankings suite and a
+Vite/native motion contract pin this behavior.
+
 The 2026-09-06 Pokémon collection correction moves all six ordering modes onto
 one renderer-independent implementation consumed by both Vite and Native.
 Native now uses Vite's exact release-date, Favorite grouping, null/recorded CP,

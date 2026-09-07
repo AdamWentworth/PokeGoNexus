@@ -1,7 +1,10 @@
 import { Image as ExpoImage } from 'expo-image';
+import { webCssVarTokens } from '@pokemongonexus/shared-ui-tokens';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   FlatList,
   Image,
   type LayoutChangeEvent,
@@ -25,6 +28,7 @@ import { getNativeRankingDisplayName } from '../features/tools/nativeRankingsMod
 import { NativeUiIcon } from '../components/NativeUiIcon';
 import { NativeOptionPicker, type NativeOptionPickerEntry } from '../components/NativeOptionPicker';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
+import { useNativeReducedMotion } from '../features/settings/useNativeMotion';
 import { markNativeUiPerformanceAfterPaint } from '../observability/nativeUiInteractionTiming';
 
 type Props = {
@@ -242,12 +246,18 @@ export const NativeRankingsScreen = ({
   snapshotLabel,
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
+  const reduceMotion = useNativeReducedMotion();
   const insets = useSafeAreaInsets();
   const compact = useWindowDimensions().width <= 420;
   const [methodOpen, setMethodOpen] = useState(false);
   const [picker, setPicker] = useState<'category' | 'collection' | 'mode' | null>(null);
   const [pagination, setPagination] = useState({ key: '', limit: INITIAL_RESULT_COUNT });
   const [showQuickControls, setShowQuickControls] = useState(false);
+  const [modeSegmentWidth, setModeSegmentWidth] = useState(0);
+  const [modeIndicatorPosition] = useState(() => new Animated.Value(
+    selectedMode === 'rarest' ? 1 : 0,
+  ));
+  const modeIndicatorIndexRef = useRef(selectedMode === 'rarest' ? 1 : 0);
   const summaryBottomRef = useRef(Number.POSITIVE_INFINITY);
   const performanceStartsRef = useRef(new Map<string, number>());
   const beginPerformance = useCallback((event: string) => {
@@ -273,6 +283,29 @@ export const NativeRankingsScreen = ({
   const activeFilters = selectedCategory !== 'all'
     || selectedCollectionFilter !== 'all'
     || Boolean(query.trim());
+
+  const moveModeIndicator = useCallback((mode: NativeRankingMode) => {
+    const nextIndex = mode === 'rarest' ? 1 : 0;
+    modeIndicatorIndexRef.current = nextIndex;
+    modeIndicatorPosition.stopAnimation();
+    if (reduceMotion) {
+      modeIndicatorPosition.setValue(nextIndex);
+      return;
+    }
+    Animated.timing(modeIndicatorPosition, {
+      duration: webCssVarTokens.motionSeconds.fast * 1000,
+      easing: Easing.ease,
+      isInteraction: false,
+      toValue: nextIndex,
+      useNativeDriver: true,
+    }).start();
+  }, [modeIndicatorPosition, reduceMotion]);
+
+  useEffect(() => {
+    const selectedIndex = selectedMode === 'rarest' ? 1 : 0;
+    if (modeIndicatorIndexRef.current === selectedIndex) return;
+    moveModeIndicator(selectedMode);
+  }, [moveModeIndicator, selectedMode]);
 
   useEffect(() => finishPerformance('rankings_mode_result_painted'), [finishPerformance, rows.length, selectedMode]);
   useEffect(() => finishPerformance('rankings_category_result_painted'), [finishPerformance, rows.length, selectedCategory]);
@@ -308,6 +341,10 @@ export const NativeRankingsScreen = ({
   };
   const changeMode = (value: NativeRankingMode) => {
     if (value === selectedMode) return;
+    // Start the compositor-owned indicator before the parent recomputes the
+    // ranking projection, so even a large result set acknowledges the tap on
+    // the current frame instead of making the control appear to jump later.
+    moveModeIndicator(value);
     beginPerformance('rankings_mode_result_painted');
     onChangeMode(value);
   };
@@ -336,6 +373,11 @@ export const NativeRankingsScreen = ({
     if (picker === 'collection') return COLLECTION_FILTERS.map(({ label, value }) => ({ key: value, label: `${label} (${collectionFilterCounts[value].toLocaleString()})` }));
     return [];
   }, [availableCategories, collectionFilterCounts, picker]);
+  const modeIndicatorWidth = Math.max(0, (modeSegmentWidth - 14) / 2);
+  const modeIndicatorTranslateX = useMemo(
+    () => Animated.multiply(modeIndicatorPosition, modeIndicatorWidth + 4),
+    [modeIndicatorPosition, modeIndicatorWidth],
+  );
 
   const header = (
     <View>
@@ -351,10 +393,28 @@ export const NativeRankingsScreen = ({
         </View>
       </View>
 
-      <View accessibilityRole="tablist" style={[styles.segment, compact && styles.segmentCompact, light && styles.panelLight]}>
+      <View
+        accessibilityRole="tablist"
+        onLayout={(event) => setModeSegmentWidth(event.nativeEvent.layout.width)}
+        style={[styles.segment, compact && styles.segmentCompact, light && styles.panelLight]}
+        testID="native-rankings-mode-switcher"
+      >
+        <Animated.View
+          accessibilityElementsHidden
+          pointerEvents="none"
+          style={[
+            styles.segmentIndicator,
+            {
+              opacity: modeIndicatorWidth > 0 ? 1 : 0,
+              transform: [{ translateX: modeIndicatorTranslateX }],
+              width: modeIndicatorWidth,
+            },
+          ]}
+          testID="native-rankings-mode-indicator"
+        />
         {([['wanted', '♥︎', 'Most wanted'], ['rarest', '◆', 'Rarest owned']] as const).map(([value, icon, label]) => {
           const selected = selectedMode === value;
-          return <Pressable aria-selected={selected} accessibilityRole="tab" accessibilityState={{ selected }} key={value} onPress={() => changeMode(value)} style={[styles.segmentButton, selected && styles.segmentActive]}><Text style={[styles.segmentIcon, light && styles.textLight, selected && styles.segmentTextActive]}>{icon}</Text><Text style={[styles.segmentText, light && styles.textLight, selected && styles.segmentTextActive]}>{label}</Text></Pressable>;
+          return <Pressable aria-selected={selected} accessibilityRole="tab" accessibilityState={{ selected }} key={value} onPress={() => changeMode(value)} style={styles.segmentButton}><Text style={[styles.segmentIcon, light && styles.textLight, selected && styles.segmentTextActive]}>{icon}</Text><Text style={[styles.segmentText, light && styles.textLight, selected && styles.segmentTextActive]}>{label}</Text></Pressable>;
         })}
       </View>
 
@@ -428,7 +488,7 @@ export const NativeRankingsScreen = ({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0c1112' }, rootLight: { backgroundColor: '#f5f2e9' }, textLight: { color: '#132d32' }, mutedLight: { color: '#405b56' }, accentLight: { color: '#08766b' }, panelLight: { borderColor: 'rgba(21,117,119,0.30)', backgroundColor: '#fffdf7' }, controlLight: { borderColor: 'rgba(21,117,119,0.30)', backgroundColor: '#fffdf7' }, inputLight: { borderColor: 'rgba(21,117,119,0.36)', backgroundColor: '#fffdf7' },
   productHeader: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }, productHeaderCompact: { minHeight: 110, alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: 'rgba(66,215,196,0.3)' }, back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(142,197,201,0.34)', borderRadius: 21, backgroundColor: '#141a1b' }, backText: { marginTop: -4, color: '#f4ffff', fontSize: 37, lineHeight: 39 }, productIcon: { width: 42, height: 42 }, productIconCompact: { marginTop: 11 }, headerCopy: { minWidth: 0, flex: 1 }, headerCopyCompact: { marginTop: 11 }, eyebrow: { color: '#8ec5c9', fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }, title: { color: '#f4ffff', fontSize: 25, fontWeight: '900', lineHeight: 29 }, population: { flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 66, paddingHorizontal: 7, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(66,215,196,0.3)', borderRadius: 7, backgroundColor: 'rgba(66,215,196,0.07)' }, populationCompact: { position: 'absolute', left: 2, bottom: 10, minWidth: 49 }, populationLight: { borderColor: 'rgba(21,117,119,0.3)', backgroundColor: 'rgba(27,185,173,0.08)' }, populationIcon: { color: '#42d7c4', fontSize: 16 }, populationValue: { color: '#f4ffff', fontSize: 14, fontWeight: '900', lineHeight: 15 }, populationLabel: { color: '#9eb9bb', fontSize: 7, fontWeight: '900' }, populationLabelCompact: { display: 'none' },
-  segment: { flexDirection: 'row', gap: 4, marginTop: 8, padding: 4, borderWidth: 1, borderColor: 'rgba(66,215,196,0.3)', borderRadius: 8, backgroundColor: '#101617' }, segmentCompact: { marginTop: 12 }, segmentButton: { minHeight: 46, flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 5 }, segmentActive: { backgroundColor: '#42d7c4' }, segmentIcon: { color: '#9eb9bb', fontSize: 14 }, segmentText: { color: '#9eb9bb', fontSize: 13, fontWeight: '900' }, segmentTextActive: { color: '#071312' },
+  segment: { position: 'relative', flexDirection: 'row', gap: 4, marginTop: 8, padding: 4, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(66,215,196,0.3)', borderRadius: 8, backgroundColor: '#101617' }, segmentCompact: { marginTop: 12 }, segmentIndicator: { position: 'absolute', zIndex: 0, top: 5, bottom: 5, left: 5, borderRadius: 5, backgroundColor: '#42d7c4' }, segmentButton: { zIndex: 1, minHeight: 46, flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 5 }, segmentIcon: { color: '#9eb9bb', fontSize: 14 }, segmentText: { color: '#9eb9bb', fontSize: 13, fontWeight: '900' }, segmentTextActive: { color: '#071312' },
   search: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(157,190,193,0.42)', borderRadius: 7, backgroundColor: '#111718' }, searchIcon: { color: '#42d7c4', fontSize: 25 }, searchInput: { minWidth: 0, flex: 1, paddingVertical: 0, color: '#f4ffff', fontSize: 14 }, clearSearch: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }, clearSearchText: { color: '#9eb9bb', fontSize: 24 },
   context: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, paddingHorizontal: 4, paddingVertical: 10 }, contextPrimary: { minWidth: 0, flex: 1, gap: 2 }, contextLabel: { color: '#8ec5c9', fontSize: 9, fontWeight: '900', letterSpacing: 0.8 }, contextTitle: { color: '#f4ffff', fontSize: 12, fontWeight: '800', lineHeight: 17 }, contextMeta: { width: 122, color: '#9eb9bb', fontSize: 9, fontWeight: '700', lineHeight: 13, textAlign: 'right' },
   filters: { gap: 5, padding: 5, borderWidth: 1, borderColor: 'rgba(66,215,196,0.3)', borderRadius: 8, backgroundColor: 'rgba(16,22,23,0.72)' }, filterLabel: { paddingHorizontal: 2, color: '#9eb9bb', fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }, filterGrid: { flexDirection: 'row', gap: 3 }, filterButton: { minWidth: 0, minHeight: 43, flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 2, borderWidth: 1, borderColor: 'rgba(157,190,193,0.38)', borderRadius: 5, backgroundColor: 'transparent' }, filterIcon: { width: 15, height: 15, resizeMode: 'contain' }, filterText: { color: '#9eb9bb', fontSize: 10, fontWeight: '900' }, categoryActive: { borderColor: '#f5cd59', backgroundColor: '#f5cd59' }, categoryActiveText: { color: '#141006' }, personalFilter: { justifyContent: 'space-between', paddingHorizontal: 4 }, personalActive: { borderColor: '#42d7c4', backgroundColor: '#42d7c4' }, personalActiveText: { color: '#071312' }, filterCount: { minWidth: 19, minHeight: 19, paddingHorizontal: 3, color: '#9eb9bb', backgroundColor: 'rgba(159,191,193,0.10)', borderRadius: 4, fontSize: 8, fontWeight: '900', lineHeight: 19, textAlign: 'center' }, filterCountLight: { color: '#405b56', backgroundColor: 'rgba(21,117,119,0.10)' }, personalCountActive: { color: '#071312', backgroundColor: 'rgba(7,19,18,0.14)' }, filterDivider: { height: 1, marginTop: 1, backgroundColor: 'rgba(159,191,193,0.13)' }, filterDividerLight: { backgroundColor: 'rgba(21,117,119,0.13)' },

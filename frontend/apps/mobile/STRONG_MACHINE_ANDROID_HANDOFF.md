@@ -9,7 +9,8 @@ baseline. It includes the shared collection-sort engine, Mega
 registration/current-form correction, and immediate Native edit/save workflow,
 but it does not include the 2026-09-07 Vite-parity location-card geometry,
 masking, responsive Wanted stages, exact-costume background correction, or the
-fixed Trades header with lower-workspace-only page sliding.
+fixed Trades header with lower-workspace-only page sliding. It also predates the
+native-driven Rankings mode indicator that replaces the broken instant switch.
 
 On the stronger machine, pull the latest clean `mobile/native-migration` HEAD
 and run the existing normal manual command:
