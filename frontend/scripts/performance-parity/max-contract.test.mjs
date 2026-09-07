@@ -16,6 +16,14 @@ const androidReporter = readFileSync(
   path.resolve(frontendDirectory, 'apps/mobile/scripts/build-android-performance-report.mjs'),
   'utf8',
 );
+const viteMaxSource = readFileSync(
+  path.resolve(frontendDirectory, 'packages/app-core/src/pages/Max/Max.tsx'),
+  'utf8',
+);
+const nativeMaxScreen = readFileSync(
+  path.resolve(frontendDirectory, 'apps/mobile/src/screens/NativeMaxScreen.tsx'),
+  'utf8',
+);
 const nativeMaxSources = [
   'apps/mobile/src/screens/NativeMaxScreen.tsx',
   'apps/mobile/src/components/tools/NativeMaxBattleSimulator.tsx',
@@ -48,4 +56,14 @@ test('every bounded Max Battles interaction has Vite and physical-native perform
     assert.match(androidReporter, new RegExp(`${nativeEvent}: ['"]${scenarioId.replaceAll('.', '\\.')}['"]`), `${scenarioId} Android report mapping`);
     assert.ok(nativeMaxSources.includes(nativeEvent), `${nativeEvent} native paint trace`);
   }
+});
+
+test('Max Battles uses the reusable segmented control in Vite and Native', () => {
+  assert.match(viteMaxSource, /<SegmentedControl/);
+  assert.match(
+    nativeMaxScreen,
+    /<NativeSlidingSegmentedControl[\s\S]*?native-max-view-indicator/,
+    'Native Max Battles must slide a shared indicator instead of jumping between active backgrounds',
+  );
+  assert.doesNotMatch(nativeMaxScreen, /view === value && styles\.viewActive/);
 });

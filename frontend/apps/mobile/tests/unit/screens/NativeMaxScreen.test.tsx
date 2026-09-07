@@ -1,4 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { webCssVarTokens } from '@pokemongonexus/shared-ui-tokens';
+import { Animated, Easing } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances';
 import type { BasePokemon, Move } from '@pokemongonexus/shared-contracts/pokemon';
@@ -43,6 +45,35 @@ describe('NativeMaxScreen', () => {
     fireEvent.press(screen.getByText('Boss teams'));
     expect(screen.getByText('Can this group beat Dynamax Bulbasaur?')).toBeTruthy();
     expect(screen.getByText('More help needed')).toBeTruthy();
+  });
+
+  it('slides the shared view indicator before swapping the Max workspace', () => {
+    const timing = jest.spyOn(Animated, 'timing');
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativeMaxScreen assetBaseUrl="https://pokegonexus.com" catalog={catalog} onBack={jest.fn()} onOpenPokemon={jest.fn()} onRetry={jest.fn()} signedIn={false} /></SafeAreaProvider>);
+    timing.mockClear();
+
+    fireEvent(
+      screen.getByTestId('native-max-view-switcher'),
+      'layout',
+      { nativeEvent: { layout: { height: 56, width: 374, x: 0, y: 0 } } },
+    );
+    fireEvent.press(screen.getByText('Boss teams'));
+
+    expect(screen.getByTestId('native-max-view-indicator', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(timing).toHaveBeenCalledWith(
+      expect.any(Animated.Value),
+      expect.objectContaining({
+        duration: webCssVarTokens.motionSeconds.fast * 1000,
+        easing: Easing.ease,
+        isInteraction: false,
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+    );
+    expect(screen.getByText('Can this group beat Dynamax Bulbasaur?')).toBeTruthy();
+    timing.mockRestore();
   });
 
   it('renders the complete recorded copy and canonical Max-role metrics', () => {

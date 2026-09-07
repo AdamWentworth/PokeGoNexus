@@ -103,13 +103,14 @@ it tracks the lower transition without moving the header itself. A
 cross-renderer structure contract and 23 focused Trades tests protect this
 boundary.
 
-The Rankings Most wanted/Rarest owned control now uses one moving native-driven
-selection indicator instead of replacing two static active backgrounds. It
-starts on the press before the parent recomputes ranking rows and uses Vite's
-200 ms fast-motion duration, so a large ranking projection cannot delay or turn
-the acknowledgement into an instant visual jump. Reduced-motion preferences
-still resolve the indicator immediately. The focused Rankings suite and a
-Vite/native motion contract pin this behavior.
+Native now has one reusable sliding segmented control corresponding to Vite's
+shared `SegmentedControl`. Both Rankings (Most wanted/Rarest owned) and Max
+Battles (Max rankings/Boss teams) consume it instead of replacing page-specific
+static active backgrounds. Its native-driven indicator starts on press before a
+parent recomputes or swaps a potentially expensive workspace and uses Vite's
+200 ms fast-motion duration. Reduced-motion preferences still resolve the
+indicator immediately. Focused component, Rankings, and Max suites plus
+Vite/native structure and motion contracts pin the reuse and ordering.
 
 The 2026-09-06 Pokémon collection correction moves all six ordering modes onto
 one renderer-independent implementation consumed by both Vite and Native.
@@ -133,14 +134,15 @@ serialized collection-sync provider contact Receiver in the background. A
 failed local queue operation restores the draft and error. Vite and physical
 Android now record like-for-like edit-visible and save-visible timings, with a
 150 ms Native hard ceiling for each interaction. The full Native
-suite passes 162 suites / 931 tests; the affected Vite Pokémon, overlay,
+suite passes 164 suites / 939 tests; the affected Vite Pokémon, overlay,
 variant, and sort surface passes 81 files / 414 tests; TypeScript, ESLint,
 stylelint, Vite production build, and Metro Android production export pass.
 
 The currently installed `8fa33311` APK includes the sort, Mega, and edit/save
-corrections, but predates the 2026-09-07 location-card correction. Build and
-install one new normal manual candidate from current HEAD before judging the
-corrected instance backdrop on the phone.
+corrections, but predates the 2026-09-07 location-card, Trades transition,
+Rankings transition, and Max Battles transition corrections. Build and install
+one new normal manual candidate from current HEAD before judging those changes
+on the phone.
 
 The current branch has shared Vite/native behavior contracts for Home
 collection links, collection tabs and slide motion, tag clearing, action-menu
@@ -151,7 +153,7 @@ mounts complete collection and Pokédex route trees in the background.
 
 Passing evidence for this checkpoint:
 
-- native Jest: 162 suites, 931 tests;
+- native Jest: 164 suites, 939 tests;
 - mobile and web TypeScript and ESLint;
 - native real-route smoke: 92 guest/signed-in, light/dark route states;
 - focused Vite mobile-Chromium browser coverage: 10 tests;

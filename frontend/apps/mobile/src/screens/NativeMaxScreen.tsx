@@ -17,6 +17,7 @@ import {
   type MaxBattleTier,
 } from '@pokemongonexus/app-core/max-battle-simulation';
 import { NativeCombatRankingCard } from '../components/NativeCombatRankingCard';
+import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
 import { NativeMaxBattleSimulator } from '../components/tools/NativeMaxBattleSimulator';
 import {
   buildNativeMaxRankings,
@@ -67,6 +68,10 @@ const EMPTY_MAX_ROLE_CANDIDATES = { damage: [], healing: [], tank: [] };
 const MAX_RESULTS_PAGE_SIZE = 18;
 const MAX_BOSS_RESULTS_INITIAL_SIZE = 3;
 const MAX_BOSS_RESULTS_PAGE_SIZE = 9;
+const MAX_VIEW_ITEMS = [
+  { label: 'Max rankings', value: 'rankings' },
+  { label: 'Boss teams', value: 'bosses' },
+] as const;
 
 const absoluteUri = (base: string, value?: string | null) => {
   if (!value) return undefined;
@@ -350,21 +355,21 @@ export const NativeMaxScreen = ({
   ), [assetBaseUrl, bossVariants.length, light]);
 
   const viewTabs = useMemo(() => (
-    <View accessibilityRole="tablist" style={[styles.viewTabs, light && styles.panelLight]}>
-      {([['rankings', 'Max rankings'], ['bosses', 'Boss teams']] as const).map(([value, label]) => (
-        <Pressable
-          aria-selected={view === value}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: view === value }}
-          key={value}
-          onPress={() => switchView(value)}
-          style={[styles.viewButton, view === value && styles.viewActive]}
-        >
-          <NativeUiIcon color={view === value ? '#06120f' : light ? '#172124' : '#ecf5f4'} name={value === 'rankings' ? 'chart' : 'target'} size={14} />
-          <Text style={[styles.viewText, light && styles.textLight, view === value && styles.activeText]}>{label}</Text>
-        </Pressable>
-      ))}
-    </View>
+    <NativeSlidingSegmentedControl
+      accessibilityLabel="Max Battle tools"
+      buttonStyle={styles.viewButton}
+      indicatorStyle={styles.viewIndicator}
+      indicatorTestID="native-max-view-indicator"
+      items={MAX_VIEW_ITEMS}
+      onChange={switchView}
+      renderItem={(item, selected) => <>
+        <NativeUiIcon color={selected ? '#06120f' : light ? '#172124' : '#ecf5f4'} name={item.value === 'rankings' ? 'chart' : 'target'} size={14} />
+        <Text style={[styles.viewText, light && styles.textLight, selected && styles.activeText]}>{item.label}</Text>
+      </>}
+      style={[styles.viewTabs, light && styles.panelLight]}
+      testID="native-max-view-switcher"
+      value={view}
+    />
   ), [light, switchView, view]);
 
   const roster = useMemo(() => (
@@ -681,9 +686,9 @@ const styles = StyleSheet.create({
   title: { marginTop: 2, color: '#fff', fontSize: 25, lineHeight: 28, fontWeight: '900' },
   countPill: { alignSelf: 'flex-end', marginBottom: 2, borderWidth: 1, borderColor: '#d45b89', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4, color: '#ffd9e7', fontSize: 7, fontWeight: '900' },
   countPillLight: { color: '#a9235b' },
-  viewTabs: { flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: '#315253', borderRadius: 13, padding: 4, backgroundColor: '#0d1516' },
-  viewButton: { flex: 1, minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  viewActive: { backgroundColor: '#44d7ca' },
+  viewTabs: { borderColor: '#315253', borderRadius: 13, backgroundColor: '#0d1516' },
+  viewButton: { gap: 6, borderRadius: 10 },
+  viewIndicator: { borderRadius: 10, backgroundColor: '#44d7ca' },
   viewText: { color: '#aebdbc', fontSize: 11, fontWeight: '900' },
   viewIcon: { marginRight: 5, color: '#aebdbc', fontSize: 11, fontWeight: '900' },
   roster: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, borderWidth: 1, borderColor: '#315253', borderRadius: 9, padding: 5, backgroundColor: '#101919' },

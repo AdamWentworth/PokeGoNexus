@@ -16,6 +16,10 @@ const nativeRankingsScreen = readFileSync(
   path.resolve(frontendDirectory, 'apps/mobile/src/screens/NativeRankingsScreen.tsx'),
   'utf8',
 );
+const nativeSlidingSegmentedControl = readFileSync(
+  path.resolve(frontendDirectory, 'apps/mobile/src/components/NativeSlidingSegmentedControl.tsx'),
+  'utf8',
+);
 
 test('Native Rankings preserves the canonical Vite mode-control motion', () => {
   assert.match(viteMotionTokens, /--motion-fast:\s*0\.2s;/, 'Vite fast motion duration');
@@ -24,15 +28,16 @@ test('Native Rankings preserves the canonical Vite mode-control motion', () => {
     /transition:[\s\S]*?background-color var\(--motion-fast\) ease/,
     'Vite ranking mode control transitions instead of jumping',
   );
-  assert.match(nativeRankingsScreen, /<Animated\.View[\s\S]*?native-rankings-mode-indicator/);
+  assert.match(nativeRankingsScreen, /<NativeSlidingSegmentedControl[\s\S]*?native-rankings-mode-indicator/);
+  assert.match(nativeSlidingSegmentedControl, /<Animated\.View/);
   assert.match(
-    nativeRankingsScreen,
+    nativeSlidingSegmentedControl,
     /duration:\s*webCssVarTokens\.motionSeconds\.fast \* 1000/,
     'Native consumes the same 200 ms motion duration',
   );
   assert.match(
-    nativeRankingsScreen,
-    /moveModeIndicator\(value\);[\s\S]*?beginPerformance\('rankings_mode_result_painted'\);[\s\S]*?onChangeMode\(value\);/,
-    'Native starts its indicator before the ranking projection changes',
+    nativeSlidingSegmentedControl,
+    /moveIndicator\(index\);[\s\S]*?onChange\(item\.value\);/,
+    'The reusable native control starts its indicator before a destination workspace changes',
   );
 });
