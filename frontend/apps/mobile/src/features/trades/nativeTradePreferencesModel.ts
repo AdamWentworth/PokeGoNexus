@@ -118,8 +118,8 @@ const preferenceCandidateFor = (
 });
 
 const compareRows = (
-  left: NativeTradePreferenceCandidate,
-  right: NativeTradePreferenceCandidate,
+  left: Pick<NativeTradePreferenceCandidate, 'collectionKey' | 'row'>,
+  right: Pick<NativeTradePreferenceCandidate, 'collectionKey' | 'row'>,
 ): number => left.row.pokedexNumber - right.row.pokedexNumber
   || (left.row.variantOrder ?? Number.MAX_SAFE_INTEGER)
     - (right.row.variantOrder ?? Number.MAX_SAFE_INTEGER)
@@ -135,17 +135,22 @@ const entryCompare = (
   || left.row.name.localeCompare(right.row.name)
   || left.collectionKey.localeCompare(right.collectionKey);
 
-export const buildNativeTradePreferenceEntries = ({
+type PreparedNativeTradePreferences = {
+  instances: Record<string, PokemonInstance>;
+  pokemonById: Map<number, BasePokemon>;
+  rowByCollectionKey: Map<string, NativeCollectionRow>;
+  speciesRowByCollectionKey: Map<string, NativeCollectionRow>;
+};
+
+const prepareNativeTradePreferences = ({
   assetOrigin,
   catalog,
   instances,
-  mode,
 }: {
   assetOrigin: string;
   catalog: BasePokemon[];
   instances: Record<string, PokemonInstance>;
-  mode: NativeTradePreferenceMode;
-}): NativeTradePreferenceEntry[] => {
+}): PreparedNativeTradePreferences => {
   const rows = buildNativeCollectionRows(instances, catalog, assetOrigin);
   const speciesRows = buildNativeCollectionRows(
     Object.fromEntries(Object.entries(instances).map(([key, instance]) => [
@@ -166,8 +171,42 @@ export const buildNativeTradePreferenceEntries = ({
     if (collectionKey) speciesRowByCollectionKey.set(collectionKey, row);
   }
   const pokemonById = new Map(catalog.map((pokemon) => [pokemon.pokemon_id, pokemon]));
+  return { instances, pokemonById, rowByCollectionKey, speciesRowByCollectionKey };
+};
+
+const buildNativeTradePreferenceEntriesFromPrepared = (
+  prepared: PreparedNativeTradePreferences,
+  mode: NativeTradePreferenceMode,
+): NativeTradePreferenceEntry[] => {
+  const {
+    instances,
+    pokemonById,
+    rowByCollectionKey,
+    speciesRowByCollectionKey,
+  } = prepared;
   const selectedStatus = mode === 'trade' ? 'trade' : 'wanted';
   const candidateStatus = mode === 'trade' ? 'wanted' : 'trade';
+  const candidatePool = Object.entries(instances).flatMap(([
+    collectionKey,
+    candidateInstance,
+  ]) => {
+    const row = rowByCollectionKey.get(collectionKey);
+    if (!row || row.status !== candidateStatus || candidateInstance.disabled) return [];
+    return [{
+      collectionKey,
+      displayName: speciesRowByCollectionKey.get(collectionKey)?.name ?? row.name,
+      instance: candidateInstance,
+      row,
+      traits: preferenceCandidateFor(
+        candidateInstance,
+        pokemonById.get(candidateInstance.pokemon_id),
+      ),
+    }];
+  }).sort(compareRows);
+  const candidateTraits = Object.fromEntries(candidatePool.map((candidate) => [
+    candidate.collectionKey,
+    candidate.traits,
+  ]));
 
   return Object.entries(instances).flatMap(([collectionKey, instance]) => {
     const row = rowByCollectionKey.get(collectionKey);
@@ -180,47 +219,42 @@ export const buildNativeTradePreferenceEntries = ({
       instances,
       mode === 'trade' ? instance.not_wanted_list : instance.not_trade_list,
     );
-    const candidateTraits: Record<string, TradePreferenceCandidate> = {};
-    const candidateReferences: InstanceReference[] = [];
-
-    for (const [candidateKey, candidateInstance] of Object.entries(instances)) {
-      const candidateRow = rowByCollectionKey.get(candidateKey);
-      if (!candidateRow || candidateRow.status !== candidateStatus || candidateInstance.disabled) {
-        continue;
-      }
-      candidateReferences.push({ collectionKey: candidateKey, instance: candidateInstance });
-      candidateTraits[candidateKey] = preferenceCandidateFor(
-        candidateInstance,
-        pokemonById.get(candidateInstance.pokemon_id),
-      );
-    }
-
-    const matchingTraits = filterTradePreferenceCandidates(
-      candidateTraits,
-      mode === 'trade' ? 'wanted-targets' : 'trade-offers',
-      filters,
-    );
-    const candidates = candidateReferences.flatMap(({ collectionKey: candidateKey, instance: candidate }) => {
-      const candidateRow = rowByCollectionKey.get(candidateKey);
-      if (!candidateRow) return [];
-      const excludedByRule = matchingTraits[candidateKey] == null;
-      const isManuallyExcluded = manuallyExcluded[candidateKey] === true;
-      return [{
-        collectionKey: candidateKey,
-        instance: candidate,
-        row: candidateRow,
-        allowed: !excludedByRule && !isManuallyExcluded,
-        excludedByRule,
-        manuallyExcluded: isManuallyExcluded,
-        traits: candidateTraits[candidateKey],
-        displayName: speciesRowByCollectionKey.get(candidateKey)?.name ?? candidateRow.name,
-      } satisfies NativeTradePreferenceCandidate];
-    }).sort(compareRows);
-
-    return [{
+    const filterMode = mode === 'trade' ? 'wanted-targets' : 'trade-offers';
+    let cachedAllowedCount: number | null = null;
+    let cachedCandidates: NativeTradePreferenceCandidate[] | null = null;
+    const entry: NativeTradePreferenceEntry = {
       activeRuleCount: TRADE_PREFERENCE_RULE_KEYS.filter((key) => filters[key]).length,
-      allowedCount: candidates.filter((candidate) => candidate.allowed).length,
-      candidates,
+      get allowedCount() {
+        if (cachedAllowedCount != null) return cachedAllowedCount;
+        if (cachedCandidates) {
+          cachedAllowedCount = cachedCandidates.filter((candidate) => candidate.allowed).length;
+          return cachedAllowedCount;
+        }
+        const matchingTraits = filterTradePreferenceCandidates(candidateTraits, filterMode, filters);
+        cachedAllowedCount = candidatePool.reduce((count, candidate) => (
+          matchingTraits[candidate.collectionKey] != null
+          && manuallyExcluded[candidate.collectionKey] !== true
+            ? count + 1
+            : count
+        ), 0);
+        return cachedAllowedCount;
+      },
+      get candidates() {
+        if (cachedCandidates) return cachedCandidates;
+        const matchingTraits = filterTradePreferenceCandidates(candidateTraits, filterMode, filters);
+        cachedCandidates = candidatePool.map((candidate) => {
+          const excludedByRule = matchingTraits[candidate.collectionKey] == null;
+          const isManuallyExcluded = manuallyExcluded[candidate.collectionKey] === true;
+          return {
+            ...candidate,
+            allowed: !excludedByRule && !isManuallyExcluded,
+            excludedByRule,
+            manuallyExcluded: isManuallyExcluded,
+          };
+        });
+        cachedAllowedCount = cachedCandidates.filter((candidate) => candidate.allowed).length;
+        return cachedCandidates;
+      },
       collectionKey,
       filters,
       instance,
@@ -229,8 +263,40 @@ export const buildNativeTradePreferenceEntries = ({
       row,
       displayName: speciesRowByCollectionKey.get(collectionKey)?.name ?? row.name,
       nickname: instance.nickname?.trim() || null,
-    } satisfies NativeTradePreferenceEntry];
+    };
+    return [entry];
   }).sort(entryCompare);
+};
+
+export const buildNativeTradePreferenceEntries = ({
+  assetOrigin,
+  catalog,
+  instances,
+  mode,
+}: {
+  assetOrigin: string;
+  catalog: BasePokemon[];
+  instances: Record<string, PokemonInstance>;
+  mode: NativeTradePreferenceMode;
+}): NativeTradePreferenceEntry[] => buildNativeTradePreferenceEntriesFromPrepared(
+  prepareNativeTradePreferences({ assetOrigin, catalog, instances }),
+  mode,
+);
+
+export const buildNativeTradePreferenceEntrySets = ({
+  assetOrigin,
+  catalog,
+  instances,
+}: {
+  assetOrigin: string;
+  catalog: BasePokemon[];
+  instances: Record<string, PokemonInstance>;
+}): Record<NativeTradePreferenceMode, NativeTradePreferenceEntry[]> => {
+  const prepared = prepareNativeTradePreferences({ assetOrigin, catalog, instances });
+  return {
+    trade: buildNativeTradePreferenceEntriesFromPrepared(prepared, 'trade'),
+    wanted: buildNativeTradePreferenceEntriesFromPrepared(prepared, 'wanted'),
+  };
 };
 
 export const resolveNativeTradePreferenceDraftCandidates = ({

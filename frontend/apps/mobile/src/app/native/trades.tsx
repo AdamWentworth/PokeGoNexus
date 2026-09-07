@@ -20,7 +20,7 @@ import {
   executeNativeTradeActivityAction,
 } from '../../features/trades/nativeTradeActivityCommands';
 import {
-  buildNativeTradePreferenceEntries,
+  buildNativeTradePreferenceEntrySets,
   resolveNativeTradePreferenceDraftCandidates,
   type NativeTradePreferenceMode,
 } from '../../features/trades/nativeTradePreferencesModel';
@@ -111,20 +111,11 @@ export default function NativeTradesRoute() {
   const preferenceEntries = useMemo(() => {
     const snapshot = collectionQuery.data;
     if (!snapshot) return { trade: [], wanted: [] };
-    return {
-      trade: buildNativeTradePreferenceEntries({
-        assetOrigin: runtimeConfig.api.frontendAppUrl,
-        catalog: snapshot.catalog,
-        instances: snapshot.instances,
-        mode: 'trade',
-      }),
-      wanted: buildNativeTradePreferenceEntries({
-        assetOrigin: runtimeConfig.api.frontendAppUrl,
-        catalog: snapshot.catalog,
-        instances: snapshot.instances,
-        mode: 'wanted',
-      }),
-    };
+    return buildNativeTradePreferenceEntrySets({
+      assetOrigin: runtimeConfig.api.frontendAppUrl,
+      catalog: snapshot.catalog,
+      instances: snapshot.instances,
+    });
   }, [collectionQuery.data]);
   const preferenceSelectionState = preferenceEntryId
     ? preferenceEntries[preferenceMode].some((entry) => entry.collectionKey === preferenceEntryId)

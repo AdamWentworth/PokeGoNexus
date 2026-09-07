@@ -2,6 +2,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
   type LayoutChangeEvent,
@@ -23,6 +24,7 @@ import type {
 } from '../features/tools/nativeRankingsModel';
 import { getNativeRankingDisplayName } from '../features/tools/nativeRankingsModel';
 import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
+import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import { NativeUiIcon } from '../components/NativeUiIcon';
 import { NativeOptionPicker, type NativeOptionPickerEntry } from '../components/NativeOptionPicker';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
@@ -253,6 +255,7 @@ export const NativeRankingsScreen = ({
   const [picker, setPicker] = useState<'category' | 'collection' | 'mode' | null>(null);
   const [pagination, setPagination] = useState({ key: '', limit: INITIAL_RESULT_COUNT });
   const [showQuickControls, setShowQuickControls] = useState(false);
+  const workspaceMotion = useNativeSegmentedWorkspaceMotion(selectedMode === 'wanted' ? 0 : 1);
   const summaryBottomRef = useRef(Number.POSITIVE_INFINITY);
   const performanceStartsRef = useRef(new Map<string, number>());
   const beginPerformance = useCallback((event: string) => {
@@ -343,33 +346,35 @@ export const NativeRankingsScreen = ({
   }, [availableCategories, collectionFilterCounts, picker]);
   const header = (
     <View>
-      <View style={[styles.productHeader, compact && styles.productHeaderCompact]}>
-        <Image accessibilityElementsHidden fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, '/images/btn_rankings.png') }} style={[styles.productIcon, compact && styles.productIconCompact]} />
-        <View style={[styles.headerCopy, compact && styles.headerCopyCompact]}>
-          <Text style={[styles.eyebrow, light && styles.accentLight]}>TRAINER COLLECTIONS</Text>
-          <Text accessibilityRole="header" style={[styles.title, light && styles.textLight]}>Community Rankings</Text>
+      <Animated.View style={workspaceMotion.stationaryStyle}>
+        <View style={[styles.productHeader, compact && styles.productHeaderCompact]}>
+          <Image accessibilityElementsHidden fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, '/images/btn_rankings.png') }} style={[styles.productIcon, compact && styles.productIconCompact]} />
+          <View style={[styles.headerCopy, compact && styles.headerCopyCompact]}>
+            <Text style={[styles.eyebrow, light && styles.accentLight]}>TRAINER COLLECTIONS</Text>
+            <Text accessibilityRole="header" style={[styles.title, light && styles.textLight]}>Community Rankings</Text>
+          </View>
+          <View style={[styles.population, compact && styles.populationCompact, light && styles.populationLight]}>
+            <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="trainers" size={19} />
+            <View><Text style={[styles.populationValue, light && styles.textLight]}>{collectorCount.toLocaleString()}</Text><Text style={[styles.populationLabel, compact && styles.populationLabelCompact, light && styles.mutedLight]}>TRAINERS</Text></View>
+          </View>
         </View>
-        <View style={[styles.population, compact && styles.populationCompact, light && styles.populationLight]}>
-          <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="trainers" size={19} />
-          <View><Text style={[styles.populationValue, light && styles.textLight]}>{collectorCount.toLocaleString()}</Text><Text style={[styles.populationLabel, compact && styles.populationLabelCompact, light && styles.mutedLight]}>TRAINERS</Text></View>
-        </View>
-      </View>
 
-      <NativeSlidingSegmentedControl
-        accessibilityLabel="Community ranking"
-        buttonStyle={styles.segmentButton}
-        indicatorStyle={styles.segmentIndicator}
-        indicatorTestID="native-rankings-mode-indicator"
-        items={RANKING_MODE_ITEMS}
-        onChange={changeMode}
-        renderItem={(item, selected) => <>
-          <Text style={[styles.segmentIcon, light && styles.textLight, selected && styles.segmentTextActive]}>{item.value === 'wanted' ? '♥︎' : '◆'}</Text>
-          <Text style={[styles.segmentText, light && styles.textLight, selected && styles.segmentTextActive]}>{item.label}</Text>
-        </>}
-        style={[styles.segment, compact && styles.segmentCompact, light && styles.panelLight]}
-        testID="native-rankings-mode-switcher"
-        value={selectedMode}
-      />
+        <NativeSlidingSegmentedControl
+          accessibilityLabel="Community ranking"
+          buttonStyle={styles.segmentButton}
+          indicatorStyle={styles.segmentIndicator}
+          indicatorTestID="native-rankings-mode-indicator"
+          items={RANKING_MODE_ITEMS}
+          onChange={changeMode}
+          renderItem={(item, selected) => <>
+            <Text style={[styles.segmentIcon, light && styles.textLight, selected && styles.segmentTextActive]}>{item.value === 'wanted' ? '♥︎' : '◆'}</Text>
+            <Text style={[styles.segmentText, light && styles.textLight, selected && styles.segmentTextActive]}>{item.label}</Text>
+          </>}
+          style={[styles.segment, compact && styles.segmentCompact, light && styles.panelLight]}
+          testID="native-rankings-mode-switcher"
+          value={selectedMode}
+        />
+      </Animated.View>
 
       <View style={[styles.search, light && styles.inputLight]}>
         <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="search" size={18} />
@@ -411,23 +416,25 @@ export const NativeRankingsScreen = ({
 
   const selectedPickerKey = picker === 'mode' ? selectedMode : picker === 'category' ? selectedCategory : selectedCollectionFilter;
   return <View style={[styles.root, light && styles.rootLight]} testID="native-rankings-screen">
-    <FlatList
-      contentContainerStyle={{ paddingBottom: 92 + insets.bottom, paddingHorizontal: 8, paddingTop: 6 + insets.top }}
-      data={hasSnapshot ? visibleRows : []}
-      initialNumToRender={30}
-      keyboardShouldPersistTaps="always"
-      keyExtractor={(row) => row.entry.id}
-      ListEmptyComponent={!isLoading && hasSnapshot ? <View style={[styles.empty, styles.emptyParity, light && styles.panelLight]}><NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="search" size={28} /><Text style={[styles.emptyTitle, light && styles.textLight]}>{empty.title}</Text><Text style={[styles.stateCopy, light && styles.mutedLight]}>{empty.body}</Text>{empty.action ? <Pressable accessibilityRole="button" onPress={activateEmptyState} style={styles.emptyAction}><Text style={styles.emptyActionText}>{empty.action}</Text></Pressable> : null}</View> : null}
-      ListFooterComponent={footer}
-      ListHeaderComponent={header}
-      maxToRenderPerBatch={30}
-      onScroll={onScroll}
-      renderItem={({ index, item }) => <RankingCard assetBaseUrl={assetBaseUrl} index={index} light={light} maximum={maximum} mode={selectedMode} onOpenEntry={onOpenEntry} privacyThreshold={privacyThreshold} row={item} showCollectionFilters={showCollectionFilters} />}
-      scrollEventThrottle={32}
-      testID="native-rankings-list"
-      updateCellsBatchingPeriod={16}
-      windowSize={21}
-    />
+    <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-rankings-workspace-motion">
+      <FlatList
+        contentContainerStyle={{ paddingBottom: 92 + insets.bottom, paddingHorizontal: 8, paddingTop: 6 + insets.top }}
+        data={hasSnapshot ? visibleRows : []}
+        initialNumToRender={30}
+        keyboardShouldPersistTaps="always"
+        keyExtractor={(row) => row.entry.id}
+        ListEmptyComponent={!isLoading && hasSnapshot ? <View style={[styles.empty, styles.emptyParity, light && styles.panelLight]}><NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="search" size={28} /><Text style={[styles.emptyTitle, light && styles.textLight]}>{empty.title}</Text><Text style={[styles.stateCopy, light && styles.mutedLight]}>{empty.body}</Text>{empty.action ? <Pressable accessibilityRole="button" onPress={activateEmptyState} style={styles.emptyAction}><Text style={styles.emptyActionText}>{empty.action}</Text></Pressable> : null}</View> : null}
+        ListFooterComponent={footer}
+        ListHeaderComponent={header}
+        maxToRenderPerBatch={30}
+        onScroll={onScroll}
+        renderItem={({ index, item }) => <RankingCard assetBaseUrl={assetBaseUrl} index={index} light={light} maximum={maximum} mode={selectedMode} onOpenEntry={onOpenEntry} privacyThreshold={privacyThreshold} row={item} showCollectionFilters={showCollectionFilters} />}
+        scrollEventThrottle={32}
+        testID="native-rankings-list"
+        updateCellsBatchingPeriod={16}
+        windowSize={21}
+      />
+    </Animated.View>
     {showQuickControls ? <View accessibilityLabel="Quick ranking controls" accessibilityRole="toolbar" style={[styles.quickControls, { top: insets.top + 4 }, light && styles.quickControlsLight]}>
       <Pressable accessibilityLabel="Ranking view" accessibilityRole="button" onPress={() => setPicker('mode')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{selectedMode === 'wanted' ? 'Wanted' : 'Rarest'}</Text></Pressable>
       <Pressable accessibilityLabel="Pokémon category" accessibilityRole="button" onPress={() => setPicker('category')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{selectedCategory === 'all' ? 'All' : CATEGORY_LABELS[selectedCategory]}</Text></Pressable>
@@ -439,7 +446,7 @@ export const NativeRankingsScreen = ({
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0c1112' }, rootLight: { backgroundColor: '#f5f2e9' }, textLight: { color: '#132d32' }, mutedLight: { color: '#405b56' }, accentLight: { color: '#08766b' }, panelLight: { borderColor: 'rgba(21,117,119,0.30)', backgroundColor: '#fffdf7' }, controlLight: { borderColor: 'rgba(21,117,119,0.30)', backgroundColor: '#fffdf7' }, inputLight: { borderColor: 'rgba(21,117,119,0.36)', backgroundColor: '#fffdf7' },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: '#0c1112' }, workspaceViewport: { flex: 1, minHeight: 0 }, rootLight: { backgroundColor: '#f5f2e9' }, textLight: { color: '#132d32' }, mutedLight: { color: '#405b56' }, accentLight: { color: '#08766b' }, panelLight: { borderColor: 'rgba(21,117,119,0.30)', backgroundColor: '#fffdf7' }, controlLight: { borderColor: 'rgba(21,117,119,0.30)', backgroundColor: '#fffdf7' }, inputLight: { borderColor: 'rgba(21,117,119,0.36)', backgroundColor: '#fffdf7' },
   productHeader: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }, productHeaderCompact: { minHeight: 110, alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: 'rgba(66,215,196,0.3)' }, back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(142,197,201,0.34)', borderRadius: 21, backgroundColor: '#141a1b' }, backText: { marginTop: -4, color: '#f4ffff', fontSize: 37, lineHeight: 39 }, productIcon: { width: 42, height: 42 }, productIconCompact: { marginTop: 11 }, headerCopy: { minWidth: 0, flex: 1 }, headerCopyCompact: { marginTop: 11 }, eyebrow: { color: '#8ec5c9', fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }, title: { color: '#f4ffff', fontSize: 25, fontWeight: '900', lineHeight: 29 }, population: { flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 66, paddingHorizontal: 7, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(66,215,196,0.3)', borderRadius: 7, backgroundColor: 'rgba(66,215,196,0.07)' }, populationCompact: { position: 'absolute', left: 2, bottom: 10, minWidth: 49 }, populationLight: { borderColor: 'rgba(21,117,119,0.3)', backgroundColor: 'rgba(27,185,173,0.08)' }, populationIcon: { color: '#42d7c4', fontSize: 16 }, populationValue: { color: '#f4ffff', fontSize: 14, fontWeight: '900', lineHeight: 15 }, populationLabel: { color: '#9eb9bb', fontSize: 7, fontWeight: '900' }, populationLabelCompact: { display: 'none' },
   segment: { marginTop: 8, borderColor: 'rgba(66,215,196,0.3)', borderRadius: 8, backgroundColor: '#101617' }, segmentCompact: { marginTop: 12 }, segmentIndicator: { borderRadius: 5, backgroundColor: '#42d7c4' }, segmentButton: { gap: 6, borderRadius: 5 }, segmentIcon: { color: '#9eb9bb', fontSize: 14 }, segmentText: { color: '#9eb9bb', fontSize: 13, fontWeight: '900' }, segmentTextActive: { color: '#071312' },
   search: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(157,190,193,0.42)', borderRadius: 7, backgroundColor: '#111718' }, searchIcon: { color: '#42d7c4', fontSize: 25 }, searchInput: { minWidth: 0, flex: 1, paddingVertical: 0, color: '#f4ffff', fontSize: 14 }, clearSearch: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }, clearSearchText: { color: '#9eb9bb', fontSize: 24 },

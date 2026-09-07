@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
   Pressable,
@@ -18,6 +19,8 @@ import { NativeRaidBossSetupPanel } from '../components/tools/NativeRaidBossSetu
 import { NativeRaidRankingCard } from '../components/tools/NativeRaidRankingCard';
 import { NativeRaidSettingsPanel } from '../components/tools/NativeRaidSettingsPanel';
 import { NativeRaidTypeFilter } from '../components/tools/NativeRaidTypeFilter';
+import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
+import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import {
   buildNativeRaidAttackers,
   buildNativeRaidCounterAttackersAsync,
@@ -49,6 +52,10 @@ type ViewMode = 'rankings' | 'boss';
 type RankingMetric = 'cp' | 'dps' | 'edps' | 'er' | 'tdo';
 type SortDirection = 'ascending' | 'descending';
 const EMPTY_INSTANCES: Record<string, PokemonInstance> = {};
+const RAID_VIEW_ITEMS = [
+  { label: 'Attacker rankings', value: 'rankings' },
+  { label: 'Boss counters', value: 'boss' },
+] as const;
 
 const absoluteUri = (base: string, value: string | null) => {
   if (!value) return undefined;
@@ -86,6 +93,7 @@ export const NativeRaidScreen = ({
   const [observedDodgeSuccessRate, setObservedDodgeSuccessRate] = useState<number | null>(null);
   const [bossCounterEntries, setBossCounterEntries] = useState<NativeCombatEntry[]>([]);
   const [bossCountersLoading, setBossCountersLoading] = useState(false);
+  const workspaceMotion = useNativeSegmentedWorkspaceMotion(view === 'rankings' ? 0 : 1);
   const bossCounterCacheRef = useRef(new Map<string, {
     catalog: BasePokemon[];
     entries: NativeCombatEntry[];
@@ -331,22 +339,21 @@ export const NativeRaidScreen = ({
   );
 
   const modeTabs = (
-    <View accessibilityRole="tablist" style={[styles.modeTabs, light && styles.panelLight]}>
-      {([['rankings', 'Attacker rankings'], ['boss', 'Boss counters']] as const).map(([value, label]) => (
-        <Pressable
-          aria-selected={view === value}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: view === value }}
-          key={value}
-          onPress={() => switchView(value)}
-          style={[styles.modeButton, view === value && styles.modeActive]}
-          testID={`raid-view-${value}`}
-        >
-          <NativeUiIcon color={view === value ? '#06120f' : light ? '#172124' : '#ecf5f4'} name={value === 'rankings' ? 'chart' : 'target'} size={14} />
-          <Text style={[styles.modeText, light && styles.textLight, view === value && styles.modeTextActive]}>{label}</Text>
-        </Pressable>
-      ))}
-    </View>
+    <NativeSlidingSegmentedControl
+      accessibilityLabel="Raid planner mode"
+      buttonStyle={styles.modeButton}
+      indicatorStyle={styles.modeIndicator}
+      indicatorTestID="native-raid-view-indicator"
+      items={RAID_VIEW_ITEMS}
+      onChange={switchView}
+      renderItem={(item, selected) => <>
+        <NativeUiIcon color={selected ? '#06120f' : light ? '#172124' : '#ecf5f4'} name={item.value === 'rankings' ? 'chart' : 'target'} size={14} />
+        <Text style={[styles.modeText, light && styles.textLight, selected && styles.modeTextActive]}>{item.label}</Text>
+      </>}
+      style={[styles.modeTabs, light && styles.panelLight]}
+      testID="native-raid-view-switcher"
+      value={view}
+    />
   );
 
   const roster = (
@@ -516,8 +523,10 @@ export const NativeRaidScreen = ({
 
   const header = (
     <View style={styles.headerStack}>
-      {productHeader}
-      {modeTabs}
+      <Animated.View style={[styles.stationaryHeader, workspaceMotion.stationaryStyle]}>
+        {productHeader}
+        {modeTabs}
+      </Animated.View>
       {roster}
       {view === 'rankings' ? <NativeRaidTypeFilter assetBaseUrl={assetBaseUrl} onChange={(type) => { beginPerformance('raid_type_result_painted'); setSelectedType(type); }} selectedType={selectedType} /> : bossPicker}
       <View style={styles.leaderboardHeading}>
@@ -575,45 +584,49 @@ export const NativeRaidScreen = ({
 
   return (
     <View style={[styles.root, light && styles.rootLight]} testID="native-raid-screen">
-      <FlatList
-        contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 4 + insets.top, paddingBottom: 96 + insets.bottom }}
-        data={rankings}
-        keyExtractor={(entry) => entry.id}
-        keyboardShouldPersistTaps="always"
-        nestedScrollEnabled
-        ListHeaderComponent={header}
-        ListEmptyComponent={!isLoading && !bossCountersLoading && !error ? (
-          <View style={[styles.empty, light && styles.emptyLight]}>
-            <Text style={[styles.emptyTitle, light && styles.textLight]}>{emptyPresentation.title}</Text>
-            {emptyPresentation.copy ? <Text style={[styles.stateCopy, light && styles.mutedLight]}>{emptyPresentation.copy}</Text> : null}
-          </View>
-        ) : null}
-        renderItem={({ item, index }) => (
-          <NativeRaidRankingCard
-            assetBaseUrl={assetBaseUrl}
-            entry={item}
-            attackerLevel={settings.attackerLevel}
-            expanded={expandedIds.has(item.id)}
-            onToggle={() => {
-              beginPerformance('raid_row_detail_painted');
-              setExpandedIds((current) => {
-                const next = new Set(current);
-                if (next.has(item.id)) next.delete(item.id);
-                else next.add(item.id);
-                return next;
-              });
-            }}
-            primaryMetric={view === 'rankings' ? rankingMetric : 'dps'}
-            rank={index + 1}
-          />
-        )}
-      />
+      <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-raid-workspace-motion">
+        <FlatList
+          contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 4 + insets.top, paddingBottom: 96 + insets.bottom }}
+          data={rankings}
+          keyExtractor={(entry) => entry.id}
+          keyboardShouldPersistTaps="always"
+          nestedScrollEnabled
+          ListHeaderComponent={header}
+          ListEmptyComponent={!isLoading && !bossCountersLoading && !error ? (
+            <View style={[styles.empty, light && styles.emptyLight]}>
+              <Text style={[styles.emptyTitle, light && styles.textLight]}>{emptyPresentation.title}</Text>
+              {emptyPresentation.copy ? <Text style={[styles.stateCopy, light && styles.mutedLight]}>{emptyPresentation.copy}</Text> : null}
+            </View>
+          ) : null}
+          renderItem={({ item, index }) => (
+            <NativeRaidRankingCard
+              assetBaseUrl={assetBaseUrl}
+              entry={item}
+              attackerLevel={settings.attackerLevel}
+              expanded={expandedIds.has(item.id)}
+              onToggle={() => {
+                beginPerformance('raid_row_detail_painted');
+                setExpandedIds((current) => {
+                  const next = new Set(current);
+                  if (next.has(item.id)) next.delete(item.id);
+                  else next.add(item.id);
+                  return next;
+                });
+              }}
+              primaryMetric={view === 'rankings' ? rankingMetric : 'dps'}
+              rank={index + 1}
+            />
+          )}
+        />
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#071011' },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: '#071011' },
+  workspaceViewport: { flex: 1, minHeight: 0 },
+  stationaryHeader: { gap: 8 },
   rootLight: { backgroundColor: '#f8fff9' },
   textLight: { color: '#142629' },
   mutedLight: { color: '#617476' },
@@ -630,9 +643,9 @@ const styles = StyleSheet.create({
   eyebrow: { color: '#69ded7', fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
   title: { color: '#fff', fontSize: 27, fontWeight: '900', letterSpacing: -.6 },
   lead: { marginTop: 2, color: '#a9bbbb', fontSize: 11.5, lineHeight: 16 },
-  modeTabs: { flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: '#355153', borderRadius: 14, padding: 4, backgroundColor: '#101819' },
-  modeButton: { flex: 1, minHeight: 34, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  modeActive: { backgroundColor: '#2fd6d0' },
+  modeTabs: { borderColor: '#355153', borderRadius: 14, backgroundColor: '#101819' },
+  modeButton: { minHeight: 34, gap: 5, borderRadius: 10 },
+  modeIndicator: { borderRadius: 10, backgroundColor: '#2fd6d0' },
   modeIcon: { color: '#d5e5e5', fontSize: 11, fontWeight: '900' },
   modeText: { color: '#d5e5e5', fontSize: 10.5, fontWeight: '900' },
   modeTextActive: { color: '#071214' },

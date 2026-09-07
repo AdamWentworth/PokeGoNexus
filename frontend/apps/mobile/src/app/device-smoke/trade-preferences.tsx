@@ -14,7 +14,7 @@ import {
   type NativeTradeHubView,
 } from '../../features/trades/NativeTradeHubHeader';
 import {
-  buildNativeTradePreferenceEntries,
+  buildNativeTradePreferenceEntrySets,
   resolveNativeTradePreferenceDraftCandidates,
 } from '../../features/trades/nativeTradePreferencesModel';
 import { persistNativeTradePreferenceMutation } from '../../features/trades/nativeTradePreferencesMutation';
@@ -240,19 +240,10 @@ export default function DeviceSmokeTradePreferencesRoute() {
     sliderRef.current?.setPage(view === 'preferences' ? 0 : 1);
     markNativeUiPerformanceAfterPaint('trade_section_result_painted', startedAt);
   }, []);
-  const entries = useMemo(() => ({
-    trade: buildNativeTradePreferenceEntries({
-      assetOrigin: ASSET_BASE_URL,
-      catalog,
-      instances,
-      mode: 'trade',
-    }),
-    wanted: buildNativeTradePreferenceEntries({
-      assetOrigin: ASSET_BASE_URL,
-      catalog,
-      instances,
-      mode: 'wanted',
-    }),
+  const entries = useMemo(() => buildNativeTradePreferenceEntrySets({
+    assetOrigin: ASSET_BASE_URL,
+    catalog,
+    instances,
   }), [catalog, instances]);
 
   if (!runtimeConfig.mobile.deviceSmokeMode) return <Redirect href="/" />;

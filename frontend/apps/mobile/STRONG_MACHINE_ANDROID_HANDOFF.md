@@ -4,18 +4,16 @@ Last updated: 2026-09-07
 
 ## Next manual candidate requested
 
-The installed `PokeGoNexus-manual-8fa33311-arm64-v8a.apk` is now the prior
-baseline. It includes the shared collection-sort engine, Mega
-registration/current-form correction, and immediate Native edit/save workflow,
-but it does not include the 2026-09-07 Vite-parity location-card geometry,
-masking, responsive Wanted stages, exact-costume background correction, or the
-fixed Trades header with lower-workspace-only page sliding. It also predates the
-reusable native-driven segmented control that replaces broken instant switches
-on both Rankings and Max Battles. It also predates the corrected Pokémon sort
-overlay: exact CSS-equivalent easing, whole-overlay fade, viewport-height row
-travel, non-blocking native-driver animation, and preloaded menu artwork. The
-next build also preserves scroll position when Pokédex categories change and
-smoothly scrolls only when a region is explicitly opened.
+The installed `PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk` is now the prior
+baseline. It includes the location-card correction, fixed Trades transition
+hierarchy, reusable Rankings/Max segmented indicator, corrected Pokémon sort
+overlay, and smooth explicit Pokédex region navigation. It does not include the
+next correction: Raid and PvP still have static workspace controls, while
+Rankings and Max move only their indicator and replace the workspace instantly.
+The next build puts all four routes on the shared 200 ms native-thread control
+and directional content motion. It also removes the eager quadratic Trades
+preference projection that can freeze the route for large collections by
+sharing preparation and lazily caching only opened listings.
 
 On the stronger machine, pull the latest clean `mobile/native-migration` HEAD
 and run the existing normal manual command:
@@ -194,8 +192,18 @@ Completed on 2026-09-07: the strong machine produced
 `aac5842c107d04b3c2627194c60d4ca2ed389684cbc47a84ffb37000786ff758`.
 The receiving workstation matched the shared file to Android's installed
 `base.apk` exactly and verified `deviceSmokeMode: false`. This is the currently
-installed baseline, but a newer build is required for the location-card
-correction described at the top of this handoff.
+installed baseline, but it was superseded by the location-card and motion
+candidate below.
+
+Completed on 2026-09-07: the strong machine produced
+`PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk` with SHA-256
+`81d59d5fb7c0860703feb7d43dfcbfb41869fd16a15f21e2e58327ade69fda5a`.
+The receiving workstation verified the public-share checksum, package identity,
+ARM64 ABI, and Android-installed `base.apk` checksum, then installed it in place
+while preserving the app-data lineage. The app launched successfully. This is
+the currently installed baseline, but a newer build is required for the four-
+route content motion and Trades route-stability correction described at the top
+of this handoff.
 
 ## Collect the matching Vite phone reference
 

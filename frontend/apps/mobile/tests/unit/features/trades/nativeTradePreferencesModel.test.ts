@@ -2,6 +2,7 @@ import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances
 import type { BasePokemon } from '@pokemongonexus/shared-contracts/pokemon';
 import {
   buildNativeTradePreferenceEntries,
+  buildNativeTradePreferenceEntrySets,
   buildNativeTradePreferencePatchPlan,
   resolveNativeTradePreferenceDraftCandidates,
 } from '../../../../src/features/trades/nativeTradePreferencesModel';
@@ -111,6 +112,28 @@ const catalog = [
 ] as BasePokemon[];
 
 describe('native trade preference model', () => {
+  it('shares preparation for both modes and materializes candidate rows only when opened', () => {
+    const entries = buildNativeTradePreferenceEntrySets({
+      assetOrigin: 'https://pokegonexus.com',
+      catalog,
+      instances: {
+        offered: instance('offered', 25, { is_for_trade: true }),
+        wanted: instance('wanted', 1, { is_caught: false, is_wanted: true }),
+      },
+    });
+
+    expect(entries.trade).toHaveLength(1);
+    expect(entries.wanted).toHaveLength(1);
+    expect(Object.getOwnPropertyDescriptor(entries.trade[0], 'allowedCount')?.get)
+      .toEqual(expect.any(Function));
+    expect(entries.trade[0].allowedCount).toBe(1);
+    expect(Object.getOwnPropertyDescriptor(entries.trade[0], 'candidates')?.get)
+      .toEqual(expect.any(Function));
+    const candidates = entries.trade[0].candidates;
+    expect(candidates.map((candidate) => candidate.collectionKey)).toEqual(['wanted']);
+    expect(entries.trade[0].candidates).toBe(candidates);
+  });
+
   it('builds For Trade entries with Wanted candidates in Pokédex order', () => {
     const entries = buildNativeTradePreferenceEntries({
       assetOrigin: 'https://pokegonexus.com',

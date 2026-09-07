@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
   Linking,
@@ -32,6 +33,8 @@ import {
 import { NativePvpBattleLab } from "../components/tools/NativePvpBattleLab";
 import { NativePvpIvRank } from "../components/tools/NativePvpIvRank";
 import { NativePvpTeamBuilder } from "../components/tools/NativePvpTeamBuilder";
+import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
+import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import {
   buildNativePvpFormats,
   buildNativePvpRankingRows,
@@ -72,6 +75,7 @@ const WORKSPACES: [NativePvpWorkspace, string, NativeUiIconName][] = [
   ["battle", "Battle Lab", "flask"],
   ["iv-rank", "IV Rank", "calculator"],
 ];
+const PVP_WORKSPACE_ITEMS = WORKSPACES.map(([value, label]) => ({ label, value }));
 const ROLES: [NativePvpRole, string, NativeUiIconName][] = [
   ["overall", "Overall", "chart"],
   ["lead", "Lead", "flag"],
@@ -327,6 +331,10 @@ export const NativePvpScreen = ({
   const deferredQuery = useDeferredValue(query);
   const deferredScope = useDeferredValue(scope);
   const deferredWorkspace = useDeferredValue(workspace);
+  const workspaceMotion = useNativeSegmentedWorkspaceMotion(Math.max(
+    0,
+    WORKSPACES.findIndex(([value]) => value === deferredWorkspace),
+  ));
   const evaluationPlan = useMemo(() => (
     deferredScope === 'owned' && deferredWorkspace !== 'iv-rank'
       ? buildNativePvpRosterEvaluationPlan({
@@ -528,72 +536,63 @@ export const NativePvpScreen = ({
       : (format?.entries.length ?? 0);
   const header = (
     <View>
-      <View style={styles.topbar}>
-        <Image fadeDuration={0}
-          resizeMode="contain"
-          source={{ uri: uri(assetBaseUrl, "/images/btn_pvp.png") }}
-          style={styles.productIcon}
-        />
-        <View style={styles.headerCopy}>
-          <Text style={[styles.eyebrow, light && styles.accentLight]}>TRAINER BATTLES</Text>
-          <Text
-            accessibilityRole="header"
-            style={[styles.title, light && styles.textLight]}
-          >
-            {workspace === "rankings"
-              ? "PvP Rankings"
-              : workspace === "team"
-                ? "PvP Team Builder"
-                : workspace === "battle"
-                  ? "PvP Battle Lab"
-                  : "PvP IV Rank"}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="How PvP rankings work"
-            onPress={onMethodology}
-            style={[styles.method, light && styles.methodLight]}
-          >
-            <Text style={[styles.methodText, light && styles.accentLight]}>ⓘ METHOD</Text>
-          </Pressable>
-          <View style={[styles.countPill, light && styles.countPillLight]}>
-            <Text style={[styles.countText, light && styles.countTextLight]}>
-              {rankedCount.toLocaleString()} {workspace === "iv-rank" ? "spreads" : scope === "owned" ? "ready" : "ranked"}
+      <Animated.View style={workspaceMotion.stationaryStyle}>
+        <View style={styles.topbar}>
+          <Image fadeDuration={0}
+            resizeMode="contain"
+            source={{ uri: uri(assetBaseUrl, "/images/btn_pvp.png") }}
+            style={styles.productIcon}
+          />
+          <View style={styles.headerCopy}>
+            <Text style={[styles.eyebrow, light && styles.accentLight]}>TRAINER BATTLES</Text>
+            <Text
+              accessibilityRole="header"
+              style={[styles.title, light && styles.textLight]}
+            >
+              {workspace === "rankings"
+                ? "PvP Rankings"
+                : workspace === "team"
+                  ? "PvP Team Builder"
+                  : workspace === "battle"
+                    ? "PvP Battle Lab"
+                    : "PvP IV Rank"}
             </Text>
           </View>
-        </View>
-      </View>
-      <View accessibilityRole="tablist" style={[styles.workspaceRail, light && styles.sectionLight]}>
-        {WORKSPACES.map(([value, label, icon]) => (
-          <Pressable
-            aria-selected={workspace === value}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: workspace === value }}
-            key={value}
-            onPress={() => updateWorkspace(value)}
-            style={[
-              styles.workspace,
-              light && styles.controlLight,
-              workspace === value && styles.workspaceActive,
-            ]}
-          >
-            <View style={styles.workspaceLabel}>
-              <NativeUiIcon color={workspace === value ? '#071313' : light ? '#172124' : '#e5f0ef'} name={icon} size={12} />
-              <Text
-              style={[
-                styles.workspaceText,
-                light && styles.textLight,
-                workspace === value && styles.workspaceTextActive,
-              ]}
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="How PvP rankings work"
+              onPress={onMethodology}
+              style={[styles.method, light && styles.methodLight]}
             >
-              {label}
+              <Text style={[styles.methodText, light && styles.accentLight]}>ⓘ METHOD</Text>
+            </Pressable>
+            <View style={[styles.countPill, light && styles.countPillLight]}>
+              <Text style={[styles.countText, light && styles.countTextLight]}>
+                {rankedCount.toLocaleString()} {workspace === "iv-rank" ? "spreads" : scope === "owned" ? "ready" : "ranked"}
               </Text>
             </View>
-          </Pressable>
-        ))}
-      </View>
+          </View>
+        </View>
+        <NativeSlidingSegmentedControl
+          accessibilityLabel="PvP workspace"
+          buttonStyle={styles.workspace}
+          indicatorStyle={styles.workspaceIndicator}
+          indicatorTestID="native-pvp-workspace-indicator"
+          items={PVP_WORKSPACE_ITEMS}
+          onChange={updateWorkspace}
+          renderItem={(item, selected) => {
+            const icon = WORKSPACES.find(([value]) => value === item.value)?.[2] ?? 'list';
+            return <View style={styles.workspaceLabel}>
+              <NativeUiIcon color={selected ? '#071313' : light ? '#172124' : '#e5f0ef'} name={icon} size={12} />
+              <Text style={[styles.workspaceText, light && styles.textLight, selected && styles.workspaceTextActive]}>{item.label}</Text>
+            </View>;
+          }}
+          style={[styles.workspaceRail, light && styles.sectionLight]}
+          testID="native-pvp-workspace-switcher"
+          value={workspace}
+        />
+      </Animated.View>
       <View style={[styles.leagueTabs, light && styles.sectionLight]}>
         {LEAGUES.map(([key, label, detail]) => (
           <Pressable
@@ -767,7 +766,8 @@ export const NativePvpScreen = ({
         style={[styles.root, light && styles.rootLight]}
         testID="native-pvp-screen"
       >
-        <FlatList
+        <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-pvp-workspace-motion">
+          <FlatList
           contentContainerStyle={{
             paddingHorizontal: 12,
             paddingTop: 8 + insets.top,
@@ -877,24 +877,25 @@ export const NativePvpScreen = ({
             ) : null}
             {sourceFooter}
           </>}
-        />
+          />
+        </Animated.View>
       </View>
     );
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.scrollContent,
-        { paddingTop: 8 + insets.top, paddingBottom: 96 + insets.bottom },
-      ]}
-      keyboardShouldPersistTaps="always"
-      ref={workspaceScrollRef}
-      nestedScrollEnabled
-      style={[styles.root, light && styles.rootLight]}
-      testID="native-pvp-screen"
-    >
-      {header}
-      {deferredWorkspace === "team" ? (
-        <NativePvpTeamBuilder
+    <View style={[styles.root, light && styles.rootLight]} testID="native-pvp-screen">
+      <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-pvp-workspace-motion">
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: 8 + insets.top, paddingBottom: 96 + insets.bottom },
+          ]}
+          keyboardShouldPersistTaps="always"
+          ref={workspaceScrollRef}
+          nestedScrollEnabled
+        >
+          {header}
+          {deferredWorkspace === "team" ? (
+            <NativePvpTeamBuilder
           assetBaseUrl={assetBaseUrl}
           candidates={toolCandidates}
           entriesBySpeciesId={entriesBySpeciesId}
@@ -906,8 +907,8 @@ export const NativePvpScreen = ({
           persistSelection={persistTeamBuilder}
           storageKey={`${format?.key ?? "great"}:${scope}`}
         />
-      ) : deferredWorkspace === "battle" ? (
-        <NativePvpBattleLab
+          ) : deferredWorkspace === "battle" ? (
+            <NativePvpBattleLab
           assetBaseUrl={assetBaseUrl}
           candidates={toolCandidates}
           formatLabel={format?.label ?? "Great League"}
@@ -930,8 +931,8 @@ export const NativePvpScreen = ({
           }
           playerSideLabel={scope === "owned" ? "Your team" : "Side A"}
         />
-      ) : (
-        <NativePvpIvRank
+          ) : (
+            <NativePvpIvRank
           assetBaseUrl={assetBaseUrl}
           catalog={catalog}
           cpLimit={format?.cpLimit ?? null}
@@ -944,14 +945,17 @@ export const NativePvpScreen = ({
           setScope={selectScope}
           signedIn={signedIn}
         />
-      )}
-      {deferredWorkspace !== "iv-rank" ? sourceFooter : null}
-    </ScrollView>
+          )}
+          {deferredWorkspace !== "iv-rank" ? sourceFooter : null}
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0d1112" },
+  root: { flex: 1, overflow: "hidden", backgroundColor: "#0d1112" },
+  workspaceViewport: { flex: 1, minHeight: 0 },
   rootLight: { backgroundColor: "#f8fff9" },
   scrollContent: { gap: 8, paddingHorizontal: 7 },
   textLight: { color: "#071d20" },
@@ -1021,25 +1025,18 @@ const styles = StyleSheet.create({
   },
   countText: { color: "#ffd7e8", fontSize: 11, fontWeight: "900" },
   workspaceRail: {
-    flexDirection: "row",
-    gap: 4,
     marginTop: 8,
-    borderWidth: 1,
     borderColor: "rgba(115,204,204,0.28)",
     borderRadius: 9,
-    padding: 4,
     backgroundColor: "#101516",
   },
   workspace: {
     minWidth: 0,
-    flex: 1,
     minHeight: 43,
-    alignItems: "center",
-    justifyContent: "center",
     borderRadius: 7,
     paddingHorizontal: 2,
   },
-  workspaceActive: { backgroundColor: "#42d5c2" },
+  workspaceIndicator: { borderRadius: 7, backgroundColor: "#42d5c2" },
   workspaceText: { color: "#9db6b8", fontSize: 9, fontWeight: "900", textAlign: "center" },
   workspaceLabel: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 },
   workspaceIcon: { color: "#9db6b8", fontSize: 10 },

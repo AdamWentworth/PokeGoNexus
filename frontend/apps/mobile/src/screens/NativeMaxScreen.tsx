@@ -2,6 +2,7 @@ import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useSta
 import { Image as ExpoImage } from 'expo-image';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Pressable,
   StyleSheet,
@@ -18,6 +19,7 @@ import {
 } from '@pokemongonexus/app-core/max-battle-simulation';
 import { NativeCombatRankingCard } from '../components/NativeCombatRankingCard';
 import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
+import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import { NativeMaxBattleSimulator } from '../components/tools/NativeMaxBattleSimulator';
 import {
   buildNativeMaxRankings,
@@ -156,6 +158,7 @@ export const NativeMaxScreen = ({
   const [bossId, setBossId] = useState(initialBossId);
   const [bossQuery, setBossQuery] = useState('');
   const [methodOpen, setMethodOpen] = useState(false);
+  const workspaceMotion = useNativeSegmentedWorkspaceMotion(view === 'rankings' ? 0 : 1);
   const [pagination, setPagination] = useState({ key: '', limit: MAX_RESULTS_PAGE_SIZE });
   const performanceStartsRef = useRef(new Map<string, number>());
   const beginPerformance = useCallback((event: string) => {
@@ -579,8 +582,10 @@ export const NativeMaxScreen = ({
 
   const header = (
     <View style={styles.headerStack}>
-      {productHeader}
-      {viewTabs}
+      <Animated.View style={[styles.stationaryHeader, workspaceMotion.stationaryStyle]}>
+        {productHeader}
+        {viewTabs}
+      </Animated.View>
       {roster}
       {view === 'rankings'
         ? <>{roleTabs}{typeFilter}</>
@@ -631,36 +636,40 @@ export const NativeMaxScreen = ({
 
   return (
     <View style={[styles.root, light && styles.rootLight]} testID="native-max-screen">
-      <FlatList
-        contentContainerStyle={{ paddingHorizontal: 7, paddingTop: 3 + insets.top, paddingBottom: 96 + insets.bottom }}
-        data={visibleRankings}
-        initialNumToRender={2}
-        keyExtractor={(_entry, index) => String(index)}
-        keyboardShouldPersistTaps="always"
-        maxToRenderPerBatch={2}
-        nestedScrollEnabled
-        removeClippedSubviews
-        updateCellsBatchingPeriod={100}
-        ListFooterComponent={footer}
-        ListHeaderComponent={header}
-        ListEmptyComponent={null}
-        renderItem={({ item, index }) => (
-          <NativeCombatRankingCard
-            assetBaseUrl={assetBaseUrl}
-            entry={item}
-            metricLabel={roleMetric(role)}
-            onPress={() => onOpenPokemon(item)}
-            rank={index + 1}
-          />
-        )}
-        windowSize={1}
-      />
+      <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-max-workspace-motion">
+        <FlatList
+          contentContainerStyle={{ paddingHorizontal: 7, paddingTop: 3 + insets.top, paddingBottom: 96 + insets.bottom }}
+          data={visibleRankings}
+          initialNumToRender={2}
+          keyExtractor={(_entry, index) => String(index)}
+          keyboardShouldPersistTaps="always"
+          maxToRenderPerBatch={2}
+          nestedScrollEnabled
+          removeClippedSubviews
+          updateCellsBatchingPeriod={100}
+          ListFooterComponent={footer}
+          ListHeaderComponent={header}
+          ListEmptyComponent={null}
+          renderItem={({ item, index }) => (
+            <NativeCombatRankingCard
+              assetBaseUrl={assetBaseUrl}
+              entry={item}
+              metricLabel={roleMetric(role)}
+              onPress={() => onOpenPokemon(item)}
+              rank={index + 1}
+            />
+          )}
+          windowSize={1}
+        />
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#090d0d' },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: '#090d0d' },
+  workspaceViewport: { flex: 1, minHeight: 0 },
+  stationaryHeader: { gap: 9 },
   rootLight: { backgroundColor: '#f8fff9' },
   footer: { gap: 9 },
   benchmark: { gap: 3, borderWidth: 1, borderColor: '#365052', borderRadius: 10, padding: 10, backgroundColor: '#10191a' },

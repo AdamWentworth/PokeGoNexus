@@ -48,9 +48,9 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`8fa33311` installed. It was received as
-`PokeGoNexus-manual-8fa33311-arm64-v8a.apk`, with SHA-256
-`aac5842c107d04b3c2627194c60d4ca2ed389684cbc47a84ffb37000786ff758`.
+`2d87ff8e` installed. It was received as
+`PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk`, with SHA-256
+`81d59d5fb7c0860703feb7d43dfcbfb41869fd16a15f21e2e58327ade69fda5a`.
 The checksum of Android's installed `base.apk` matches exactly. Its embedded
 configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
 `deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
@@ -104,13 +104,25 @@ cross-renderer structure contract and 23 focused Trades tests protect this
 boundary.
 
 Native now has one reusable sliding segmented control corresponding to Vite's
-shared `SegmentedControl`. Both Rankings (Most wanted/Rarest owned) and Max
-Battles (Max rankings/Boss teams) consume it instead of replacing page-specific
-static active backgrounds. Its native-driven indicator starts on press before a
-parent recomputes or swaps a potentially expensive workspace and uses Vite's
-200 ms fast-motion duration. Reduced-motion preferences still resolve the
-indicator immediately. Focused component, Rankings, and Max suites plus
-Vite/native structure and motion contracts pin the reuse and ordering.
+shared `SegmentedControl`. Raid, PvP, Rankings, and Max Battles all consume it
+instead of replacing page-specific static active backgrounds. Its native-driven
+indicator starts on press before a parent recomputes or swaps a potentially
+expensive workspace and uses Vite's 200 ms fast-motion duration. The content
+beneath the shared product header and control now enters directionally on that
+same native-thread clock, while the header/control remain stationary. Reduced-
+motion preferences still resolve both pieces immediately. Focused component and
+screen suites plus a four-route structure/motion contract pin the behavior.
+
+The next manual candidate also removes the main freeze risk found while opening
+Trades with a large collection. Native previously built and retained every
+listing-by-candidate pair for both For Trade and Wanted when the route opened.
+The route now prepares collection presentation data once for both modes, defers
+per-listing matching and candidate row creation until that listing is rendered,
+and caches only listings actually opened. Matching, ordering, counts, reciprocal
+updates, and editor behavior remain covered by the full Native suite. Android's
+system crash and ANR stores contained no matching process record for the reported
+failure, which is consistent with the observed JavaScript-thread stall; the new
+standalone candidate still requires manual repetition on the phone.
 
 The Pokémon sort overlay now reproduces the complete Vite animation rather
 than only approximating its durations. The entire gradient, controls, and close

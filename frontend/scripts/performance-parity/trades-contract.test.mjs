@@ -24,6 +24,10 @@ const nativeTradesRoute = readFileSync(
   path.resolve(frontendDirectory, 'apps/mobile/src/app/native/trades.tsx'),
   'utf8',
 );
+const nativeTradePreferenceModel = readFileSync(
+  path.resolve(frontendDirectory, 'apps/mobile/src/features/trades/nativeTradePreferencesModel.ts'),
+  'utf8',
+);
 const nativeTradeSources = [
   'apps/mobile/src/app/native/trades.tsx',
   'apps/mobile/src/screens/NativeTradePreferencesScreen.tsx',
@@ -93,5 +97,28 @@ test('Trades keeps its product header outside the sliding Preferences and Activi
     nativeTradesRoute,
     /pageHeader=\{/,
     'Neither sliding panel owns another copy of the product header',
+  );
+});
+
+test('Trades does not eagerly retain every listing-by-candidate cross product on route entry', () => {
+  assert.match(
+    nativeTradesRoute,
+    /buildNativeTradePreferenceEntrySets\(/,
+    'the route prepares the collection rows once for both preference modes',
+  );
+  assert.match(
+    nativeTradePreferenceModel,
+    /get candidates\(\)[\s\S]*?cachedCandidates = candidatePool\.map/,
+    'candidate presentation rows are materialized only for a listing the user opens',
+  );
+  assert.match(
+    nativeTradePreferenceModel,
+    /get allowedCount\(\)[\s\S]*?filterTradePreferenceCandidates/,
+    'per-listing matching work is deferred until its summary is rendered',
+  );
+  assert.match(
+    nativeTradePreferenceModel,
+    /if \(cachedCandidates\) return cachedCandidates/,
+    'an opened listing reuses its candidate projection',
   );
 });
