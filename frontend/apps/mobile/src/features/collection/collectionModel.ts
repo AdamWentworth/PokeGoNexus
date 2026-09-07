@@ -513,8 +513,11 @@ const resolveLocationBackgroundImage = (
   const exactCostume = candidates.find(
     (background) => Number(background.costume_id ?? 0) === Number(instance.costume_id ?? 0),
   );
-  const generic = candidates.find((background) => background.costume_id == null);
-  const selected = exactCostume ?? generic ?? candidates[0];
+  // Vite deliberately hides a stored card that does not belong to the
+  // instance's exact costume. Do not fall through to a same-ID background for
+  // a different form.
+  const selected = exactCostume;
+  if (!selected) return null;
   if (!instance.is_fused || !instance.fused_with) return selected?.image_url ?? null;
   const partnerKey = resolveInstanceCollectionKey(instances, instance.fused_with);
   const partnerBackgroundId = partnerKey == null

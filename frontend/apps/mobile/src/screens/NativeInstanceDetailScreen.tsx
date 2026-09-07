@@ -91,6 +91,42 @@ type Props = {
   canEdit?: boolean;
 };
 
+type NativeInstanceLocationBackdropStatus = 'caught' | 'trade' | 'wanted';
+
+export const resolveNativeInstanceLocationBackdropLayout = (
+  viewportWidth: number,
+  status: NativeInstanceLocationBackdropStatus,
+) => {
+  const contract = collectionExperienceParityContract.locationBackdrop;
+  const wantedStageSize = viewportWidth <= contract.wantedStage.narrowMaxWidth
+    ? contract.wantedStage.narrowSize
+    : viewportWidth <= contract.wantedStage.phoneMaxWidth
+      ? contract.wantedStage.phoneSize
+      : contract.wantedStage.wideSize;
+  const stageSize = status === 'wanted'
+    ? wantedStageSize
+    : contract.standardStageSize;
+  const stageLift = status === 'wanted'
+    ? viewportWidth <= contract.wantedStage.phoneMaxWidth
+      ? contract.wantedStage.phoneLift
+      : contract.wantedStage.wideLift
+    : contract.standardStageLift;
+
+  return {
+    backdropHeight: stageSize + Math.abs(contract.topOffset),
+    backdropTop: contract.topOffset,
+    backdropWidth: Math.min(
+      viewportWidth * contract.viewportWidthRatio,
+      contract.maxWidth,
+    ),
+    maxBadgeSize: stageSize * 0.35,
+    pokemonSize: stageSize * 0.98,
+    purifiedBadgeSize: stageSize * 0.2,
+    stageLift,
+    stageSize,
+  };
+};
+
 type NativeInstanceEditDraft = {
   nickname: string;
   cp: string;
@@ -2439,6 +2475,10 @@ export const NativeInstanceDetailScreen = ({
   const isCaught = detail.row.status === 'caught';
   const isTrade = detail.row.status === 'trade';
   const isWanted = detail.row.status === 'wanted';
+  const locationBackdropLayout = resolveNativeInstanceLocationBackdropLayout(
+    width,
+    detail.row.status,
+  );
   const caughtDate = !isWanted && detail.instance?.date_caught
     ? detail.instance.date_caught.slice(0, 10)
     : null;
@@ -2854,12 +2894,29 @@ export const NativeInstanceDetailScreen = ({
 
           <View style={[
             styles.imageStage,
-            isWanted && (desktopLayout ? styles.wantedImageStageDesktop : styles.wantedImageStage),
-            isTrade && styles.tradeImageStage,
+            {
+              width: locationBackdropLayout.stageSize,
+              height: locationBackdropLayout.stageSize,
+              marginTop: -locationBackdropLayout.stageLift,
+            },
           ]}>
             {selectedLocationBackgroundUri ? (
-              <View style={[styles.locationBackdrop, { width: Math.min(shellWidth, 447) }]}>
-                <NativePokemonLocationBackdrop uri={selectedLocationBackgroundUri} />
+              <View
+                style={[
+                  styles.locationBackdrop,
+                  {
+                    top: locationBackdropLayout.backdropTop,
+                    width: locationBackdropLayout.backdropWidth,
+                    height: locationBackdropLayout.backdropHeight,
+                    transform: [{ translateX: -locationBackdropLayout.backdropWidth / 2 }],
+                  },
+                ]}
+                testID="native-instance-location-backdrop-frame"
+              >
+                <NativePokemonLocationBackdrop
+                  uri={selectedLocationBackgroundUri}
+                  variant="instance"
+                />
               </View>
             ) : null}
             {displayLucky ? (
@@ -2869,7 +2926,10 @@ export const NativeInstanceDetailScreen = ({
                 source={{ uri: toAssetUrl(assetBaseUrl, '/images/lucky.png') }}
                 style={[
                   styles.luckyBackdrop,
-                  isWanted && (desktopLayout ? styles.wantedLuckyBackdropDesktop : styles.wantedLuckyBackdrop),
+                  {
+                    width: locationBackdropLayout.stageSize,
+                    height: locationBackdropLayout.stageSize,
+                  },
                 ]}
               />
             ) : null}
@@ -2880,8 +2940,10 @@ export const NativeInstanceDetailScreen = ({
                 source={{ uri: displayImageUri }}
                 style={[
                   styles.pokemonImage,
-                  isWanted && (desktopLayout ? styles.wantedPokemonImageDesktop : styles.wantedPokemonImage),
-                  isTrade && styles.tradePokemonImage,
+                  {
+                    width: locationBackdropLayout.pokemonSize,
+                    height: locationBackdropLayout.pokemonSize,
+                  },
                 ]}
               />
             ) : null}
@@ -2892,7 +2954,12 @@ export const NativeInstanceDetailScreen = ({
                 source={{ uri: maxBadge }}
                 style={[
                   styles.maxBadge,
-                  isWanted && (desktopLayout ? styles.wantedMaxBadgeDesktop : styles.wantedMaxBadge),
+                  {
+                    top: locationBackdropLayout.stageSize * 0.02,
+                    right: locationBackdropLayout.stageSize * 0.02,
+                    width: locationBackdropLayout.maxBadgeSize,
+                    height: locationBackdropLayout.maxBadgeSize,
+                  },
                 ]}
               />
             ) : null}
@@ -2901,7 +2968,15 @@ export const NativeInstanceDetailScreen = ({
                 accessibilityLabel="Purified"
                 resizeMode="contain"
                 source={{ uri: toAssetUrl(assetBaseUrl, '/images/purified.png') }}
-                style={styles.purifiedBadge}
+                style={[
+                  styles.purifiedBadge,
+                  {
+                    bottom: locationBackdropLayout.stageSize * 0.02,
+                    left: locationBackdropLayout.stageSize * 0.02,
+                    width: locationBackdropLayout.purifiedBadgeSize,
+                    height: locationBackdropLayout.purifiedBadgeSize,
+                  },
+                ]}
               />
             ) : null}
           </View>
@@ -3283,20 +3358,10 @@ const styles = StyleSheet.create({
   conditionChipText: { fontSize: 11 },
   arc: { position: 'absolute', zIndex: 1, top: 48, alignSelf: 'center' },
   imageStage: { zIndex: 3, width: 296, height: 296, alignItems: 'center', justifyContent: 'center', marginTop: -48 },
-  wantedImageStage: { width: 185, height: 185, marginTop: -8 },
-  wantedImageStageDesktop: { width: 238, height: 238, marginTop: -18 },
-  tradeImageStage: { width: 296, height: 296, marginTop: -48 },
-  locationBackdrop: { position: 'absolute', top: -20, height: 292 },
+  locationBackdrop: { position: 'absolute', left: '50%' },
   luckyBackdrop: { position: 'absolute', zIndex: 2, width: 296, height: 296 },
-  wantedLuckyBackdrop: { width: 185, height: 185 },
-  wantedLuckyBackdropDesktop: { width: 238, height: 238 },
   pokemonImage: { zIndex: 4, width: 290, height: 290 },
-  wantedPokemonImage: { width: 181, height: 181 },
-  wantedPokemonImageDesktop: { width: 233, height: 233 },
-  tradePokemonImage: { width: 290, height: 290 },
   maxBadge: { position: 'absolute', zIndex: 5, top: 5, right: 5, width: 104, height: 104 },
-  wantedMaxBadge: { top: 2, right: 2, width: 65, height: 65 },
-  wantedMaxBadgeDesktop: { top: 3, right: 3, width: 83, height: 83 },
   purifiedBadge: { position: 'absolute', zIndex: 5, bottom: 5, left: 5, width: 54, height: 54 },
   detailsPanel: { width: '100%', minHeight: 300, alignItems: 'center', marginTop: -51, paddingTop: 64, paddingBottom: 18, borderRadius: 12, overflow: 'hidden' },
   wantedDetailsPanel: { marginTop: -42, paddingTop: 43 },

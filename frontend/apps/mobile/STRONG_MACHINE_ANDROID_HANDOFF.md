@@ -1,13 +1,14 @@
 # Strong-machine Android performance handoff
 
-Last updated: 2026-09-06
+Last updated: 2026-09-07
 
 ## Next manual candidate requested
 
-The installed `PokeGoNexus-manual-0dad5332-arm64-v8a.apk` is now only the prior
-baseline. It does not include the 2026-09-06 shared collection-sort engine,
-Mega registration/current-form correction, or immediate Native edit/save
-workflow.
+The installed `PokeGoNexus-manual-8fa33311-arm64-v8a.apk` is now the prior
+baseline. It includes the shared collection-sort engine, Mega
+registration/current-form correction, and immediate Native edit/save workflow,
+but it does not include the 2026-09-07 Vite-parity location-card geometry,
+masking, responsive Wanted stages, and exact-costume background correction.
 
 On the stronger machine, pull the latest clean `mobile/native-migration` HEAD
 and run the existing normal manual command:
@@ -178,8 +179,16 @@ The receiving workstation verified the embedded `deviceSmokeMode: false`
 configuration, installed it in place while preserving the signed-in session,
 and matched the installed package checksum to the source APK. A signed-in
 Home → Raid → Search sanity flow passed with a two-second visibility guard per
-destination and no eight-second loading overlay. This is the one currently
-installed manual-testing artifact.
+destination and no eight-second loading overlay. This artifact has since been
+superseded on the phone.
+
+Completed on 2026-09-07: the strong machine produced
+`PokeGoNexus-manual-8fa33311-arm64-v8a.apk` with SHA-256
+`aac5842c107d04b3c2627194c60d4ca2ed389684cbc47a84ffb37000786ff758`.
+The receiving workstation matched the shared file to Android's installed
+`base.apk` exactly and verified `deviceSmokeMode: false`. This is the currently
+installed baseline, but a newer build is required for the location-card
+correction described at the top of this handoff.
 
 ## Collect the matching Vite phone reference
 

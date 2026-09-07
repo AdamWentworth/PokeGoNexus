@@ -1,7 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, Animated, StyleSheet } from 'react-native';
 import type { NativeInstanceDetail } from '../../../src/features/collection/collectionModel';
-import { NativeInstanceDetailScreen } from '../../../src/screens/NativeInstanceDetailScreen';
+import {
+  NativeInstanceDetailScreen,
+  resolveNativeInstanceLocationBackdropLayout,
+} from '../../../src/screens/NativeInstanceDetailScreen';
 import { getNativeLocationSuggestions } from '../../../src/services/locationApi';
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -81,6 +84,52 @@ const openCaughtEditor = async () => {
 describe('NativeInstanceDetailScreen', () => {
   beforeEach(() => {
     mockGetNativeLocationSuggestions.mockReset();
+  });
+
+  it('matches Vite location-card geometry for every instance overlay width and status', () => {
+    expect(resolveNativeInstanceLocationBackdropLayout(412, 'caught')).toEqual({
+      backdropHeight: 316,
+      backdropTop: -20,
+      backdropWidth: 354.32,
+      maxBadgeSize: 103.6,
+      pokemonSize: 290.08,
+      purifiedBadgeSize: 59.2,
+      stageLift: 48,
+      stageSize: 296,
+    });
+    expect(resolveNativeInstanceLocationBackdropLayout(412, 'trade'))
+      .toEqual(resolveNativeInstanceLocationBackdropLayout(412, 'caught'));
+    expect(resolveNativeInstanceLocationBackdropLayout(360, 'wanted')).toEqual({
+      backdropHeight: 188,
+      backdropTop: -20,
+      backdropWidth: 309.6,
+      maxBadgeSize: 58.8,
+      pokemonSize: 164.64,
+      purifiedBadgeSize: 33.6,
+      stageLift: 8,
+      stageSize: 168,
+    });
+    expect(resolveNativeInstanceLocationBackdropLayout(412, 'wanted')).toEqual(expect.objectContaining({
+      backdropHeight: 205,
+      backdropTop: -20,
+      backdropWidth: 354.32,
+      maxBadgeSize: 64.75,
+      purifiedBadgeSize: 37,
+      stageLift: 8,
+      stageSize: 185,
+    }));
+    expect(resolveNativeInstanceLocationBackdropLayout(412, 'wanted').pokemonSize)
+      .toBeCloseTo(181.3, 8);
+    expect(resolveNativeInstanceLocationBackdropLayout(700, 'wanted')).toEqual({
+      backdropHeight: 258,
+      backdropTop: -20,
+      backdropWidth: 447,
+      maxBadgeSize: 83.3,
+      pokemonSize: 233.24,
+      purifiedBadgeSize: 47.6,
+      stageLift: 18,
+      stageSize: 238,
+    });
   });
 
   it('starts the incoming instance stage before reconciling its lower detail sections', async () => {
@@ -794,6 +843,12 @@ describe('NativeInstanceDetailScreen', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Blast Burn' }));
     fireEvent.press(screen.getByRole('button', { name: 'Choose location background' }));
     fireEvent.press(screen.getByRole('button', { name: 'Use Vancouver City Safari background' }));
+    const locationBackdropFrame = screen.getByTestId('native-instance-location-backdrop-frame');
+    const locationBackdropStyle = StyleSheet.flatten(locationBackdropFrame.props.style);
+    expect(locationBackdropStyle.left).toBe('50%');
+    expect(locationBackdropStyle.transform).toEqual([
+      { translateX: -locationBackdropStyle.width / 2 },
+    ]);
     await act(async () => {
       fireEvent.press(screen.getByRole('button', { name: 'Save Pokémon' }));
     });

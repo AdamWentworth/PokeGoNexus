@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last revalidated: 2026-09-06
+Last revalidated: 2026-09-07
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -48,9 +48,9 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`0dad5332` installed. The retained ignored artifact is
-`PokeGoNexus-manual-0dad5332-arm64-v8a.apk`, with SHA-256
-`01456399139065e1dd28c961a415cdd0a22fc264f46cc0137abdd11db57b0c1c`.
+`8fa33311` installed. It was received as
+`PokeGoNexus-manual-8fa33311-arm64-v8a.apk`, with SHA-256
+`aac5842c107d04b3c2627194c60d4ca2ed389684cbc47a84ffb37000786ff758`.
 The checksum of Android's installed `base.apk` matches exactly. Its embedded
 configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
 `deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
@@ -86,6 +86,15 @@ for iteration that does not need standalone-binary authority.
 
 ## Current automated checkpoint
 
+The 2026-09-07 location-card correction pins Native instance overlays to the
+Vite renderer's exact backdrop geometry: 86 viewport-percent width capped at
+447 px, a 20 px top extension, top-aligned cover crop, the same 57% by 94%
+elliptical fade and stops, and the same subtle center-brightness layer. Caught,
+Trade, and all three responsive Wanted stage sizes now use that contract. A
+stored background is no longer replaced with a same-ID image belonging to the
+wrong costume. Cross-renderer contract tests and 48 focused Native tests cover
+the geometry, masking, costume selection, and instance editor integration.
+
 The 2026-09-06 Pokémon collection correction moves all six ordering modes onto
 one renderer-independent implementation consumed by both Vite and Native.
 Native now uses Vite's exact release-date, Favorite grouping, null/recorded CP,
@@ -112,9 +121,10 @@ suite passes 162 suites / 931 tests; the affected Vite Pokémon, overlay,
 variant, and sort surface passes 81 files / 414 tests; TypeScript, ESLint,
 stylelint, Vite production build, and Metro Android production export pass.
 
-The currently installed `0dad5332` APK predates these corrections. Build and
-install one new normal manual candidate from the current branch before judging
-the sort, Mega, or edit/save changes on the phone.
+The currently installed `8fa33311` APK includes the sort, Mega, and edit/save
+corrections, but predates the 2026-09-07 location-card correction. Build and
+install one new normal manual candidate from current HEAD before judging the
+corrected instance backdrop on the phone.
 
 The current branch has shared Vite/native behavior contracts for Home
 collection links, collection tabs and slide motion, tag clearing, action-menu

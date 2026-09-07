@@ -320,6 +320,27 @@ describe('native collection model', () => {
     }));
   });
 
+  it('hides a stored location card when its background belongs to another costume', () => {
+    const presentationPokemon = {
+      ...pokemon,
+      backgrounds: [{
+        background_id: 9,
+        costume_id: 22,
+        image_url: '/images/detective-location.png',
+      }],
+    } as unknown as BasePokemon;
+
+    const rows = buildNativeCollectionRows({
+      ordinary: instance({
+        instance_id: 'ordinary',
+        costume_id: null,
+        location_card: '9',
+      }),
+    }, [presentationPokemon], 'https://pokegonexus.com');
+
+    expect(rows[0].locationBackgroundUri).toBeNull();
+  });
+
   it('sorts a copy of real collection rows without mutating query data', () => {
     const rows = buildNativeCollectionRows({
       charizard: instance({ instance_id: 'charizard', cp: 2500, favorite: false }),
