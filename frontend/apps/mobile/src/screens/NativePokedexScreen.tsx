@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { pokedexExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import type {
   NativePokedexCategory,
   NativePokedexEntry,
@@ -35,6 +36,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
+import { useNativeReducedMotion } from '../features/settings/useNativeMotion';
 import { markNativeUiPerformanceAfterPaint } from '../observability/nativeUiInteractionTiming';
 
 type Props = {
@@ -227,6 +229,9 @@ const RegionCardBackdrop = ({
 
 export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, isLoading = false, isSaving = false, onBack: _onBack, onOpenEntry, onRetry, onSetRegistrations }: Props) => {
   const light = useNativeColorScheme() === 'light';
+  const reduceMotion = useNativeReducedMotion();
+  const animateRegionNavigation = !reduceMotion
+    && pokedexExperienceParityContract.regionNavigationScrollBehavior.default === 'smooth';
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const columns = width >= 760 ? 5 : width >= 520 ? 4 : 3;
@@ -406,11 +411,11 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, isLoa
     ));
     if (targetIndex < 0) return;
     const frame = requestAnimationFrame(() => {
-      listRef.current?.scrollToIndex({ animated: false, index: targetIndex, viewPosition: 0 });
+      listRef.current?.scrollToIndex({ animated: animateRegionNavigation, index: targetIndex, viewPosition: 0 });
       pendingScrollGenerationRef.current = null;
     });
     return () => cancelAnimationFrame(frame);
-  }, [generation, listRows]);
+  }, [animateRegionNavigation, generation, listRows]);
   useEffect(() => finishPerformance('pokedex_advanced_result_painted'), [advanced, finishPerformance]);
   useEffect(() => finishPerformance('pokedex_category_result_painted'), [category, finishPerformance, regionCards]);
   useEffect(() => finishPerformance('pokedex_facet_result_painted'), [facets, finishPerformance, regionCards]);
@@ -445,7 +450,6 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, isLoa
     beginPerformance('pokedex_category_result_painted');
     setCategory(value);
     if (value.includes('shadow')) setFacets((current) => current.filter((facet) => facet !== 'lucky' && facet !== 'purified'));
-    if (generation != null) pendingScrollGenerationRef.current = generation;
   };
   const toggleAdvanced = () => {
     beginPerformance('pokedex_advanced_result_painted');
@@ -575,7 +579,7 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, isLoa
         </View>}
         ListEmptyComponent={generation != null && !isLoading && !error ? <View style={styles.empty}><Text style={[styles.emptyTitle, light && styles.textLight]}>No Pokémon match</Text><Text style={[styles.emptyText, light && styles.mutedLight]}>Try another region, category, quality, or search term.</Text></View> : null}
         onScrollToIndexFailed={({ index }) => {
-          listRef.current?.scrollToOffset({ animated: false, offset: Math.max(0, index * 180) });
+          listRef.current?.scrollToOffset({ animated: animateRegionNavigation, offset: Math.max(0, index * 180) });
         }}
         renderItem={({ item }) => item.kind === 'entries'
           ? <View style={styles.cardRow}>{item.entries.map(renderEntryCard)}</View>

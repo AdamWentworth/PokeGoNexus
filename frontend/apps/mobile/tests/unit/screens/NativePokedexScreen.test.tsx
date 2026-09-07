@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { FlatList } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativePokedexScreen } from '../../../src/screens/NativePokedexScreen';
 
@@ -25,6 +26,18 @@ const johtoEntry = {
   pokedexNumber: 152,
   pokemonId: 152,
   generation: 2,
+};
+const shadowEntry = {
+  ...entry,
+  category: 'shadow' as const,
+  id: '0001-shadow',
+  name: 'Shadow Bulbasaur',
+};
+const johtoShadowEntry = {
+  ...johtoEntry,
+  category: 'shadow' as const,
+  id: '0152-shadow',
+  name: 'Shadow Chikorita',
 };
 
 describe('NativePokedexScreen', () => {
@@ -98,5 +111,30 @@ describe('NativePokedexScreen', () => {
     fireEvent.press(screen.getByText('‹ All regions'));
     expect(screen.getByLabelText('Open Kanto')).toBeTruthy();
     expect(screen.getByLabelText('Open Johto')).toBeTruthy();
+  });
+
+  it('preserves position on category filters and only smooth-scrolls for explicit region navigation', () => {
+    const requestFrame = jest.spyOn(global, 'requestAnimationFrame').mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+    const scrollToIndex = jest.spyOn(FlatList.prototype, 'scrollToIndex');
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexScreen assetBaseUrl="https://pokegonexus.com" entries={[entry, johtoEntry, shadowEntry, johtoShadowEntry]} onBack={jest.fn()} onOpenEntry={jest.fn()} onRetry={jest.fn()} onSetRegistrations={jest.fn()} /></SafeAreaProvider>);
+
+    fireEvent.press(screen.getByText('Shiny'));
+    expect(scrollToIndex).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByLabelText('Open Johto'));
+    expect(scrollToIndex).toHaveBeenCalledWith({
+      animated: true,
+      index: expect.any(Number),
+      viewPosition: 0,
+    });
+
+    scrollToIndex.mockClear();
+    fireEvent.press(screen.getByText('Shadow'));
+    expect(scrollToIndex).not.toHaveBeenCalled();
+    scrollToIndex.mockRestore();
+    requestFrame.mockRestore();
   });
 });

@@ -16,6 +16,14 @@ export const homeExperienceParityContract = {
   recentPokemonPath: '/pokemon',
 } as const;
 
+export const pokedexExperienceParityContract = {
+  categoryChangePreservesScrollPosition: true,
+  regionNavigationScrollBehavior: {
+    default: 'smooth',
+    reducedMotion: 'auto',
+  },
+} as const;
+
 export const collectionExperienceParityContract = {
   initialView: 'pokemon',
   cardLongPressMs: 300,

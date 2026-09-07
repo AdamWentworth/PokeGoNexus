@@ -122,6 +122,14 @@ small menu assets are prefetched when the collection screen mounts. A shared
 motion contract plus focused Vite, Native, hub-hosting, and cross-renderer tests
 pin those details.
 
+Pokédex category filters now preserve the current viewport. Selecting Shiny,
+Shadow, or another category no longer re-targets the previously opened region
+and instantly jumps past the filter header. Explicitly opening a region still
+scrolls to that region, but both Vite and Native do so smoothly; the only
+intentional immediate behavior is the operating-system reduced-motion path.
+Focused renderer tests and the Pokédex cross-renderer contract prohibit a
+non-animated category-triggered scroll from returning.
+
 The 2026-09-06 Pokémon collection correction moves all six ordering modes onto
 one renderer-independent implementation consumed by both Vite and Native.
 Native now uses Vite's exact release-date, Favorite grouping, null/recorded CP,
@@ -144,15 +152,16 @@ serialized collection-sync provider contact Receiver in the background. A
 failed local queue operation restores the draft and error. Vite and physical
 Android now record like-for-like edit-visible and save-visible timings, with a
 150 ms Native hard ceiling for each interaction. The full Native
-suite passes 164 suites / 939 tests; the affected Vite Pokémon, overlay,
+suite passes 164 suites / 940 tests; the affected Vite Pokémon, overlay,
 variant, and sort surface passes 81 files / 414 tests; TypeScript, ESLint,
 stylelint, Vite production build, and Metro Android production export pass.
 
 The currently installed `8fa33311` APK includes the sort, Mega, and edit/save
 corrections, but predates the 2026-09-07 location-card, Trades transition,
 Rankings transition, Max Battles transition, and corrected Pokémon sort-menu
-motion. Build and install one new normal manual candidate from current HEAD
-before judging those changes on the phone.
+motion, as well as the Pokédex filter-scroll correction. Build and install one
+new normal manual candidate from current HEAD before judging those changes on
+the phone.
 
 The current branch has shared Vite/native behavior contracts for Home
 collection links, collection tabs and slide motion, tag clearing, action-menu
@@ -163,7 +172,7 @@ mounts complete collection and Pokédex route trees in the background.
 
 Passing evidence for this checkpoint:
 
-- native Jest: 164 suites, 939 tests;
+- native Jest: 164 suites, 940 tests;
 - mobile and web TypeScript and ESLint;
 - native real-route smoke: 92 guest/signed-in, light/dark route states;
 - focused Vite mobile-Chromium browser coverage: 10 tests;

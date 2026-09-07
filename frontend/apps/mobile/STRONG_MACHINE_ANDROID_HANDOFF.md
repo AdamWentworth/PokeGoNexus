@@ -13,7 +13,9 @@ fixed Trades header with lower-workspace-only page sliding. It also predates the
 reusable native-driven segmented control that replaces broken instant switches
 on both Rankings and Max Battles. It also predates the corrected Pokémon sort
 overlay: exact CSS-equivalent easing, whole-overlay fade, viewport-height row
-travel, non-blocking native-driver animation, and preloaded menu artwork.
+travel, non-blocking native-driver animation, and preloaded menu artwork. The
+next build also preserves scroll position when Pokédex categories change and
+smoothly scrolls only when a region is explicitly opened.
 
 On the stronger machine, pull the latest clean `mobile/native-migration` HEAD
 and run the existing normal manual command:

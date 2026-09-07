@@ -454,7 +454,7 @@ describe('Pokedex page', () => {
     });
   });
 
-  it('jumps directly to the selected region after opening the detail view', async () => {
+  it('smoothly scrolls to an explicitly opened region without retargeting category changes', async () => {
     serviceMocks.getPokedexSpecies.mockResolvedValue([
       ...makeKantoSpeciesCatalog(),
       makePokedexSpecies({
@@ -473,9 +473,16 @@ describe('Pokedex page', () => {
     await waitFor(() => {
       expect(scrollIntoView).toHaveBeenCalledWith({
         block: 'start',
-        behavior: 'auto',
+        behavior: 'smooth',
       });
     });
     expect(scrollIntoView.mock.instances.at(-1)).toHaveTextContent('Johto');
+
+    scrollIntoView.mockClear();
+    fireEvent.click(screen.getByRole('tab', { name: /^Shiny$/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /^Shiny$/i })).toHaveAttribute('aria-selected', 'true');
+    });
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });

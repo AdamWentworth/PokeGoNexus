@@ -26,6 +26,7 @@ import { createScopedLogger } from '@/utils/logger';
 
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { PokemonPokedexSpecies } from '@shared-contracts/pokemon';
+import { pokedexExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 import './Pokedex.css';
 import PokedexPokemonDetail from './PokedexPokemonDetail';
@@ -1300,9 +1301,12 @@ function Pokedex() {
     const targetSection = regionSectionRefs.current[sectionRefKey];
     if (typeof targetSection?.scrollIntoView !== 'function') return;
 
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     targetSection.scrollIntoView({
       block: 'start',
-      behavior: 'auto',
+      behavior: reducedMotion
+        ? pokedexExperienceParityContract.regionNavigationScrollBehavior.reducedMotion
+        : pokedexExperienceParityContract.regionNavigationScrollBehavior.default,
     });
     setPendingScrollRegionKey(null);
   }, [pendingScrollRegionKey, selectedCategoryKey, viewMode]);

@@ -16,6 +16,18 @@ const androidReporter = readFileSync(
   path.resolve(frontendDirectory, 'apps/mobile/scripts/build-android-performance-report.mjs'),
   'utf8',
 );
+const sharedExperienceContract = readFileSync(
+  path.resolve(frontendDirectory, 'packages/shared-ui-tokens/src/experienceParity.ts'),
+  'utf8',
+);
+const vitePokedexSource = readFileSync(
+  path.resolve(frontendDirectory, 'packages/app-core/src/pages/Pokedex/Pokedex.tsx'),
+  'utf8',
+);
+const nativePokedexScreen = readFileSync(
+  path.resolve(frontendDirectory, 'apps/mobile/src/screens/NativePokedexScreen.tsx'),
+  'utf8',
+);
 const nativePokedexSources = [
   'apps/mobile/src/screens/NativePokedexScreen.tsx',
   'apps/mobile/src/screens/NativePokedexDetailScreen.tsx',
@@ -49,4 +61,29 @@ test('every bounded Pokédex interaction has Vite and physical-native performanc
     assert.match(androidReporter, new RegExp(`${nativeEvent}: ['"]${scenarioId.replaceAll('.', '\\.')}['"]`), `${scenarioId} Android report mapping`);
     assert.ok(nativePokedexSources.includes(nativeEvent), `${nativeEvent} native paint trace`);
   }
+});
+
+test('Pokédex filters preserve position and explicit region navigation scrolls smoothly', () => {
+  assert.match(
+    sharedExperienceContract,
+    /pokedexExperienceParityContract[\s\S]*?categoryChangePreservesScrollPosition:\s*true[\s\S]*?default:\s*'smooth'[\s\S]*?reducedMotion:\s*'auto'/,
+  );
+  assert.match(
+    vitePokedexSource,
+    /targetSection\.scrollIntoView\([\s\S]*?pokedexExperienceParityContract\.regionNavigationScrollBehavior\.default/,
+  );
+  assert.match(
+    nativePokedexScreen,
+    /scrollToIndex\(\{ animated: animateRegionNavigation, index: targetIndex, viewPosition: 0 \}\)/,
+  );
+  const nativeCategoryHandler = nativePokedexScreen.match(
+    /const selectCategory = \(value: NativePokedexCategory\) => \{([\s\S]*?)\n  \};/,
+  )?.[1] ?? '';
+  assert.ok(nativeCategoryHandler, 'Native category handler is present');
+  assert.doesNotMatch(
+    nativeCategoryHandler,
+    /pendingScrollGenerationRef/,
+    'Changing Shiny, Shadow, or another category must not retarget the list',
+  );
+  assert.doesNotMatch(nativePokedexScreen, /scrollTo(?:Index|Offset)\(\{ animated: false/);
 });
