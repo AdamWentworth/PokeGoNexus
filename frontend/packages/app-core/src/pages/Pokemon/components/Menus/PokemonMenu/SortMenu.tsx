@@ -85,7 +85,7 @@ const SortMenu: React.FC<SortMenuProps> = ({
     if (!isAnimating && isMenuVisible) {
       const timer = setTimeout(
         () => setIsMenuVisible(false),
-        collectionExperienceParityContract.sortMenuTransitionMs,
+        collectionExperienceParityContract.sortMenuMotion.overlayTransitionMs,
       );
       return () => clearTimeout(timer);
     }

@@ -350,7 +350,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     hostedSortMenuCloseTimerRef.current = setTimeout(() => {
       hostedSortMenuCloseTimerRef.current = null;
       setHostedSortMenu(null);
-    }, collectionExperienceParityContract.sortMenuTransitionMs);
+    }, collectionExperienceParityContract.sortMenuMotion.overlayTransitionMs);
   }, []);
   const sortMenuHost = useMemo<NativeCollectionSortMenuHost>(() => ({
     dismiss: dismissSortMenu,

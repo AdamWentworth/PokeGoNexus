@@ -1,7 +1,11 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { Animated, Image, Modal, StyleSheet } from 'react-native';
+import { Animated, Dimensions, Image, Modal, StyleSheet } from 'react-native';
 import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
-import { NativeCollectionSortMenu } from '../../../../src/features/collection/parity/NativeCollectionSortMenu';
+import {
+  NATIVE_SORT_OPTION_EASING,
+  NATIVE_SORT_OVERLAY_EASING,
+  NativeCollectionSortMenu,
+} from '../../../../src/features/collection/parity/NativeCollectionSortMenu';
 
 let mockSafeAreaInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 let mockReduceMotion = true;
@@ -148,7 +152,7 @@ describe('NativeCollectionSortMenu', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('owns the exact Vite backdrop duration on the native driver', () => {
+  it('owns the exact Vite overlay and staggered-row motion on the native driver', () => {
     mockReduceMotion = false;
     jest.spyOn(global, 'requestAnimationFrame').mockImplementation((callback) => {
       callback(0);
@@ -156,7 +160,8 @@ describe('NativeCollectionSortMenu', () => {
     });
     const timing = jest.spyOn(Animated, 'timing');
     const stagger = jest.spyOn(Animated, 'stagger');
-    const { rerender } = render(
+    const interpolate = jest.spyOn(Animated.Value.prototype, 'interpolate');
+    const { getByTestId, rerender } = render(
       <NativeCollectionSortMenu
         assetBaseUrl="https://pokegonexus.com"
         direction="ascending"
@@ -168,15 +173,28 @@ describe('NativeCollectionSortMenu', () => {
       />,
     );
 
+    const { sortMenuMotion } = collectionExperienceParityContract;
+    expect(StyleSheet.flatten(getByTestId('native-collection-sort-menu').props.style).opacity)
+      .toBe(0);
     expect(timing).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-      duration: collectionExperienceParityContract.sortMenuTransitionMs,
+      duration: sortMenuMotion.overlayTransitionMs,
+      easing: NATIVE_SORT_OVERLAY_EASING,
+      isInteraction: false,
       toValue: 1,
       useNativeDriver: true,
     }));
-    expect(stagger).toHaveBeenCalledWith(50, expect.any(Array));
+    expect(stagger).toHaveBeenCalledWith(sortMenuMotion.optionStaggerMs, expect.any(Array));
     expect(timing.mock.calls.filter(([, config]) => (
-      config.duration === 150 && config.toValue === 1 && config.useNativeDriver === true
+      config.duration === sortMenuMotion.optionTransitionMs
+      && config.easing === NATIVE_SORT_OPTION_EASING
+      && config.isInteraction === false
+      && config.toValue === 1
+      && config.useNativeDriver === true
     ))).toHaveLength(6);
+    expect(interpolate).toHaveBeenCalledWith({
+      inputRange: [0, 1],
+      outputRange: [Dimensions.get('window').height, 0],
+    });
 
     rerender(
       <NativeCollectionSortMenu
@@ -190,7 +208,9 @@ describe('NativeCollectionSortMenu', () => {
       />,
     );
     expect(timing).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-      duration: collectionExperienceParityContract.sortMenuTransitionMs,
+      duration: sortMenuMotion.overlayTransitionMs,
+      easing: NATIVE_SORT_OVERLAY_EASING,
+      isInteraction: false,
       toValue: 0,
       useNativeDriver: true,
     }));

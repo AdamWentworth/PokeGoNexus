@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import {
   NativeCollectionParityFixture,
@@ -39,6 +39,7 @@ import {
   runAfterNativeUiInteractions,
 } from '../interaction/nativeUiInteractionScheduler';
 import { createNativeCollectionImageRevealController } from '../features/collection/parity/nativeCollectionImageRevealController';
+import { toNativeCollectionAssetUrl } from '../features/collection/parity/nativeCollectionImageSource';
 
 export {
   projectNativeCollectionParityCards,
@@ -88,6 +89,14 @@ const SORT_ICONS: Record<NativeCollectionSort, string> = {
   name: '/images/sorting/name.png',
   combatPower: '/images/sorting/cp.png',
 };
+
+const SORT_MENU_ASSET_PATHS = [
+  ...NATIVE_SORT_OPTIONS.map(({ icon }) => icon),
+  '/images/sorting/arrow.png',
+  '/images/close-button.png',
+  '/images/close-button-light.png',
+] as const;
+const warmedSortMenuAssetOrigins = new Set<string>();
 
 export const prepareNativeCollectionParityRows = (
   rows: NativeCollectionRow[],
@@ -194,6 +203,17 @@ export const NativeCollectionParityScreen = memo(forwardRef<
   const sortMenuRequestStartedAtRef = useRef<number | null>(null);
   const sortMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sortMenuInteractionReleaseRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (warmedSortMenuAssetOrigins.has(assetBaseUrl)) return;
+    warmedSortMenuAssetOrigins.add(assetBaseUrl);
+    for (const path of SORT_MENU_ASSET_PATHS) {
+      void Promise.resolve(
+        Image.prefetch(toNativeCollectionAssetUrl(assetBaseUrl, path)),
+      ).catch(() => undefined);
+    }
+  }, [assetBaseUrl]);
+
   const stagedQueryTraceRef = useRef<{
     paintedAt: number | null;
     query: string;
@@ -531,7 +551,7 @@ export const NativeCollectionParityScreen = memo(forwardRef<
       if (!sortMenuHost) setSortVisible(false);
       sortMenuInteractionReleaseRef.current?.();
       sortMenuInteractionReleaseRef.current = null;
-    }, collectionExperienceParityContract.sortMenuTransitionMs);
+    }, collectionExperienceParityContract.sortMenuMotion.overlayTransitionMs);
   }, [sortMenuHost]);
   const selectSort = useCallback((nextSort: NativeCollectionSort) => {
     const next = resolveSortSelection(sort, direction, nextSort);

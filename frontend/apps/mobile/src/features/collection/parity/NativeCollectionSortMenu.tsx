@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +33,10 @@ export const NATIVE_SORT_OPTIONS: {
   { key: 'name', label: 'NAME', icon: '/images/sorting/name.png', iconHeight: 16 },
   { key: 'combatPower', label: 'COMBAT POWER', icon: '/images/sorting/cp.png', iconHeight: 22 },
 ];
+
+const { sortMenuMotion } = collectionExperienceParityContract;
+export const NATIVE_SORT_OPTION_EASING = Easing.bezier(...sortMenuMotion.optionEasing);
+export const NATIVE_SORT_OVERLAY_EASING = Easing.bezier(...sortMenuMotion.overlayEasing);
 
 const SortBackdrop = ({ light }: { light: boolean }) => (
   <LinearGradient
@@ -70,11 +75,12 @@ export const NativeCollectionSortMenu = memo(function NativeCollectionSortMenu({
 }: NativeCollectionSortMenuProps) {
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
+  const { height: viewportHeight } = useWindowDimensions();
   const reduceMotion = useOptionalNativeDevicePreferences()?.shouldReduceMotion ?? false;
   const [optionProgress] = useState(() => (
-    NATIVE_SORT_OPTIONS.map(() => new Animated.Value(0))
+    NATIVE_SORT_OPTIONS.map(() => new Animated.Value(open && reduceMotion ? 1 : 0))
   ));
-  const [backdropProgress] = useState(() => new Animated.Value(0));
+  const [backdropProgress] = useState(() => new Animated.Value(open && reduceMotion ? 1 : 0));
 
   useEffect(() => {
     if (open) {
@@ -85,23 +91,30 @@ export const NativeCollectionSortMenu = memo(function NativeCollectionSortMenu({
         backdropProgress.setValue(1);
         return undefined;
       }
+      let opening: Animated.CompositeAnimation | null = null;
       const frame = requestAnimationFrame(() => {
-        Animated.parallel([
-          Animated.stagger(50, optionProgress.map((progress) => Animated.timing(progress, {
-            duration: 150,
-            easing: Easing.ease,
+        opening = Animated.parallel([
+          Animated.stagger(sortMenuMotion.optionStaggerMs, optionProgress.map((progress) => Animated.timing(progress, {
+            duration: sortMenuMotion.optionTransitionMs,
+            easing: NATIVE_SORT_OPTION_EASING,
+            isInteraction: false,
             toValue: 1,
             useNativeDriver: true,
           }))),
           Animated.timing(backdropProgress, {
-            duration: collectionExperienceParityContract.sortMenuTransitionMs,
-            easing: Easing.inOut(Easing.ease),
+            duration: sortMenuMotion.overlayTransitionMs,
+            easing: NATIVE_SORT_OVERLAY_EASING,
+            isInteraction: false,
             toValue: 1,
             useNativeDriver: true,
           }),
-        ]).start();
+        ]);
+        opening.start();
       });
-      return () => cancelAnimationFrame(frame);
+      return () => {
+        cancelAnimationFrame(frame);
+        opening?.stop();
+      };
     }
     if (reduceMotion) {
       optionProgress.forEach((progress) => progress.setValue(0));
@@ -109,15 +122,17 @@ export const NativeCollectionSortMenu = memo(function NativeCollectionSortMenu({
       return undefined;
     }
     const closing = Animated.parallel([
-      Animated.stagger(50, optionProgress.map((progress) => Animated.timing(progress, {
-        duration: 150,
-        easing: Easing.ease,
+      Animated.stagger(sortMenuMotion.optionStaggerMs, optionProgress.map((progress) => Animated.timing(progress, {
+        duration: sortMenuMotion.optionTransitionMs,
+        easing: NATIVE_SORT_OPTION_EASING,
+        isInteraction: false,
         toValue: 0,
         useNativeDriver: true,
       }))),
       Animated.timing(backdropProgress, {
-        duration: collectionExperienceParityContract.sortMenuTransitionMs,
-        easing: Easing.inOut(Easing.ease),
+        duration: sortMenuMotion.overlayTransitionMs,
+        easing: NATIVE_SORT_OVERLAY_EASING,
+        isInteraction: false,
         toValue: 0,
         useNativeDriver: true,
       }),
@@ -136,20 +151,19 @@ export const NativeCollectionSortMenu = memo(function NativeCollectionSortMenu({
   }, [onClose, open, presentation]);
 
   const content = (
-    <View
+    <Animated.View
       accessibilityElementsHidden={!open}
       accessibilityViewIsModal
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
       pointerEvents={open ? 'auto' : 'none'}
-      style={[styles.overlay, presentation === 'inline' ? styles.inlineOverlay : null]}
+      style={[
+        styles.overlay,
+        presentation === 'inline' ? styles.inlineOverlay : null,
+        { opacity: backdropProgress },
+      ]}
       testID="native-collection-sort-menu"
     >
-        <Animated.View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFill, { opacity: backdropProgress }]}
-        >
-          <SortBackdrop light={light} />
-        </Animated.View>
+        <SortBackdrop light={light} />
         <Pressable
           accessibilityElementsHidden
           accessibilityLabel="Dismiss sort menu"
@@ -168,10 +182,9 @@ export const NativeCollectionSortMenu = memo(function NativeCollectionSortMenu({
               transform: [{
                 translateY: progress.interpolate({
                   inputRange: [0, 1],
-                  // CSS starts every canonical row one full viewport below
-                  // its final position. A large fixed native translation is
-                  // equivalent and stays on the compositor.
-                  outputRange: [1_000, 0],
+                  // CSS starts every canonical row exactly one viewport below
+                  // its final position.
+                  outputRange: [viewportHeight, 0],
                 }),
               }],
             };
@@ -228,7 +241,7 @@ export const NativeCollectionSortMenu = memo(function NativeCollectionSortMenu({
             style={styles.closeImage}
           />
         </Pressable>
-    </View>
+    </Animated.View>
   );
 
   if (presentation === 'inline') return visible ? content : null;

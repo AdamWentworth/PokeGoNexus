@@ -112,6 +112,16 @@ parent recomputes or swaps a potentially expensive workspace and uses Vite's
 indicator immediately. Focused component, Rankings, and Max suites plus
 Vite/native structure and motion contracts pin the reuse and ordering.
 
+The Pokémon sort overlay now reproduces the complete Vite animation rather
+than only approximating its durations. The entire gradient, controls, and close
+button share the canonical 250 ms CSS ease-in-out fade; each option travels
+from one real viewport height with Vite's exact 150 ms CSS `ease` curve and
+50 ms stagger. The animations stay on the native driver without reserving JS
+interaction handles, rapid dismissal cancels the entrance cleanly, and all
+small menu assets are prefetched when the collection screen mounts. A shared
+motion contract plus focused Vite, Native, hub-hosting, and cross-renderer tests
+pin those details.
+
 The 2026-09-06 Pokémon collection correction moves all six ordering modes onto
 one renderer-independent implementation consumed by both Vite and Native.
 Native now uses Vite's exact release-date, Favorite grouping, null/recorded CP,
@@ -140,9 +150,9 @@ stylelint, Vite production build, and Metro Android production export pass.
 
 The currently installed `8fa33311` APK includes the sort, Mega, and edit/save
 corrections, but predates the 2026-09-07 location-card, Trades transition,
-Rankings transition, and Max Battles transition corrections. Build and install
-one new normal manual candidate from current HEAD before judging those changes
-on the phone.
+Rankings transition, Max Battles transition, and corrected Pokémon sort-menu
+motion. Build and install one new normal manual candidate from current HEAD
+before judging those changes on the phone.
 
 The current branch has shared Vite/native behavior contracts for Home
 collection links, collection tabs and slide motion, tag clearing, action-menu

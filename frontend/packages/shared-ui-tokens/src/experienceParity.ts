@@ -19,7 +19,13 @@ export const homeExperienceParityContract = {
 export const collectionExperienceParityContract = {
   initialView: 'pokemon',
   cardLongPressMs: 300,
-  sortMenuTransitionMs: 250,
+  sortMenuMotion: {
+    optionEasing: [0.25, 0.1, 0.25, 1] as const,
+    optionStaggerMs: 50,
+    optionTransitionMs: 150,
+    overlayEasing: [0.42, 0, 0.58, 1] as const,
+    overlayTransitionMs: 250,
+  },
   instanceOverlaySwipe: {
     axisLockDelta: 10,
     backgroundBaseScale: 1.06,

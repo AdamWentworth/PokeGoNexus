@@ -24,12 +24,24 @@ const viteWantedInstanceStyles = readFileSync(
   path.resolve(frontendDirectory, 'packages/app-core/src/pages/Pokemon/features/instances/WantedInstance.css'),
   'utf8',
 );
+const viteSortMenu = readFileSync(
+  path.resolve(frontendDirectory, 'packages/app-core/src/pages/Pokemon/components/Menus/PokemonMenu/SortMenu.tsx'),
+  'utf8',
+);
+const viteSortMenuStyles = readFileSync(
+  path.resolve(frontendDirectory, 'packages/app-core/src/pages/Pokemon/components/Menus/PokemonMenu/SortMenu.css'),
+  'utf8',
+);
 const sharedExperienceContract = readFileSync(
   path.resolve(frontendDirectory, 'packages/shared-ui-tokens/src/experienceParity.ts'),
   'utf8',
 );
 const nativeLocationBackdrop = readFileSync(
   path.resolve(frontendDirectory, 'apps/mobile/src/features/collection/parity/NativePokemonLocationBackdrop.tsx'),
+  'utf8',
+);
+const nativeSortMenu = readFileSync(
+  path.resolve(frontendDirectory, 'apps/mobile/src/features/collection/parity/NativeCollectionSortMenu.tsx'),
   'utf8',
 );
 const nativeCollectionSources = [
@@ -88,4 +100,26 @@ test('native instance location backdrops stay pinned to Vite geometry and maskin
   assert.match(nativeLocationBackdrop, /variant === 'instance' \? contract\.instanceMask/);
   assert.match(nativeLocationBackdrop, /'xMidYMin slice'/);
   assert.match(nativeLocationBackdrop, /location-backdrop-brightness/);
+});
+
+test('native collection sort motion stays pinned to the complete Vite overlay transition', () => {
+  assert.match(viteSortMenu, /transitionDelay:\s*`\$\{i \* 0\.05\}s`/);
+  assert.match(viteSortMenuStyles, /transition:\s*opacity 0\.25s ease-in-out/);
+  assert.match(
+    viteSortMenuStyles,
+    /transition:\s*background 0\.2s ease, transform 0\.15s ease, opacity 0\.15s ease/,
+  );
+  assert.match(viteSortMenuStyles, /transform:\s*translateY\(100vh\)/);
+
+  assert.match(sharedExperienceContract, /optionEasing:\s*\[0\.25, 0\.1, 0\.25, 1\]/);
+  assert.match(sharedExperienceContract, /optionStaggerMs:\s*50/);
+  assert.match(sharedExperienceContract, /optionTransitionMs:\s*150/);
+  assert.match(sharedExperienceContract, /overlayEasing:\s*\[0\.42, 0, 0\.58, 1\]/);
+  assert.match(sharedExperienceContract, /overlayTransitionMs:\s*250/);
+
+  assert.match(nativeSortMenu, /Easing\.bezier\(\.\.\.sortMenuMotion\.optionEasing\)/);
+  assert.match(nativeSortMenu, /Easing\.bezier\(\.\.\.sortMenuMotion\.overlayEasing\)/);
+  assert.match(nativeSortMenu, /style=\{\[[\s\S]*?\{ opacity: backdropProgress \}[\s\S]*?\]\}/);
+  assert.match(nativeSortMenu, /outputRange:\s*\[viewportHeight, 0\]/);
+  assert.match(nativeSortMenu, /isInteraction:\s*false/);
 });
