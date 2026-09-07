@@ -8,7 +8,8 @@ The installed `PokeGoNexus-manual-8fa33311-arm64-v8a.apk` is now the prior
 baseline. It includes the shared collection-sort engine, Mega
 registration/current-form correction, and immediate Native edit/save workflow,
 but it does not include the 2026-09-07 Vite-parity location-card geometry,
-masking, responsive Wanted stages, and exact-costume background correction.
+masking, responsive Wanted stages, exact-costume background correction, or the
+fixed Trades header with lower-workspace-only page sliding.
 
 On the stronger machine, pull the latest clean `mobile/native-migration` HEAD
 and run the existing normal manual command:

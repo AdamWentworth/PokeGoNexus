@@ -95,6 +95,14 @@ stored background is no longer replaced with a same-ID image belonging to the
 wrong costume. Cross-renderer contract tests and 48 focused Native tests cover
 the geometry, masking, costume selection, and instance editor integration.
 
+The same checkpoint restores the Vite Trades transition hierarchy. Native now
+renders one shared Trades product header and Preferences/Activity control above
+the horizontal page slider; only the two lower workspaces move. The control's
+indicator continues to consume the slider's shared native animation value, so
+it tracks the lower transition without moving the header itself. A
+cross-renderer structure contract and 23 focused Trades tests protect this
+boundary.
+
 The 2026-09-06 Pokémon collection correction moves all six ordering modes onto
 one renderer-independent implementation consumed by both Vite and Native.
 Native now uses Vite's exact release-date, Favorite grouping, null/recorded CP,

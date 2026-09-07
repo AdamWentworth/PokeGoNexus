@@ -16,6 +16,14 @@ const androidReporter = readFileSync(
   path.resolve(frontendDirectory, 'apps/mobile/scripts/build-android-performance-report.mjs'),
   'utf8',
 );
+const viteTradesRoute = readFileSync(
+  path.resolve(frontendDirectory, 'packages/app-core/src/pages/Trades/Trades.tsx'),
+  'utf8',
+);
+const nativeTradesRoute = readFileSync(
+  path.resolve(frontendDirectory, 'apps/mobile/src/app/native/trades.tsx'),
+  'utf8',
+);
 const nativeTradeSources = [
   'apps/mobile/src/app/native/trades.tsx',
   'apps/mobile/src/screens/NativeTradePreferencesScreen.tsx',
@@ -63,5 +71,27 @@ test('every bounded Trades interaction has Vite and physical-native performance 
     androidReporter,
     /trade_activity_status_result_painted:\s*'first'/,
     'status timing selects the same one status change per repetition as Vite',
+  );
+});
+
+test('Trades keeps its product header outside the sliding Preferences and Activity body', () => {
+  assert.ok(
+    viteTradesRoute.indexOf('<ProductPageHeader') < viteTradesRoute.indexOf('<HorizontalPageSlider'),
+    'Vite reference keeps its header outside the page slider',
+  );
+  assert.equal(
+    nativeTradesRoute.match(/<NativeTradeHubHeader\b/g)?.length,
+    1,
+    'Native renders one shared trade header',
+  );
+  assert.ok(
+    nativeTradesRoute.indexOf('\n      <NativeTradeHubHeader')
+      < nativeTradesRoute.indexOf('\n      <NativeHorizontalPageSlider'),
+    'Native keeps its shared header before the moving track',
+  );
+  assert.doesNotMatch(
+    nativeTradesRoute,
+    /pageHeader=\{/,
+    'Neither sliding panel owns another copy of the product header',
   );
 });

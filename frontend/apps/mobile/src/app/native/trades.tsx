@@ -165,6 +165,13 @@ export default function NativeTradesRoute() {
 
   return (
     <View style={[styles.screen, light && styles.screenLight]} testID="native-trades-hub">
+      <NativeTradeHubHeader
+        activeView={activeView}
+        assetBaseUrl={runtimeConfig.api.frontendAppUrl}
+        onOpenTradeBoard={() => router.push('/native/trade-board')}
+        onViewChange={changeView}
+        scrollX={pageScrollX}
+      />
       <NativeHorizontalPageSlider
         activeIndex={activeIndex}
         onIndexChange={(index) => setActiveView(TRADE_VIEWS[index] ?? 'preferences')}
@@ -180,15 +187,6 @@ export default function NativeTradesRoute() {
           initialMode={preferenceMode}
           isLoading={collectionQuery.isPending}
           onOpenActivity={() => changeView('activity')}
-          pageHeader={(
-            <NativeTradeHubHeader
-              activeView={activeView}
-              assetBaseUrl={runtimeConfig.api.frontendAppUrl}
-              onOpenTradeBoard={() => router.push('/native/trade-board')}
-              onViewChange={changeView}
-              scrollX={pageScrollX}
-            />
-          )}
           onSave={async (entry, draft) => {
             const candidates = resolveNativeTradePreferenceDraftCandidates({
               entry,
@@ -231,15 +229,6 @@ export default function NativeTradesRoute() {
             void collectionQuery.refetch();
           }}
           onRevealPartner={(tradeId) => getNativeTradePartnerInfo(clients.users, tradeId)}
-          pageHeader={(
-            <NativeTradeHubHeader
-              activeView={activeView}
-              assetBaseUrl={runtimeConfig.api.frontendAppUrl}
-              onOpenTradeBoard={() => router.push('/native/trade-board')}
-              onViewChange={changeView}
-              scrollX={pageScrollX}
-            />
-          )}
           rows={activityRows}
           showModeTabs={false}
         />
