@@ -229,6 +229,11 @@ const NativeTradeBoardThemePreview = forwardRef<NativeTradeBoardThemePreviewHand
       const previousTheme = activeThemeRef.current;
       if (nextTheme === previousTheme) return;
       activeThemeRef.current = nextTheme;
+      if (Platform.OS === 'web') {
+        identityRefs[nextTheme].current?.setPokemonGoNameVisible(pokemonGoNameVisibleRef.current);
+        setRenderTheme(nextTheme);
+        return;
+      }
       const previousWrapper = wrapperRefs[previousTheme].current;
       const nextWrapper = wrapperRefs[nextTheme].current;
       identityRefs[nextTheme].current?.setPokemonGoNameVisible(pokemonGoNameVisibleRef.current);

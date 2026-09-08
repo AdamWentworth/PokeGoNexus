@@ -47,7 +47,7 @@ const e2eApiEnv = useRealApis
 const e2eServerEnv = {
   ...inheritedEnv,
   ...e2eApiEnv,
-  VITE_ASSET_ORIGIN: 'https://pokegonexus.com',
+  VITE_ASSET_ORIGIN: process.env.E2E_ASSET_ORIGIN ?? 'https://pokegonexus.com',
   VITE_FORCED_REFRESH_TIMESTAMP: '0',
   VITE_DISABLE_SERVICE_WORKER: 'true',
   VITE_LOG_LEVEL: 'warn',

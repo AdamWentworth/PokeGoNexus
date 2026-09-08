@@ -8,7 +8,7 @@ import {
   type ComponentProps,
   type Ref,
 } from 'react';
-import { Image, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Image, Platform, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import type {
   NativeTradeBoardEntry,
@@ -220,32 +220,34 @@ const BoardIdentity = memo(forwardRef<NativeTradeBoardIdentityHandle, {
   username,
 }, ref) {
   const pokemonGoNameRef = useRef<Text>(null);
-  const [testPokemonGoNameVisible, setTestPokemonGoNameVisible] = useState(
+  const usesReactVisibility = Platform.OS === 'web' || process.env.NODE_ENV === 'test';
+  const [pokemonGoNameVisible, setPokemonGoNameVisible] = useState(
     initialPokemonGoNameVisible,
   );
   useImperativeHandle(ref, () => ({
     setPokemonGoNameVisible: (visible) => {
-      if (process.env.NODE_ENV === 'test') {
-        setTestPokemonGoNameVisible(visible);
+      if (usesReactVisibility) {
+        setPokemonGoNameVisible(visible);
         return;
       }
       pokemonGoNameRef.current?.setNativeProps({
         style: { display: visible ? 'flex' : 'none' },
       });
     },
-  }), []);
+  }), [usesReactVisibility]);
   return (
     <View style={styles.identity}>
       <BoardText style={[styles.kicker, { color: palette.muted }]}>TRAINER</BoardText>
       <BoardText numberOfLines={1} style={[styles.username, { color: palette.text }]}>@{username}</BoardText>
-      {pokemonGoName && (process.env.NODE_ENV !== 'test' || testPokemonGoNameVisible) ? (
+      {pokemonGoName && (!usesReactVisibility || pokemonGoNameVisible) ? (
         <Text
           allowFontScaling={false}
           ref={pokemonGoNameRef}
           style={[
             styles.pogoName,
             { color: palette.muted },
-            !initialPokemonGoNameVisible && styles.pokemonGoNameHidden,
+            !(usesReactVisibility ? pokemonGoNameVisible : initialPokemonGoNameVisible)
+              && styles.pokemonGoNameHidden,
           ]}
         >Pokémon GO: {pokemonGoName}</Text>
       ) : null}

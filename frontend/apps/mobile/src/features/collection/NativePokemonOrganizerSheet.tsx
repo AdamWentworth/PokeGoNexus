@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   BackHandler,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -94,7 +95,7 @@ export const NativePokemonOrganizerSheet = ({
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
   useEffect(() => {
-    if (!visible || isSaving) return undefined;
+    if (!visible || isSaving || Platform.OS === 'web') return undefined;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       onClose();
       return true;

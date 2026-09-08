@@ -5,6 +5,7 @@ import {
   type ListRenderItemInfo,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Platform,
   Pressable,
   ScrollView,
   type StyleProp,
@@ -504,11 +505,15 @@ export const NativeCollectionParityFixture = memo(forwardRef<
     // reconcile. React adopts the exact same state on the following frame.
     filterReleaseStartedAtRef.current = Date.now();
     searchControlsRef.current?.commitQueryValue(nextQuery);
-    searchMenuOverlayRef.current?.setNativeProps({
-      pointerEvents: 'none',
-      style: { opacity: 0, transform: [{ translateY: 10_000 }] },
-    });
-    listRef.current?.setNativeProps({ pointerEvents: 'auto' });
+    if (Platform.OS === 'web') {
+      setSearchMenuVisible(false);
+    } else {
+      searchMenuOverlayRef.current?.setNativeProps({
+        pointerEvents: 'none',
+        style: { opacity: 0, transform: [{ translateY: 10_000 }] },
+      });
+      listRef.current?.setNativeProps({ pointerEvents: 'auto' });
+    }
     onQueryChange?.(nextQuery, 'filter');
     if (filterReleaseFrameRef.current !== null) {
       cancelAnimationFrame(filterReleaseFrameRef.current);

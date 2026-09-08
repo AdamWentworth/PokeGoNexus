@@ -189,6 +189,7 @@ const preferences = {
   user_id: session.user.user_id,
 };
 
+let ownProfileUpdate = {};
 const trainerProfile = (username = session.user.username) => ({
   highlights: [],
   location: 'Burnaby, British Columbia, Canada',
@@ -211,6 +212,7 @@ const trainerProfile = (username = session.user.username) => ({
     trainer_level: 50,
     user_id: username === session.user.username ? session.user.user_id : 'native-route-friend',
     username,
+    ...(username === session.user.username ? ownProfileUpdate : {}),
   },
   viewer: {
     can_view_collection: true,
@@ -507,10 +509,14 @@ const startExpo = async () => {
   return child;
 };
 
-const apiResponse = (url, method = 'GET') => {
+const apiResponse = (url, method = 'GET', body = null) => {
   const parsedUrl = new URL(url);
   const { pathname, searchParams } = parsedUrl;
   if (pathname === '/api/auth/mobile/refresh') return session;
+  if (pathname === `/api/auth/update/${session.user.user_id}` && method === 'PUT') {
+    session.user = { ...session.user, ...body };
+    return { success: true, data: session.user };
+  }
   if (pathname === '/api/auth/account/security') {
     return {
       activeSessions: 2,
@@ -551,7 +557,10 @@ const apiResponse = (url, method = 'GET') => {
   }
   if (pathname === '/api/users/friends') return friends;
   if (pathname === '/api/users/preferences') return preferences;
-  if (pathname === '/api/users/profile' && method === 'PUT') return { success: true };
+  if (pathname === '/api/users/profile' && method === 'PUT') {
+    ownProfileUpdate = { ...ownProfileUpdate, ...body };
+    return { success: true };
+  }
   if (pathname === '/api/users/profile') return trainerProfile();
   if (pathname.startsWith('/api/users/profiles/')) {
     return trainerProfile(decodeURIComponent(pathname.split('/').at(-1) ?? 'NexusFriend'));
@@ -622,7 +631,8 @@ const apiResponse = (url, method = 'GET') => {
 
 const installRoutes = async (context, unhandledApis) => {
   await context.route('**/api/**', async (route) => {
-    const response = apiResponse(route.request().url(), route.request().method());
+    const request = route.request();
+    const response = apiResponse(request.url(), request.method(), request.postDataJSON());
     if (response === null) {
       unhandledApis.add(`${route.request().method()} ${new URL(route.request().url()).pathname}`);
       await route.fulfill({ contentType: 'application/json', json: {} });
@@ -1112,7 +1122,7 @@ const assertSignedInHomeCollectionWorkflow = async (context) => {
 
     for (const [homeLabel, activeTagLabel] of summaryCases) {
       const startedAt = Date.now();
-      await page.getByRole('button', { name: new RegExp(homeLabel) }).first().click();
+      await page.getByRole('link', { name: new RegExp(homeLabel) }).first().click();
       await page.waitForURL((url) => url.pathname === '/native/collection', { timeout: 10_000 });
       await page.getByTestId('native-collection-hub').waitFor({
         state: 'visible',
@@ -1442,7 +1452,10 @@ const assertSignedInSearchWorkflow = async (context) => {
     await page.getByLabel('Search Choose a Pokémon', { exact: true }).fill('Bulbasaur');
     await page.getByRole('radio').filter({ hasText: /^Bulbasaur/ }).first().click();
     await page.getByRole('button', { name: 'For Trade', exact: true }).click();
-    await page.getByLabel('Search', { exact: true }).click();
+    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await page.getByRole('tab', { name: 'Location', exact: true }).click();
+    await page.getByRole('button', { name: 'Use saved location', exact: true }).click();
+    await page.getByRole('button', { name: /^Apply & search/ }).click();
     await page.getByText('SEARCH COMPLETE', { exact: true }).waitFor({ state: 'visible', timeout: 15_000 });
     await page.getByText('NexusFriend', { exact: true }).waitFor({ state: 'visible', timeout: 10_000 });
     await page.getByRole('button', { name: /Open listing/ }).click();
@@ -1589,6 +1602,8 @@ const assertSignedInProfileWorkflow = async (context) => {
     await page.getByRole('button', { name: 'Save profile', exact: true }).click();
     await page.getByText('Profile updated.', { exact: true }).waitFor({ state: 'visible', timeout: 15_000 });
     await page.getByTestId('native-profile-editor').waitFor({ state: 'hidden', timeout: 10_000 });
+    await page.getByTestId('native-trainer-profile').getByText('49', { exact: true })
+      .waitFor({ state: 'visible', timeout: 10_000 });
 
     await page.getByRole('tab', { name: 'Friends', exact: true }).click();
     await assertNativeDestination(page, '/native/friends', 'native-friends-route');
@@ -1691,6 +1706,8 @@ const assertSignedInTradeBoardWorkflow = async (context) => {
     if (await identity.getAttribute('aria-checked') !== 'false') {
       throw new Error('Trade Board did not hide the Pokémon GO name.');
     }
+    await page.getByTestId('native-trade-board').getByText(/^Pokémon GO:/).first()
+      .waitFor({ state: 'hidden', timeout: 10_000 });
     await recordInteractionPerformance(page, 'interaction.trade-board.identity-result');
 
     await page.getByRole('button', { name: 'Copy live link', exact: true }).click();
@@ -1721,6 +1738,8 @@ const runContext = async (browser, { authState, routes, theme }) => {
     viewport: { height: 915, width: 412 },
   });
   const unhandledApis = new Set();
+  const runtimeErrors = [];
+  context.on('page', (page) => trackRuntimeErrors(page, runtimeErrors));
   await installRoutes(context, unhandledApis);
   if (performanceMode) {
     await context.addInitScript(() => {
@@ -1768,10 +1787,13 @@ const runContext = async (browser, { authState, routes, theme }) => {
       requestAnimationFrame(frame);
     });
   }
-  await context.addInitScript(({ key, signedIn }) => {
+  await context.addInitScript(({ key, origin, signedIn }) => {
+    // New pages begin at an opaque about:blank origin with no localStorage.
+    // Seed only the app document, not that initial page or unrelated frames.
+    if (window.location.origin !== origin) return;
     window.localStorage.clear();
     if (signedIn) window.localStorage.setItem(key, 'native-real-route-refresh-token');
-  }, { key: refreshTokenKey, signedIn: authState === 'signed-in' });
+  }, { key: refreshTokenKey, origin: baseUrl, signedIn: authState === 'signed-in' });
   try {
     for (const routeCase of routes.filter(([path]) => {
       const scenarioId = routeScenarioId(path, authState);
@@ -1820,6 +1842,9 @@ const runContext = async (browser, { authState, routes, theme }) => {
     }
     if (unhandledApis.size > 0) {
       throw new Error(`Real-route smoke encountered unhandled APIs:\n${[...unhandledApis].sort().join('\n')}`);
+    }
+    if (runtimeErrors.length > 0) {
+      throw new Error(`Real-route smoke encountered runtime errors:\n${[...new Set(runtimeErrors)].join('\n')}`);
     }
   } finally {
     await context.close();

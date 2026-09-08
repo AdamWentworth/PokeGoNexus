@@ -65,7 +65,10 @@
     "lint": "cd ../../packages/app-core && eslint src --ext .ts,.tsx --config eslint.config.mjs",
     "lint:styles": "cd ../../packages/app-core && stylelint \"src/**/*.css\" --config ../../apps/web/.stylelintrc.json --ignore-path ../../apps/web/.stylelintignore",
     "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
-    "lint:fix": "cd ../../packages/app-core && eslint src --ext .ts,.tsx --fix --config eslint.config.mjs"
+    "lint:fix": "cd ../../packages/app-core && eslint src --ext .ts,.tsx --fix --config eslint.config.mjs",
+    "capture:demo:branch": "tsc --project tsconfig.capture.json && node scripts/run-branch-media-capture.mjs",
+    "capture:demo:account:login": "node scripts/sign-in-account-media.mjs",
+    "capture:demo:account": "node scripts/run-account-media-capture.mjs"
   },
   "browserslist": {
     "production": [

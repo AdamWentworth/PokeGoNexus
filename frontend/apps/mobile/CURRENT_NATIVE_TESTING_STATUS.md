@@ -86,6 +86,89 @@ for iteration that does not need standalone-binary authority.
 
 ## Current automated checkpoint
 
+### Real-account web media refresh — 2026-09-08
+
+`capture:demo:account` completed all 56 scenarios across 34 web routes using a
+real trainer account and live API reads, producing 52 videos, 52 posters, and
+280 screenshots in dark/light desktop/mobile layouts. Raid, Max, and PvP pair
+overall recommendations with My Pokémon; public trainer, collection, and Trade
+Board pages use a separate visitor context. Account email addresses and private
+trainer-card fields are hidden, and account/data mutations are blocked.
+
+The recorder supports terminal sign-in and verified resume, keeps browser request
+handling active during encoding, and waits for completed personal PvP evaluations
+before capturing them. All four PvP variants include complete teams, matchup
+results, Battle Lab, and comparable catalog/caught Zacian IV examples.
+
+All 52 videos passed a 10 fps blank-frame scan, with no flagged frames. Phlosion
+imported the complete package in commit `3006681`; its production build and all
+8 browser media checks passed. See
+[`ACCOUNT_MEDIA_CAPTURE.md`](../web/ACCOUNT_MEDIA_CAPTURE.md) for reproduction.
+This remains responsive web evidence; native release gates are unchanged.
+
+### Capture automation repair — 2026-09-07
+
+The capture-readiness investigation repaired the real-route browser harness:
+Home collection cards now use their current link semantics, Search explicitly
+selects a location, and the profile fixture implements the authentication update
+response and retains the saved trainer level. The profile workflow verifies the
+refetched level, and Trade Board verifies that hiding the trainer name changes
+the rendered board. Runtime errors are now tracked across workflow pages as well
+as individual route assertions; session seeding skips opaque `about:blank` pages.
+
+The browser proxy also exposed native-only `setNativeProps` calls in collection
+filter dismissal and Trade Board theme/name controls. Their React Native Web
+paths now use React state; Android and iOS retain the existing native update path.
+The organizer also skips the unsupported hardware-Back subscription on web,
+matching the platform guard already used by the other native dialogs.
+
+The WebKit spinner failure came from probing a detached video: it reported loaded
+data without painting frames. The probe now attaches the video to the document
+and keeps the decoded-pixel assertions. Back navigation exposed a separate race:
+a link could navigate before the scroll event delivered the outgoing position.
+Vite now saves it on link activation and rejects delayed writes to another history
+entry, including the initial entry with no stored router key. Two regression tests
+cover these timing cases.
+
+Passing evidence for this repair:
+
+- native Jest: 165 suites / 942 tests, followed by 4 focused organizer tests
+  after adding its web hardware-Back guard;
+- web and mobile TypeScript and ESLint, plus web stylelint;
+- shared performance-parity contracts: 33 tests;
+- route-scroll unit tests: 4 tests, including the two new regressions;
+- repeated Chromium and desktop/mobile WebKit scroll checks: 9 passes;
+- Chromium and WebKit desktop/mobile spinner and Back-navigation checks:
+  26 passes, with 2 expected desktop skips for the mobile-only Back case;
+- canonical Vite screenshot capture: all 5 scenarios;
+- the full native browser matrix: 98 guest/signed-in route/theme states and
+  the complete signed-in workflow set, with no recorded runtime errors or
+  unhandled API requests.
+
+Validation logs are retained under `.artifacts/capture-readiness/`.
+This is browser-proxy and capture evidence; it does not complete the standalone
+Android, real two-account trade, physical iOS, or performance approval gates.
+
+### Branch web media refresh — 2026-09-07
+
+`capture:demo:branch` now builds the current checkout with fixture APIs and local
+repository artwork, captures all 34 web route declarations, and packages 13 feature
+clips plus reference screens in dark/light desktop/mobile layouts. The completed
+run passed all 56 scenarios with no runtime/console errors or unhandled fixture
+API requests. It exported 52 WebM clips, 52 WebP posters, and 228 WebP screenshots.
+The manifest records source and build fingerprints, route coverage, video edit
+segments, viewport dimensions, and asset checksums. See
+[`BRANCH_MEDIA_CAPTURE.md`](../web/BRANCH_MEDIA_CAPTURE.md) for reproduction.
+
+Visual review also found unauthenticated CARTO tiles displaying an API-key
+watermark. Both web map surfaces now support a CARTO project key and fall back to
+attributed OpenStreetMap tiles when no key is configured. All 9 map source/view
+tests, the existing 5 capture scenarios, web typecheck, and web ESLint passed.
+
+This package uses the responsive web renderer and synthetic demo data. It is
+presentation evidence for the migration branch, not physical native footage or
+approval to change the production mobile default.
+
 The 2026-09-07 location-card correction pins Native instance overlays to the
 Vite renderer's exact backdrop geometry: 86 viewport-percent width capped at
 447 px, a 20 px top extension, top-aligned cover crop, the same 57% by 94%
