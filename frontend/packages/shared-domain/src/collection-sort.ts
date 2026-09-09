@@ -295,3 +295,37 @@ export const sortPokemonCollectionItems = <T>(
   project: (item: T) => PokemonCollectionSortProjection,
 ): T[] => [...items].sort((a, b) =>
   comparePokemonCollectionSortProjections(project(a), project(b), sort, direction));
+
+export type PokemonFavoriteTagSortSource = {
+  favorite?: boolean;
+  cp?: number | string | null;
+  cp50?: number | string | null;
+  pokedex_number?: number | string | null;
+};
+
+const favoriteTagInteger = (
+  value: number | string | null | undefined,
+  fallback: number,
+): number => {
+  if (value == null) return fallback;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+/** Tag previews use CP descending independently of the collection grid's sort. */
+export const sortPokemonFavoriteTagItems = <T>(
+  items: readonly T[],
+  project: (item: T) => PokemonFavoriteTagSortSource,
+): T[] => items.map((item) => {
+  const source = project(item);
+  return {
+    item,
+    favorite: Boolean(source.favorite),
+    cp: favoriteTagInteger(source.cp ?? source.cp50, -1),
+    pokedexNumber: favoriteTagInteger(source.pokedex_number, 0),
+  };
+}).sort((a, b) =>
+  Number(b.favorite) - Number(a.favorite)
+  || b.cp - a.cp
+  || a.pokedexNumber - b.pokedexNumber,
+).map(({ item }) => item);

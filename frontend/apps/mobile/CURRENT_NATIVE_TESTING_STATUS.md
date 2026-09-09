@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last revalidated: 2026-09-07
+Last targeted revalidation: 2026-09-09 (tag previews; Android artifact evidence below retains its original date)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,31 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current strong-machine standalone Android build, artifact identity, and
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Tag preview parity repair — 2026-09-09
+
+Native tag cards now preserve the web instance order, with Favorites sorted by
+CP descending using the same shared function as Vite. Custom tags honor saved
+sort/name order when explicit order keys are absent. Stale memberships cannot
+leak wanted Pokémon into caught custom tags or Favorites. Opening a tag still
+preserves the selected collection-grid sort, as Vite does.
+
+Both native tag panels share one membership pass per collection snapshot.
+Metadata edits reuse those memberships, and the summary cache retains only the
+latest entry for each panel. Vite also memoizes its Favorites input so unrelated
+renders do not repeat the sort.
+
+Visible native tag panels start image admission after pending interactions,
+without the background panel's 1.2-second delay. Admission counts actual visible
+sprites instead of eighteen slots per card, skips missing artwork, and preserves
+the revealed count when tag data changes. Native keeps the one-sprite admission
+batch and interaction scheduler; the browser uses its own image scheduler.
+
+Validation: 62 focused native tests, 52 web tag/sort tests, 33 performance-contract
+tests, both hosts' TypeScript and lint checks, and the real-route collection
+browser workflow passed. That browser run painted the For Trade result in
+485 ms against the existing 750 ms budget. No Android device was connected;
+this repair has not received physical-device frame validation or a new APK.
 
 ## Which Android workflow to use
 

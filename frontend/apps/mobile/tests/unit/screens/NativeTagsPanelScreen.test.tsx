@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
+import { beginNativeUiInteraction } from '../../../src/interaction/nativeUiInteractionScheduler';
 import {
   NATIVE_TAG_PREVIEW_REVEAL_BATCH,
   NATIVE_TAG_PREVIEW_PRESS_DELAY_MS,
@@ -53,6 +54,7 @@ afterEach(() => {
     jest.runOnlyPendingTimers();
   });
   cleanup();
+  jest.restoreAllMocks();
   jest.useRealTimers();
 });
 
@@ -149,6 +151,7 @@ describe('NativeTagsPanelScreen', () => {
         assetBaseUrl="https://pokegonexus.com"
         collectionCount={3}
         error={null}
+        isActive={false}
         isLoading={false}
         onRetry={jest.fn()}
         onSelectTag={jest.fn()}
@@ -164,6 +167,72 @@ describe('NativeTagsPanelScreen', () => {
     act(() => jest.advanceTimersByTime(17));
     expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(2);
     act(() => jest.advanceTimersByTime(17));
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(3);
+  });
+
+  const previewProps = {
+    activeTagName: null,
+    assetBaseUrl: 'https://pokegonexus.com',
+    collectionCount: 3,
+    error: null,
+    isLoading: false,
+    onRetry: jest.fn(),
+    onSelectTag: jest.fn(),
+    onViewChange: jest.fn(),
+    parent: 'caught' as const,
+  };
+
+  it('starts visible previews immediately and skips empty cards and missing artwork', () => {
+    render(<NativeTagsPanelScreen {...previewProps} tags={[
+      { ...maxTag, rows: [] },
+      { ...tag, rows: [{ ...tag.rows[0], id: 'missing-artwork', imageUri: null }, ...tag.rows] },
+    ]} />);
+
+    expect(screen.getByLabelText('Open Shadow Shinies, 2 Pokémon')).toBeTruthy();
+    act(() => jest.advanceTimersByTime(1));
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(1);
+  });
+
+  it('keeps revealed thumbnails when another tag is added', () => {
+    const { rerender } = render(<NativeTagsPanelScreen {...previewProps} tags={[tag]} />);
+    act(() => jest.advanceTimersByTime(1));
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(1);
+
+    rerender(<NativeTagsPanelScreen {...previewProps} tags={[tag, {
+      ...maxTag, rows: [{ ...maxTag.rows[0], maxKind: null }],
+    }]} />);
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(1);
+    act(() => jest.advanceTimersByTime(1));
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(2);
+  });
+
+  it('promotes a background panel when selected while respecting page motion', () => {
+    const { rerender } = render(
+      <NativeTagsPanelScreen {...previewProps} isActive={false} tags={[tag]} />,
+    );
+    act(() => jest.advanceTimersByTime(100));
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(0);
+    const release = beginNativeUiInteraction();
+    try {
+      rerender(<NativeTagsPanelScreen {...previewProps} isActive tags={[tag]} />);
+      act(() => jest.advanceTimersByTime(100));
+      expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(0);
+      act(() => {
+        release();
+        jest.advanceTimersByTime(1);
+      });
+      expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(1);
+    } finally {
+      release();
+    }
+  });
+
+  it('lets the browser schedule all preview images without native delays', () => {
+    jest.replaceProperty(Platform, 'OS', 'web');
+    const rows = Array.from({ length: 3 }, (_, index) => ({
+      ...tag.rows[0], id: `web-instance-${index}`,
+    }));
+    render(<NativeTagsPanelScreen {...previewProps} isActive={false} tags={[{ ...tag, rows }]} />);
     expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(3);
   });
 

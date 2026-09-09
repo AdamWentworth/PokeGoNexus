@@ -772,6 +772,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
   const inventoryPanel = useMemo(() => (
     <NativeTagsPanelScreen
       key="inventory"
+      isActive={activeView === 'inventory'}
       activeTagName={null}
       assetBaseUrl={assetBaseUrl}
       collectionCount={inventoryCount}
@@ -799,6 +800,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     error,
     inventoryCount,
     inventoryTags,
+    activeView,
     isLoading,
     onRetry,
     previewTag,
@@ -875,6 +877,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
   const wishlistPanel = useMemo(() => (
     <NativeTagsPanelScreen
       key="wishlist"
+      isActive={activeView === 'wishlist'}
       activeTagName={null}
       assetBaseUrl={assetBaseUrl}
       collectionCount={inventoryCount}
@@ -914,6 +917,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     selectTag,
     warning,
     wishlistTags,
+    activeView,
   ]);
   // Multiple JSX children normally allocate a new array on every Hub render,
   // which defeats NativeHorizontalPageSlider's memo even when every panel is

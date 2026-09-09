@@ -4,13 +4,14 @@ import {
   FlatList,
   Image,
   LayoutAnimation,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type {
@@ -53,6 +54,7 @@ type Props = {
   error: string | null;
   warning?: string | null;
   isLoading: boolean;
+  isActive?: boolean;
   parent: CustomTagParent;
   tags: NativeTagSummary[];
   onActionMenuPress?: () => void;
@@ -71,6 +73,11 @@ type Props = {
 };
 
 type TagGradient = readonly [string, string, string];
+type TagPreview = {
+  rows: NativeTagSummary['rows'];
+  sources: NativeTagSummary['rows'];
+  offset: number;
+};
 const VITE_TAG_PREVIEW_SOURCE_LIMIT = 18;
 export const NATIVE_TAG_PREVIEW_PRESS_DELAY_MS = 16;
 // Core Image on Android can decode these remote sprites on HWUI's render
@@ -84,7 +91,7 @@ export const NATIVE_TAG_PREVIEW_REVEAL_BATCH = 1;
 // Cold mount priority mirrors what a browser's image scheduler effectively
 // gives Vite: paint the visible collection, then warm the retained search
 // controls, and only then decode sprites in the two offscreen tag panels.
-const TAG_PREVIEW_REVEAL_DELAY_MS = 1_200;
+const TAG_PREVIEW_BACKGROUND_DELAY_MS = 1_200;
 const TAG_PREVIEW_REVEAL_PERIOD_MS = 16;
 const requestedTagResultAssets = new Set<string>();
 
@@ -207,7 +214,8 @@ const NativeTagCard = memo(function NativeTagCard({
   reorder,
   reduceMotion,
   imageRevealController,
-  previewSlotOffset,
+  preview,
+  widePreview,
 }: {
   assetBaseUrl: string;
   light: boolean;
@@ -218,44 +226,38 @@ const NativeTagCard = memo(function NativeTagCard({
   onEditTag?: (tag: NativeTagSummary) => void;
   reduceMotion: boolean;
   imageRevealController: NativeCollectionImageRevealController;
-  previewSlotOffset: number;
+  preview: TagPreview;
+  widePreview: boolean;
   reorder?: {
     index: number;
     count: number;
     onMove: (sourceIndex: number, targetIndex: number) => void;
   };
 }) {
-  const { width } = useWindowDimensions();
-  const widePreview = width >= 767;
   const palette = light
     ? collectionParityTokens.colors.light
     : collectionParityTokens.colors.dark;
   const cardSurface = palette.tagSurface;
   const titleColor = palette.tagTitle;
   const subtitleColor = palette.tagSubtitle;
-  const visiblePreviewLimit = widePreview
-    ? collectionParityTokens.tags.previewColumnsWide * collectionParityTokens.tags.previewRows
-    : collectionParityTokens.tags.previewColumnsNarrow * collectionParityTokens.tags.previewRows;
-  const previewRows = tag.rows.slice(0, visiblePreviewLimit);
+  const previewRows = preview.rows;
   useEffect(() => {
     // Vite creates eighteen <img> sources for every tag, then CSS hides the
     // third six-image row on a phone. Those hidden sources warm the remainder
     // of its first result viewport. Preserve that useful behavior without
     // mounting clipped native Image views into the page-animation texture.
-    for (const row of tag.rows.slice(visiblePreviewLimit, VITE_TAG_PREVIEW_SOURCE_LIMIT)) {
+    for (const row of preview.sources.slice(previewRows.length)) {
       if (!row.imageUri) continue;
       prefetchTagResultAsset(toNativeCollectionAssetUrl(assetBaseUrl, row.imageUri));
     }
     // Preview cards do not render type glyphs, but result cards do. Warm the
     // small shared set used by the same first eighteen rows so Android does not
     // start image-cache lookups for those glyphs on the transition frame.
-    const typeIconUris = new Set(tag.rows
-      .slice(0, VITE_TAG_PREVIEW_SOURCE_LIMIT)
-      .flatMap((row) => row.typeIconUris));
+    const typeIconUris = new Set(preview.sources.flatMap((row) => row.typeIconUris));
     for (const uri of typeIconUris) {
       prefetchTagResultAsset(toNativeCollectionAssetUrl(assetBaseUrl, uri));
     }
-  }, [assetBaseUrl, tag.rows, visiblePreviewLimit]);
+  }, [assetBaseUrl, preview.sources, previewRows.length]);
   const previewGradientTestId = `native-tag-gradient-${tag.key.replace(/[^a-z0-9_-]/gi, '-')}`;
   const [cardDragY] = useState(() => new Animated.Value(0));
   const [dragging, setDragging] = useState(false);
@@ -276,7 +278,7 @@ const NativeTagCard = memo(function NativeTagCard({
           <NativeTagPreviewSprite
             assetBaseUrl={assetBaseUrl}
             controller={imageRevealController}
-            controllerIndex={previewSlotOffset + previewIndex}
+            controllerIndex={preview.offset + previewIndex}
             key={row.id}
             row={row}
             widePreview={widePreview}
@@ -472,6 +474,7 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
   error,
   warning = null,
   isLoading,
+  isActive = true,
   parent,
   tags,
   onActionMenuPress,
@@ -489,6 +492,11 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
   showHeader = true,
 }: Props) {
   const light = useNativeColorScheme() === 'light';
+  const { width } = useWindowDimensions();
+  const widePreview = width >= 767;
+  const visiblePreviewLimit = widePreview
+    ? collectionParityTokens.tags.previewColumnsWide * collectionParityTokens.tags.previewRows
+    : collectionParityTokens.tags.previewColumnsNarrow * collectionParityTokens.tags.previewRows;
   const reduceMotion = useOptionalNativeDevicePreferences()?.shouldReduceMotion ?? false;
   const palette = light
     ? collectionParityTokens.colors.light
@@ -502,8 +510,9 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
   const [creating, setCreating] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
   const [previewImageRevealController] = useState(
-    () => createNativeCollectionImageRevealController(0),
+    () => createNativeCollectionImageRevealController(Platform.OS === 'web' ? null : 0),
   );
+  const revealedImageCount = useRef(0);
   const scrollInteraction = useNativeScrollInteractionReservation();
   const orderedTags = useMemo(() => {
     if (!reordering) return tags;
@@ -513,9 +522,32 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
       return tag ? [tag] : [];
     });
   }, [draftKeys, reordering, tags]);
+  const previewLayout = useMemo(() => {
+    const byKey = new Map<PokemonTagOrderKey, TagPreview>();
+    let count = 0;
+    for (const tag of orderedTags) {
+      const sources: NativeTagSummary['rows'] = [];
+      for (const row of tag.rows) {
+        if (row.imageUri) sources.push(row);
+        if (sources.length === VITE_TAG_PREVIEW_SOURCE_LIMIT) break;
+      }
+      const rows = sources.slice(0, visiblePreviewLimit);
+      byKey.set(tag.key, { rows, sources, offset: count });
+      count += rows.length;
+    }
+    return { byKey, count };
+  }, [orderedTags, visiblePreviewLimit]);
   useEffect(() => {
-    const target = orderedTags.length * VITE_TAG_PREVIEW_SOURCE_LIMIT;
-    let revealed = 0;
+    // Browsers schedule image loading themselves. Native retains its bounded
+    // decode budget, but a visible panel need not wait behind cold-start warming
+    // or spend frames on empty/clipped cells. Keep already revealed images warm.
+    if (Platform.OS === 'web') {
+      previewImageRevealController.setRevealCount(null);
+      return;
+    }
+    const target = previewLayout.count;
+    let revealed = Math.min(target, revealedImageCount.current);
+    revealedImageCount.current = revealed;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     let interactionTask: ReturnType<typeof runAfterNativeUiInteractions> | null = null;
@@ -524,26 +556,24 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
         interactionTask = null;
         if (cancelled) return;
         revealed = Math.min(target, revealed + NATIVE_TAG_PREVIEW_REVEAL_BATCH);
+        revealedImageCount.current = revealed;
         previewImageRevealController.setRevealCount(revealed);
         if (revealed < target) {
           timer = setTimeout(revealNext, TAG_PREVIEW_REVEAL_PERIOD_MS);
-        } else {
-          previewImageRevealController.setRevealCount(null);
         }
-      });
+      }, { preferIdle: !isActive });
     };
-    previewImageRevealController.setRevealCount(0);
-    if (target > 0) {
-      timer = setTimeout(revealNext, TAG_PREVIEW_REVEAL_DELAY_MS);
-    } else {
-      previewImageRevealController.setRevealCount(null);
+    previewImageRevealController.setRevealCount(revealed);
+    if (revealed < target) {
+      if (isActive) revealNext();
+      else timer = setTimeout(revealNext, TAG_PREVIEW_BACKGROUND_DELAY_MS);
     }
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
       interactionTask?.cancel();
     };
-  }, [orderedTags.length, previewImageRevealController]);
+  }, [isActive, previewLayout.count, previewImageRevealController]);
   const openTagEditor = useCallback((tag: NativeTagSummary) => {
     setEditingTag(definitionFromSummary(tag));
   }, []);
@@ -649,7 +679,7 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
             ) : null}
           </View>
         )}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <NativeTagCard
             assetBaseUrl={assetBaseUrl}
             imageRevealController={previewImageRevealController}
@@ -659,7 +689,8 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
             onPressOutTag={onCancelPreviewTag}
             onEditTag={item.tone === 'custom' ? openTagEditor : undefined}
             reduceMotion={reduceMotion}
-            previewSlotOffset={index * VITE_TAG_PREVIEW_SOURCE_LIMIT}
+            preview={previewLayout.byKey.get(item.key)!}
+            widePreview={widePreview}
             reorder={reordering ? {
               index: orderedTags.findIndex((tag) => tag.key === item.key),
               count: orderedTags.length,

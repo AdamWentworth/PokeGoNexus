@@ -530,6 +530,55 @@ describe('native collection model', () => {
     expect(wanted[0].rows[0]).toEqual(expect.objectContaining({ id: 'wanted' }));
   });
 
+  it('matches web tag previews: instance order for buckets and descending CP for Favorites', () => {
+    const instances = {
+      high: instance({ instance_id: 'high', pokemon_id: 383, cp: 4000, favorite: true }),
+      missing: instance({ instance_id: 'missing', cp: null, favorite: true }),
+      low: instance({ instance_id: 'low', cp: 1200, favorite: true }),
+      zero: instance({ instance_id: 'zero', cp: 0, favorite: true }),
+    };
+    const rows = buildNativeCollectionRows(instances, [
+      pokemon,
+      { ...pokemon, pokemon_id: 383, pokedex_number: 383, name: 'Groudon' },
+    ], 'https://pokegonexus.com');
+    const tags = buildNativeTagSummaries(rows, instances, undefined, 'caught');
+
+    expect(tags.find((tag) => tag.key === 'system:caught')?.rows.map((row) => row.id))
+      .toEqual(['high', 'missing', 'low', 'zero']);
+    expect(tags.find((tag) => tag.key === 'system:favorites')?.rows.map((row) => row.id))
+      .toEqual(['high', 'low', 'zero', 'missing']);
+  });
+
+  it('keeps stale memberships in the correct parent and uses saved custom-tag sort order', () => {
+    const instances = {
+      caught: instance({ instance_id: 'caught', caught_tags: ['alpha'], wanted_tags: ['dream'] }),
+      wanted: instance({
+        instance_id: 'wanted', is_caught: false, is_wanted: true,
+        favorite: true, caught_tags: ['alpha'], wanted_tags: ['dream'],
+      }),
+    };
+    const rows = buildNativeCollectionRows(instances, [pokemon], 'https://pokegonexus.com');
+    const envelope: CustomTagsEnvelope = {
+      tags: [
+        { tag_id: 'zeta', parent: 'caught', name: 'Zeta', color: '#111111', sort: 2, created_at: '' },
+        { tag_id: 'alpha', parent: 'caught', name: 'Alpha', color: '#111111', sort: 1, created_at: '' },
+        { tag_id: 'beta', parent: 'caught', name: 'Beta', color: '#111111', sort: 1, created_at: '' },
+        { tag_id: 'dream', parent: 'wanted', name: 'Dream', color: '#111111', sort: 0, created_at: '' },
+      ],
+      orders: { caught: [], wanted: [] },
+    };
+    const caught = buildNativeTagSummaries(rows, instances, envelope, 'caught');
+    const wanted = buildNativeTagSummaries(rows, instances, envelope, 'wanted');
+
+    expect(caught.filter((tag) => tag.tone === 'custom').map((tag) => tag.name))
+      .toEqual(['Alpha', 'Beta', 'Zeta']);
+    expect(caught.find((tag) => tag.key === 'system:favorites')?.rows).toEqual([]);
+    expect(caught.find((tag) => tag.key === 'custom:alpha')?.rows.map((row) => row.id))
+      .toEqual(['caught']);
+    expect(wanted.find((tag) => tag.key === 'custom:dream')?.rows.map((row) => row.id))
+      .toEqual(['wanted']);
+  });
+
   it('keeps system tags available for malformed optional tag metadata', () => {
     const rows = buildNativeCollectionRows({}, [pokemon], 'https://pokegonexus.com');
 

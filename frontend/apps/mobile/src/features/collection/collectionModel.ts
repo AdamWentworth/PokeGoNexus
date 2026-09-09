@@ -13,6 +13,7 @@ import { buildPokemonCatalogEntries } from '@pokemongonexus/shared-domain/catalo
 import {
   projectPokemonCollectionSortSource,
   sortPokemonCollectionItems,
+  sortPokemonFavoriteTagItems,
   type PokemonCollectionSortProjection,
 } from '@pokemongonexus/shared-domain/collection-sort';
 import { resolveInstanceCollectionKey } from '@pokemongonexus/shared-domain/instances';
@@ -711,24 +712,64 @@ const SYSTEM_TAGS: Record<string, Omit<NativeTagSummary, 'rows'>> = {
   },
 };
 
-const rowsForSystemTag = (
-  key: PokemonTagOrderKey,
+type NativeTagMembership = {
+  system: Map<PokemonTagOrderKey, NativeCollectionRow[]>;
+  custom: Record<CustomTagParent, Map<string, NativeCollectionRow[]>>;
+};
+
+const nativeTagMembershipCache = new WeakMap<
+  NativeCollectionRow[],
+  WeakMap<Record<string, PokemonInstance>, NativeTagMembership>
+>();
+
+const buildNativeTagMembership = (
   rows: NativeCollectionRow[],
-): NativeCollectionRow[] => {
-  switch (key) {
-    case 'system:caught':
-      return rows.filter((row) => row.status === 'caught' || row.status === 'trade');
-    case 'system:favorites':
-      return rows.filter((row) => row.favorite);
-    case 'system:trade':
-      return rows.filter((row) => row.status === 'trade');
-    case 'system:wanted':
-      return rows.filter((row) => row.status === 'wanted');
-    case 'system:most-wanted':
-      return rows.filter((row) => row.status === 'wanted' && row.mostWanted);
-    default:
-      return [];
+  instances: Record<string, PokemonInstance>,
+): NativeTagMembership => {
+  const byInstances = nativeTagMembershipCache.get(rows) ?? new WeakMap();
+  const cached = byInstances.get(instances);
+  if (cached) return cached;
+
+  const membership: NativeTagMembership = {
+    system: new Map(),
+    custom: { caught: new Map(), wanted: new Map() },
+  };
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+  const append = <K extends string>(map: Map<K, NativeCollectionRow[]>, key: K, row: NativeCollectionRow) => {
+    const bucket = map.get(key);
+    if (bucket) bucket.push(row);
+    else map.set(key, [row]);
+  };
+
+  // Web tag cards preserve instance insertion order. Populate both panels in
+  // one pass instead of filtering dex-sorted rows for every system bucket.
+  for (const [instanceKey, instance] of Object.entries(instances)) {
+    const row = rowById.get(instance.instance_id ?? instanceKey);
+    if (!row || instance.disabled) continue;
+    if (instance.is_caught) {
+      append(membership.system, 'system:caught', row);
+      if (instance.favorite) append(membership.system, 'system:favorites', row);
+      if (instance.is_for_trade) append(membership.system, 'system:trade', row);
+    }
+    if (instance.is_wanted) {
+      append(membership.system, 'system:wanted', row);
+      if (instance.most_wanted) append(membership.system, 'system:most-wanted', row);
+    }
+    const parent = instance.is_wanted ? 'wanted' : instance.is_caught ? 'caught' : null;
+    if (!parent) continue;
+    for (const tagId of normalizeNativeTagIds(
+      parent === 'caught' ? instance.caught_tags : instance.wanted_tags,
+    )) {
+      append(membership.custom[parent], tagId, row);
+    }
   }
+  membership.system.set('system:favorites', sortPokemonFavoriteTagItems(
+    membership.system.get('system:favorites') ?? [],
+    (row) => ({ favorite: row.favorite, cp: row.cp, pokedex_number: row.pokedexNumber }),
+  ));
+  byInstances.set(instances, membership);
+  nativeTagMembershipCache.set(rows, byInstances);
+  return membership;
 };
 
 type NativeTagSummaryCacheEntry = {
@@ -758,41 +799,34 @@ export const buildNativeTagSummaries = (
   if (cached) return cached.summaries;
 
   const normalizedEnvelope = normalizeNativeTagsEnvelope(envelope);
-  const rowById = new Map(rows.map((row) => [row.id, row]));
-  const customDefinitions = normalizedEnvelope.tags.filter((tag) => tag.parent === parent);
-  const customTagIds = new Set(customDefinitions.map((tag) => tag.tag_id));
-  const customRowsByTagId = new Map<string, NativeCollectionRow[]>();
-  for (const [instanceKey, instance] of Object.entries(instances)) {
-    const row = rowById.get(instance.instance_id ?? instanceKey);
-    if (!row) continue;
-    const memberships = normalizeNativeTagIds(
-      parent === 'caught' ? instance.caught_tags : instance.wanted_tags,
-    );
-    for (const tagId of memberships) {
-      if (!customTagIds.has(tagId)) continue;
-      const tagRows = customRowsByTagId.get(tagId) ?? [];
-      tagRows.push(row);
-      customRowsByTagId.set(tagId, tagRows);
-    }
-  }
+  const membership = buildNativeTagMembership(rows, instances);
+  const customDefinitions = normalizedEnvelope.tags
+    .filter((tag) => tag.parent === parent)
+    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+  const definitionsById = new Map(customDefinitions.map((tag) => [tag.tag_id, tag]));
   const customKeys = customDefinitions.map(
     (tag) => `custom:${tag.tag_id}` as PokemonTagOrderKey,
   );
   const allowed = new Set([...DEFAULT_TAG_ORDER[parent], ...customKeys]);
+  const seen = new Set<PokemonTagOrderKey>();
   const orderedKeys = [
     ...normalizedEnvelope.orders[parent],
     ...DEFAULT_TAG_ORDER[parent],
     ...customKeys,
-  ].filter((key, index, all) => allowed.has(key) && all.indexOf(key) === index);
+  ].filter((key) => {
+    if (!allowed.has(key) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   const summaries = orderedKeys.flatMap((key) => {
     const system = SYSTEM_TAGS[key];
     if (system && system.parent === parent) {
-      return [{ ...system, rows: rowsForSystemTag(key, rows) }];
+      return [{ ...system, rows: membership.system.get(key) ?? [] }];
     }
     if (!key.startsWith('custom:')) return [];
     const tagId = key.slice('custom:'.length);
-    const definition = customDefinitions.find((tag) => tag.tag_id === tagId);
+    const definition = definitionsById.get(tagId);
     if (!definition) return [];
     return [{
       key,
@@ -801,12 +835,14 @@ export const buildNativeTagSummaries = (
       filterName: definition.name,
       color: definition.color,
       tone: 'custom',
-      rows: customRowsByTagId.get(tagId) ?? [],
+      rows: membership.custom[parent].get(tagId) ?? [],
     } satisfies NativeTagSummary];
   });
-  const nextCacheEntries = cachedEntries ?? [];
+  // Keep the latest summary for each panel; metadata edits must not retain an
+  // unbounded history of envelopes while the collection rows stay unchanged.
+  const nextCacheEntries = (cachedEntries ?? []).filter((entry) => entry.parent !== parent);
   nextCacheEntries.push({ envelope, instances, parent, summaries });
-  if (!cachedEntries) nativeTagSummariesCache.set(rows, nextCacheEntries);
+  nativeTagSummariesCache.set(rows, nextCacheEntries);
   return summaries;
 };
 
