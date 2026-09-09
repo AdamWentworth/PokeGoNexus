@@ -546,6 +546,8 @@ describe('native collection model', () => {
     expect(tags.find((tag) => tag.key === 'system:caught')?.rows.map((row) => row.id))
       .toEqual(['high', 'missing', 'low', 'zero']);
     expect(tags.find((tag) => tag.key === 'system:favorites')?.rows.map((row) => row.id))
+      .toEqual(['high', 'missing', 'low', 'zero']);
+    expect(tags.find((tag) => tag.key === 'system:favorites')?.previewRows?.map((row) => row.id))
       .toEqual(['high', 'low', 'zero', 'missing']);
   });
 

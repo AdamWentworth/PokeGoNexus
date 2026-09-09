@@ -182,6 +182,41 @@ describe('NativeTagsPanelScreen', () => {
     parent: 'caught' as const,
   };
 
+  it('renders Favorites artwork in CP order and hands the original membership to the grid', () => {
+    const first = { ...tag.rows[0], id: 'first', cp: 2000 };
+    const strongest = {
+      ...tag.rows[0], id: 'strongest', cp: 4000,
+      imageUri: 'https://pokegonexus.com/images/mewtwo.png',
+    };
+    const favorites = {
+      ...tag,
+      key: 'system:favorites' as const,
+      name: 'Favorites',
+      tone: 'favorites' as const,
+      rows: [first, strongest],
+      previewRows: [strongest, first],
+    };
+    const onSelectTag = jest.fn();
+    const onPreviewTag = jest.fn();
+    render(<NativeTagsPanelScreen
+      {...previewProps}
+      tags={[favorites]}
+      onSelectTag={onSelectTag}
+      onPreviewTag={onPreviewTag}
+    />);
+    act(() => jest.advanceTimersByTime(100));
+    const spriteUris = screen.UNSAFE_getAllByType(Image)
+      .map((image) => image.props.source?.uri)
+      .filter((uri) => [first.imageUri, strongest.imageUri].includes(uri));
+    expect(spriteUris).toEqual([strongest.imageUri, first.imageUri]);
+    const openTag = screen.getByLabelText('Open Favorites, 2 Pokémon');
+    fireEvent(openTag, 'pressIn');
+    fireEvent.press(openTag);
+    expect(onPreviewTag).toHaveBeenCalledWith(favorites);
+    expect(onSelectTag).toHaveBeenCalledWith(favorites);
+    expect(onSelectTag.mock.calls[0][0].rows).toEqual([first, strongest]);
+  });
+
   it('starts visible previews immediately and skips empty cards and missing artwork', () => {
     render(<NativeTagsPanelScreen {...previewProps} tags={[
       { ...maxTag, rows: [] },

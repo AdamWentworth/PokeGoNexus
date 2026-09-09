@@ -79,7 +79,10 @@ export type NativeTagSummary = {
   filterName?: string;
   color: string;
   tone: 'caught' | 'trade' | 'favorites' | 'wanted' | 'most-wanted' | 'custom';
+  /** Membership in web bucket order, before applying the grid's selected sort. */
   rows: NativeCollectionRow[];
+  /** Optional artwork order for the tag card, independent of grid ordering. */
+  previewRows?: NativeCollectionRow[];
 };
 
 export type NativeCollectionSort =
@@ -669,7 +672,7 @@ const DEFAULT_TAG_ORDER: Record<CustomTagParent, PokemonTagOrderKey[]> = {
   wanted: ['system:wanted', 'system:most-wanted'],
 };
 
-const SYSTEM_TAGS: Record<string, Omit<NativeTagSummary, 'rows'>> = {
+const SYSTEM_TAGS: Record<string, Omit<NativeTagSummary, 'rows' | 'previewRows'>> = {
   'system:caught': {
     key: 'system:caught',
     parent: 'caught',
@@ -715,6 +718,7 @@ const SYSTEM_TAGS: Record<string, Omit<NativeTagSummary, 'rows'>> = {
 type NativeTagMembership = {
   system: Map<PokemonTagOrderKey, NativeCollectionRow[]>;
   custom: Record<CustomTagParent, Map<string, NativeCollectionRow[]>>;
+  favoritePreviewRows: NativeCollectionRow[];
 };
 
 const nativeTagMembershipCache = new WeakMap<
@@ -733,6 +737,7 @@ const buildNativeTagMembership = (
   const membership: NativeTagMembership = {
     system: new Map(),
     custom: { caught: new Map(), wanted: new Map() },
+    favoritePreviewRows: [],
   };
   const rowById = new Map(rows.map((row) => [row.id, row]));
   const append = <K extends string>(map: Map<K, NativeCollectionRow[]>, key: K, row: NativeCollectionRow) => {
@@ -763,10 +768,12 @@ const buildNativeTagMembership = (
       append(membership.custom[parent], tagId, row);
     }
   }
-  membership.system.set('system:favorites', sortPokemonFavoriteTagItems(
+  // Vite sorts only the Favorites card's artwork by CP. The grid starts from
+  // the original bucket order so ties retain the same instance/form sequence.
+  membership.favoritePreviewRows = sortPokemonFavoriteTagItems(
     membership.system.get('system:favorites') ?? [],
     (row) => ({ favorite: row.favorite, cp: row.cp, pokedex_number: row.pokedexNumber }),
-  ));
+  );
   byInstances.set(instances, membership);
   nativeTagMembershipCache.set(rows, byInstances);
   return membership;
@@ -819,10 +826,14 @@ export const buildNativeTagSummaries = (
     return true;
   });
 
-  const summaries = orderedKeys.flatMap((key) => {
+  const summaries = orderedKeys.flatMap<NativeTagSummary>((key) => {
     const system = SYSTEM_TAGS[key];
     if (system && system.parent === parent) {
-      return [{ ...system, rows: membership.system.get(key) ?? [] }];
+      return [{
+        ...system,
+        rows: membership.system.get(key) ?? [],
+        previewRows: key === 'system:favorites' ? membership.favoritePreviewRows : undefined,
+      }];
     }
     if (!key.startsWith('custom:')) return [];
     const tagId = key.slice('custom:'.length);

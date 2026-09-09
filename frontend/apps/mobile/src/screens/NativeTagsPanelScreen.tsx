@@ -527,7 +527,7 @@ export const NativeTagsPanelScreen = memo(function NativeTagsPanelScreen({
     let count = 0;
     for (const tag of orderedTags) {
       const sources: NativeTagSummary['rows'] = [];
-      for (const row of tag.rows) {
+      for (const row of tag.previewRows ?? tag.rows) {
         if (row.imageUri) sources.push(row);
         if (sources.length === VITE_TAG_PREVIEW_SOURCE_LIMIT) break;
       }
