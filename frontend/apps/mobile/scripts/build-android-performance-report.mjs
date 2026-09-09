@@ -313,6 +313,9 @@ const percentile = (values, fraction) => {
 const frameTimelinePaths = listArgs.get('--frame-timeline') ?? [];
 for (const frameTimelinePath of frameTimelinePaths) {
   const timeline = JSON.parse(readFileSync(resolve(frameTimelinePath), 'utf8'));
+  if (timeline.frameTimePercentile !== 95) {
+    throw new Error(`FrameTimeline report lacks verified p95 semantics: ${frameTimelinePath}. Reprocess its trace with the corrected query.`);
+  }
   addSample('global.runtime', 'frame_time_p95_ms', Number(timeline.frameTimeP95Ms));
   addSample(
     'global.runtime',

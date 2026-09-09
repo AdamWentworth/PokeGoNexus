@@ -55,6 +55,7 @@ test('builds interaction, frame, jank, and memory evidence from Android diagnost
     writeFileSync(frameTimeline, JSON.stringify({
       frameCount: 720,
       frameTimeP95Ms: 3.5,
+      frameTimePercentile: 95,
       jankyFramesPercent: 0,
       layerName: 'com.pokegonexus.mobile/MainActivity',
     }));
@@ -141,6 +142,21 @@ test('rejects development-client data as physical release evidence', () => {
     ], { encoding: 'utf8' });
     assert.equal(result.status, 2);
     assert.match(result.stderr, /standalone release APK/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('rejects old FrameTimeline values that were mislabeled as p95', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'pokegonexus-old-frame-report-'));
+  try {
+    const timeline = resolve(directory, 'old-frame-timeline.json');
+    writeFileSync(timeline, JSON.stringify({ frameCount: 100, frameTimeP95Ms: 3.5 }));
+    const result = spawnSync(process.execPath, [
+      builder, '--output', resolve(directory, 'report.json'), '--frame-timeline', timeline,
+    ], { encoding: 'utf8' });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Reprocess its trace with the corrected query/);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

@@ -1,8 +1,24 @@
 # Strong-machine Android performance handoff
 
-Last updated: 2026-09-07
+Last updated: 2026-09-09
 
-## Next manual candidate requested
+## Current phone candidate
+
+The physical Pixel 8 Pro now has
+`PokeGoNexus-manual-1fdef284-arm64-v8a.apk`, built locally with the existing
+bounded manual builder. Its installed APK checksum is
+`2ee042d41ccdcc951546e72dcfd9cbc1590a7c928d360a4775f3629a67521076`.
+This is the normal standalone native preview with smoke mode disabled; the
+in-place update preserved the signed-in account. Targeted tag checks and the
+remaining form-order/performance findings are recorded in
+`CURRENT_NATIVE_TESTING_STATUS.md`.
+
+The 2026-09-09 phone investigation also corrected a FrameTimeline percentile
+query bug. Older FrameTimeline p95 reports used the 0.95th percentile and must
+be recomputed from their raw traces before reuse. JS interaction-latency
+measurements are separate and unaffected by that query correction.
+
+## Previous manual candidate request (superseded)
 
 The installed `PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk` is now the prior
 baseline. It includes the location-card correction, fixed Trades transition

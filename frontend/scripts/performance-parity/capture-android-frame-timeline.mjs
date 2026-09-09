@@ -14,6 +14,7 @@ import {
 import os from 'node:os';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { buildAndroidFrameTimelineQuery } from './android-frame-timeline-query.mjs';
 
 const frontendDirectory = resolve(import.meta.dirname, '../..');
 const perfettoVersion = 'v58.2';
@@ -199,27 +200,7 @@ const main = async () => {
   } finally {
     runAdb(adb, device, ['shell', 'rm', '-f', remoteTrace], { quiet: true });
   }
-  const sql = `
-    WITH target AS (
-      SELECT layer_name
-      FROM actual_frame_timeline_slice
-      WHERE layer_name LIKE '%${layerMatch}%'
-      GROUP BY layer_name
-      ORDER BY COUNT(*) DESC
-      LIMIT 1
-    ), frames AS (
-      SELECT dur / 1e6 AS duration_ms, jank_type, layer_name
-      FROM actual_frame_timeline_slice
-      JOIN target USING(layer_name)
-    )
-    SELECT json_object(
-      'frameCount', COUNT(*),
-      'frameTimeP95Ms', PERCENTILE(duration_ms, 0.95),
-      'jankyFramesPercent', 100.0 * SUM(jank_type != 'None') / COUNT(*),
-      'layerName', MIN(layer_name)
-    ) AS result
-    FROM frames;
-  `;
+  const sql = buildAndroidFrameTimelineQuery(layerMatch);
   const queryResult = execFileSync(
     traceProcessor,
     ['query', tracePath, sql],

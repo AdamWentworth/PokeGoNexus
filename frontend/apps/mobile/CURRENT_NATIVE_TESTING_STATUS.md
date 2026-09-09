@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-09 (tag previews; Android artifact evidence below retains its original date)
+Last targeted revalidation: 2026-09-09 (tag previews on the physical Pixel 8 Pro)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -33,8 +33,46 @@ batch and interaction scheduler; the browser uses its own image scheduler.
 Validation: 62 focused native tests, 52 web tag/sort tests, 33 performance-contract
 tests, both hosts' TypeScript and lint checks, and the real-route collection
 browser workflow passed. That browser run painted the For Trade result in
-485 ms against the existing 750 ms budget. No Android device was connected;
-this repair has not received physical-device frame validation or a new APK.
+485 ms against the existing 750 ms budget.
+
+The subsequent physical Pixel 8 Pro check installed the normal standalone
+`1fdef284` APK in place, preserving the signed-in session and account data.
+Its 167-Favorites preview starts with the expected CP 4713/4689/4688 Mewtwo,
+matching the saved web account snapshot. Read-only checks covered preserved
+grid sorting, explicit Favorite sorting, detail open/close, Shadow Shinies,
+For Trade, All Wanted, Most Wanted, All Caught, and returning to tag previews.
+Maestro needed CP-label and floating-menu targeting corrections; a final
+All Caught scroll-centering failure was resolved by completing selection and
+return navigation in a focused follow-up flow. This was targeted account
+validation, not a complete run of the fixture-based release gate.
+
+Further findings limit parity sign-off:
+
+- Pokédex sorting orders some same-species forms differently from the saved
+  web capture: native places shiny Gigantamax Charizard before Shadow and
+  shiny Shadow Charizard. Web places those Shadow forms first. The shared
+  comparator leaves some form pairs tied, making input order significant.
+- The physical scrolling report used `PERCENTILE(duration_ms, 0.95)` even
+  though Perfetto expects a percentage from 0 to 100. The query now uses `95`,
+  has a known-value SQL regression test, and marks its percentile explicitly.
+  The native report builder rejects old unmarked FrameTimeline JSON. Historical
+  FrameTimeline-derived p95 values must be recomputed from their saved traces;
+  this does not invalidate separately measured JS interaction timings.
+
+Across two old-build and four updated-build scrolling samples, corrected p95
+ranged from 9.50–11.66 ms on `2d87ff8e` and 9.77–11.74 ms on `1fdef284`.
+All-jank rates ranged from 0.90–12.97% and 0–15.33%, respectively. Reversing the
+build order reproduced high variability on the old APK too; the final restored
+current-build run recorded 783 frames with zero jank flags. The extra flags in
+the slower runs were predominantly Buffer Stuffing and remain included in
+those rates. These limited, sequential account samples do not establish a
+performance pass or isolate a regression from the tag change. Preserve this
+concern for a controlled comparison against Vite on the same phone.
+
+Raw videos, 11 checkpoint screenshots across the account flows, installation
+checksum evidence, corrected traces, and automation logs are retained under
+`.artifacts/tag-parity/android-1fdef284/`. The measurement repair's 36 performance
+contract/report tests pass.
 
 ## Which Android workflow to use
 
@@ -73,13 +111,15 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`2d87ff8e` installed. It was received as
-`PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk`, with SHA-256
-`81d59d5fb7c0860703feb7d43dfcbfb41869fd16a15f21e2e58327ade69fda5a`.
+`1fdef284` installed. It was built locally with the bounded manual builder as
+`PokeGoNexus-manual-1fdef284-arm64-v8a.apk`, with SHA-256
+`2ee042d41ccdcc951546e72dcfd9cbc1590a7c928d360a4775f3629a67521076`.
 The checksum of Android's installed `base.apk` matches exactly. Its embedded
 configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
 `deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
 does not require Metro. The in-place install preserved the signed-in session.
+The prior installed `2d87ff8e` APK was retained as
+`.artifacts/tag-parity/android-1fdef284/original-installed.apk` for rollback.
 
 The prior `PokeGoNexus-information-5c7f025b-arm64.apk` remains retained only as
 performance evidence. It was compiled with device-smoke mode enabled and must
