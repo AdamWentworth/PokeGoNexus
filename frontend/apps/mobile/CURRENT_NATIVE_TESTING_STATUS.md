@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-09 (tag previews on the physical Pixel 8 Pro)
+Last targeted revalidation: 2026-09-09 (Favorites preview/grid ordering)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -46,12 +46,40 @@ All Caught scroll-centering failure was resolved by completing selection and
 return navigation in a focused follow-up flow. This was targeted account
 validation, not a complete run of the fixture-based release gate.
 
-Further findings limit parity sign-off:
+The Favorites grid ordering discrepancy found in that phone run is repaired
+in `44c02d98`. Vite builds the grid from instance-ordered tag membership,
+whereas native was feeding it the CP-sorted Favorites preview. Some forms
+compare equal, so their input order affects Pokédex, Name, and HP results.
+Native now keeps original membership in `rows` and separate CP-sorted artwork
+in `previewRows`. Both arrays are cached with the membership snapshot. Other
+tag previews keep their existing order, and opening a tag preserves the
+selected grid sort.
 
-- Pokédex sorting orders some same-species forms differently from the saved
-  web capture: native places shiny Gigantamax Charizard before Shadow and
-  shiny Shadow Charizard. Web places those Shadow forms first. The shared
-  comparator leaves some form pairs tied, making input order significant.
+The new cross-host regression uses the captured Venusaur, Charizard, and
+Blastoise form/CP sequence with synthetic instance IDs. It reproduced the
+incorrect Charizard Shadow/Gigantamax and Blastoise Gigantamax/costume order
+before the fix. All six sorts in both directions now match Vite's actual
+bucket/filter pipeline; a native screen test verifies the preview artwork
+and the membership passed to the grid. Validation: 57 native tests, 42 web
+tests including 14 new ordering checks, both hosts' TypeScript checks, and
+native/new-test lint passed. Native lint excluded generated `.artifacts/`
+diagnostic bundles from the prior investigation.
+
+The normal standalone `44c02d98` APK then passed the targeted signed-in Pixel
+8 Pro flow without a retry. Visual review of its screenshots confirms the
+captured Charizard Shadow-before-Gigantamax and Blastoise
+Gigantamax-before-sunglasses order, both on opening Favorites and after a
+NUMBER → FAVORITE → NUMBER round trip. The CP-descending grid starts with
+4713/4689/4688 Mewtwo; the tag preview retains the same first twelve sprites.
+Counts remain 2249 caught and 167 Favorites. The install used the same signing
+certificate and preserved app data. No fatal exception, JS error, or app ANR
+marker appeared in the captured current-process log. The flow, four reviewed
+screenshots, checksum evidence, and logs are retained under
+`.artifacts/tag-ordering/android-44c02d98/`. This closes the reported ordering
+issue; it does not replace the outstanding controlled performance comparison.
+
+The separate performance finding still limits parity sign-off:
+
 - The physical scrolling report used `PERCENTILE(duration_ms, 0.95)` even
   though Perfetto expects a percentage from 0 to 100. The query now uses `95`,
   has a known-value SQL regression test, and marks its percentile explicitly.
@@ -111,15 +139,18 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`1fdef284` installed. It was built locally with the bounded manual builder as
-`PokeGoNexus-manual-1fdef284-arm64-v8a.apk`, with SHA-256
-`2ee042d41ccdcc951546e72dcfd9cbc1590a7c928d360a4775f3629a67521076`.
+`44c02d98` installed. It was built locally with the bounded manual builder as
+`PokeGoNexus-manual-44c02d98-arm64-v8a.apk`, with SHA-256
+`b111792c0306cb8c4b3553765154904a1c7444235747da1247a45f63b5919875`.
 The checksum of Android's installed `base.apk` matches exactly. Its embedded
 configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
 `deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
 does not require Metro. The in-place install preserved the signed-in session.
 The prior installed `2d87ff8e` APK was retained as
 `.artifacts/tag-parity/android-1fdef284/original-installed.apk` for rollback.
+The intermediate `1fdef284` manual APK is also retained in
+`.artifacts/manual-standalone/`; it contains the earlier tag preview repair
+but predates the Favorites grid ordering fix.
 
 The prior `PokeGoNexus-information-5c7f025b-arm64.apk` remains retained only as
 performance evidence. It was compiled with device-smoke mode enabled and must

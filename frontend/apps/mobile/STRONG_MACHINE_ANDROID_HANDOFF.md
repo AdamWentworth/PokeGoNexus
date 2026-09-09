@@ -5,12 +5,14 @@ Last updated: 2026-09-09
 ## Current phone candidate
 
 The physical Pixel 8 Pro now has
-`PokeGoNexus-manual-1fdef284-arm64-v8a.apk`, built locally with the existing
+`PokeGoNexus-manual-44c02d98-arm64-v8a.apk`, built locally with the existing
 bounded manual builder. Its installed APK checksum is
-`2ee042d41ccdcc951546e72dcfd9cbc1590a7c928d360a4775f3629a67521076`.
+`b111792c0306cb8c4b3553765154904a1c7444235747da1247a45f63b5919875`.
 This is the normal standalone native preview with smoke mode disabled; the
-in-place update preserved the signed-in account. Targeted tag checks and the
-remaining form-order/performance findings are recorded in
+in-place update preserved the signed-in account. This candidate separates
+the CP-sorted Favorites preview from the grid's instance-ordered membership.
+Targeted tag checks, the ordering repair, and the remaining performance
+comparison are recorded in
 `CURRENT_NATIVE_TESTING_STATUS.md`.
 
 The 2026-09-09 phone investigation also corrected a FrameTimeline percentile
