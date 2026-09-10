@@ -1,4 +1,4 @@
-import { createNativeInstanceFromCatalogEntry, persistNativeCatalogAdditions } from '../../../../src/features/collection/nativeCatalogMutation';
+import { createNativeInstanceFromCatalogEntry, mergeNativeCatalogInstances, persistNativeCatalogAdditions } from '../../../../src/features/collection/nativeCatalogMutation';
 import type { NativeCatalogOrganizerRequest } from '../../../../src/features/collection/nativeCatalogMutation';
 import { caughtCopy, formCatalog } from '../../../fixtures/nativeCatalogForms';
 import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances';
@@ -16,6 +16,18 @@ const run = (request: NativeCatalogOrganizerRequest, instances: Record<string, P
 };
 
 describe('catalog form additions', () => {
+  it('merges updated legacy copies and a large new batch without duplicating existing records or rescanning per item', () => {
+    const source = { legacyKey: caughtCopy('owned', 6) };
+    let enumerations = 0;
+    const tracked = new Proxy(source, { ownKeys: (target) => { enumerations += 1; return Reflect.ownKeys(target); } });
+    const additions = Array.from({ length: 1_000 }, (_, index) => caughtCopy(`new-${index}`, 6));
+    const merged = mergeNativeCatalogInstances(tracked, [{ ...source.legacyKey, is_mega: true }, ...additions]);
+    expect(Object.keys(merged)).toHaveLength(1_001);
+    expect(merged.legacyKey.is_mega).toBe(true);
+    expect(merged.owned).toBeUndefined();
+    expect(source.legacyKey.is_mega).toBe(false);
+    expect(enumerations).toBeLessThanOrEqual(2);
+  });
   it.each([['0006-mega_x', 6, 'X'], ['0383-primal', 383, null]] as const)(
     'evolves an existing copy for %s while retaining identity, stats, tags, and favorite', async (variantId, pokemonId, megaForm) => {
       const source = caughtCopy('owned', pokemonId);
@@ -49,6 +61,7 @@ describe('catalog form additions', () => {
       expect.objectContaining({ variant_id: '0646-shiny', shiny: true, instance_id: 'new-1', fused_with: 'new-2', is_fused: true }),
       expect.objectContaining({ variant_id: '0644-default', shiny: false, instance_id: 'new-2', fused_with: 'new-1', disabled: true }),
     ]);
+    expect(result.instances[1].last_update).toBeGreaterThan(result.instances[0].last_update);
   });
 
   it('supports an existing base and a newly created fusion partner', async () => {

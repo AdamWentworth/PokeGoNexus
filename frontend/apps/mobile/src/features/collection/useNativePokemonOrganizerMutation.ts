@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { resolveInstanceCollectionKey } from '@pokemongonexus/shared-domain/instances';
 import type { NativeCollectionSnapshot } from '../../services/collectionApi';
 import { useNativeApiClients } from '../../services/useNativeApiClients';
 import { nativeCollectionOutbox } from '../../storage/nativeCollectionOutbox';
@@ -7,6 +6,7 @@ import { useNativeCollectionSync } from './NativeCollectionSyncProvider';
 import { nativeCollectionQueryKeys } from './collectionQueries';
 import {
   persistNativeCatalogAdditions,
+  mergeNativeCatalogInstances,
   type NativeCatalogOrganizerRequest,
 } from './nativeCatalogMutation';
 import {
@@ -39,11 +39,7 @@ export const useNativePokemonOrganizerMutation = (userId: string) => {
             onQueued: (instances) => {
               queryClient.setQueryData<NativeCollectionSnapshot>(queryKey, (current) => {
                 if (!current) return current;
-                const additions = Object.fromEntries(instances.flatMap((instance) => (
-                  instance.instance_id ? [[resolveInstanceCollectionKey(current.instances, instance.instance_id)
-                    ?? instance.instance_id, instance]] : []
-                )));
-                return { ...current, instances: { ...current.instances, ...additions } };
+                return { ...current, instances: mergeNativeCatalogInstances(current.instances, instances) };
               });
             },
           })

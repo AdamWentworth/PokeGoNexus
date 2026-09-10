@@ -99,6 +99,9 @@ behavior is easier to reproduce natively.
   no records, including when new components have been selected.
 - The bulk organizer and individual catalog route must use the same validated
   creation path; neither may create a fused record without a partner.
+- Applying a bulk creation result must index existing instance keys once,
+  avoiding a full collection scan for every new copy. Newly created copies
+  retain their creation order through increasing timestamps within the batch.
 - Connection loss, sync failure with retry, and recovery must be visible across
   native routes, including signed-out connectivity feedback. Status notices must
   leave Save and Cancel controls accessible.

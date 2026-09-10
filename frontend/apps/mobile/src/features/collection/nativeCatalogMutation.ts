@@ -31,6 +31,26 @@ export type NativeCatalogOrganizerRequest = {
   formChoices?: Record<string, NativeCatalogFormChoice>;
 };
 
+/** Preserve legacy collection keys without rescanning the collection per addition. */
+export const mergeNativeCatalogInstances = (
+  current: Record<string, PokemonInstance>,
+  updates: PokemonInstance[],
+): Record<string, PokemonInstance> => {
+  const keysById = new Map<string, string>();
+  for (const [key, instance] of Object.entries(current)) {
+    const id = instance.instance_id || key;
+    if (!keysById.has(id)) keysById.set(id, key);
+  }
+  const merged = { ...current };
+  for (const instance of updates) {
+    if (!instance.instance_id) continue;
+    const key = current[instance.instance_id] ? instance.instance_id
+      : keysById.get(instance.instance_id) ?? instance.instance_id;
+    merged[key] = instance;
+  }
+  return merged;
+};
+
 const variantSuffix = (entry: PokemonCatalogEntry): string =>
   entry.id.slice(entry.id.indexOf('-') + 1).toLowerCase();
 
@@ -183,11 +203,13 @@ export const persistNativeCatalogAdditions = async ({
   const instances: PokemonInstance[] = [];
   const usedKeys = new Set<string>();
   let createdCount = 0;
-  const createCopy = (entry: PokemonCatalogEntry, pokemon: BasePokemon): PokemonInstance =>
-    createNativeInstanceFromCatalogEntry({
+  const createCopy = (entry: PokemonCatalogEntry, pokemon: BasePokemon): PokemonInstance => {
+    const index = createdCount++;
+    return createNativeInstanceFromCatalogEntry({
       entry, pokemon, destination: request.destination,
-      instanceId: instanceIds?.[createdCount++] ?? Crypto.randomUUID(), now,
+      instanceId: instanceIds?.[index] ?? Crypto.randomUUID(), now: now + index,
     });
+  };
   const chooseCopy = (
     choice: NativeCatalogCopyChoice,
     form: NativeCatalogForm,
