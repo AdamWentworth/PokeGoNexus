@@ -59,6 +59,7 @@ import { NativeActionMenu } from '../components/NativeActionMenu';
 import { NativeActionMenuAnchor } from '../components/NativeActionMenuAnchor';
 import { NativeConfirmationDialog } from '../components/NativeConfirmationDialog';
 import { NativePokemonOrganizerSheet } from '../features/collection/NativePokemonOrganizerSheet';
+import type { BasePokemon } from '@pokemongonexus/shared-contracts/pokemon';
 import type {
   NativePokemonOrganizerRequest,
 } from '../features/collection/useNativePokemonOrganizerMutation';
@@ -75,6 +76,7 @@ const VIEW_ORDER: readonly NativePokemonHubView[] = (
 );
 
 type Props = {
+  catalog?: BasePokemon[];
   assetBaseUrl: string;
   catalogRows: NativeCollectionRow[];
   instances: Record<string, PokemonInstance>;
@@ -112,6 +114,7 @@ type Props = {
 };
 
 export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen({
+  catalog,
   assetBaseUrl,
   catalogRows,
   instances,
@@ -993,6 +996,8 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
       ) : null}
       {onOrganizePokemon && organizerPrepared && selectedOrganizerRows.length > 0 ? (
         <NativePokemonOrganizerSheet
+          catalog={catalog}
+          assetBaseUrl={assetBaseUrl}
           error={organizerError}
           inventoryTags={inventoryTags}
           instances={instances}

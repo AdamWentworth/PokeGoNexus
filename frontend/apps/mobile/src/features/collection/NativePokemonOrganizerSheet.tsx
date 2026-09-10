@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances';
+import type { BasePokemon } from '@pokemongonexus/shared-contracts/pokemon';
 import type {
   CreateCustomTagRequest,
   CustomTagDefinition,
@@ -17,7 +18,9 @@ import type {
 } from '@pokemongonexus/shared-contracts/users';
 import { resolveInstanceCollectionKey } from '@pokemongonexus/shared-domain/instances';
 import type { NativeCollectionRow, NativeTagSummary } from './collectionModel';
-import type { NativeCatalogDestination } from './nativeCatalogMutation';
+import type { NativeCatalogDestination, NativeCatalogOrganizerRequest } from './nativeCatalogMutation';
+import { NativeCatalogFormPicker } from './NativeCatalogFormPicker';
+import { isNativeCatalogFormVariant } from './nativeCatalogFormModel';
 import type { NativeOrganizerTagChanges } from './nativeExistingOrganizerMutation';
 import type { NativePokemonOrganizerRequest } from './useNativePokemonOrganizerMutation';
 import { NativeCollectionPriorityStar } from './parity/NativeCollectionPriorityStar';
@@ -26,6 +29,8 @@ import { NativeCustomTagEditorSheet } from './NativeCustomTagEditorSheet';
 import { useNativeColorScheme } from '../settings/useNativeColorScheme';
 
 type Props = {
+  catalog?: BasePokemon[];
+  assetBaseUrl?: string;
   inventoryTags: NativeTagSummary[];
   wishlistTags: NativeTagSummary[];
   instances: Record<string, PokemonInstance>;
@@ -82,6 +87,8 @@ const CustomTagChoice = ({
 );
 
 export const NativePokemonOrganizerSheet = ({
+  catalog = [],
+  assetBaseUrl = '',
   inventoryTags,
   wishlistTags,
   instances,
@@ -94,14 +101,16 @@ export const NativePokemonOrganizerSheet = ({
   visible,
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
+  const [formRequest, setFormRequest] = useState<NativeCatalogOrganizerRequest | null>(null);
+  if (!visible && formRequest) setFormRequest(null);
   useEffect(() => {
-    if (!visible || isSaving || Platform.OS === 'web') return undefined;
+    if (!visible || isSaving || formRequest || Platform.OS === 'web') return undefined;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       onClose();
       return true;
     });
     return () => subscription.remove();
-  }, [isSaving, onClose, visible]);
+  }, [formRequest, isSaving, onClose, visible]);
   const isCatalog = rows.length > 0 && rows.every((row) => row.source === 'catalog');
   const selectedInstances = useMemo(() => rows.flatMap((row) => {
     if (row.source === 'catalog') return [];
@@ -369,14 +378,18 @@ export const NativePokemonOrganizerSheet = ({
 
   const apply = async () => {
     if (selectionKind === 'catalog') {
-      await onApply({
-        operation: 'create',
+      const request: NativeCatalogOrganizerRequest = {
         variantIds: rows.map((row) => row.id),
         destination,
         customTagIds: selectedTagIds(destination === 'wanted' ? 'wanted' : 'caught'),
         favorite: destination === 'caught' && Boolean(builtInChanges.favorite),
         mostWanted: destination === 'wanted' && Boolean(builtInChanges.mostWanted),
-      });
+      };
+      if (destination === 'caught' && request.variantIds.some(isNativeCatalogFormVariant)) {
+        setFormRequest(request);
+      } else {
+        await onApply({ operation: 'create', ...request });
+      }
       return;
     }
     if (stage === 'wanted-copy') {
@@ -434,6 +447,19 @@ export const NativePokemonOrganizerSheet = ({
         : stage === 'remove'
           ? selectionKind === 'wanted' ? 'Remove from Wanted' : 'Transfer selected'
           : `Apply to ${selectedInstances.length}`;
+
+  if (visible && formRequest) return (
+    <View style={styles.inlineRoot}>
+      <View style={styles.backdrop}>
+        <View style={[styles.sheet, { height: '94%' }]}>
+          <NativeCatalogFormPicker assetBaseUrl={assetBaseUrl} catalog={catalog} instances={instances}
+            error={error} isSaving={isSaving} request={formRequest}
+            onCancel={() => setFormRequest(null)}
+            onConfirm={(request) => onApply({ operation: 'create', ...request })} />
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <View

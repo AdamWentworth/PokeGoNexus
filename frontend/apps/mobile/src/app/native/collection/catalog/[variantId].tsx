@@ -1,5 +1,7 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNativeSession } from '../../../../auth/NativeSessionContext';
 import { runtimeConfig } from '../../../../config/runtimeConfig';
 import { buildNativeCatalogRows } from '../../../../features/collection/collectionModel';
@@ -7,11 +9,16 @@ import { useNativeCollectionSnapshotQuery } from '../../../../features/collectio
 import { useNativeCatalogAddition } from '../../../../features/collection/useNativeCatalogAddition';
 import { NativeCatalogDetailScreen } from '../../../../screens/NativeCatalogDetailScreen';
 import { NativeProtectedSessionGate } from '../../../../components/NativeProtectedSessionGate';
+import { NativeCatalogFormPicker } from '../../../../features/collection/NativeCatalogFormPicker';
+import { isNativeCatalogFormVariant } from '../../../../features/collection/nativeCatalogFormModel';
+import type { NativeCatalogOrganizerRequest } from '../../../../features/collection/nativeCatalogMutation';
 
 export default function NativeCatalogDetailRoute() {
   const router = useRouter();
   const params = useLocalSearchParams<{ variantId?: string | string[] }>();
   const session = useNativeSession();
+  const insets = useSafeAreaInsets();
+  const [formRequest, setFormRequest] = useState<NativeCatalogOrganizerRequest | null>(null);
   const variantId = Array.isArray(params.variantId)
     ? params.variantId[0] ?? ''
     : params.variantId ?? '';
@@ -39,6 +46,20 @@ export default function NativeCatalogDetailRoute() {
     return <Redirect href="/native/login?returnTo=%2Fnative%2Fcollection" />;
   }
 
+  if (formRequest && snapshotQuery.data) return (
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <NativeCatalogFormPicker assetBaseUrl={runtimeConfig.api.frontendAppUrl}
+        catalog={snapshotQuery.data.catalog} instances={snapshotQuery.data.instances}
+        request={formRequest} isSaving={mutation.isPending}
+        error={mutation.error instanceof Error ? mutation.error.message : null}
+        onCancel={() => setFormRequest(null)}
+        onConfirm={async (request) => {
+          await mutation.mutateAsync(request);
+          setFormRequest(null);
+        }} />
+    </View>
+  );
+
   return (
     <NativeCatalogDetailScreen
       error={mutation.error instanceof Error
@@ -47,7 +68,12 @@ export default function NativeCatalogDetailRoute() {
       isLoading={snapshotQuery.isPending}
       isSaving={mutation.isPending}
       notice={mutation.data?.message ?? null}
-      onAdd={(destination) => mutation.mutate(destination)}
+      onAdd={(destination) => {
+        if (destination === 'caught' && isNativeCatalogFormVariant(variantId)) {
+          mutation.reset();
+          setFormRequest({ variantIds: [variantId], destination });
+        } else mutation.mutate(destination);
+      }}
       onBack={() => router.canGoBack() ? router.back() : router.replace('/native/collection')}
       row={row}
     />

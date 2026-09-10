@@ -85,6 +85,24 @@ behavior is easier to reproduce natively.
 
 ## Pokémon view invariants
 
+### Catalog form additions
+
+- Adding Mega/Primal catalog forms must offer an eligible caught copy or an
+  explicitly requested new copy. Preserve the selected copy's identity, stats,
+  moves, favorite, and existing tags.
+- Adding fusion forms must show both component choices, including creation of
+  either component. Preserve the base's shiny appearance; either partner
+  appearance is eligible. Save reciprocal links and disable the partner in the
+  same retained batch. Unfusing must release the partner again.
+- Validate current eligibility and prevent reuse of one copy across multiple
+  selected forms before queueing anything. Cancelling the picker must create
+  no records, including when new components have been selected.
+- The bulk organizer and individual catalog route must use the same validated
+  creation path; neither may create a fused record without a partner.
+- Connection loss, sync failure with retry, and recovery must be visible across
+  native routes, including signed-out connectivity feedback. Status notices must
+  leave Save and Cancel controls accessible.
+
 ### Search and active context
 
 - Preserve the centered white search pill in its idle state.

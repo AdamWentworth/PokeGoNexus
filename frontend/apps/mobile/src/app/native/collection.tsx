@@ -149,7 +149,7 @@ export default function NativeCollectionRoute() {
     () => { void refetchSnapshot(); },
     [refetchSnapshot],
   );
-  const syncStatus = useMemo(() => <NativeCollectionSyncStatusCard />, []);
+  const syncStatus = useMemo(() => <NativeCollectionSyncStatusCard includeConnectionErrors={false} />, []);
 
   useLayoutEffect(() => {
     markNativeUiPerformance('collection_route_committed', {
@@ -200,6 +200,7 @@ export default function NativeCollectionRoute() {
 
   return (
     <NativeCollectionHubScreen
+      catalog={snapshotQuery.data?.catalog}
       assetBaseUrl={runtimeConfig.api.frontendAppUrl}
       catalogRows={catalogRows}
       error={snapshotQuery.error instanceof Error ? snapshotQuery.error.message : null}

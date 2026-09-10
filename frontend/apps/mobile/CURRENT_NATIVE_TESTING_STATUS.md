@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-09 (collection scrollbar restoration)
+Last targeted revalidation: 2026-09-09 (catalog form workflows and global status)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,29 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current strong-machine standalone Android build, artifact identity, and
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Omitted catalog workflows and global status — 2026-09-09
+
+Native now offers existing/new copy selection when adding Mega/Primal forms,
+and both component choices when adding a fusion. The organizer and individual
+catalog route use the same validated mutation path. Existing copies retain
+their identity, stats, moves, favorite, and tags. New fusion components use base
+variant identities so the existing unfuse workflow can restore them correctly.
+Both reciprocal links and the disabled partner are queued in one retained
+batch. Cancel creates nothing; stale/ineligible choices and reuse of a copy
+across selected forms reject the entire batch before queueing.
+
+The native navigator now presents offline, retry-sync, and four-second recovery
+notices across its routes, including connectivity feedback when signed out.
+The notice reserves space rather than covering Save/Cancel controls. Collection
+pending/accepted progress remains available without duplicating global errors.
+
+Targeted validation covers the real organizer-to-picker interaction, both
+existing/new choices, Primal and shiny forms, mixed creation/reuse, cancellation,
+duplicate submissions, stale eligibility, atomic offline retention, and the
+fusion/unfusion round trip. Global status tests cover recovery expiry, offline
+priority, retries, connection-check failures, and signed-out isolation. Physical
+Android verification of these new workflows is pending the updated build.
 
 ## Collection scrollbar restoration — 2026-09-09
 

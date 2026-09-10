@@ -69,8 +69,9 @@ export const NativeCollectionSyncStatusCardView = ({
   );
 };
 
-export const NativeCollectionSyncStatusCard = () => {
+export const NativeCollectionSyncStatusCard = ({ includeConnectionErrors = true }: { includeConnectionErrors?: boolean }) => {
   const sync = useNativeCollectionSync();
+  if (!includeConnectionErrors && (sync.isOffline || sync.lastError)) return null;
   return (
     <NativeCollectionSyncStatusCardView
       acceptedCount={sync.acceptedCount}

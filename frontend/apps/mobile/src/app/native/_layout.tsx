@@ -8,6 +8,7 @@ import { NativeRealtimeProvider } from '../../features/realtime/NativeRealtimePr
 import { useNativeDevicePreferences } from '../../features/settings/NativeDevicePreferencesProvider';
 import { nativeRouteAnimation } from '../../navigation/nativeRouteMotion';
 import { nativeRouteSurface } from '../../navigation/nativeRouteSurface';
+import { NativeAppStatusCenter } from '../../components/NativeAppStatusCenter';
 
 export default function NativeLayout() {
   const { colorTheme, shouldReduceMotion } = useNativeDevicePreferences();
@@ -23,6 +24,7 @@ export default function NativeLayout() {
       <NativeQueryProvider>
         <NativeCollectionSyncProvider>
           <NativeRealtimeProvider>
+            <View style={styles.screenSurface}>
             <Stack
               screenLayout={({ children, route }) => (
                 <View
@@ -83,6 +85,8 @@ export default function NativeLayout() {
                 options={{ animation: nativeRouteAnimation('slide_from_bottom', shouldReduceMotion), gestureDirection: 'vertical' }}
               />
             </Stack>
+              <NativeAppStatusCenter />
+            </View>
           </NativeRealtimeProvider>
         </NativeCollectionSyncProvider>
       </NativeQueryProvider>

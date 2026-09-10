@@ -10,6 +10,15 @@ import type { NativeCollectionSnapshot } from '../../services/collectionApi';
 import type { NativeReceiverApiClient } from '../../services/nativeApiClients';
 import type { nativeCollectionOutbox } from '../../storage/nativeCollectionOutbox';
 import { sendPendingNativeCollectionBatches } from './collectionSyncCoordinator';
+import { resolveInstanceCollectionKey } from '@pokemongonexus/shared-domain/instances';
+import { normalizeNativeInstance, normalizeNativeTagIds } from './nativeInstanceNormalization';
+import {
+  isNativeCatalogFormCandidate,
+  resolveNativeCatalogForm,
+  type NativeCatalogCopyChoice,
+  type NativeCatalogForm,
+  type NativeCatalogFormChoice,
+} from './nativeCatalogFormModel';
 
 export type NativeCatalogDestination = 'caught' | 'trade' | 'wanted';
 
@@ -19,6 +28,7 @@ export type NativeCatalogOrganizerRequest = {
   customTagIds?: string[];
   favorite?: boolean;
   mostWanted?: boolean;
+  formChoices?: Record<string, NativeCatalogFormChoice>;
 };
 
 const variantSuffix = (entry: PokemonCatalogEntry): string =>
@@ -47,26 +57,15 @@ export const createNativeInstanceFromCatalogEntry = ({
     const reason = shadow ? 'Shadow' : isMega ? 'Mega or Primal' : 'fusion';
     throw new Error(`${reason} Pokémon cannot be added to ${destination === 'trade' ? 'For Trade' : 'Wanted'}.`);
   }
+  if (isMega || isFused) {
+    throw new Error('Choose the Pokémon for this Mega, Primal, or fusion form before adding it.');
+  }
 
   const costume = pokemon.costumes?.find((candidate) =>
     entry.id === `${String(pokemon.pokemon_id).padStart(4, '0')}-${candidate.name}_default`
     || entry.id === `${String(pokemon.pokemon_id).padStart(4, '0')}-${candidate.name}_shiny`
     || entry.id === `${String(pokemon.pokemon_id).padStart(4, '0')}-shadow_${candidate.name}_default`
     || entry.id === `${String(pokemon.pokemon_id).padStart(4, '0')}-shadow_${candidate.name}_shiny`);
-  const mega = isMega
-    ? pokemon.megaEvolutions?.find((candidate) => {
-      if (candidate.primal) return suffix.includes('primal');
-      const form = candidate.form?.trim().toLowerCase();
-      return suffix === `mega${form ? `_${form}` : ''}`
-        || suffix === `shiny_mega${form ? `_${form}` : ''}`;
-    })
-    : undefined;
-  const fusionId = isFused
-    ? Number.parseInt(suffix.split('fusion_')[1] ?? '', 10)
-    : Number.NaN;
-  const fusion = Number.isFinite(fusionId)
-    ? pokemon.fusion?.find((candidate) => candidate.fusion_id === fusionId)
-    : undefined;
   const crownId = suffix.includes('crown_')
     ? Number.parseInt(suffix.split('crown_')[1] ?? '', 10)
     : Number.NaN;
@@ -95,18 +94,18 @@ export const createNativeInstanceFromCatalogEntry = ({
     weight: null,
     height: null,
     gender: null,
-    mega: isMega,
-    mega_form: mega?.form ?? null,
-    is_mega: isMega,
+    mega: false,
+    mega_form: null,
+    is_mega: false,
     dynamax: suffix.includes('dynamax'),
     gigantamax: suffix.includes('gigantamax'),
     crown: Boolean(crown),
     max_attack: null,
     max_guard: null,
     max_spirit: null,
-    is_fused: isFused,
-    fusion: fusion ? { ...fusion } : null,
-    fusion_form: crown?.display_form ?? fusion?.name ?? null,
+    is_fused: false,
+    fusion: null,
+    fusion_form: crown?.display_form ?? null,
     fused_with: null,
     is_traded: false,
     traded_date: null,
@@ -181,26 +180,79 @@ export const persistNativeCatalogAdditions = async ({
     snapshot.catalog.map((pokemon) => [pokemon.pokemon_id, pokemon]),
   );
   const tagIds = [...new Set((request.customTagIds ?? []).filter(Boolean))];
-  const instances = requestedIds.map((variantId, index) => {
+  const instances: PokemonInstance[] = [];
+  const usedKeys = new Set<string>();
+  let createdCount = 0;
+  const createCopy = (entry: PokemonCatalogEntry, pokemon: BasePokemon): PokemonInstance =>
+    createNativeInstanceFromCatalogEntry({
+      entry, pokemon, destination: request.destination,
+      instanceId: instanceIds?.[createdCount++] ?? Crypto.randomUUID(), now,
+    });
+  const chooseCopy = (
+    choice: NativeCatalogCopyChoice,
+    form: NativeCatalogForm,
+    side: 'base' | 'partner',
+  ): PokemonInstance => {
+    if (choice.kind === 'existing') {
+      const key = resolveInstanceCollectionKey(snapshot.instances, choice.instanceId);
+      const previous = key ? snapshot.instances[key] : null;
+      if (!key || !previous || !isNativeCatalogFormCandidate(previous, form, side)) {
+        throw new Error('A selected Pokémon is no longer available for this form. Choose another copy.');
+      }
+      if (usedKeys.has(key)) throw new Error('Choose a different Pokémon for each form and fusion partner.');
+      usedKeys.add(key);
+      return {
+        ...normalizeNativeInstance(previous),
+        instance_id: previous.instance_id || key,
+        last_update: Math.max(now, (previous.last_update || 0) + 1),
+      };
+    }
+    const pokemon = side === 'partner' && form.kind === 'fusion' ? form.partner : form.pokemon;
+    const shiny = side === 'base' && form.shiny;
+    const baseId = `${String(pokemon.pokemon_id).padStart(4, '0')}-${shiny ? 'shiny' : 'default'}`;
+    const base = entriesById.get(baseId);
+    if (!base) throw new Error(`The base form of ${pokemon.name} is unavailable.`);
+    return createCopy(base, pokemon);
+  };
+  for (const variantId of requestedIds) {
     const entry = entriesById.get(variantId);
     if (!entry) throw new Error(`The selected Pokémon variant ${variantId} is no longer available.`);
     const pokemon = pokemonById.get(entry.pokemonId);
     if (!pokemon) throw new Error(`The selected Pokémon ${entry.name} is no longer in the catalog.`);
-    const instance = createNativeInstanceFromCatalogEntry({
-      entry,
-      pokemon,
-      destination: request.destination,
-      instanceId: instanceIds?.[index] ?? Crypto.randomUUID(),
-      now: now + index,
-    });
-    return {
+    const form = resolveNativeCatalogForm(snapshot.catalog, variantId);
+    let instance: PokemonInstance;
+    let partner: PokemonInstance | null = null;
+    if (form) {
+      if (request.destination !== 'caught') throw new Error('Mega, Primal, and fusion Pokémon can only be added to Caught.');
+      const choice = request.formChoices?.[variantId];
+      if (!choice || choice.kind !== form.kind) throw new Error('Choose the Pokémon for each Mega, Primal, or fusion form.');
+      instance = chooseCopy(choice.base, form, 'base');
+      if (form.kind === 'mega') {
+        instance = { ...instance, mega: true, is_mega: true, mega_form: form.mega.form ?? null };
+      } else if (choice.kind === 'fusion') {
+        partner = chooseCopy(choice.partner, form, 'partner');
+        instance = {
+          ...instance, is_fused: true, fused_with: partner.instance_id!,
+          fusion_form: form.fusion.name,
+          fusion: { ...instance.fusion, [form.fusion.fusion_id!]: true },
+        };
+        partner = {
+          ...partner, is_fused: true, disabled: true,
+          fused_with: instance.instance_id!, fusion_form: form.fusion.name,
+        };
+      }
+    } else {
+      instance = createCopy(entry, pokemon);
+    }
+    instances.push({
       ...instance,
-      favorite: request.destination === 'caught' && Boolean(request.favorite),
+      favorite: request.destination === 'caught' && (Boolean(instance.favorite) || Boolean(request.favorite)),
       most_wanted: request.destination === 'wanted' && Boolean(request.mostWanted),
-      caught_tags: request.destination === 'wanted' ? [] : tagIds,
+      caught_tags: request.destination === 'wanted' ? [] : [...new Set([...normalizeNativeTagIds(instance.caught_tags), ...tagIds])],
       wanted_tags: request.destination === 'wanted' ? tagIds : [],
-    } satisfies PokemonInstance;
-  });
+    });
+    if (partner) instances.push(partner);
+  }
   const batch = createNativeCollectionSyncBatch({
     syncBatchId,
     location: null,
@@ -216,8 +268,8 @@ export const persistNativeCatalogAdditions = async ({
     instances,
     syncState: sent.failedBatchId ? 'pending' as const : 'acknowledged' as const,
     message: sent.failedBatchId
-      ? `${instances.length} Pokémon added on this device. They will sync when Receiver is available.`
-      : `${instances.length} Pokémon added. Receiver accepted the change.`,
+      ? `${requestedIds.length} Pokémon saved on this device. They will sync when Receiver is available.`
+      : `${requestedIds.length} Pokémon saved. Receiver accepted the change.`,
   };
 };
 
@@ -232,6 +284,7 @@ export const persistNativeCatalogAddition = async ({
   instanceId = Crypto.randomUUID(),
   syncBatchId = Crypto.randomUUID(),
   now = Date.now(),
+  formChoices,
 }: {
   userId: string;
   snapshot: NativeCollectionSnapshot;
@@ -243,29 +296,16 @@ export const persistNativeCatalogAddition = async ({
   instanceId?: string;
   syncBatchId?: string;
   now?: number;
+  formChoices?: NativeCatalogOrganizerRequest['formChoices'];
 }) => {
-  const pokemon = snapshot.catalog.find((candidate) => candidate.pokemon_id === entry.pokemonId);
-  if (!pokemon) throw new Error('This Pokémon is no longer in the catalog.');
-  const instance = createNativeInstanceFromCatalogEntry({
-    entry,
-    pokemon,
-    destination,
-    instanceId,
-    now,
+  const result = await persistNativeCatalogAdditions({
+    userId, snapshot, request: { variantIds: [entry.id], destination, formChoices },
+    outbox, receiverClient, instanceIds: [instanceId], syncBatchId, now,
+    onQueued: async (instances) => { for (const instance of instances) await onQueued?.(instance); },
   });
-  const batch = createNativeCollectionSyncBatch({
-    syncBatchId,
-    location: null,
-    updates: [{ ...instance, instance_id: instanceId }],
-  });
-  await outbox.queue(userId, batch, now);
-  await onQueued?.(instance);
-  const sent = await sendPendingNativeCollectionBatches({ userId, outbox, receiverClient });
   return {
-    instance,
-    syncState: sent.failedBatchId ? 'pending' as const : 'acknowledged' as const,
-    message: sent.failedBatchId
-      ? 'Added on this device. It will sync when Receiver is available.'
-      : 'Pokémon added. Receiver accepted the change.',
+    instance: result.instances[0]!,
+    syncState: result.syncState,
+    message: result.message,
   };
 };
