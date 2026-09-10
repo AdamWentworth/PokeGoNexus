@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-09 (Favorites preview/grid ordering)
+Last targeted revalidation: 2026-09-09 (Favorites automatic sort selection)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,13 +11,43 @@ The current strong-machine standalone Android build, artifact identity, and
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Favorites tag selection — 2026-09-09
+
+Commit `d8ede733` makes tapping Favorites automatically select FAVORITE
+descending, with highest CP first, in both native and Vite. Reopening the same
+tag restores that sort after a manual change; repeated taps do not toggle it
+ascending. Users can still choose another sort while viewing Favorites.
+Other tags preserve the chosen sort, and cancelled presses do not alter it.
+The native grid commits the new ordering before the page slide reveals it,
+and the selected sort is saved in the collection session.
+
+The earlier `44c02d98` and `1eea14cb` checks verified preview and form ordering
+while preserving the current grid sort. They did not verify the requested
+automatic Favorite-sort selection. Those builds are superseded for this
+interaction. Regression coverage now taps the Favorites card directly from
+Number, Name, and Favorite ascending; checks the actual ordered rows and sort
+control; and repeats the tap after a manual sort change. The web controller
+test exercises real sort state, and the collection Maestro flows now assert
+FAVORITE descending after selecting the tag.
+
+Validation: 60 focused native tests, 40 web/controller/sort tests, both hosts'
+TypeScript checks and lint passed. Native lint excludes generated `.artifacts/`
+diagnostic bundles.
+
+The normal standalone `d8ede733` APK has been installed in place on the Pixel
+8 Pro and its installed checksum verified. The direct-tap phone flow is
+prepared under `.artifacts/favorites-auto-sort/android-d8ede733/`; its execution
+is pending the user unlocking the phone. Do not report the physical tap test
+as passed until that flow has completed.
+
 ## Tag preview parity repair — 2026-09-09
 
 Native tag cards now preserve the web instance order, with Favorites sorted by
 CP descending using the same shared function as Vite. Custom tags honor saved
 sort/name order when explicit order keys are absent. Stale memberships cannot
-leak wanted Pokémon into caught custom tags or Favorites. Opening a tag still
-preserves the selected collection-grid sort, as Vite does.
+leak wanted Pokémon into caught custom tags or Favorites. That initial repair
+preserved the grid sort on tag selection; Favorites now applies the automatic
+sort described above.
 
 Both native tag panels share one membership pass per collection snapshot.
 Metadata edits reuse those memberships, and the summary cache retains only the
@@ -52,8 +82,8 @@ whereas native was feeding it the CP-sorted Favorites preview. Some forms
 compare equal, so their input order affects Pokédex, Name, and HP results.
 Native now keeps original membership in `rows` and separate CP-sorted artwork
 in `previewRows`. Both arrays are cached with the membership snapshot. Other
-tag previews keep their existing order, and opening a tag preserves the
-selected grid sort.
+tag previews keep their existing order. The later Favorites selection change
+above applies its default sort without coupling membership to preview order.
 
 The new cross-host regression uses the captured Venusaur, Charizard, and
 Blastoise form/CP sequence with synthetic instance IDs. It reproduced the
@@ -139,17 +169,21 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`1eea14cb` installed. The other machine's rebuild was retrieved from the
-`public` share as `PokeGoNexus-manual-1eea14cb-arm64-v8a.apk`, with SHA-256
-`dd8d39461a2844007c6040394df5d5f2b3de183e001e9afbe3c1d252d9394628`.
-The supplied share checksum and existing signing certificate were verified
-before the in-place install on 2026-09-09. This commit adds validation records
-to the app code already tested in `44c02d98`.
+`d8ede733` installed. It was built locally using the bounded manual builder as
+`PokeGoNexus-manual-d8ede733-arm64-v8a.apk`, with SHA-256
+`0ea172ec1e658182081dab63d624a15c4992e710129f6aa3a147559ae816f7ee`.
+The existing signing certificate was verified before the in-place install on
+2026-09-09. This build includes automatic Favorite descending selection when
+tapping Favorites.
 The checksum of Android's installed `base.apk` matches exactly. Its embedded
 configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
 `deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
-does not require Metro. The in-place install preserved the signed-in session.
-The public-share APK passed the targeted account flow without a retry: 2249
+does not require Metro. No app-data reset was performed.
+
+The preceding other-machine build, retrieved from the `public` share as
+`PokeGoNexus-manual-1eea14cb-arm64-v8a.apk`, had SHA-256
+`dd8d39461a2844007c6040394df5d5f2b3de183e001e9afbe3c1d252d9394628`.
+That APK passed the earlier targeted account flow without a retry: 2249
 caught, 167 Favorites, CP-ordered preview sprites, and the corrected Charizard
 and Blastoise order under NUMBER ascending. Both screenshots were visually
 reviewed. Checksum evidence and the flow artifacts are retained under

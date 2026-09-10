@@ -5,13 +5,14 @@ Last updated: 2026-09-09
 ## Current phone candidate
 
 The physical Pixel 8 Pro now has
-`PokeGoNexus-manual-1eea14cb-arm64-v8a.apk`, rebuilt on the other machine
-and retrieved from the `public` share. Its supplied checksum matches the
-downloaded file and the installed APK:
-`dd8d39461a2844007c6040394df5d5f2b3de183e001e9afbe3c1d252d9394628`.
+`PokeGoNexus-manual-d8ede733-arm64-v8a.apk`, built locally with the bounded
+manual builder. Its checksum matches the installed APK:
+`0ea172ec1e658182081dab63d624a15c4992e710129f6aa3a147559ae816f7ee`.
 This is the normal standalone native preview with smoke mode disabled; the
-in-place update preserved the signed-in account. This candidate separates
-the CP-sorted Favorites preview from the grid's instance-ordered membership.
+in-place update did not clear app data. This candidate automatically selects
+Favorite descending on a Favorites tag tap, including reopening that tag
+after a manual sort change. The direct-tap phone test is awaiting an unlocked
+phone; the prior `1eea14cb` build did not implement this requested behavior.
 Targeted tag checks, the ordering repair, and the remaining performance
 comparison are recorded in
 `CURRENT_NATIVE_TESTING_STATUS.md`.
