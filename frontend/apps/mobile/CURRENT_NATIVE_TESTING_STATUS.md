@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-09 (Favorites automatic sort selection)
+Last targeted revalidation: 2026-09-09 (collection scrollbar restoration)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,60 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current strong-machine standalone Android build, artifact identity, and
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Collection scrollbar restoration — 2026-09-09
+
+Commit `116c9eff` restores the missing native equivalent of the canonical
+`PokemonMenu/CustomScrollbar` component. It uses the same `/images/scroll.png`
+artwork, 40 × 60 thumb, 85% viewport track, and one-second idle/500 ms fade.
+Dragging seeks the actual FlatList, clamps at the ends, and saves the offset
+on release or cancellation. Native Animated tracks ordinary scrolling without
+a JS listener; the one-shot position read at grab time also handles momentum.
+The control handles restored offsets, tag resets, changed content/viewport
+sizes, short or empty results, and the search overlay. Hidden thumbs do not
+accept touches, and accessible actions move the list by a page.
+
+Validation: 62 targeted native scrollbar, fixture, collection-screen, and hub
+tests passed, plus mobile TypeScript and lint. The contract now explicitly
+includes the draggable scrollbar. Physical thumb drags on the `116c9eff`
+standalone build reached the middle of the 4,255-entry catalog, its final
+Hydrapple entry, and Bulbasaur back at the top; the idle fade also worked.
+
+That phone review exposed an additional existing page-slider defect after a
+long horizontal swipe: sorting assertions passed, but the entire Pokémon
+panel stayed displaced sideways, revealing Wishlist. `b600f024` replaces the
+stateful `Animated.diffClamp` with a clamped absolute interpolation. The new
+regression fails in both directions before the fix and verifies exact page
+alignment after resetting a drag and selecting another page. All 39 targeted
+slider, hub, and scrollbar tests pass, plus mobile TypeScript and lint.
+
+The combined normal standalone `b600f024` APK is installed on the Pixel 8 Pro,
+with its installed checksum verified and account data retained. The final
+phone run passed full-catalog thumb drags to the middle, Hydrapple at the
+bottom, and Bulbasaur back at the top. Favorites thumb drags also reached both
+ends; opening a Pokémon from the middle and closing its detail retained the
+same visible card identities at their exact prior positions. The auto-Favorite
+sort sequence passed again, including manual NUMBER followed by reopening and
+repeated tag taps. Long horizontal swipes in both directions now leave the
+Pokémon page aligned across the complete 1344-pixel viewport.
+
+Search filters and empty results hide the scrollbar, and clearing the query
+restores Favorites with the correct sort. The catalog has 4255 entries, with
+2249 caught and 167 Favorites retained. The final phone view is the full
+catalog at Bulbasaur in NUMBER ascending. No fatal exception, JS error, or app
+ANR marker appeared in the captured current-process log. Scripts, screenshots,
+the catalog drag video, and installation evidence are retained under
+`.artifacts/collection-scrollbar/android-b600f024/`. This is targeted functional
+validation; the controlled performance comparison below remains open.
+
+Separate observation: the first launch after the `116c9eff` update showed a
+sync error from `NativeDatabase.prepareAsync` reporting an already-released
+native shared database object. It cleared after restarting and did not appear
+on the following checked launches, including the combined build. No persistence
+code changed here. Retain this
+as an unresolved lifecycle investigation; do not count it as a fixed defect or
+assume it was caused by the scrollbar. Initial evidence is retained under
+`.artifacts/collection-scrollbar/android-116c9eff/`.
 
 ## Favorites tag selection — 2026-09-09
 
@@ -146,10 +200,12 @@ contract/report tests pass.
 | Standalone preview/release APK | A specific APK build | Bundled inside that APK | An artifact link may download one APK; no Metro server is used |
 | Expo Go | The generic Expo Go app | Metro | Not valid for this project because native-module behavior is part of parity |
 
-The currently installed development client is the fastest path for testing JS,
-TypeScript, layout, navigation, and animation changes. A new APK is needed only
-when the native dependency set, Android project, Expo config plugin output, or
-other compiled native code changes.
+A development client is the fastest path for testing JS, TypeScript, layout,
+navigation, and animation changes through Metro. That workflow needs a new APK
+only when the native dependency set, Android project, Expo config plugin output,
+or other compiled native code changes. The current phone candidate above is a
+standalone APK: its JavaScript is bundled, so application changes require a new
+build and in-place installation.
 
 Use `start:native-preview` while instrumenting or using Fast Refresh. Use
 `start:native-preview:performance` for release-like perceived-performance
