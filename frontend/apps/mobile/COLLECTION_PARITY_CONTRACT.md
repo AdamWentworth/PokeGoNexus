@@ -65,6 +65,9 @@ behavior is easier to reproduce natively.
   transition between adjacent views.
 - Preserve swipe navigation where it does not conflict with an active nested
   horizontal gesture.
+- Long swipes past the peek limit must settle to an exactly aligned page in
+  both directions. Later tab/tag taps must not retain a sideways displacement
+  or expose the neighboring panel.
 - Preserve the three equal-width header controls, active white underline, count
   below Pokémon, and selected-tag sublabel below Tags or Wishlist.
 - Preserve own-catalog and foreign-catalog behavior. A foreign catalog must

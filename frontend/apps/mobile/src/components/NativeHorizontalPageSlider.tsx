@@ -130,7 +130,14 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
   const nativeDrivenDrag = dragX && Platform.OS !== 'web' ? dragX : null;
   const clampedNativeDrag = useMemo(
     () => nativeDrivenDrag
-      ? Animated.diffClamp(nativeDrivenDrag, -maxPeekDistance, maxPeekDistance)
+      // Clamp the absolute translation. diffClamp accumulates deltas, so a
+      // swipe beyond the peek limit leaves an opposite displacement when the
+      // gesture resets to zero; that displacement also survives later tab taps.
+      ? nativeDrivenDrag.interpolate({
+          inputRange: [-maxPeekDistance, maxPeekDistance],
+          outputRange: [-maxPeekDistance, maxPeekDistance],
+          extrapolate: 'clamp',
+        })
       : null,
     [maxPeekDistance, nativeDrivenDrag],
   );

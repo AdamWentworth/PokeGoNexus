@@ -268,4 +268,31 @@ describe('NativeHorizontalPageSlider', () => {
     expect(setValue).toHaveBeenLastCalledWith(412);
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
+
+  it.each([-1, 1])('realigns the rendered track after a long native swipe in direction %i', async (direction) => {
+    const scrollX = new Animated.Value(412);
+    const dragX = new Animated.Value(0);
+    const ref = createRef<NativeHorizontalPageSliderHandle>();
+    const view = render(
+      <NativeHorizontalPageSlider activeIndex={1} onIndexChange={jest.fn()} ref={ref} scrollX={scrollX} dragX={dragX}>
+        <Text>Tags</Text>
+        <Text>Pokémon</Text>
+        <Text>Wishlist</Text>
+      </NativeHorizontalPageSlider>,
+    );
+    await act(async () => undefined);
+    const track = view.UNSAFE_getAllByType(Animated.View)
+      .find((node) => node.props.testID === 'native-horizontal-page-track');
+    const translation = StyleSheet.flatten(track?.props.style).transform[0].translateX as { __getValue: () => number };
+    const peek = 412 * collectionExperienceParityContract.pageSwipeMaxPeekRatio;
+    expect(translation.__getValue()).toBe(-412);
+    act(() => dragX.setValue(direction * 300));
+    expect(translation.__getValue()).toBeCloseTo(-412 + direction * peek);
+    // Resetting a diffClamp after exceeding its limit retains an opposite
+    // displacement. The rendered page must line up exactly after every reset.
+    act(() => ref.current?.setPage(1, false));
+    expect(translation.__getValue()).toBe(-412);
+    act(() => ref.current?.setPage(2, false));
+    expect(translation.__getValue()).toBe(-824);
+  });
 });
