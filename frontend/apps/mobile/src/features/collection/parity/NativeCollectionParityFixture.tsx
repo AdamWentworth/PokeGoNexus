@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
   type ListRenderItemInfo,
@@ -61,6 +62,7 @@ import {
 import { markNativeUiPerformance } from '../../../observability/nativeUiPerformanceTrace';
 import { beginNativeUiInteraction } from '../../../interaction/nativeUiInteractionScheduler';
 import { useNativeScrollInteractionReservation } from '../../../interaction/useNativeScrollInteractionReservation';
+import { NativeCollectionScrollbar, type NativeCollectionScrollbarHandle } from './NativeCollectionScrollbar';
 import {
   type NativeCollectionImageRevealController,
   useNativeCollectionImageRevealState,
@@ -417,6 +419,19 @@ export const NativeCollectionParityFixture = memo(forwardRef<
   const [searchMenuMounted, setSearchMenuMounted] = useState(false);
   const searchControlsRef = useRef<NativeCollectionSearchControlsHandle>(null);
   const listRef = useRef<FlatList<CollectionCardSource>>(null);
+  const scrollbarRef = useRef<NativeCollectionScrollbarHandle>(null);
+  const [scrollY] = useState(() => new Animated.Value(initialScrollOffset));
+  const trackScroll = useMemo(() => Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: Platform.OS !== 'web',
+      // Browser wheel events do not have native drag/momentum lifecycle events.
+      ...(Platform.OS === 'web' ? { listener: () => {
+        scrollbarRef.current?.beginScroll();
+        scrollbarRef.current?.endScroll();
+      } } : {}),
+    },
+  ), [scrollY]);
   const searchMenuOverlayRef = useRef<ScrollView>(null);
   const restoredScrollRef = useRef(initialScrollOffset <= 0);
   const previousResetKeyRef = useRef(scrollResetKey);
@@ -603,10 +618,23 @@ export const NativeCollectionParityFixture = memo(forwardRef<
       listRef.current?.scrollToOffset({ animated: false, offset: 0 });
     }
     currentScrollOffsetRef.current = 0;
+    scrollY.setValue(0);
+    scrollbarRef.current?.reset();
     // Tag selection already persists `scrollOffset: 0` in its one context
     // patch. Avoid emitting a second session update when the list is already
     // at the top, including the layout-effect reset after data changes.
     if (hadSettledOffset) onScrollOffsetChange?.(0);
+  }, [onScrollOffsetChange, scrollY]);
+
+  const seekScroll = useCallback((offset: number) => {
+    listRef.current?.scrollToOffset({ animated: false, offset });
+    currentScrollOffsetRef.current = offset;
+    scrollY.setValue(offset);
+  }, [scrollY]);
+
+  const persistSeekOffset = useCallback((offset: number) => {
+    currentScrollOffsetRef.current = offset;
+    onScrollOffsetChange?.(offset);
   }, [onScrollOffsetChange]);
   const persistSettledScrollOffset = useCallback((
     event: NativeSyntheticEvent<NativeScrollEvent>,
@@ -620,14 +648,17 @@ export const NativeCollectionParityFixture = memo(forwardRef<
   ) => {
     persistSettledScrollOffset(event);
     scrollInteraction.onMomentumScrollEnd();
+    scrollbarRef.current?.endScroll();
   }, [persistSettledScrollOffset, scrollInteraction]);
   const handleScrollEndDrag = useCallback((
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     persistSettledScrollOffset(event);
     scrollInteraction.onScrollEndDrag();
+    scrollbarRef.current?.endScroll();
   }, [persistSettledScrollOffset, scrollInteraction]);
-  const restoreInitialScroll = useCallback(() => {
+  const restoreInitialScroll = useCallback((_width: number, height: number) => {
+    scrollbarRef.current?.setContentHeight(height);
     if (
       restoredScrollRef.current
       || initialScrollOffset <= 0
@@ -635,7 +666,18 @@ export const NativeCollectionParityFixture = memo(forwardRef<
     ) return;
     restoredScrollRef.current = true;
     listRef.current?.scrollToOffset({ animated: false, offset: initialScrollOffset });
-  }, [initialScrollOffset]);
+    scrollY.setValue(initialScrollOffset);
+  }, [initialScrollOffset, scrollY]);
+
+  const handleScrollBeginDrag = useCallback(() => {
+    scrollInteraction.onScrollBeginDrag();
+    scrollbarRef.current?.beginScroll();
+  }, [scrollInteraction]);
+
+  const handleMomentumScrollBegin = useCallback(() => {
+    scrollInteraction.onMomentumScrollBegin();
+    scrollbarRef.current?.beginScroll();
+  }, [scrollInteraction]);
   useImperativeHandle(ref, () => ({ resetScroll }), [resetScroll]);
   useLayoutEffect(() => () => {
     if (filterReleaseFrameRef.current !== null) {
@@ -847,7 +889,7 @@ export const NativeCollectionParityFixture = memo(forwardRef<
 
       {collectionControls}
       <View style={styles.collectionBody}>
-        <FlatList
+        <Animated.FlatList
           accessibilityElementsHidden={searchMenuVisible}
           aria-hidden={searchMenuVisible}
           columnWrapperStyle={styles.gridRow}
@@ -865,12 +907,16 @@ export const NativeCollectionParityFixture = memo(forwardRef<
           maxToRenderPerBatch={COLLECTION_ROW_BATCH_BUDGET}
           numColumns={columns}
           onContentSizeChange={restoreInitialScroll}
+          onLayout={(event) => scrollbarRef.current?.setViewportHeight(event.nativeEvent.layout.height)}
           // The native list owns every movement frame. Persist only settled
           // offsets so ordinary vertical scrolling never schedules recurring
           // JS/cache work while the user is trying to keep 60 fps.
-          onMomentumScrollBegin={scrollInteraction.onMomentumScrollBegin}
+          onMomentumScrollBegin={handleMomentumScrollBegin}
           onMomentumScrollEnd={handleMomentumScrollEnd}
-          onScrollBeginDrag={scrollInteraction.onScrollBeginDrag}
+          onScroll={trackScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={handleScrollBeginDrag}
           onScrollEndDrag={handleScrollEndDrag}
           pointerEvents={searchMenuVisible ? 'none' : 'auto'}
           removeClippedSubviews={false}
@@ -881,6 +927,14 @@ export const NativeCollectionParityFixture = memo(forwardRef<
           windowSize={3}
           ListEmptyComponent={emptyState}
           renderItem={renderCard}
+        />
+        <NativeCollectionScrollbar
+          assetBaseUrl={assetBaseUrl}
+          enabled={!searchMenuVisible && activeView === 'pokemon'}
+          onSeek={seekScroll}
+          onSeekEnd={persistSeekOffset}
+          ref={scrollbarRef}
+          scrollY={scrollY}
         />
         {searchMenuMounted ? (
           <ScrollView

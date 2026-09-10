@@ -103,6 +103,15 @@ behavior is easier to reproduce natively.
 - Preserve compact, minimally framed cards. Do not replace them with large
   dashboard cards, status banners, or a two-column native list.
 - Preserve ordering, sort controls, all supported sort modes, and stable keys.
+- Preserve `PokemonMenu/CustomScrollbar`: the original `/images/scroll.png`
+  thumb is 40 × 60 px on the right, travels over 85% of the grid viewport,
+  appears while scrolling, and fades over 500 ms after one second idle.
+  Dragging it must seek the actual virtualized list, clamp at both ends, and
+  stay synchronized with ordinary scrolling, restored offsets, tag resets,
+  filters, and viewport changes. Hide it for non-scrollable results and while
+  search controls cover the grid; it must not steal horizontal page gestures
+  or card taps outside its visible thumb. Native scroll tracking must not add
+  a recurring JS listener or per-frame collection/session updates.
 - Selecting the Favorites tag automatically selects Favorite descending
   (highest CP first), including reopening Favorites after a manual sort.
   A cancelled tag press must not change sorting. Other tags preserve the
