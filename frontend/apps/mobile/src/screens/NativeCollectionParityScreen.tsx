@@ -3,6 +3,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -141,7 +142,10 @@ const containsOnlyCatalogRows = (rows: NativeCollectionRow[]): boolean => {
   return result;
 };
 
-export type NativeCollectionParityScreenHandle = NativeCollectionParityFixtureHandle;
+export type NativeCollectionParityScreenHandle = NativeCollectionParityFixtureHandle & {
+  /** Apply a tag's exact sort without toggling its direction. Returns whether it changed. */
+  applySort: (sort: NativeCollectionSort, direction: NativeCollectionSortDirection) => boolean;
+};
 
 export const NativeCollectionParityScreen = memo(forwardRef<
   NativeCollectionParityScreenHandle,
@@ -179,6 +183,7 @@ export const NativeCollectionParityScreen = memo(forwardRef<
   const colorScheme = useNativeColorScheme();
   const [sort, setSort] = useState<NativeCollectionSort>(initialSort);
   const [direction, setDirection] = useState<NativeCollectionSortDirection>(initialSortDirection);
+  const fixtureRef = useRef<NativeCollectionParityFixtureHandle>(null);
   const [sortOpen, setSortOpen] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
   const [showEvolutionaryLine, setShowEvolutionaryLine] = useState(initialShowEvolutionaryLine);
@@ -194,6 +199,17 @@ export const NativeCollectionParityScreen = memo(forwardRef<
   const [collectionImageRevealInteraction, setCollectionImageRevealInteraction] = useState<string | null>(
     'initial',
   );
+  useImperativeHandle(ref, () => ({
+    resetScroll: () => fixtureRef.current?.resetScroll(),
+    applySort: (nextSort, nextDirection) => {
+      if (sort === nextSort && direction === nextDirection) return false;
+      setSort(nextSort);
+      setDirection(nextDirection);
+      setCollectionImageRevealCount(0);
+      setCollectionImageRevealInteraction(`sort:${nextSort}:${nextDirection}`);
+      return true;
+    },
+  }), [direction, setCollectionImageRevealCount, sort]);
   const stagedQueryRef = useRef<string | null>(null);
   const adoptedStagedQueryRef = useRef<string | null>(null);
   const stagedQueryCancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -651,7 +667,7 @@ export const NativeCollectionParityScreen = memo(forwardRef<
         initialScrollOffset={initialScrollOffset}
         onScrollOffsetChange={handleScrollOffsetChange}
         query={query}
-        ref={ref}
+        ref={fixtureRef}
         scrollResetKey={scrollResetKey}
         sortDirection={direction}
         sortIconPath={SORT_ICONS[sort]}

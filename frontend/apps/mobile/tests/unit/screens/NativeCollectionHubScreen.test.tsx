@@ -127,6 +127,66 @@ const caughtInstance = {
 } as unknown as PokemonInstance;
 
 describe('NativeCollectionHubScreen', () => {
+  it.each(['number', 'name', 'favorite'] as const)(
+    'opens Favorites in Favorite descending from %s ascending, including repeated taps',
+    (initialSort) => {
+      const strong = { ...caughtRow, id: 'strong-mewtwo', pokemonId: 150, pokedexNumber: 150,
+        name: 'Mewtwo', cp: 4713 };
+      const favorites = { ...inventoryTag, rows: [caughtRow, strong] };
+      const onContextChange = jest.fn();
+      const onOpenEntry = jest.fn();
+      render(
+        <SafeAreaProvider initialMetrics={{
+          frame: { x: 0, y: 0, width: 412, height: 915 },
+          insets: { top: 24, right: 0, bottom: 20, left: 0 },
+        }}>
+          <NativeCollectionHubScreen
+            assetBaseUrl="https://pokegonexus.com"
+            catalogRows={[catalogBulbasaur, catalogMewtwo]}
+            error={null}
+            inventoryTags={[favorites, allCaughtTag]}
+            instances={{}}
+            initialView="inventory"
+            initialSort={initialSort}
+            initialSortDirection="ascending"
+            isLoading={false}
+            onContextChange={onContextChange}
+            onOpenEntry={onOpenEntry}
+            onRetry={jest.fn()}
+            wishlistTags={[wishlistTag]}
+          />
+        </SafeAreaProvider>,
+      );
+
+      const openFavorites = () => {
+        const button = screen.getByRole('button', { name: /Open Favorites/i });
+        fireEvent(button, 'pressIn');
+        fireEvent(button, 'pressOut');
+        fireEvent.press(button);
+        expect(screen.getByLabelText('Sort by FAVORITE descending')).toBeTruthy();
+        fireEvent.press(screen.getByRole('button', { name: 'View Mewtwo' }));
+        expect(onOpenEntry).toHaveBeenLastCalledWith(strong, [strong, caughtRow]);
+        expect(onContextChange).toHaveBeenCalledWith(expect.objectContaining({
+          sort: 'favorite', sortDirection: 'descending',
+        }));
+        act(() => jest.advanceTimersByTime(500));
+      };
+      openFavorites();
+
+      // A manual sort is allowed until the user opens Favorites again.
+      fireEvent.press(screen.getByLabelText('Sort by FAVORITE descending'));
+      fireEvent.press(screen.getByText('NUMBER'));
+      act(() => jest.advanceTimersByTime(500));
+      expect(screen.getByLabelText('Sort by NUMBER ascending')).toBeTruthy();
+      fireEvent.press(screen.getByRole('tab', { name: /tags/i }));
+      openFavorites();
+
+      // Selecting an already-active Favorite sort must not toggle it ascending.
+      fireEvent.press(screen.getByRole('tab', { name: /tags/i }));
+      openFavorites();
+    },
+  );
+
   it('hosts the Vite-style sort overlay at the edge-to-edge hub root', () => {
     render(
       <SafeAreaProvider initialMetrics={{
@@ -365,9 +425,8 @@ describe('NativeCollectionHubScreen', () => {
       toValue: 412,
       useNativeDriver: true,
     }));
-    expect(timing.mock.invocationCallOrder[0]).toBeLessThan(
-      onContextChange.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
-    );
+    // The Favorites preset must commit before motion reveals the destination.
+    expect(screen.getByLabelText('Sort by FAVORITE descending')).toBeTruthy();
     expect(onContextChange).toHaveBeenCalledWith(expect.objectContaining({
       activeView: 'pokemon',
       selectedTagKey: 'system:favorites',
@@ -409,6 +468,9 @@ describe('NativeCollectionHubScreen', () => {
       jest.runOnlyPendingTimers();
     });
 
+    expect(screen.getByLabelText('Sort by NUMBER ascending', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
     expect(screen.getByTestId(
       'parity-card-0150-default',
       { includeHiddenElements: true },

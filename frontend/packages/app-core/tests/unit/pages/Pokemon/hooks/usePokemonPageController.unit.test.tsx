@@ -85,21 +85,16 @@ vi.mock('@/contexts/ModalContext', () => ({
   }),
 }));
 
-vi.mock('@/pages/Pokemon/hooks/useUIControls', () => ({
-  default: () => ({
-    showEvolutionaryLine: false,
-    toggleEvolutionaryLine: vi.fn(),
-    isFastSelectEnabled: false,
-    setIsFastSelectEnabled: setIsFastSelectEnabledMock,
-    sortType: 'number',
-    setSortType: vi.fn(),
-    sortMode: 'ascending',
-    setSortMode: vi.fn(),
-    highlightedCards: new Set<string>(),
-    setHighlightedCards: setHighlightedCardsMock,
-    toggleCardHighlight: vi.fn(),
-  }),
-}));
+vi.mock('@/pages/Pokemon/hooks/useUIControls', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/pages/Pokemon/hooks/useUIControls')>();
+  return {
+    default: (settings: Parameters<typeof actual.default>[0]) => ({
+      ...actual.default(settings),
+      setIsFastSelectEnabled: setIsFastSelectEnabledMock,
+      setHighlightedCards: setHighlightedCardsMock,
+    }),
+  };
+});
 
 vi.mock('@/pages/Pokemon/hooks/usePokemonProcessing', () => ({
   default: (...args: UsePokemonProcessingArgs) => usePokemonProcessingMock(...args),
@@ -148,6 +143,36 @@ vi.mock('@/pages/Pokemon/hooks/useSwipeHandler', () => ({
 describe('usePokemonPageController', () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('selects Favorite descending on every Favorites tap and lets other tags keep the chosen sort', () => {
+    const { result } = renderHook(() => usePokemonPageController({
+      isOwnCollection: true,
+      location: { pathname: '/pokemon', state: null } as any,
+      navigate: vi.fn() as unknown as NavigateFunction,
+    }));
+    expect(result.current.sortType).toBe('number');
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortType).toBe('favorite');
+    expect(result.current.sortMode).toBe('descending');
+    expect(usePokemonProcessingMock.mock.calls.at(-1)?.slice(6)).toEqual(['favorite', 'descending']);
+
+    act(() => {
+      result.current.setSortType('name');
+      result.current.setSortMode('ascending');
+    });
+    act(() => result.current.handleTagSelect('Trade'));
+    expect(result.current.sortType).toBe('name');
+    expect(result.current.sortMode).toBe('ascending');
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortType).toBe('favorite');
+    expect(result.current.sortMode).toBe('descending');
+
+    act(() => result.current.setSortMode('ascending'));
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortMode).toBe('descending');
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortMode).toBe('descending');
   });
 
   it('forwards derived tag filters like Favorites into pokemon processing', async () => {

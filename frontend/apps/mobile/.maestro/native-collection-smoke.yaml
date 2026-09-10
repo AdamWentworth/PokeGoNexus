@@ -228,6 +228,9 @@ tags:
     direction: UP
     timeout: 20000
 - tapOn: "Open Favorites, 3 Pokémon"
+- extendedWaitUntil:
+    visible: Sort by FAVORITE descending
+    timeout: 10000
 - tapOn: "View Shiny Shadow Venusaur"
 - assertVisible: Shiny Shadow Venusaur
 - assertVisible: Remove Favorite

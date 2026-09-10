@@ -103,6 +103,10 @@ behavior is easier to reproduce natively.
 - Preserve compact, minimally framed cards. Do not replace them with large
   dashboard cards, status banners, or a two-column native list.
 - Preserve ordering, sort controls, all supported sort modes, and stable keys.
+- Selecting the Favorites tag automatically selects Favorite descending
+  (highest CP first), including reopening Favorites after a manual sort.
+  A cancelled tag press must not change sorting. Other tags preserve the
+  selected sort, and users may change sorting after opening Favorites.
 - Preserve fast/multi-select, highlighted-card treatment, selection count, and
   the organizer action that appears for a non-empty selection.
 - Preserve loading, empty, offline/cached, refresh, and error states without

@@ -553,6 +553,13 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
 
   const selectTag = useCallback((tag: NativeTagSummary) => {
     const startedAt = Date.now();
+    const favoriteSort = tag.key === 'system:favorites'
+      ? { sort: 'favorite' as const, sortDirection: 'descending' as const }
+      : {};
+    // Apply only on a confirmed tap, including reopening the same Favorites
+    // tag after a manual sort. A cancelled press must preserve the current sort.
+    const sortChanged = tag.key === 'system:favorites'
+      && collectionSurfaceRef.current?.applySort('favorite', 'descending');
     const touchStartedAt = stagedTagPreviewStartedAtRef.current;
     tagSelectionTraceRef.current = { key: tag.key, startedAt };
     if (stagedTagCancelTimerRef.current) {
@@ -562,8 +569,9 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     const stagedDestinationAlreadyCommitted = (
       stagedTagKeyRef.current === tag.key && stagedTagReadyRef.current
     );
-    const destinationAlreadyCommitted = stagedDestinationAlreadyCommitted
-      || selectedTagKeyRef.current === tag.key;
+    const destinationAlreadyCommitted = !sortChanged && (
+      stagedDestinationAlreadyCommitted || selectedTagKeyRef.current === tag.key
+    );
     markNativeUiPerformance('collection_tag_pressed', {
       destinationAlreadyCommitted,
       previewLeadMs: stagedTagPreviewStartedAtRef.current === null
@@ -625,7 +633,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     if (selectedTagKeyRef.current === tag.key) {
       activeViewRef.current = 'pokemon';
       setActiveView('pokemon');
-      onContextChange?.({ activeView: 'pokemon', scrollOffset: 0 });
+      onContextChange?.({ activeView: 'pokemon', scrollOffset: 0, ...favoriteSort });
       return;
     }
 
@@ -641,6 +649,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
       activeView: 'pokemon',
       selectedTagKey: tag.key,
       scrollOffset: 0,
+      ...favoriteSort,
     });
   }, [onContextChange, query, startPendingTagMotion]);
 

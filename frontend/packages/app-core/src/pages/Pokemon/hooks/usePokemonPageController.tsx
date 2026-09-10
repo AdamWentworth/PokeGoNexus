@@ -347,11 +347,15 @@ export default function usePokemonPageController({
       const nextFilter =
         filter.trim() || (isUsernamePath ? DEFAULT_FOREIGN_CATALOG_TAG : '');
       setHighlightedCards(new Set());
+      if (nextFilter.toLowerCase() === 'favorites') {
+        setSortType('favorite');
+        setSortMode('descending');
+      }
       setTagFilter(nextFilter);
       setActiveView('pokemon');
       syncSidePanelTagFilter(nextFilter, shouldDelaySidePanelUpdate);
     },
-    [activeView, isUsernamePath, setHighlightedCards, syncSidePanelTagFilter],
+    [activeView, isUsernamePath, setHighlightedCards, setSortMode, setSortType, syncSidePanelTagFilter],
   );
 
   const setStatusFilter = useCallback((filter: string) => {

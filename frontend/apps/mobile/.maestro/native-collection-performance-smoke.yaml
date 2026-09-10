@@ -115,6 +115,7 @@ tags:
     visible: "(FAVORITES)"
     timeout: 10000
 - assertVisible: Shiny Shadow Venusaur
+- assertVisible: Sort by FAVORITE descending
 - tapOn: TAGS
 - extendedWaitUntil:
     visible: Inventory tags
