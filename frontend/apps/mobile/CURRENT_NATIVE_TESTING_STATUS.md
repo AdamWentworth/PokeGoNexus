@@ -139,18 +139,27 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`44c02d98` installed. It was built locally with the bounded manual builder as
-`PokeGoNexus-manual-44c02d98-arm64-v8a.apk`, with SHA-256
-`b111792c0306cb8c4b3553765154904a1c7444235747da1247a45f63b5919875`.
+`1eea14cb` installed. The other machine's rebuild was retrieved from the
+`public` share as `PokeGoNexus-manual-1eea14cb-arm64-v8a.apk`, with SHA-256
+`dd8d39461a2844007c6040394df5d5f2b3de183e001e9afbe3c1d252d9394628`.
+The supplied share checksum and existing signing certificate were verified
+before the in-place install on 2026-09-09. This commit adds validation records
+to the app code already tested in `44c02d98`.
 The checksum of Android's installed `base.apk` matches exactly. Its embedded
 configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
 `deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
 does not require Metro. The in-place install preserved the signed-in session.
+The public-share APK passed the targeted account flow without a retry: 2249
+caught, 167 Favorites, CP-ordered preview sprites, and the corrected Charizard
+and Blastoise order under NUMBER ascending. Both screenshots were visually
+reviewed. Checksum evidence and the flow artifacts are retained under
+`.artifacts/public-installs/android-1eea14cb/`.
 The prior installed `2d87ff8e` APK was retained as
 `.artifacts/tag-parity/android-1fdef284/original-installed.apk` for rollback.
 The intermediate `1fdef284` manual APK is also retained in
 `.artifacts/manual-standalone/`; it contains the earlier tag preview repair
 but predates the Favorites grid ordering fix.
+The locally built `44c02d98` ordering-repair APK remains in that directory too.
 
 The prior `PokeGoNexus-information-5c7f025b-arm64.apk` remains retained only as
 performance evidence. It was compiled with device-smoke mode enabled and must
