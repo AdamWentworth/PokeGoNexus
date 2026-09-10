@@ -5,21 +5,24 @@ Last updated: 2026-09-09
 ## Current phone candidate
 
 The physical Pixel 8 Pro now has
-`PokeGoNexus-manual-b600f024-arm64-v8a.apk`, built locally with the bounded
+`PokeGoNexus-manual-d1e06fc2-arm64-v8a.apk`, built locally with the bounded
 manual builder. Its checksum matches the installed APK:
-`16829236baf6e0474f57463f52a6070ef4abdc98a41cc555b23d257e9628173e`.
-This is the normal standalone native preview with smoke mode disabled; the
-in-place update did not clear app data. It restores the canonical draggable
-collection scrollbar (`116c9eff`) and fixes retained sideways page displacement
-after long horizontal swipes (`b600f024`). The Favorite-descending default from
-`d8ede733` is retained and was rechecked on this build, including reopening
-after NUMBER, repeated tag taps, and horizontal navigation in both directions.
-Physical Favorites thumb drags reach both ends, and a detail round trip keeps
-the same visible cards at the same positions. Grid alignment was checked at
-the full 1344-pixel viewport width after the formerly failing swipe sequence.
-The full targeted results, a separate transient sync observation, and the
-remaining performance comparison are recorded in
+`da4059d2b4a2ff6da59b8b228dcfecdce359743b47f55a4a720ebbfe45cd2743`.
+This is the normal standalone native preview with smoke mode disabled. The
+in-place update retained the account data.
+
+`bb2888cc` restores existing/new Mega and Primal selection, both fusion
+component choices, and app-wide offline/sync/reconnection notices. `d1e06fc2`
+keeps bulk cache application linear and preserves new-copy creation order.
+All 104 focused tests, TypeScript, and lint pass (lint excludes generated
+`.artifacts/` diagnostics). Physical UI, cancellation, connectivity, and account
+verification evidence is recorded under `.artifacts/catalog-forms/` and in
 `CURRENT_NATIVE_TESTING_STATUS.md`.
+
+The earlier `b600f024` candidate established the draggable-scrollbar and page
+alignment checks, including Favorites ordering. Those repairs are retained.
+This functional update does not close the controlled performance comparison
+or the separate SQLite lifecycle investigation recorded in the status document.
 
 The 2026-09-09 phone investigation also corrected a FrameTimeline percentile
 query bug. Older FrameTimeline p95 reports used the 0.95th percentile and must

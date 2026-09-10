@@ -27,12 +27,40 @@ notices across its routes, including connectivity feedback when signed out.
 The notice reserves space rather than covering Save/Cancel controls. Collection
 pending/accepted progress remains available without duplicating global errors.
 
-Targeted validation covers the real organizer-to-picker interaction, both
-existing/new choices, Primal and shiny forms, mixed creation/reuse, cancellation,
+All 104 focused tests across ten suites pass, along with mobile TypeScript and
+lint (excluding generated `.artifacts/` bundles). Coverage includes the real
+organizer-to-picker interaction, both existing/new choices, Primal and shiny
+forms, mixed creation/reuse, cancellation,
 duplicate submissions, stale eligibility, atomic offline retention, and the
 fusion/unfusion round trip. Global status tests cover recovery expiry, offline
-priority, retries, connection-check failures, and signed-out isolation. Physical
-Android verification of these new workflows is pending the updated build.
+priority, retries, connection-check failures, and signed-out isolation.
+
+Physical Pixel 8 Pro review of `bb2888cc` passed the actual bulk Add path and
+individual Mega/Primal/fusion pickers using the signed-in account's Pokémon.
+Existing and new choices were cancelled without saving account changes. The
+Raid page showed the global offline notice and Check again, followed by Back
+online on reconnection and automatic expiry. Both network settings were
+restored. Final counts remained 2249 caught and 167 Favorites, with Favorite
+descending and CP 4713/4689/4688 first. No fatal/JS/ANR markers appeared in the
+captured current-process log. Evidence and corrected automation selectors are
+under `.artifacts/catalog-forms/android-bb2888cc/`.
+
+Follow-up `d1e06fc2` replaces a per-addition collection scan with one index when
+applying queued snapshots, preserving legacy instance keys without duplicating
+records. It also preserves creation order with increasing timestamps for new
+copies. A 1,000-addition regression verifies bounded collection enumeration.
+The final `PokeGoNexus-manual-d1e06fc2-arm64-v8a.apk` was installed in place
+on the Pixel, and its installed checksum matches the built file. It is the
+normal native preview with smoke mode disabled. The complete Mega/Primal/fusion
+picker flow and the Raid offline/Check again/reconnection/notice-expiry checks
+passed again on this exact APK. Final account checks again confirmed 2249 caught,
+167 Favorites, and Favorite descending with CP 4713/4689/4688 first. Wi-Fi and
+mobile data were restored; the captured process log had no fatal/JS/ANR markers.
+Evidence is under
+`.artifacts/catalog-forms/android-d1e06fc2/`; its checksum is recorded in
+`STRONG_MACHINE_ANDROID_HANDOFF.md`. Physical picker checks deliberately cancel
+before committing changes; save, offline retention, and unfusion behavior are
+covered by the isolated automated tests.
 
 ## Collection scrollbar restoration — 2026-09-09
 
