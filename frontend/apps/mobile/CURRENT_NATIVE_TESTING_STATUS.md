@@ -35,10 +35,16 @@ TypeScript checks and lint passed. Native lint excludes generated `.artifacts/`
 diagnostic bundles.
 
 The normal standalone `d8ede733` APK has been installed in place on the Pixel
-8 Pro and its installed checksum verified. The direct-tap phone flow is
-prepared under `.artifacts/favorites-auto-sort/android-d8ede733/`; its execution
-is pending the user unlocking the phone. Do not report the physical tap test
-as passed until that flow has completed.
+8 Pro and its installed checksum verified. After the phone was unlocked, the
+direct-tap Maestro flow passed without retry. It started in NUMBER ascending,
+tapped Favorites directly, and verified FAVORITE descending with the CP
+4713/4689/4688 Mewtwo first. Choosing NUMBER manually and reopening Favorites
+restored Favorite descending; another Favorites tap kept it descending.
+The initial and final screenshots were visually reviewed. The account still
+has 2249 caught and 167 Favorites, and no fatal exception, JS error, or app ANR
+marker appeared in the current-process log. The phone is left on Favorites
+with the corrected sort. The flow, four screenshots, checksum evidence, and
+log are retained under `.artifacts/favorites-auto-sort/android-d8ede733/`.
 
 ## Tag preview parity repair — 2026-09-09
 

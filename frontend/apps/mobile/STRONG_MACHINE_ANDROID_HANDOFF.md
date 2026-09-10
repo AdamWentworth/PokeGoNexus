@@ -11,8 +11,10 @@ manual builder. Its checksum matches the installed APK:
 This is the normal standalone native preview with smoke mode disabled; the
 in-place update did not clear app data. This candidate automatically selects
 Favorite descending on a Favorites tag tap, including reopening that tag
-after a manual sort change. The direct-tap phone test is awaiting an unlocked
-phone; the prior `1eea14cb` build did not implement this requested behavior.
+after a manual sort change. The direct-tap phone test passed without retry,
+including restoring the sort after choosing NUMBER manually and keeping it
+descending on another Favorites tap. The prior `1eea14cb` build did not
+implement this requested behavior.
 Targeted tag checks, the ordering repair, and the remaining performance
 comparison are recorded in
 `CURRENT_NATIVE_TESTING_STATUS.md`.
