@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-09 (catalog form workflows and global status)
+Last targeted revalidation: 2026-09-12 (Pokédex region card framing)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,30 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current strong-machine standalone Android build, artifact identity, and
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Pokédex region card framing — 2026-09-12
+
+The native region overview cards now use Vite's neutral outer frame, regional
+diagonal color panel, grid treatment, and bottom-aligned three-column previews.
+The backdrop uses measured card bounds instead of fitting a fixed 400×132 SVG,
+which previously left dark bands above and below the artwork. Preview columns
+retain empty positions for categories with fewer than three available Pokémon.
+Narrow layouts keep region names on one line; light-mode badges and text use
+the corresponding Vite palette.
+
+The existing five Pokédex screen tests, TypeScript, and lint pass (generated
+`.artifacts/` diagnostics excluded). The targeted native web parity smoke passed
+in dark/light themes at 360px, 412px, and desktop widths, including accessibility,
+overflow, filtering, and registration-dialog cancellation. Follow-up rendered
+checks verify all ten region names fit at 360px and 412px, region navigation and
+collapse/return work, and the sparse Mega Kalos preview retains its first slot.
+Actual Vite and native artwork captures are under
+`.artifacts/pokedex-region-framing/`; general smoke captures are under
+`.artifacts/native-web-parity/`.
+
+No Android device was attached during this review. This source fix still needs
+a rebuilt APK and physical-phone verification; the installed candidate documented
+in the handoff remains the earlier catalog-workflow build.
 
 ## Omitted catalog workflows and global status — 2026-09-09
 
