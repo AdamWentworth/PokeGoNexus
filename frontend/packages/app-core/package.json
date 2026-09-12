@@ -29,6 +29,8 @@
     "./pvp-iv-pokemon": "./src/pages/Pvp/utils/pvpIvPokemon.ts",
     "./pvp-iv-rank": "./src/pages/Pvp/utils/pvpIvRank.ts",
     "./pvp-iv-roster": "./src/pages/Pvp/utils/pvpIvRoster.ts",
+    "./pokedex-detail-model": "./src/pages/Pokedex/pokedexRegistrationModel.ts",
+    "./pokedex-detail-pokemon": "./src/pages/Pokedex/pokedexPokemonDetailModel.ts",
     "./pokedex-registration": "./src/features/pokedex/registrationProjection.ts",
     "./image-helpers": "./src/utils/imageHelpers.ts"
   },

@@ -584,7 +584,6 @@ function DeviceSmokePokedexDetail() {
         setRegistrations((existing) => updatePokedexRegistrations(existing, [registration], registered));
       }}
       pokemon={detailPokemon}
-      signedIn
     />
   );
 }
@@ -614,7 +613,6 @@ function DeviceSmokePokedex({ catalog }: { catalog: BasePokemon[] }) {
       onSetRegistrations={setRegistrationState}
       onToggleRegistration={(registration, registered) => setRegistrationState([registration], registered)}
       pokemon={selectedPokemon}
-      signedIn
     />;
   }
   return <NativePokedexScreen

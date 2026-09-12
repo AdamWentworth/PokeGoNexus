@@ -50,7 +50,7 @@ export default function NativePokedexDetailRoute() {
         assetBaseUrl={runtimeConfig.api.frontendAppUrl}
         entry={entry}
         error={[query.error, movesQuery.error, speciesQuery.error, snapshotQuery.error, registrationsQuery.error, mutation.error].find((value): value is Error => value instanceof Error)?.message ?? null}
-        isLoading={query.isPending || movesQuery.isPending || speciesQuery.isPending || Boolean(userId && (snapshotQuery.isPending || registrationsQuery.isPending))}
+        isLoading={query.isPending || movesQuery.isPending || speciesQuery.isPending || (registrationsQuery.isPending || Boolean(userId && snapshotQuery.isPending))}
         isSaving={mutation.isPending}
         initialGender={initialGender}
         onBack={() => router.canGoBack() ? router.back() : router.replace('/native/pokedex')}
@@ -58,7 +58,6 @@ export default function NativePokedexDetailRoute() {
         onSetRegistrations={(registrations, registered) => mutation.mutate({ registrations, registered })}
         onToggleRegistration={(registration, registered) => mutation.mutate({ registrations: [registration], registered })}
         pokemon={pokemon}
-        signedIn={Boolean(session.user)}
       />
       <NativeRouteActionMenu currentPath="/pokedex" signedIn={Boolean(session.user)} />
     </>

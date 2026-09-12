@@ -1,3 +1,5 @@
+import { pokedexCatalog } from '../../helpers/pokedexCatalog';
+import { buildNativePokedexEntries } from '../../../src/features/tools/nativePokedexModel';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativePokedexDetailScreen } from '../../../src/screens/NativePokedexDetailScreen';
@@ -37,7 +39,7 @@ const pokemon = {
 describe('NativePokedexDetailScreen', () => {
   it('preserves registered, info, battle, and exact-combination workflows', () => {
     const onToggleRegistration = jest.fn();
-    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, entry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={entry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={onToggleRegistration} pokemon={pokemon} signedIn /></SafeAreaProvider>);
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, entry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={entry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={onToggleRegistration} pokemon={pokemon} /></SafeAreaProvider>);
 
     expect(screen.getByText('Register all')).toBeTruthy();
     expect(screen.getByText('Unregister all')).toBeTruthy();
@@ -51,6 +53,8 @@ describe('NativePokedexDetailScreen', () => {
     expect(screen.getByText('Sludge Bomb')).toBeTruthy();
     fireEvent.press(screen.getByText('More'));
     expect(screen.getByText('Variant combinations')).toBeTruthy();
+    expect(screen.queryByLabelText('Search combinations')).toBeNull();
+    fireEvent.press(screen.getByLabelText('Open combination group Pokemon'));
     expect(screen.getByText('Showing 60 of 60')).toBeTruthy();
     fireEvent.press(screen.getByLabelText('Filter Lucky'));
     expect(screen.getByText('Showing 30 of 60')).toBeTruthy();
@@ -61,10 +65,10 @@ describe('NativePokedexDetailScreen', () => {
   it('does not let a manual toggle remove a quality proved by a caught instance', () => {
     const onToggleRegistration = jest.fn();
     const collectedEntry = { ...entry, instanceRegistered: true, registered: true, registeredFacets: [{ lucky: true as const }] };
-    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, collectedEntry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={collectedEntry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={onToggleRegistration} pokemon={pokemon} signedIn /></SafeAreaProvider>);
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, collectedEntry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={collectedEntry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={onToggleRegistration} pokemon={pokemon} /></SafeAreaProvider>);
 
     fireEvent.press(screen.getByText('More'));
-    fireEvent.press(screen.getByLabelText('Open combination group Shiny Bulbasaur'));
+    fireEvent.press(screen.getByLabelText('Open combination group Shiny'));
     fireEvent.press(screen.getByLabelText('Filter Lucky'));
     expect(screen.getByText('In collection')).toBeTruthy();
     const lockedCombination = screen.UNSAFE_getAllByProps({ accessibilityLabel: 'Unregister Shiny Lucky' })[0];
@@ -78,10 +82,10 @@ describe('NativePokedexDetailScreen', () => {
       femaleImageUri: '/female-shiny-bulbasaur.png',
       supportedGenders: ['Male', 'Female'] as ('Male' | 'Female')[],
     };
-    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, genderEntry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={genderEntry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={jest.fn()} pokemon={pokemon} signedIn /></SafeAreaProvider>);
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, genderEntry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={genderEntry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={jest.fn()} pokemon={pokemon} /></SafeAreaProvider>);
 
     fireEvent.press(screen.getByLabelText('View Shiny'));
-    expect(screen.getByText('#0001 Shiny Bulbasaur')).toBeTruthy();
+    expect(screen.getByText('#0001 Bulbasaur')).toBeTruthy();
     fireEvent.press(screen.getByLabelText('Show Female Bulbasaur'));
     expect(screen.getByTestId('native-pokedex-detail-hero-image').props.source).toEqual({
       uri: 'https://pokegonexus.com/female-shiny-bulbasaur.png',
@@ -90,7 +94,7 @@ describe('NativePokedexDetailScreen', () => {
 
   it('matches the web detail confirmations, collapsible combination index, and clear action', () => {
     const onSetRegistrations = jest.fn();
-    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, entry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={entry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={onSetRegistrations} onToggleRegistration={jest.fn()} pokemon={pokemon} signedIn /></SafeAreaProvider>);
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, entry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={entry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={onSetRegistrations} onToggleRegistration={jest.fn()} pokemon={pokemon} /></SafeAreaProvider>);
 
     fireEvent.press(screen.getByText('Register all'));
     expect(screen.getByText('Register all entries?')).toBeTruthy();
@@ -98,18 +102,26 @@ describe('NativePokedexDetailScreen', () => {
     expect(onSetRegistrations).toHaveBeenCalledWith(expect.any(Array), true);
 
     fireEvent.press(screen.getByText('More'));
-    expect(screen.getByLabelText('Search combinations')).toBeTruthy();
-    fireEvent.press(screen.getByLabelText('Open combination group Bulbasaur'));
     expect(screen.queryByLabelText('Search combinations')).toBeNull();
-    fireEvent.press(screen.getByLabelText('Open combination group Bulbasaur'));
+    fireEvent.press(screen.getByLabelText('Open combination group Pokemon'));
+    expect(screen.getByLabelText('Search combinations')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Open combination group Pokemon'));
+    expect(screen.queryByLabelText('Search combinations')).toBeNull();
+    fireEvent.press(screen.getByLabelText('Open combination group Pokemon'));
     fireEvent.press(screen.getByLabelText('Filter Lucky'));
     expect(screen.getByText('Showing 30 of 60')).toBeTruthy();
+    fireEvent.changeText(screen.getByLabelText('Search combinations'), 'hundo');
+    expect(screen.getByText('Showing 15 of 60')).toBeTruthy();
+    fireEvent.press(screen.getByText('Info'));
+    fireEvent.press(screen.getByText('More'));
+    expect(screen.getByLabelText('Search combinations').props.value).toBe('hundo');
+    expect(screen.getByText('Showing 15 of 60')).toBeTruthy();
     fireEvent.press(screen.getByText('Clear'));
     expect(screen.getByText('Showing 60 of 60')).toBeTruthy();
   });
 
   it('matches the web Info and Battle content model', () => {
-    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, entry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={entry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={jest.fn()} pokemon={pokemon} signedIn /></SafeAreaProvider>);
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={[baseEntry, entry]} allPokemon={[pokemon]} assetBaseUrl="https://pokegonexus.com" entry={entry} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={jest.fn()} pokemon={pokemon} /></SafeAreaProvider>);
 
     fireEvent.press(screen.getByText('Info'));
     expect(screen.getByText('Base stats')).toBeTruthy();
@@ -127,4 +139,24 @@ describe('NativePokedexDetailScreen', () => {
     expect(screen.getByText('Fast attack')).toBeTruthy();
     expect(screen.getByText('Charged attack')).toBeTruthy();
   });
+});
+
+
+test('uses the selected Mega form for stats and types and changes the hero with a combination group', () => {
+  const charizard = pokedexCatalog.find(({ pokemon_id }) => pokemon_id === 6)!;
+  const entries = buildNativePokedexEntries([charizard]);
+  render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativePokedexDetailScreen allEntries={entries} allPokemon={[charizard]} assetBaseUrl="https://pokegonexus.com" entry={entries[0]} onBack={jest.fn()} onOpenEntry={jest.fn()} onSetRegistrations={jest.fn()} onToggleRegistration={jest.fn()} pokemon={charizard} /></SafeAreaProvider>);
+  fireEvent.press(screen.getByLabelText('View Mega Charizard X'));
+  expect(screen.getByText('#0006 Charizard')).toBeTruthy();
+  fireEvent.press(screen.getByText('Info'));
+  expect(screen.getByLabelText('Attack 273')).toBeTruthy();
+  expect(screen.getByLabelText('Defense 213')).toBeTruthy();
+  expect(screen.getByText('4,353')).toBeTruthy();
+  fireEvent.press(screen.getByText('Battle'));
+  expect(screen.getAllByText('Dragon').length).toBeGreaterThan(0);
+  fireEvent.press(screen.getByText('More'));
+  fireEvent.press(screen.getByLabelText('Open combination group Shiny'));
+  expect(screen.getByTestId('native-pokedex-detail-hero-image').props.source.uri).toContain('shiny');
+  fireEvent.press(screen.getByText('Info'));
+  expect(screen.getByLabelText('Attack 223')).toBeTruthy();
 });

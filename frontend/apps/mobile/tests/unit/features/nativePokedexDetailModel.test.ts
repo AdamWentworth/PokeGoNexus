@@ -26,7 +26,7 @@ describe('native Pokédex detail model', () => {
     ], 1);
 
     expect(slots.map(({ label }) => label)).toEqual(expect.arrayContaining([
-      'Pokémon', 'Shiny', '100%', 'Lucky', 'XXL', 'XXS', 'Shadow Bulbasaur', 'Purified',
+      'Pokemon', 'Shiny', '100%', 'Lucky', 'XXL', 'XXS', 'Shadow', 'Purified',
     ]));
     expect(slots.find(({ label }) => label === 'Lucky')?.registration.registrationId).toBe('0001-default|lucky:true');
   });

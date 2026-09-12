@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-12 (Pokédex region card framing)
+Last targeted revalidation: 2026-09-12 (Pokédex detail and region-index parity)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,50 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current strong-machine standalone Android build, artifact identity, and
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Pokédex detail and region-index parity — 2026-09-12
+
+Vite and native now consume the same pure registration-slot, combination-family,
+release-order, and search-alias model. Native retains the canonical selected
+variant for Info/Battle stats, CP, types, sizes, and moves, including the fusion
+move filter. The hero title uses the species name once, with the selected form
+identified by its badge.
+
+Caught copies imply every subset of their registration qualities; native checks
+these on demand instead of expanding all subsets for the entire collection.
+Manual marks retain their exact-registration semantics. A caught male, Lucky,
+15/15/15 Bulbasaur now registers Lucky and 100% and counts 8/60 base combinations,
+matching Vite. Purified combinations and paired normal/shiny costume families
+have 120 entries, and Pikachu's costumes begin Santa, Party Hat, Ash, Witch Hat,
+with each shiny version beside its original family.
+
+More starts as a collapsed index, retains search/filters across tab switches,
+and changes the hero when a group is selected. Guest registrations are stored
+locally under a separate guest scope and never copied into an account. Index
+save errors have a dismissible registration message separate from loading errors.
+
+The region index now uses four columns on phones, a larger dex number above the
+name, neutral summary frames, gradient count pills, unboxed totals, and chevrons.
+Stat bars use Vite's Attack/Defense/Stamina scales. Category changes slide over
+300ms without an explicit scroll reset; native region collapse uses a 260ms
+layout animation. Both honor reduced motion. Android Back closes a region index
+before leaving the route, and the handler is removed while another route or the
+action menu is active. It is not installed in the browser.
+
+Validation: 32 focused native tests and 7 Vite detail tests pass. Mobile/web
+TypeScript and targeted lint pass. Both Pokédex routes pass the native web parity
+smoke in light/dark themes at 360px, 412px, and desktop widths. A real-route browser
+fixture verifies Mega Charizard X (273 Attack, 213 Defense, 4,353 CP50, Fire/Dragon),
+Shiny group hero selection, retained hundo search, four-column alignment, and
+guest registration persistence. Missing-card artwork is dimmed independently of
+text so status labels retain accessible contrast. The production Android/Hermes
+bundle exports successfully with device-smoke mode disabled.
+
+Audit captures and model comparisons are under `.artifacts/pokedex-parity-audit/`;
+the Android export is under `.artifacts/pokedex-parity-android/`. No Android device
+is attached. These source changes still need a rebuilt APK and physical verification
+of Back handling, motion, and the real account; the previously installed APK has
+not been updated by this work.
 
 ## Pokédex region card framing — 2026-09-12
 

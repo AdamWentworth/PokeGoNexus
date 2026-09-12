@@ -756,10 +756,10 @@ const run = async () => {
 
         if (route === 'tools?tool=pokedex-detail') {
           for (const tabName of ['Info', 'Battle', 'More', 'Registered']) {
-            await page.getByRole('tab', { name: tabName, exact: true }).click();
+            await page.getByRole('tab', { name: tabName === 'More' ? /^More/ : tabName, exact: true }).click();
           }
-          await page.getByRole('button', { name: 'Register Shadow Bulbasaur' }).click();
-          await page.getByRole('button', { name: 'Unregister Shadow Bulbasaur' }).waitFor({ state: 'visible' });
+          await page.getByRole('button', { name: 'Register Shadow', exact: true }).click();
+          await page.getByRole('button', { name: 'Clear Shadow', exact: true }).waitFor({ state: 'visible' });
         }
 
         if (route === 'tools?tool=raid') {

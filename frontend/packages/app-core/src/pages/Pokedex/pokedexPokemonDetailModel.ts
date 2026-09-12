@@ -1,7 +1,7 @@
-import { getDisplayName as getFormattedPokemonDisplayName } from '@/utils/displayName';
-import { getTypeIconPath } from '@/utils/imageHelpers';
+import { getDisplayName as getFormattedPokemonDisplayName } from '../../utils/displayName';
+import { getTypeIconPath } from '../../utils/imageHelpers';
 
-import type { PokemonVariant } from '@/types/pokemonVariants';
+import type { PokemonVariant } from '../../types/pokemonVariants';
 
 export function asNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;

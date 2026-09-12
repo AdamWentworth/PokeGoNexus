@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import { FlatList } from 'react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { BackHandler, FlatList, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativePokedexScreen } from '../../../src/screens/NativePokedexScreen';
 
@@ -39,6 +39,13 @@ const johtoShadowEntry = {
   id: '0152-shadow',
   name: 'Shadow Chikorita',
 };
+
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => {
+  act(() => jest.runOnlyPendingTimers());
+  jest.clearAllTimers();
+  jest.useRealTimers();
+});
 
 describe('NativePokedexScreen', () => {
   it('supports region, category, and query filtering and opens an exact entry', () => {
@@ -137,4 +144,28 @@ describe('NativePokedexScreen', () => {
     scrollToIndex.mockRestore();
     requestFrame.mockRestore();
   });
+});
+
+
+test('handles contextual Android Back only while focused, then removes the listener', () => {
+  const platform = jest.replaceProperty(Platform, 'OS', 'android');
+  const remove = jest.fn();
+  const add = jest.spyOn(BackHandler, 'addEventListener').mockReturnValue({ remove });
+  const onBack = jest.fn();
+  const props = { assetBaseUrl: 'https://pokegonexus.com', entries: [entry], onBack, onOpenEntry: jest.fn(), onRetry: jest.fn(), onSetRegistrations: jest.fn() };
+  const wrapper = (focused: boolean) => <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, right: 0, bottom: 0, left: 0 } }}><NativePokedexScreen {...props} isFocused={focused} /></SafeAreaProvider>;
+  const view = render(wrapper(true));
+  fireEvent.press(screen.getByText('Shiny'));
+  fireEvent.press(screen.getByLabelText('Open Kanto'));
+  act(() => { expect(add.mock.calls.at(-1)![1]({ type: 'hardwareBackPress', timeStamp: 0 })).toBe(true); });
+  expect(screen.getByLabelText('Open Kanto')).toBeTruthy();
+  expect(onBack).not.toHaveBeenCalled();
+  act(() => { add.mock.calls.at(-1)![1]({ type: 'hardwareBackPress', timeStamp: 0 }); });
+  expect(onBack).toHaveBeenCalledTimes(1);
+  const calls = add.mock.calls.length;
+  view.rerender(wrapper(false));
+  expect(remove).toHaveBeenCalled();
+  expect(add).toHaveBeenCalledTimes(calls);
+  add.mockRestore();
+  platform.restore();
 });

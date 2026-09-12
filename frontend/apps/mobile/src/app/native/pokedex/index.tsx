@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useNativeSession } from '../../../auth/NativeSessionContext';
 import { NativeActionMenu } from '../../../components/NativeActionMenu';
@@ -16,6 +16,7 @@ import { NativePokedexScreen } from '../../../screens/NativePokedexScreen';
 
 export default function NativePokedexRoute() {
   const router = useRouter();
+  const isFocused = usePathname() === '/native/pokedex';
   const session = useNativeSession();
   const catalogQuery = useNativeToolCatalogQuery();
   const speciesQuery = useNativePokedexSpeciesQuery();
@@ -40,7 +41,30 @@ export default function NativePokedexRoute() {
     router.push({ pathname: '/web', params: { path: destination.path } });
   };
   return <>
-    <NativePokedexScreen assetBaseUrl={runtimeConfig.api.frontendAppUrl} entries={entries} error={[catalogQuery.error, speciesQuery.error, snapshotQuery.error, registrationsQuery.error, registrationMutation.error].find((value): value is Error => value instanceof Error)?.message ?? null} isLoading={catalogQuery.isPending || speciesQuery.isPending || Boolean(session.user && (snapshotQuery.isPending || registrationsQuery.isPending))} isSaving={registrationMutation.isPending} onBack={() => router.canGoBack() ? router.back() : router.replace('/native')} onOpenEntry={(entry, facets) => router.push({ pathname: '/native/pokedex/[variantId]', params: { variantId: entry.id, gender: facets?.gender ?? '' } })} onRetry={() => { void catalogQuery.refetch(); void speciesQuery.refetch(); if (session.user) { void snapshotQuery.refetch(); void registrationsQuery.refetch(); } }} onSetRegistrations={(registrations, registered) => registrationMutation.mutate({ registrations, registered })} />
+    <NativePokedexScreen
+      assetBaseUrl={runtimeConfig.api.frontendAppUrl}
+      entries={entries}
+      error={[catalogQuery.error, speciesQuery.error, snapshotQuery.error, registrationsQuery.error]
+        .find((value): value is Error => value instanceof Error)?.message ?? null}
+      registrationError={registrationMutation.error?.message ?? null}
+      onDismissRegistrationError={() => registrationMutation.reset()}
+      isFocused={isFocused && !menu}
+      isLoading={catalogQuery.isPending || speciesQuery.isPending || registrationsQuery.isPending
+        || Boolean(session.user && snapshotQuery.isPending)}
+      isSaving={registrationMutation.isPending}
+      onBack={() => router.canGoBack() ? router.back() : router.replace('/native')}
+      onOpenEntry={(entry, facets) => router.push({
+        pathname: '/native/pokedex/[variantId]',
+        params: { variantId: entry.id, gender: facets?.gender ?? '' },
+      })}
+      onRetry={() => {
+        void catalogQuery.refetch();
+        void speciesQuery.refetch();
+        void registrationsQuery.refetch();
+        if (session.user) void snapshotQuery.refetch();
+      }}
+      onSetRegistrations={(registrations, registered) => registrationMutation.mutate({ registrations, registered })}
+    />
     <NativeActionMenuAnchor assetBaseUrl={runtimeConfig.api.frontendAppUrl} onPress={() => setMenu(true)} />
     {menu ? <NativeActionMenu assetBaseUrl={runtimeConfig.api.frontendAppUrl} onClose={() => setMenu(false)} onNavigate={navigate} visible /> : null}
   </>;

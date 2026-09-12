@@ -1,3 +1,9 @@
+import {
+  getRegistrationSlots, getComboRootSlots, getComboRootKeyForSlot,
+  getRegistrationCombos, getComboSearchText,
+  type PokedexRegistrationSlot, type PokedexRegistrationCombo,
+} from '@pokemongonexus/app-core/pokedex-detail-model';
+import { getFusionId } from '@pokemongonexus/app-core/pokedex-detail-pokemon';
 import type { BasePokemon, Move } from '@pokemongonexus/shared-contracts/pokemon';
 import {
   buildNativePokedexRegistrationId,
@@ -30,6 +36,7 @@ export type NativePokedexComboFilter =
   | 'perfect';
 
 export type NativePokedexRegistrationSlot = {
+  canonical: PokedexRegistrationSlot;
   entry: NativePokedexEntry;
   facets: NativePokedexRegistrationFacets;
   icon: string | null;
@@ -43,6 +50,7 @@ export type NativePokedexRegistrationSlot = {
 };
 
 export type NativePokedexCombination = {
+  canonical: PokedexRegistrationCombo;
   entry: NativePokedexEntry;
   facets: NativePokedexRegistrationFacets;
   id: string;
@@ -53,6 +61,7 @@ export type NativePokedexCombination = {
 };
 
 export type NativePokedexCombinationSection = {
+  slot: NativePokedexRegistrationSlot;
   combinations: NativePokedexCombination[];
   entries: NativePokedexEntry[];
   id: string;
@@ -137,7 +146,7 @@ export const buildNativePokedexEvolutionLine = (
 };
 
 export const getNativePokedexTypeEffectiveness = (
-  pokemon: BasePokemon,
+  pokemon: Pick<BasePokemon, 'type1_name' | 'type2_name'>,
 ): { resistantTo: string[]; weakTo: string[] } => {
   const defendingTypes = [pokemon.type1_name, pokemon.type2_name]
     .map((type) => String(type ?? '').trim().toLocaleLowerCase())
@@ -180,8 +189,12 @@ const stateFor = (
 ): { lockedByInstance: boolean; registered: boolean } => {
   const id = buildNativePokedexRegistrationId(entry.id, facets);
   const manual = entry.manualRegistrationIds.includes(id);
-  const registered = manual || entry.registeredFacets.some((candidate) => facetsEqual(candidate, facets));
-  return { lockedByInstance: registered && !manual, registered };
+  // Caught copies imply every subset of their qualities. Manual marks remain exact.
+  // Match subsets on demand to avoid exponentially expanding an entire collection.
+  const instanceFacets = entry.instanceFacets ?? (entry.instanceRegistered ? entry.registeredFacets : []);
+  const caught = instanceFacets.some((candidate) => facetOrder.every((key) => facets[key] === undefined || facets[key] === candidate[key]));
+  const registered = manual || caught || entry.registeredFacets.some((candidate) => facetsEqual(candidate, facets));
+  return { lockedByInstance: caught && !manual, registered };
 };
 
 const registrationFor = (
@@ -193,163 +206,73 @@ const registrationFor = (
   registrationId: buildNativePokedexRegistrationId(entry.id, facets),
 });
 
-const sectionFor = (entry: NativePokedexEntry): NativePokedexDetailSectionKey => {
-  if (entry.category.includes('costume')) return 'costume';
-  if (entry.category.includes('shadow')) return 'shadow';
-  if (entry.category.includes('mega')) return 'mega';
-  if (entry.category.includes('dynamax') || entry.category.includes('gigantamax')) return 'max';
-  if (entry.category.includes('fusion')) return 'fusion';
-  if (entry.category === 'pokemon' || entry.category === 'shiny') return 'registered';
-  return 'special';
-};
+const variantFor = (entry: NativePokedexEntry) => entry.variant ?? ({
+  pokemon_id: entry.pokemonId,
+  pokedex_number: entry.pokedexNumber,
+  variant_id: entry.id,
+  variantType: entry.id.slice(entry.id.indexOf('-') + 1),
+  name: entry.name.replace(/^Shiny /, ''),
+  species_name: entry.name,
+  gender_rate: entry.supportedGenders?.length === 0 ? 'GENDERLESS' : 'M/F',
+  costumes: [],
+} as unknown as PokedexRegistrationSlot['pokemon']);
 
-const iconForEntry = (entry: NativePokedexEntry): string | null => {
-  if (entry.category.includes('costume')) return '/images/costume_icon.png';
-  if (entry.category.includes('shadow')) return '/images/shadow_icon.png';
-  if (entry.category.includes('mega')) return '/images/mega.png';
-  if (entry.category.includes('gigantamax')) return '/images/gigantamax-icon.png';
-  if (entry.category.includes('dynamax')) return '/images/dynamax-icon.png';
-  if (entry.category.includes('fusion')) return '/images/fusion_1.png';
-  return null;
-};
-
-const createSlot = (
-  entry: NativePokedexEntry,
-  label: string,
-  section: NativePokedexDetailSectionKey,
-  facets: NativePokedexRegistrationFacets = {},
-  icon: string | null = iconForEntry(entry),
-): NativePokedexRegistrationSlot => {
-  const state = stateFor(entry, facets);
+const nativeSlot = (slot: PokedexRegistrationSlot, entries: NativePokedexEntry[]): NativePokedexRegistrationSlot => {
+  const entry = entries.find(({ id }) => id === slot.pokemon.variant_id)!;
+  const facets = (slot.facets ?? {}) as NativePokedexRegistrationFacets;
   const registration = registrationFor(entry, facets);
   return {
-    entry,
-    facets,
-    icon,
-    id: registration.registrationId,
-    label,
-    registration,
-    releaseDate: section === 'costume' ? entry.releaseDate ?? null : null,
-    section,
-    ...state,
+    canonical: slot, entry, facets, registration, id: registration.registrationId,
+    label: slot.label, section: slot.section === 'primary' ? 'registered' : slot.section,
+    icon: slot.icon ?? null, releaseDate: slot.releaseDate ?? null,
+    ...stateFor(entry, facets),
   };
 };
 
-const isShiny = (entry: NativePokedexEntry): boolean => entry.category.includes('shiny');
-const isShadow = (entry: NativePokedexEntry): boolean => entry.category.includes('shadow');
-
 export const buildNativePokedexRegistrationSlots = (
-  allEntries: NativePokedexEntry[],
-  pokemonId: number,
+  allEntries: NativePokedexEntry[], pokemonId: number,
 ): NativePokedexRegistrationSlot[] => {
-  const speciesEntries = allEntries.filter((entry) => entry.pokemonId === pokemonId);
-  const base = speciesEntries.find((entry) => entry.category === 'pokemon') ?? speciesEntries[0];
-  if (!base) return [];
-  const shinyCandidate = speciesEntries.find((entry) => entry.category === 'shiny');
-  const shiny = shinyCandidate === base ? undefined : shinyCandidate;
-  const formEntries = speciesEntries.filter((entry) => entry !== base && entry !== shiny);
-  const shadowEntries = formEntries.filter(isShadow);
-
-  return [
-    createSlot(base, 'Pokémon', 'registered', {}, '/images/pokedex-icon.png'),
-    ...(shiny ? [createSlot(shiny, 'Shiny', 'registered')] : []),
-    createSlot(base, '100%', 'registered', { appraisal: '4-star' }, '/images/appraisal_04.png'),
-    createSlot(base, 'Lucky', 'registered', { lucky: true }, '/images/lucky-icon.png'),
-    createSlot(base, 'XXL', 'registered', { size: 'xxl' }, '/images/xxl.png'),
-    createSlot(base, 'XXS', 'registered', { size: 'xxs' }, '/images/xxs.png'),
-    ...formEntries.map((entry) => createSlot(entry, entry.name, sectionFor(entry))),
-    ...(shadowEntries.length > 0 ? [createSlot(base, 'Purified', 'shadow', { purified: true }, '/images/purified.png')] : []),
-    ...shadowEntries.filter(isShiny).map((entry) => createSlot(entry, 'Shiny Purified', 'shadow', { purified: true }, '/images/purified.png')),
-  ];
-};
-
-const genderOptionsFor = (pokemon: BasePokemon): ('Male' | 'Female')[] => {
-  const rate = String(pokemon.gender_rate ?? '').toLocaleUpperCase();
-  if (rate === 'GENDERLESS' || rate === 'NONE') return [];
-  if (rate === 'M/M') return ['Male'];
-  if (rate === 'F/F') return ['Female'];
-  if (rate === 'M/F' || rate === 'F/M' || !rate) return ['Male', 'Female'];
-  const options: ('Male' | 'Female')[] = [];
-  if (Number(rate.match(/(\d+)M/)?.[1] ?? 0) > 0) options.push('Male');
-  if (Number(rate.match(/(\d+)F/)?.[1] ?? 0) > 0) options.push('Female');
-  return options;
-};
-
-const combinationLabel = (
-  entry: NativePokedexEntry,
-  facets: NativePokedexRegistrationFacets,
-): string => [
-  isShiny(entry) ? 'Shiny' : null,
-  facets.purified ? 'Purified' : null,
-  facets.gender,
-  facets.size ? facets.size.toLocaleUpperCase() : null,
-  facets.lucky ? 'Lucky' : null,
-  facets.appraisal ? '100%' : null,
-].filter(Boolean).join(' ') || entry.name;
-
-const combinationsFor = (
-  entry: NativePokedexEntry,
-  pokemon: BasePokemon,
-): NativePokedexCombination[] => {
-  const genderFacets: NativePokedexRegistrationFacets[] = [
-    {}, ...genderOptionsFor(pokemon).map((gender) => ({ gender })),
-  ];
-  const sizeFacets: NativePokedexRegistrationFacets[] = [
-    {}, { size: 'xxs' }, { size: 'xs' }, { size: 'xl' }, { size: 'xxl' },
-  ];
-  const luckyFacets: NativePokedexRegistrationFacets[] = isShadow(entry) ? [{}] : [{}, { lucky: true }];
-  const appraisalFacets: NativePokedexRegistrationFacets[] = [{}, { appraisal: '4-star' }];
-  const combinations: NativePokedexCombination[] = [];
-
-  for (const gender of genderFacets) for (const size of sizeFacets) {
-    for (const lucky of luckyFacets) for (const appraisal of appraisalFacets) {
-      const facets = { ...gender, ...size, ...lucky, ...appraisal };
-      const state = stateFor(entry, facets);
-      const registration = registrationFor(entry, facets);
-      combinations.push({
-        entry,
-        facets,
-        id: registration.registrationId,
-        label: combinationLabel(entry, facets),
-        registration,
-        ...state,
-      });
-    }
-  }
-  return combinations;
-};
-
-const familyKeyFor = (entry: NativePokedexEntry): string => {
-  if (entry.category === 'pokemon' || entry.category === 'shiny') return entry.id;
-  return entry.id
-    .replace(/shiny[_-]?/gi, '')
-    .replace(/(^|[-_])shiny($|[-_])/gi, '$1')
-    .replace(/[-_]+/g, '-');
+  const entries = allEntries.filter((entry) => entry.pokemonId === pokemonId);
+  const variants = entries.map(variantFor);
+  return variants[0] ? getRegistrationSlots(variants[0], variants, []).map((slot) => nativeSlot(slot, entries)) : [];
 };
 
 export const buildNativePokedexCombinationSections = (
-  allEntries: NativePokedexEntry[],
-  pokemon: BasePokemon,
+  allEntries: NativePokedexEntry[], pokemon: BasePokemon,
 ): NativePokedexCombinationSection[] => {
-  const speciesEntries = allEntries.filter((entry) => entry.pokemonId === pokemon.pokemon_id);
-  const grouped = new Map<string, NativePokedexEntry[]>();
-  speciesEntries.forEach((entry) => {
-    const key = familyKeyFor(entry);
-    grouped.set(key, [...(grouped.get(key) ?? []), entry]);
-  });
-  return [...grouped.entries()].map(([id, entries]) => {
-    const combinations = entries.flatMap((entry) => combinationsFor(entry, pokemon));
-    return {
-      combinations,
-      entries,
-      id,
-      label: entries.length > 1
-        ? entries.map(({ name }) => name.replace(/^Shiny\s+/i, '')).filter((name, index, names) => names.indexOf(name) === index).join(' / ')
-        : entries[0]?.name ?? 'Variant',
-      registeredCount: combinations.filter(({ registered }) => registered).length,
-    };
+  const entries = allEntries.filter((entry) => entry.pokemonId === pokemon.pokemon_id);
+  const variants = entries.map((entry) => entry.variant ?? { ...pokemon, ...variantFor(entry), gender_rate: pokemon.gender_rate ?? variantFor(entry).gender_rate });
+  if (!variants[0]) return [];
+  const roots = getComboRootSlots(getRegistrationSlots(variants[0], variants, []));
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  return roots.map((root) => {
+    const slot = nativeSlot(root, entries);
+    const combinations = getRegistrationCombos({ selectedSlot: root, variants, registrations: [] }).map((combo) => {
+      const entry = byId.get(combo.pokemon.variant_id)!;
+      const facets = combo.facets as NativePokedexRegistrationFacets;
+      const registration = registrationFor(entry, facets);
+      return { canonical: combo, entry, facets, registration, id: registration.registrationId,
+        label: combo.label, ...stateFor(entry, facets) };
+    });
+    return { slot, combinations, entries: [...new Set(combinations.map(({ entry }) => entry))],
+      id: slot.id, label: slot.label, registeredCount: combinations.filter(({ registered }) => registered).length };
   });
 };
+
+export const getNativePokedexComboSectionForSlot = (
+  slot: NativePokedexRegistrationSlot | undefined, sections: NativePokedexCombinationSection[],
+): NativePokedexCombinationSection | undefined => {
+  const key = getComboRootKeyForSlot(slot?.canonical, sections.map(({ slot }) => slot.canonical));
+  return sections.find(({ slot }) => slot.canonical.key === key);
+};
+
+export const getNativePokedexMoves = (pokemon: BasePokemon | PokedexRegistrationSlot['pokemon'] | null | undefined): Move[] => {
+  if (!pokemon) return [];
+  const fusionId = getFusionId(pokemon as PokedexRegistrationSlot['pokemon']);
+  return (pokemon.moves ?? []).filter((move) => fusionId === null || move.fusion_id == null || Number(move.fusion_id) === fusionId);
+};
+
+const isShiny = (entry: NativePokedexEntry) => entry.category.includes('shiny');
 
 const FILTER_GROUPS: Record<NativePokedexComboFilter, string> = {
   registered: 'status', missing: 'status', pokemon: 'variant', shiny: 'variant',
@@ -380,7 +303,7 @@ export const filterNativePokedexCombinations = (
     return result;
   }, {});
   return combinations.filter((combo) => {
-    const text = `${combo.label} ${combo.entry.name} ${combo.registered ? 'registered' : 'missing'}`.toLocaleLowerCase();
+    const text = getComboSearchText({ ...combo.canonical, registered: combo.registered });
     if (!tokens.every((token) => text.includes(token))) return false;
     return Object.entries(groups).every(([group, groupFilters]) => group === 'quality'
       ? groupFilters.every((filter) => matchesFilter(combo, filter))

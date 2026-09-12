@@ -60,6 +60,8 @@ export type NativePokedexManualRegistration = {
 };
 
 export type NativePokedexEntry = PokemonCatalogEntry & {
+  variant?: ReturnType<typeof createPokemonVariants>[number];
+  instanceFacets?: NativePokedexRegistrationFacets[];
   category: NativePokedexCategory;
   femaleImageUri?: string | null;
   femalePurifiedImageUri?: string | null;
@@ -79,6 +81,7 @@ export type NativePokedexEntry = PokemonCatalogEntry & {
 
 type NativePokedexStaticEntry = PokemonCatalogEntry & Pick<
   NativePokedexEntry,
+  | 'variant'
   | 'category'
   | 'femaleImageUri'
   | 'femalePurifiedImageUri'
@@ -262,6 +265,7 @@ const getNativePokedexCatalogProjection = (
     return {
       ...entry,
       category,
+      variant,
       femaleImageUri: variant ? determineImageUrl(true, variant) : entry.imageUri,
       femalePurifiedImageUri: variant
         ? determineImageUrl(true, variant, false, undefined, false, undefined, true)
@@ -340,6 +344,7 @@ export const buildNativePokedexEntries = (
     const categoryFacets = registeredCategoryFacets.get(`${category}:${entry.pokedexNumber}`) ?? [];
     return {
       ...entry,
+      instanceFacets: projectedForVariant.filter(({ source }) => source === 'instance').map(({ facets }) => nativeFacetsFromCanonical(facets)),
       instanceRegistered: projectedForVariant.some(({ source }) => source === 'instance'),
       manualRegistrationIds: (manualByVariant.get(entry.id) ?? []).map(({ registrationId }) => registrationId),
       registered: projectedForVariant.length > 0,
