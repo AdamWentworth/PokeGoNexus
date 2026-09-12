@@ -1,15 +1,34 @@
 # Strong-machine Android performance handoff
 
-Last updated: 2026-09-09
+Last updated: 2026-09-12
 
 ## Current phone candidate
 
 The physical Pixel 8 Pro now has
-`PokeGoNexus-manual-d1e06fc2-arm64-v8a.apk`, built locally with the bounded
-manual builder. Its checksum matches the installed APK:
-`da4059d2b4a2ff6da59b8b228dcfecdce359743b47f55a4a720ebbfe45cd2743`.
-This is the normal standalone native preview with smoke mode disabled. The
-in-place update retained the account data.
+`PokeGoNexus-manual-033b1f63-arm64-v8a.apk`, including the Pokédex detail and
+region-index parity repairs. Its checksum matches the installed APK:
+`9db948be0ae307b90c40fd2e401590fe83832d3ac472d0d6b5b67802d973ffd0`.
+The package remains `com.pokegonexus.app`, with the existing signing certificate,
+normal native preview, and device-smoke mode disabled. Installation used
+`adb install -r` without clearing app data. The previous `d1e06fc2` APK is retained
+under `.artifacts/pokedex-parity/android-033b1f63/previous-installed.apk`.
+
+This build completed on the original workstation in 10m 15s. In addition to the
+manual builder's single ARM64 ABI, 2 GB Gradle heap, and two Gradle workers, the
+process ran on two CPU cores inside a user systemd scope with a 6 GiB memory-high
+threshold, 8 GiB hard memory limit, and 512 MiB swap limit. The stronger machine
+was not needed for this build. Unrestricted local builds remain inappropriate.
+Installation evidence and focused phone checks are under
+`.artifacts/pokedex-parity/android-033b1f63/`.
+
+Targeted checks on this APK passed Android Back from the region index, the
+four-column grid, selected Mega Charizard X stats/CP/typing, retained hundo
+combination search, initially collapsed More, and all 120 Purified combinations.
+The account still has 2249 caught and 167 Favorites; selecting Favorites uses
+Favorite descending with CP 4713/4689/4688 first. Current-process logs have no
+fatal/JS/ANR or released-database markers. Scrolled content overlapping the
+transparent status bar remains a visual follow-up. These checks do not replace
+the outstanding whole-app and comparative performance gates.
 
 `bb2888cc` restores existing/new Mega and Primal selection, both fusion
 component choices, and app-wide offline/sync/reconnection notices. `d1e06fc2`

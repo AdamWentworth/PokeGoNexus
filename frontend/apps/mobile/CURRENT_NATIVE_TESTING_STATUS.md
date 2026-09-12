@@ -7,7 +7,7 @@ The canonical Vite application defines user-visible behavior. Native may use
 different implementation details, but it must preserve the same content,
 navigation outcomes, interaction order, terminology, and perceived motion.
 
-The current strong-machine standalone Android build, artifact identity, and
+The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
@@ -50,10 +50,31 @@ text so status labels retain accessible contrast. The production Android/Hermes
 bundle exports successfully with device-smoke mode disabled.
 
 Audit captures and model comparisons are under `.artifacts/pokedex-parity-audit/`;
-the Android export is under `.artifacts/pokedex-parity-android/`. No Android device
-is attached. These source changes still need a rebuilt APK and physical verification
-of Back handling, motion, and the real account; the previously installed APK has
-not been updated by this work.
+the Android export is under `.artifacts/pokedex-parity-android/`.
+
+The normal standalone APK for `033b1f63` was built on the original workstation
+in 10m 15s and installed in place on the Pixel 8 Pro on 2026-09-12. The stronger
+machine was not needed. The installed checksum matches the built artifact;
+signing identity and account data were retained, with smoke mode disabled.
+Physical checks confirm the four-column region index, Android Back returning
+from the index to the overview, Mega Charizard X's 273 Attack / 213 Defense /
+4,353 CP50 and Fire/Dragon Battle data, and Shiny hundo search showing 30/60
+combinations with the search retained across tab switches. A fresh detail launch
+confirms More initially has no expanded combination search; selecting Purified
+then exposes all 120 combinations.
+
+The same read-only account check passes before and after installation: 2249
+caught, 167 Favorites, Favorite descending, with CP 4713/4689/4688 first and no
+collection sync warning. No account mutations were submitted. The captured
+current-process log contains no fatal, JS-error, ANR, or released-database
+markers; this does not close the earlier intermittent SQLite lifecycle issue.
+
+Phone evidence is under `.artifacts/pokedex-parity/android-033b1f63/`. Initial
+automation assertions assumed offscreen headers were visible and one tab tap
+landed under the status bar; scrolling targets into the center resolved those
+steps. Screenshots also expose a visual follow-up: scrolled content can overlap
+the transparent Android status bar. Safe-area treatment and comparative motion
+review remain open; these targeted checks are not full release approval.
 
 ## Pokédex region card framing — 2026-09-12
 
@@ -75,9 +96,9 @@ Actual Vite and native artwork captures are under
 `.artifacts/pokedex-region-framing/`; general smoke captures are under
 `.artifacts/native-web-parity/`.
 
-No Android device was attached during this review. This source fix still needs
-a rebuilt APK and physical-phone verification; the installed candidate documented
-in the handoff remains the earlier catalog-workflow build.
+The framing changes are included in the `033b1f63` APK installed on 2026-09-12.
+The signed-in Pixel overview and region index were inspected during that update;
+the broader theme/width coverage above remains browser evidence.
 
 ## Omitted catalog workflows and global status — 2026-09-09
 
@@ -350,16 +371,19 @@ unchanged-native-code runs.
 ## Current artifact truth
 
 The current phone has the normal standalone ARM64 manual candidate for commit
-`d8ede733` installed. It was built locally using the bounded manual builder as
-`PokeGoNexus-manual-d8ede733-arm64-v8a.apk`, with SHA-256
-`0ea172ec1e658182081dab63d624a15c4992e710129f6aa3a147559ae816f7ee`.
-The existing signing certificate was verified before the in-place install on
-2026-09-09. This build includes automatic Favorite descending selection when
-tapping Favorites.
-The checksum of Android's installed `base.apk` matches exactly. Its embedded
-configuration reports `experienceMode: native-preview`, `appEnv: preview`, and
-`deviceSmokeMode: false`; it uses bundled production/minified JavaScript and
-does not require Metro. No app-data reset was performed.
+`033b1f63`, installed in place on 2026-09-12. Its filename is
+`PokeGoNexus-manual-033b1f63-arm64-v8a.apk` and SHA-256 is
+`9db948be0ae307b90c40fd2e401590fe83832d3ac472d0d6b5b67802d973ffd0`.
+Android's installed `base.apk` checksum matches exactly. The signing certificate
+matches the previous `d1e06fc2` installation, the package remains
+`com.pokegonexus.app`, and app data was not cleared. Embedded configuration confirms
+`experienceMode: native-preview` and `deviceSmokeMode: false`; the minified Hermes
+bundle contains the new Pokédex code and requires no Metro connection.
+
+The previous `d1e06fc2` APK is retained for rollback under
+`.artifacts/pokedex-parity/android-033b1f63/previous-installed.apk`.
+Earlier `d8ede733`, `b600f024`, and catalog-workflow phone evidence remains
+historical; the dated validation sections describe what each build established.
 
 The preceding other-machine build, retrieved from the `public` share as
 `PokeGoNexus-manual-1eea14cb-arm64-v8a.apk`, had SHA-256
