@@ -2,7 +2,28 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — parity follow-up
+## Current phone candidate — instance overlay parity
+
+Code candidate: `f762569358d1da3d80bcb086b81d0966b4624a78`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-f7625693-arm64-v8a.apk`.
+SHA-256: `dd69c79d8c345f3cf55041d0ae268f0d05bb21884d42d4c68deb578ddf2acc97`.
+
+Installed on the Pixel 8 Pro using `adb install -r`; the installed checksum
+and original signing certificate match. Session and account data are retained.
+Device-smoke mode and UI performance probes are disabled. This candidate adds
+the Vite CP arc, correct caught ribbon, recorded ball in the lower frame, and
+the Shadow Mega eligibility guard. It also preserves centered Wanted headers.
+See `NATIVE_INSTANCE_OVERLAY_PARITY_REVIEW.md` for the targeted validation.
+
+The build completed locally in 80.2 seconds, reusing the existing native tree,
+with two cores, CPUQuota 200%, MemoryHigh 6G, MemoryMax 8G, MemorySwapMax 512M,
+Java heap 2G, and two Gradle workers. A stronger machine was not required.
+Evidence and the rollback APK are private under
+`.artifacts/instance-overlay-final-2026-09-13/`. The earlier clipped-dot candidate
+and before/after references are in `.artifacts/instance-overlay-parity-2026-09-13/`.
+The performance and lifecycle gates recorded below remain separate work.
+
+## Previous phone candidate — roster/count parity follow-up
 
 Code candidate: `a6155531961a51dd09adade33edc89c503dea6dd`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-a6155531-arm64-v8a.apk`.

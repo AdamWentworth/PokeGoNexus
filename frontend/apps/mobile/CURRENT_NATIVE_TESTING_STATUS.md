@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (roster/count parity, FAQ rendering, database recovery)
+Last targeted revalidation: 2026-09-13 (instance overlay arc, caught metadata, Shadow Mega eligibility)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,33 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Instance overlay parity — 2026-09-13
+
+The current code candidate is `f7625693`. Native now uses the responsive Vite
+CP arc with white progress, grey remainder, a circular 10px dot, and measured
+header/panel placement. Android gets a padded SVG viewport so the dot is not
+clipped at maximum level. Vite and native share the same CPM interpolation.
+
+The caught-date ribbon uses Vite's `caught.png` asset and ribbon layout. The
+lower caught card renders the recorded ball; the editor and Vite share the
+same canonical/legacy ball mapping. Missing ball values remain unknown.
+Unpurified Shadow Pokémon no longer show the read-only Mega eligibility badge;
+Purified Pokémon remain eligible. Both editor states are regression-covered.
+
+The normal APK is installed with SHA-256
+`dd69c79d8c345f3cf55041d0ae268f0d05bb21884d42d4c68deb578ddf2acc97`.
+It preserves the package, signing certificate, session, and collection. Device
+fixtures and UI timing probes are disabled. The local build took 80.2 seconds
+under the existing two-core/8GB limits. See `NATIVE_INSTANCE_OVERLAY_PARITY_REVIEW.md`
+for source comparison, regression checks, and physical-device evidence.
+
+All 58 targeted native/Vite tests and both typechecks pass. Final phone checks
+cover both themes, full/partial arcs, Premier/Beast Balls, Shadow purification
+previews, and Trade/Wanted frames. No collection edits were saved. The final
+account check retains 2249 caught, 167 Favorites, Favorite descending, and
+CP 4713/4689/4688 first. The phone is left in its current dark theme on Favorites;
+private final evidence is under `.artifacts/instance-overlay-final-2026-09-13/`.
 
 ## Roster/count follow-up and measured performance — 2026-09-13
 
