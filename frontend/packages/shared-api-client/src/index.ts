@@ -2,6 +2,8 @@ import { buildUrl, type UrlQueryValue } from '@pokemongonexus/shared-contracts/c
 
 export type AccessTokenProvider = {
   getAccessToken: () => Promise<string | null> | string | null;
+  // The host decides whether a failed refresh invalidates its persisted session.
+  // A temporary network outage may return null while retaining retry credentials.
   refreshAccessToken: () => Promise<string | null>;
   clearSession?: () => Promise<void> | void;
 };
@@ -152,17 +154,23 @@ export const createApiClient = ({
         ? await authentication.tokens.getAccessToken()
         : null;
     let response = await execute(url, options, initialToken);
+    let payload = await parseResponsePayload(response);
 
-    if (response.status === 401 && authentication.mode === 'bearer') {
+    // The users/search/events services use this specific legacy 403 response for
+    // missing or expired JWTs. Other 403 responses are actual permission denials.
+    const legacyAuthenticationFailure = response.status === 403
+      && payload !== null
+      && typeof payload === 'object'
+      && 'error' in payload
+      && payload.error === 'Authentication failed';
+    if ((response.status === 401 || legacyAuthenticationFailure) && authentication.mode === 'bearer') {
       const refreshedToken = await refreshBearerToken();
       if (refreshedToken) {
         response = await execute(url, options, refreshedToken);
-      } else {
-        await authentication.tokens.clearSession?.();
+        payload = await parseResponsePayload(response);
       }
     }
 
-    const payload = await parseResponsePayload(response);
     if (!response.ok) {
       throw new ApiClientError(
         response.status,

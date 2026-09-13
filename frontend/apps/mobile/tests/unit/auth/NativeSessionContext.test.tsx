@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { ApiClientError } from '@pokemongonexus/shared-api-client';
+import { ApiClientError, createApiClient } from '@pokemongonexus/shared-api-client';
 import type { PropsWithChildren } from 'react';
 import {
   NativeSessionProvider,
@@ -146,6 +146,47 @@ describe('NativeSessionProvider', () => {
     await act(async () => result.current.retrySession());
     expect(result.current.status).toBe('signed-in');
     expect(result.current.getAccessToken()).toBe('access-retry');
+  });
+
+  it('can recover after a protected request encounters a temporary refresh outage', async () => {
+    const api = createApi({
+      refresh: jest.fn()
+        .mockResolvedValueOnce(session('restored'))
+        .mockRejectedValueOnce(new Error('Network request failed'))
+        .mockResolvedValueOnce(session('recovered')),
+    });
+    const persistence = {
+      read: jest.fn().mockResolvedValue('refresh-stored'),
+      store: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    };
+    const wrapper = ({ children }: PropsWithChildren) => (
+      <NativeSessionProvider api={api} persistence={persistence}>{children}</NativeSessionProvider>
+    );
+    const { result } = renderHook(() => useNativeSession(), { wrapper });
+    await waitFor(() => expect(result.current.status).toBe('signed-in'));
+    const client = createApiClient({
+      baseUrl: 'https://pokegonexus.com/api/users',
+      authentication: { mode: 'bearer', tokens: {
+        getAccessToken: () => result.current.getAccessToken(),
+        refreshAccessToken: () => result.current.refreshAccessToken(),
+        clearSession: () => result.current.clearSession(),
+      } },
+      fetch: jest.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        text: async () => JSON.stringify({ error: 'Expired' }),
+      } as Response),
+    });
+
+    await act(async () => {
+      await expect(client.get('/preferences')).rejects.toMatchObject({ status: 401 });
+    });
+    expect(result.current.status).toBe('unavailable');
+    expect(persistence.clear).not.toHaveBeenCalled();
+    await act(async () => result.current.retrySession());
+    expect(result.current.status).toBe('signed-in');
+    expect(result.current.getAccessToken()).toBe('access-recovered');
   });
 
   it('coalesces concurrent refresh requests into one token rotation', async () => {

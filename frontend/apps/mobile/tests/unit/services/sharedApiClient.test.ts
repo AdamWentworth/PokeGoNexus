@@ -48,10 +48,13 @@ describe('shared API client', () => {
     );
   });
 
-  it('refreshes once and retries an unauthorized bearer request', async () => {
+  it.each([
+    { status: 401, payload: { message: 'Expired' } },
+    { status: 403, payload: { error: 'Authentication failed' } },
+  ])('refreshes once and retries a $status authentication failure', async ({ status, payload }) => {
     const fetchMock = jest
       .fn()
-      .mockResolvedValueOnce(response(401, { message: 'Expired' }))
+      .mockResolvedValueOnce(response(status, payload))
       .mockResolvedValueOnce(response(200, { username: 'AdamZilla' }));
     const tokens: AccessTokenProvider = {
       getAccessToken: jest.fn().mockResolvedValue('expired-token'),
@@ -71,6 +74,61 @@ describe('shared API client', () => {
     expect(new Headers(retry.headers).get('Authorization')).toBe(
       'Bearer fresh-token',
     );
+  });
+
+  it.each([
+    { error: 'This collection is private' },
+    { message: 'Forbidden' },
+    null,
+  ])('does not refresh or clear the session for a permission denial: %j', async (payload) => {
+    const fetchMock = jest.fn().mockResolvedValue(response(403, payload));
+    const tokens: AccessTokenProvider = {
+      getAccessToken: () => 'valid-token',
+      refreshAccessToken: jest.fn(),
+      clearSession: jest.fn(),
+    };
+    const client = createApiClient({
+      baseUrl: 'https://pokegonexus.com/api/users',
+      authentication: { mode: 'bearer', tokens },
+      fetch: fetchMock,
+    });
+    await expect(client.get('/collection/private')).rejects.toMatchObject({ status: 403, payload });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(tokens.refreshAccessToken).not.toHaveBeenCalled();
+    expect(tokens.clearSession).not.toHaveBeenCalled();
+  });
+
+  it('stops after one retry when the server still rejects authentication', async () => {
+    const payload = { error: 'Authentication failed' };
+    const fetchMock = jest.fn().mockResolvedValue(response(403, payload));
+    const tokens: AccessTokenProvider = {
+      getAccessToken: () => 'expired-token',
+      refreshAccessToken: jest.fn().mockResolvedValue('fresh-token'),
+    };
+    const client = createApiClient({
+      baseUrl: 'https://pokegonexus.com/api/users',
+      authentication: { mode: 'bearer', tokens },
+      fetch: fetchMock,
+    });
+    await expect(client.get('/preferences')).rejects.toMatchObject({ status: 403, payload });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(tokens.refreshAccessToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves credential retention to the session provider when refresh cannot complete', async () => {
+    const tokens: AccessTokenProvider = {
+      getAccessToken: () => 'expired-token',
+      refreshAccessToken: jest.fn().mockResolvedValue(null),
+      clearSession: jest.fn(),
+    };
+    const client = createApiClient({
+      baseUrl: 'https://pokegonexus.com/api/users',
+      authentication: { mode: 'bearer', tokens },
+      fetch: jest.fn().mockResolvedValue(response(401, { error: 'Expired' })),
+    });
+    await expect(client.get('/preferences')).rejects.toMatchObject({ status: 401 });
+    expect(tokens.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(tokens.clearSession).not.toHaveBeenCalled();
   });
 
   it('surfaces a typed failure with the server message', async () => {
