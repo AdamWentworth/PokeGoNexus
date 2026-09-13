@@ -248,6 +248,45 @@ const InformationSection = memo(({
   section: NativeInformationSection;
 }) => {
   const bodyVisible = !isFaq || expanded;
+  const body = useMemo(() => (
+  <View style={styles.sectionBody}>
+    {section.paragraphs?.map((paragraph) => (
+      <Text key={paragraph} style={[styles.paragraph, light && styles.mutedLight]}>{paragraph}</Text>
+    ))}
+    {section.bullets?.map((bullet) => (
+      <View key={bullet} style={styles.bulletRow}>
+        <Text style={styles.bulletCheck}>✓</Text>
+        <Text style={[styles.bulletText, light && styles.mutedLight]}>{bullet}</Text>
+      </View>
+    ))}
+    {isFaq ? (
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => onNavigate(`/faq#${section.id}`)}
+        style={styles.faqAnswerLink}
+      >
+        <Text style={[styles.faqAnswerLinkText, light && styles.blueTextLight]}>
+          ⌁  Link to this answer
+        </Text>
+      </Pressable>
+    ) : null}
+    {section.links?.length ? (
+      <View style={styles.links}>
+        {section.links.map((link) => (
+          <Pressable
+            accessibilityRole="button"
+            key={`${section.id}-${link.path}`}
+            onPress={() => onNavigate(link.path)}
+            style={[styles.link, link.primary ? styles.linkPrimary : light ? styles.linkLight : styles.linkDark]}
+          >
+            <Text style={[styles.linkText, link.primary ? styles.linkTextPrimary : light && styles.textLight]}>{link.label}</Text>
+            <Text style={[styles.linkArrow, link.primary ? styles.linkTextPrimary : light && styles.textLight]}>›</Text>
+          </Pressable>
+        ))}
+      </View>
+    ) : null}
+  </View>
+  ), [isFaq, light, onNavigate, section]);
 
   return (
     <View style={[styles.section, light && styles.sectionLight]}>
@@ -285,43 +324,7 @@ const InformationSection = memo(({
           pointerEvents={bodyVisible ? 'auto' : 'none'}
           style={!bodyVisible ? styles.faqBodyCollapsed : undefined}
         >
-          <View style={styles.sectionBody}>
-            {section.paragraphs?.map((paragraph) => (
-              <Text key={paragraph} style={[styles.paragraph, light && styles.mutedLight]}>{paragraph}</Text>
-            ))}
-            {section.bullets?.map((bullet) => (
-              <View key={bullet} style={styles.bulletRow}>
-                <Text style={styles.bulletCheck}>✓</Text>
-                <Text style={[styles.bulletText, light && styles.mutedLight]}>{bullet}</Text>
-              </View>
-            ))}
-            {isFaq ? (
-              <Pressable
-                accessibilityRole="link"
-                onPress={() => onNavigate(`/faq#${section.id}`)}
-                style={styles.faqAnswerLink}
-              >
-                <Text style={[styles.faqAnswerLinkText, light && styles.blueTextLight]}>
-                  ⌁  Link to this answer
-                </Text>
-              </Pressable>
-            ) : null}
-            {section.links?.length ? (
-              <View style={styles.links}>
-                {section.links.map((link) => (
-                  <Pressable
-                    accessibilityRole="button"
-                    key={`${section.id}-${link.path}`}
-                    onPress={() => onNavigate(link.path)}
-                    style={[styles.link, link.primary ? styles.linkPrimary : light ? styles.linkLight : styles.linkDark]}
-                  >
-                    <Text style={[styles.linkText, link.primary ? styles.linkTextPrimary : light && styles.textLight]}>{link.label}</Text>
-                    <Text style={[styles.linkArrow, link.primary ? styles.linkTextPrimary : light && styles.textLight]}>›</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-          </View>
+          {body}
         </View>
       ) : null}
     </View>
