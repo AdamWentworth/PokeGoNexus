@@ -3354,7 +3354,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239,91,113,0.08)',
   },
   conditionChipText: { fontSize: 11 },
-  stageHeader: { width: '100%', zIndex: 7 },
+  stageHeader: { width: '100%', alignItems: 'center', zIndex: 7 },
   arc: { position: 'absolute', zIndex: 1, alignSelf: 'center' },
   imageStage: { zIndex: 3, width: 296, height: 296, alignItems: 'center', justifyContent: 'center', marginTop: -48 },
   locationBackdrop: { position: 'absolute', left: '50%' },

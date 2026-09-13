@@ -22,8 +22,8 @@ describe('native instance CP arc parity', () => {
     expect(dot.cx).toBeCloseTo(width / 2 * (1 + Math.cos(Math.PI * (1 + progress))));
     expect(dot.cy).toBeCloseTo(height * (1 + Math.sin(Math.PI * (1 + progress))));
     expect(dot.r).toBe(5);
-    const [left, top, canvasWidth, canvasHeight] = screen.getByTestId('native-level-arc-canvas')
-      .props.viewBox.split(' ').map(Number);
+    const { minX: left, minY: top, vbWidth: canvasWidth, vbHeight: canvasHeight } = screen
+      .getByTestId('native-level-arc-canvas').props;
     expect(dot.cx - dot.r).toBeGreaterThanOrEqual(left);
     expect(dot.cx + dot.r).toBeLessThanOrEqual(left + canvasWidth);
     expect(dot.cy - dot.r).toBeGreaterThanOrEqual(top);
