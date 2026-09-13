@@ -225,7 +225,7 @@ describe('initializePokemonTags', () => {
 
   it('uses image override helper for female/mega/fusion/purified cases', () => {
     const variant = makeVariant({
-      female_data: { female_available: true } as PokemonVariant['female_data'],
+      female_data: { pokemon_id: 1, image_url: '/female.png', shadow_image_url: '/female-shadow.png', shiny_image_url: '/female-shiny.png', shiny_shadow_image_url: '/female-shiny-shadow.png' },
       megaEvolutions: [{ key: 'mega' }] as unknown as PokemonVariant['megaEvolutions'],
       fusion: [{ key: 'fusion' }] as unknown as PokemonVariant['fusion'],
       currentImage: '/images/default/pokemon_1.png',
