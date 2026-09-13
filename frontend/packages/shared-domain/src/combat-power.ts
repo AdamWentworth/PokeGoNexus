@@ -178,8 +178,12 @@ export const calculatePokemonCombatPower = (
 
 export const getPokemonLevelArcProgress = (level: number): number => {
   const boundedLevel = Math.max(MIN_POKEMON_LEVEL, Math.min(50, level));
-  const nearestHalfLevel = Math.round(boundedLevel * 2) / 2;
-  const current = getPokemonCpMultiplier(nearestHalfLevel) ?? cpMultipliers[MIN_POKEMON_LEVEL];
+  const low = Math.floor(boundedLevel * 2) / 2;
+  const high = Math.ceil(boundedLevel * 2) / 2;
+  const lowMultiplier = getPokemonCpMultiplier(low) ?? cpMultipliers[MIN_POKEMON_LEVEL];
+  const highMultiplier = getPokemonCpMultiplier(high) ?? lowMultiplier;
+  const current = high === low ? lowMultiplier
+    : lowMultiplier + (highMultiplier - lowMultiplier) * (boundedLevel - low) / (high - low);
   return Math.max(0, Math.min(1, current / cpMultipliers[50]));
 };
 

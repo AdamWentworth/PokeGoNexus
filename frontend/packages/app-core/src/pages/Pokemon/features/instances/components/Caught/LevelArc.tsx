@@ -1,7 +1,7 @@
 // LevelArc.tsx
 import React from 'react';
 import './LevelArc.css';
-import { cpMultipliers } from '@/utils/constants';
+import { getPokemonLevelArcProgress } from '@pokemongonexus/shared-domain/combat-power';
 
 export interface LevelArcProps {
   level?: number | null;
@@ -12,31 +12,6 @@ export interface LevelArcProps {
   dotRadius?: number;
   fitToContainer?: boolean;
   className?: string;
-}
-
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
-/** Get CP Multiplier at any level (supports 0.5 steps, with linear interpolation if needed). */
-function getCPM(level: number): number {
-  // Round to nearest 0.5 grid bounds
-  const lo = Math.floor(level * 2) / 2;
-  const hi = Math.ceil(level * 2) / 2;
-  const multipliers = cpMultipliers as Record<number, number>;
-
-  const cLo = multipliers[lo];
-  const cHi = multipliers[hi];
-
-  if (cLo != null && cHi != null) {
-    if (hi === lo) return cLo;
-    const t = (level - lo) / (hi - lo);
-    return cLo + (cHi - cLo) * t;
-  }
-  // Fallbacks if a key is missing (shouldn’t happen with your map)
-  if (cLo != null) return cLo;
-  if (cHi != null) return cHi;
-
-  // Very defensive default
-  return 0;
 }
 
 /** Build a circular arc path using SVG 'A' command from angle a1 -> a2 (clockwise on top half). */
@@ -69,19 +44,7 @@ const LevelArc: React.FC<LevelArcProps> = ({
   const cx = r;
   const cy = r;
 
-  // --- Relative power mapping ---------------------------------------------
-  // Treat anything >= 50 as "max" (same as 50 / 50.5 / 51).
-  const LVL_MIN = 1;
-  const LVL_MAX = 50;
-  const L = clamp(typeof level === 'number' ? level : LVL_MIN, LVL_MIN, LVL_MAX);
-
-  const cpmL = getCPM(L);
-  const cpmMax = getCPM(LVL_MAX) || 1; // ~0.84029999
-  let p = clamp(cpmL / cpmMax, 0, 1);  // normalized relative power
-
-  // Optional easing to fine-tune feel of the compression near high levels.
-  const POWER_GAMMA = 1.0; // try 0.9 (more right-compression) or 1.1 (less)
-  if (POWER_GAMMA !== 1.0) p = Math.pow(p, POWER_GAMMA);
+  const p = getPokemonLevelArcProgress(typeof level === 'number' ? level : 1);
 
   // Angles along the top semicircle (left π → right 2π)
   const leftA = Math.PI;

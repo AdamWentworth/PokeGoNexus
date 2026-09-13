@@ -3,6 +3,7 @@ import {
   Animated,
   Image,
   Modal,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -24,7 +25,6 @@ import {
   useState,
   startTransition,
 } from 'react';
-import Svg, { Circle, Path } from 'react-native-svg';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import type {
   NativeInstanceBackgroundOption,
@@ -48,7 +48,8 @@ import {
   useNativeOverlaySwipeNavigation,
 } from '../features/collection/parity/useNativeOverlaySwipeNavigation';
 import { getNativeLocationSuggestions } from '../services/locationApi';
-import { getPokemonLevelArcProgress } from '@pokemongonexus/shared-domain/combat-power';
+import { BALL_OPTIONS as POKEMON_BALL_OPTIONS, getBallImageFileName } from '@pokemongonexus/shared-domain/pokemon-balls';
+import { NativePokemonLevelArc, resolveNativeLevelArcLayout } from '../features/collection/parity/NativePokemonLevelArc';
 import {
   getPokemonShadowMoveBonus,
   type PokemonMoveDamageMode,
@@ -256,25 +257,7 @@ const createEditDraft = (detail: NativeInstanceDetail): NativeInstanceEditDraft 
   fusedWith: detail.instance?.is_fused ? detail.instance.fused_with : null,
 });
 
-const BALL_OPTIONS = [
-  ['poke_ball', 'POKE BALL'],
-  ['great_ball', 'GREAT BALL'],
-  ['ultra_ball', 'ULTRA BALL'],
-  ['premier_ball', 'PREMIER BALL'],
-  ['master_ball', 'MASTER BALL'],
-  ['safari_ball', 'SAFARI BALL'],
-  ['beast_ball', 'BEAST BALL'],
-] as const;
-
-const BALL_IMAGE_FILES: Record<string, string> = {
-  poke_ball: 'pokeball.png',
-  great_ball: 'greatball.png',
-  ultra_ball: 'ultraball.png',
-  premier_ball: 'premierball.png',
-  master_ball: 'masterball.png',
-  safari_ball: 'safariball.png',
-  beast_ball: 'beastball.png',
-};
+const BALL_OPTIONS = POKEMON_BALL_OPTIONS.map(({ value, label }) => [value, label] as const);
 
 const nullableNumber = (value: string): number | null => {
   const trimmed = value.trim();
@@ -375,20 +358,20 @@ const LIGHT_STATUS = {
   wanted: { accent: '#b0003b', label: 'WANTED' },
 } as const;
 
-const LevelArc = ({ level }: { level: number }) => {
-  const angle = Math.PI - getPokemonLevelArcProgress(level) * Math.PI;
-  const pointX = 150 + (126 * Math.cos(angle));
-  const pointY = 136 - (126 * Math.sin(angle));
+const NativeCaughtBall = ({ assetBaseUrl, value }: { assetBaseUrl: string; value: string }) => {
+  const file = getBallImageFileName(value);
   return (
-    <Svg height={146} viewBox="0 0 300 146" width={300}>
-      <Path
-        d="M24 136 A126 126 0 0 1 276 136"
-        fill="none"
-        stroke="rgba(255,255,255,0.92)"
-        strokeWidth={3}
-      />
-      <Circle cx={pointX} cy={pointY} fill="#ffffff" r={6} />
-    </Svg>
+    <Image
+      fadeDuration={0}
+      accessibilityElementsHidden
+      resizeMode="contain"
+      source={{ uri: toAssetUrl(assetBaseUrl, `/media/images/balls/${file}`) }}
+      style={[
+        styles.editMetaBall,
+        (file === 'beastball.png' || file === 'safariball.png') && styles.editMetaBallLarge,
+      ]}
+      testID="native-instance-caught-ball"
+    />
   );
 };
 
@@ -1146,7 +1129,7 @@ const NativeCaughtMetadataControls = ({
     { backgroundColor: palette.input, borderColor: palette.border, color: palette.text },
   ];
   const isShadow = Boolean(draft.shadow && !draft.purified);
-  const ballImageFile = draft.pokeball ? BALL_IMAGE_FILES[draft.pokeball] : null;
+  const ballImageFile = draft.pokeball ? getBallImageFileName(draft.pokeball) : null;
   const hasCaughtSummary = Boolean(draft.locationCaught || draft.dateCaught || ballImageFile);
 
   useEffect(() => {
@@ -1223,18 +1206,7 @@ const NativeCaughtMetadataControls = ({
               ) : null}
             </View>
             {ballImageFile ? (
-              <Image
-                fadeDuration={0}
-                accessibilityElementsHidden
-                resizeMode="contain"
-                source={{ uri: toAssetUrl(assetBaseUrl, `/media/images/balls/${ballImageFile}`) }}
-                style={[
-                  styles.editMetaBall,
-                  draft.pokeball === 'beast_ball' || draft.pokeball === 'safari_ball'
-                    ? styles.editMetaBallLarge
-                    : null,
-                ]}
-              />
+              <NativeCaughtBall assetBaseUrl={assetBaseUrl} value={draft.pokeball!} />
             ) : null}
           </View>
           <View style={[styles.editMetaDivider, { backgroundColor: palette.divider }]} />
@@ -1368,11 +1340,13 @@ const NativeCaughtMetadataControls = ({
         <Text style={[styles.ballCaughtLabel, { color: palette.text }]}>Ball Caught</Text>
         <View accessibilityLabel="Ball Caught" style={styles.ballOptions}>
           {[...BALL_OPTIONS, [null, 'UNKNOWN'] as const].map(([value, label]) => {
-            const selected = draft.pokeball === value;
+            const selected = value === null ? draft.pokeball === null : draft.pokeball != null
+              && getBallImageFileName(draft.pokeball) === getBallImageFileName(value);
             return (
               <Pressable
                 accessibilityLabel={`Ball caught: ${label}`}
                 accessibilityRole="button"
+                accessibilityState={{ selected }}
                 key={label}
                 onPress={() => onChange({ pokeball: value })}
                 style={[
@@ -2221,16 +2195,21 @@ const NativeInstanceReadOnlyDetailSections = memo(function NativeInstanceReadOnl
         </View>
       ) : null}
 
-      {detail.provenance.length ? (
+      {!isWanted && (detail.provenance.length || instance?.pokeball) ? (
         <View style={[styles.metaSection, { borderTopColor: palette.divider }]}>
           <View style={[styles.metaPanel, { backgroundColor: palette.meta }]}>
+            {instance?.pokeball ? (
+              <View pointerEvents="none" style={styles.metaBallSlot}>
+                <NativeCaughtBall assetBaseUrl={assetBaseUrl} value={instance.pokeball} />
+              </View>
+            ) : null}
             {instance?.original_trainer_name ? (
               <View style={styles.metaSummaryBlock}>
                 <Text style={[styles.metaSummaryLabel, { color: palette.secondary }]}>OBTAINED IN A TRADE</Text>
                 <Text style={[styles.metaSummaryValue, { color: palette.text }]}>{instance.original_trainer_name}</Text>
               </View>
             ) : null}
-            {instance?.location_caught || caughtDate ? (
+            {instance?.location_caught || caughtDate || instance?.pokeball ? (
               <View style={styles.metaSummaryBlock}>
                 <Text style={[styles.metaSummaryLabel, { color: palette.secondary }]}>CAUGHT</Text>
                 {instance?.location_caught ? (
@@ -2370,6 +2349,19 @@ export const NativeInstanceDetailScreen = ({
   const desktopLayout = width >= 768;
   const shellWidth = Math.min(width * 0.95, 500);
   const palette = light ? LIGHT : DARK;
+  const [arcMeasurements, setArcMeasurements] = useState({ headerBottom: 52, panelTop: 249 });
+  const measureArcHeader = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
+    const headerBottom = layout.y + layout.height;
+    setArcMeasurements((previous) => previous.headerBottom === headerBottom
+      ? previous : { ...previous, headerBottom });
+  }, []);
+  const measureArcPanel = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
+    setArcMeasurements((previous) => previous.panelTop === layout.y
+      ? previous : { ...previous, panelTop: layout.y });
+  }, []);
+  const arcLayout = resolveNativeLevelArcLayout({
+    viewportWidth: width, panelWidth: shellWidth, ...arcMeasurements,
+  });
   const [editingInstanceId, setEditingInstanceId] = useState<string | null>(null);
   const [editorReadyInstanceId, setEditorReadyInstanceId] = useState<string | null>(null);
   const editInteractionStartedAtRef = useRef<number | null>(null);
@@ -2777,6 +2769,7 @@ export const NativeInstanceDetailScreen = ({
             </View>
           ) : null}
 
+          <View onLayout={measureArcHeader} style={styles.stageHeader} testID="native-instance-stage-header">
           {isWanted ? (
             <FriendshipConditions
               accent={status.accent}
@@ -2886,9 +2879,11 @@ export const NativeInstanceDetailScreen = ({
             </View>
           ) : null}
 
-          {!isWanted && showArc ? (
-            <View style={styles.arc}>
-              <LevelArc level={displayLevel} />
+          </View>
+
+          {!isWanted && showArc && arcLayout.height > 0 ? (
+            <View pointerEvents="none" style={[styles.arc, { top: arcLayout.top }]}>
+              <NativePokemonLevelArc level={displayLevel} width={arcLayout.width} height={arcLayout.height} />
             </View>
           ) : null}
 
@@ -2981,7 +2976,7 @@ export const NativeInstanceDetailScreen = ({
             ) : null}
           </View>
 
-          <View style={[
+          <View onLayout={measureArcPanel} testID="native-instance-details-panel" style={[
             styles.detailsPanel,
             isWanted && (desktopLayout ? styles.wantedDetailsPanelDesktop : styles.wantedDetailsPanel),
             isTrade && styles.tradeDetailsPanel,
@@ -2995,10 +2990,12 @@ export const NativeInstanceDetailScreen = ({
               >
                 <Image fadeDuration={0}
                   accessibilityElementsHidden
-                  source={{ uri: toAssetUrl(assetBaseUrl, '/images/balls/pokeball.png') }}
+                  source={{ uri: toAssetUrl(assetBaseUrl, '/media/images/caught.png') }}
+                  resizeMode="contain"
                   style={styles.caughtDateBall}
+                  testID="native-instance-caught-ribbon-icon"
                 />
-                <View>
+                <View style={styles.caughtDateText}>
                   <Text style={styles.caughtDateYear}>{caughtDateParts[1]}</Text>
                   <Text style={styles.caughtDateDay}>{caughtDateParts[2]}-{caughtDateParts[3]}</Text>
                 </View>
@@ -3108,6 +3105,7 @@ export const NativeInstanceDetailScreen = ({
 
             {!editorVisible
               && isCaught
+              && !displayShadow
               && !instance?.mega
               && !instance?.is_mega
               && (detail.megaOptions?.length ?? 0) > 0 ? (
@@ -3356,7 +3354,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239,91,113,0.08)',
   },
   conditionChipText: { fontSize: 11 },
-  arc: { position: 'absolute', zIndex: 1, top: 48, alignSelf: 'center' },
+  stageHeader: { width: '100%', zIndex: 7 },
+  arc: { position: 'absolute', zIndex: 1, alignSelf: 'center' },
   imageStage: { zIndex: 3, width: 296, height: 296, alignItems: 'center', justifyContent: 'center', marginTop: -48 },
   locationBackdrop: { position: 'absolute', left: '50%' },
   luckyBackdrop: { position: 'absolute', zIndex: 2, width: 296, height: 296 },
@@ -3370,21 +3369,22 @@ const styles = StyleSheet.create({
   caughtDateBadge: {
     position: 'absolute',
     zIndex: 4,
-    top: 12,
-    right: 5,
-    minWidth: 67,
-    minHeight: 38,
+    top: 20,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    paddingHorizontal: 6,
-    borderRadius: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
+    borderTopLeftRadius: 999,
+    borderBottomLeftRadius: 999,
     backgroundColor: '#f4be5c',
   },
-  caughtDateBall: { width: 19, height: 19 },
-  caughtDateYear: { color: '#422b00', fontSize: 12, lineHeight: 13, fontWeight: '900', textAlign: 'center' },
-  caughtDateDay: { color: '#422b00', fontSize: 10, lineHeight: 11, fontWeight: '800', textAlign: 'center' },
+  caughtDateBall: { width: 16, height: 16 },
+  caughtDateText: { paddingLeft: 4, alignItems: 'flex-end' },
+  caughtDateYear: { color: '#422b00', fontSize: 12, lineHeight: 13, fontWeight: '700', borderBottomWidth: 1, borderBottomColor: 'rgba(66,43,0,0.72)', paddingBottom: 2 },
+  caughtDateDay: { color: '#422b00', fontSize: 10, lineHeight: 11, fontWeight: '600', paddingTop: 2 },
   statusEyebrow: { marginBottom: 4, fontSize: 12, fontWeight: '900', letterSpacing: 1.7 },
   name: { maxWidth: '92%', fontSize: 32, lineHeight: 35, fontWeight: '500', textAlign: 'center' },
   nameDesktop: { fontSize: 52, lineHeight: 55 },
@@ -3789,7 +3789,8 @@ const styles = StyleSheet.create({
   preferenceTitle: { fontSize: 11, fontWeight: '900', letterSpacing: 1.3 },
   metaSection: { width: '94%', marginTop: 16, paddingTop: 18, borderTopWidth: 2 },
   metaPanel: { width: '100%', gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8 },
-  metaSummaryBlock: { width: '100%', alignItems: 'flex-start' },
+  metaSummaryBlock: { width: '100%', paddingRight: 44, alignItems: 'flex-start' },
+  metaBallSlot: { position: 'absolute', top: 10, right: 12, width: 36, height: 36, alignItems: 'flex-end', zIndex: 1 },
   metaSummaryLabel: { fontSize: 11, lineHeight: 14, fontWeight: '600', letterSpacing: 0.4 },
   metaSummaryValue: { marginVertical: 3, fontSize: 16, lineHeight: 19 },
   targetsPanel: {

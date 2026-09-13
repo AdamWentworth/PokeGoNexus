@@ -268,6 +268,69 @@ describe('NativeInstanceDetailScreen', () => {
     });
   });
 
+  const renderOverlay = (instanceDetail: NativeInstanceDetail) => render(
+    <NativeInstanceDetailScreen
+      detail={instanceDetail} isLoading={false} error={null} cachedAt={null}
+      movesWarning={null} saveNotice={null} saveError={null} isSaving={false}
+      onRetry={jest.fn()} onBack={jest.fn()} onToggleFavorite={jest.fn()} onSaveDetails={jest.fn()}
+    />,
+  );
+
+  const megaDetail = (shadow: boolean, purified: boolean): NativeInstanceDetail => ({
+    ...detail,
+    row: { ...detail.row, status: 'caught' },
+    instance: { shadow, purified, mega: false, is_mega: false } as NativeInstanceDetail['instance'],
+    megaOptions: [{
+      form: 'X', label: 'Mega Charizard X', primal: false, imageUri: '', typeIconUris: [],
+      stats: { attack: 273, defense: 213, stamina: 186 },
+    }],
+  });
+
+  it.each([[false, false, true], [true, false, false], [false, true, true], [true, true, true]])(
+    'Mega eligibility respects Shadow=%s and Purified=%s in both overlay and editor',
+    async (shadow, purified, eligible) => {
+      renderOverlay(megaDetail(shadow, purified));
+      expect(Boolean(screen.queryByLabelText('Mega Evolution available'))).toBe(eligible);
+      await openCaughtEditor();
+      expect(Boolean(screen.queryByRole('button', { name: 'Mega Evolve' }))).toBe(eligible);
+      expect(screen.queryByLabelText('Mega Evolution available')).toBeNull();
+    },
+  );
+
+  it('updates Mega eligibility immediately when a Shadow draft is purified and reverted', async () => {
+    renderOverlay(megaDetail(true, false));
+    await openCaughtEditor();
+    expect(screen.queryByRole('button', { name: 'Mega Evolve' })).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Shadow state: Purified' }));
+    expect(screen.getByRole('button', { name: 'Mega Evolve' })).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Shadow state: Shadow' }));
+    expect(screen.queryByRole('button', { name: 'Mega Evolve' })).toBeNull();
+  });
+
+  it.each([
+    ['caught', 'premier_ball', 'premierball.png', 'PREMIER BALL'],
+    ['trade', 'ultraball', 'ultraball.png', 'ULTRA BALL'],
+    ['caught', ' Beast Ball ', 'beastball.png', 'BEAST BALL'],
+  ] as const)('restores the saved ball in the %s card and editor for %s', async (status, pokeball, file, label) => {
+    renderOverlay({
+      ...detail, row: { ...detail.row, status }, provenance: [],
+      instance: { pokeball } as NativeInstanceDetail['instance'],
+    });
+    expect(screen.getByText('CAUGHT')).toBeTruthy();
+    expect(screen.getByTestId('native-instance-caught-ball', { includeHiddenElements: true }).props.source.uri)
+      .toBe(`https://pokegonexus.com/media/images/balls/${file}`);
+    await openCaughtEditor();
+    expect(screen.getByTestId('native-instance-caught-ball', { includeHiddenElements: true }).props.source.uri)
+      .toBe(`https://pokegonexus.com/media/images/balls/${file}`);
+    expect(screen.getByRole('button', { name: `Ball caught: ${label}` }).props.accessibilityState.selected).toBe(true);
+  });
+
+  it('does not invent a caught ball when the saved ball is unknown', () => {
+    renderOverlay({ ...detail, row: { ...detail.row, status: 'caught' },
+      instance: { pokeball: null } as NativeInstanceDetail['instance'] });
+    expect(screen.queryByTestId('native-instance-caught-ball', { includeHiddenElements: true })).toBeNull();
+  });
+
   it('shows canonical catch-date and Mega-eligibility signals', () => {
     render(
       <NativeInstanceDetailScreen
@@ -303,6 +366,8 @@ describe('NativeInstanceDetailScreen', () => {
     );
 
     expect(screen.getByLabelText('Caught on 2026-06-15')).toBeTruthy();
+    expect(screen.getByTestId('native-instance-caught-ribbon-icon', { includeHiddenElements: true }).props.source.uri)
+      .toBe('https://pokegonexus.com/media/images/caught.png');
     expect(screen.getByLabelText('Mega Evolution available')).toBeTruthy();
   });
 
