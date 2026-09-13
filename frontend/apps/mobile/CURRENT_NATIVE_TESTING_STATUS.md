@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-12 (Pokédex detail and region-index parity)
+Last targeted revalidation: 2026-09-12 (main-route account audit and native display/session repairs)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,36 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Main-route account audit and status-bar repair — 2026-09-12
+
+The current phone code candidate is `a501f03c`. It includes the fixed native
+status-bar surface (`1ab77bff`), recovery from the services' legacy authentication
+403 without discarding credentials after transient refresh failure (`0aff1ad5`),
+and four display corrections: light-mode PvP scope contrast, Max stat contrast,
+equal-width trainer showcase slots, and calendar-date handling for Started.
+
+The broad physical account audit on `0aff1ad5` loaded all 27 reviewed routes
+without an observed error screen. Raid, Max, and Master League PvP All/My
+interactions pass using the real account. A separate native browser run passed
+98 route/theme states, and fresh Vite references provide 70 screenshots per
+theme across 14 flows. The authentication regression suites pass 23 tests;
+the final profile/PvP/Max suites pass 30, including timestamp regressions under
+the Vancouver time zone. See `NATIVE_ROUTE_PARITY_REVIEW.md` for exact evidence
+boundaries, remaining discrepancies, and private artifact locations.
+
+No additional wholly missing main route was found. Remaining work includes
+Raid/Max roster-description layout, count projection differences, visual polish,
+controlled scrolling/motion comparisons, and the earlier intermittent SQLite
+lifecycle investigation. The direct server read confirms 2249 active caught
+and 167 active Favorites; a same-input Raid comparison returns 190 eligible
+entries in both implementations. Vite's differing captured counts require
+projection/catalog investigation, not adding disabled copies to native.
+
+The status-bar overlap mentioned in the historical section below is repaired
+in this candidate. Current installation identity and final phone checks are in
+`STRONG_MACHINE_ANDROID_HANDOFF.md`. This audit does not close the remaining
+performance gates or constitute whole-app release approval.
 
 ## Pokédex detail and region-index parity — 2026-09-12
 

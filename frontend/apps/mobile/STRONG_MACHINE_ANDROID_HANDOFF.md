@@ -4,9 +4,50 @@ Last updated: 2026-09-12
 
 ## Current phone candidate
 
-The physical Pixel 8 Pro now has
+The Pixel 8 Pro now has `PokeGoNexus-manual-a501f03c-arm64-v8a.apk`, built from
+`a501f03c7f4fb59bed95c23ec00ab7b7b5ff782b`. Its installed SHA-256 matches:
+`536c35ae0a95cb98c8e67ccde8257e3aaaddd8049f3a3cc113c38e05b94b82d2`.
+This is the normal native preview with device-smoke mode disabled, installed
+over the existing `com.pokegonexus.app` using `adb install -r`. The signing
+certificate is unchanged and app data was retained.
+
+This candidate repairs the status-bar overlap, legacy authentication recovery,
+light-mode PvP/Max contrast, trainer showcase column widths, and the start-date
+time-zone shift. The 27-route physical account audit and actual All/My tool
+checks are described in `NATIVE_ROUTE_PARITY_REVIEW.md` with their source commits.
+
+On this exact final APK, light-mode captures confirm the readable PvP scope
+buttons and Max values, a regular three-by-two trainer showcase, and the
+correct Jul 6, 2016 start date. Settings loads the real privacy controls without
+an authentication error. Dark-mode checks also pass Pokédex detail, Raid, Max,
+PvP, and profile, including
+scrolled status-bar coverage. The broader 27-route pass used the intermediate
+`0aff1ad5` build; final verification targets the changed screens and both themes.
+
+The final account check passes 2249 caught, 167 Favorites, and automatic
+Favorite descending with CP 4713/4689/4688 first and no collection-sync warning.
+The original light theme was restored, and the phone was left on Favorites.
+Sampled current-process logs contain no fatal, JS-error, ANR, or released-database
+markers; this short sample does not close the intermittent SQLite investigation.
+
+The first bounded native compilation in this review took 13m 8s. The final
+JavaScript-only update reused that native build tree and completed in 55.8s
+(24 tasks executed, 960 up to date), without another prebuild. Both used two CPU
+cores, a 200% CPU quota, 6 GiB memory-high, 8 GiB memory-max, 512 MiB swap-max,
+2 GB Gradle heap, and two Gradle workers. The stronger workstation was not
+required. Reuse the existing native tree only when native dependencies and
+configuration have not changed; otherwise use the normal manual builder.
+
+Evidence is under `.artifacts/route-parity-2026-09-12/`. The initial `033b1f63`
+rollback APK remains `previous-installed.apk`; the intermediate `0aff1ad5`
+rollback is `previous-before-final.apk`. The final APK is under
+`.artifacts/manual-standalone/`.
+
+## Previous phone candidate — Pokédex parity
+
+The physical Pixel 8 Pro previously received
 `PokeGoNexus-manual-033b1f63-arm64-v8a.apk`, including the Pokédex detail and
-region-index parity repairs. Its checksum matches the installed APK:
+region-index parity repairs. Its checksum matched the APK installed at that time:
 `9db948be0ae307b90c40fd2e401590fe83832d3ac472d0d6b5b67802d973ffd0`.
 The package remains `com.pokegonexus.app`, with the existing signing certificate,
 normal native preview, and device-smoke mode disabled. Installation used
