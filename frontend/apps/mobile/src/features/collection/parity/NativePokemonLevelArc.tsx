@@ -32,11 +32,20 @@ export const NativePokemonLevelArc = ({ level, width, height }: {
   const angle = Math.PI * (1 + progress);
   const x = radiusX + radiusX * Math.cos(angle);
   const y = height + height * Math.sin(angle);
+  // Android clips to the SVG viewport even with overflow: visible. Include
+  // the entire dot and stroke at both endpoints and at the ellipse's apex.
+  const padding = 6;
 
   // Draw in layout pixels: the ellipse follows the available space while
   // the stroke and circular dot retain their size at every viewport width.
   return (
-    <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
+    <Svg
+      width={width + padding * 2}
+      height={height + padding * 2}
+      viewBox={`${-padding} ${-padding} ${width + padding * 2} ${height + padding * 2}`}
+      style={{ marginTop: -padding }}
+      testID="native-level-arc-canvas"
+    >
       {progress < 1 ? (
         <Path
           d={`M ${x} ${y} A ${radiusX} ${height} 0 0 1 ${width} ${height}`}
