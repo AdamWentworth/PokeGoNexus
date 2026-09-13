@@ -3,7 +3,8 @@
 This review compares the native migration with the canonical Vite application
 using the signed-in account on a physical Pixel 8 Pro and fresh Vite references.
 It is a route and presentation audit, not a whole-app performance qualification.
-The final code candidate is `a501f03c` on `mobile/native-migration`.
+The current code candidate is `a6155531` on `mobile/native-migration`.
+The original route audit and the follow-up evidence below have distinct scopes.
 
 ## Repairs from this review
 
@@ -38,8 +39,9 @@ terms; data deletion; Raid methodology; PvP methodology; and not-found.
 Both top and scrolled states were captured on content routes. This proves
 route loading and sampled presentation, not every nested interaction.
 
-The physical All/My workflow passes Raid, Max, and Master League PvP with the
-actual account. Raid's personal roster shows 190 eligible entries from 2249
+The initial physical All/My workflow passed Raid, Max, and Master League PvP
+with the actual account. Its historical counts below are superseded by the
+follow-up repair: Raid's personal roster shows 190 eligible entries from 2249
 active caught copies and Shiny Mega Rayquaza among its leading attackers.
 Max reports 15 eligible entries from 63 caught Max copies and renders 13 ranked
 results for the reviewed damage view. PvP switches between catalog and owned
@@ -84,45 +86,93 @@ inspection identified both controls in the accessibility tree. Tapping the
 visible menu switch worked, and theme helpers now start from Profile to avoid
 that ambiguity. This was not treated as a successful automation run.
 
-## Remaining discrepancies and investigations
+## Follow-up repairs — 2026-09-13 UTC
 
-1. Raid and Max show their roster explanation paragraphs visibly in native.
-   Vite keeps that content as an accessible description without occupying
-   visible layout space. This adds height before the native results. PvP's
-   explanation is visible in Vite too, so it should not receive the same change.
-2. Count semantics are inconsistent between views. A direct server read has
-   2255 caught records including disabled copies, 2249 active caught, and 167
-   active Favorites. Native collection matches the active count; Home's server
-   summary uses the raw count. The Vite collection reference displays 2252.
-   Vite tag initialization includes disabled instances and drops unmapped
-   variants. Do not change native to include disabled partners just to match
-   that display. Reconcile the projections and define a shared visible count.
-3. The captured Vite Raid badge displays 192 versus native's 190. With identical
-   server instances and hydrated catalog inputs, both Raid models produce
-   exactly the same summary, including 190 eligible entries. The difference
-   therefore still needs investigation at the capture/catalog/state boundary;
-   it is not evidence of a native Raid calculation error. Max's 15-versus-13
-   eligible badge difference also needs an equivalent input-level comparison.
-4. Spacing, font sizes, gradients, small icons, ranking decorations, and some
-   light-mode card surfaces remain visually different on the compared main
-   pages. These are polish findings, not evidence of omitted routes. Screenshots
-   use different effective viewport widths (phone 448, Vite reference 412), so
-   viewport and safe-area differences must be normalized before pixel comparison.
-5. Controlled collection/tag scrolling and whole-app motion/performance
-   comparisons remain open. The earlier FAQ median misses and intermittent
-   released-SQLite-handle investigation are not closed by this functional pass.
-   Final two-account trade mutations and physical iOS coverage are also outside
-   this account-preserving audit.
+`0fb69dab` fixes the data and presentation discrepancies identified above:
 
-No further wholly missing main route was found in this pass. New native videos
-and Phlosion presentation changes remain a subsequent task after choosing which
-remaining presentation differences to resolve.
+- Native tool hydration omitted fusion and crown move pools. Using the full
+  canonical web hydration exposed two missing owned crowned attackers. Shared
+  move hydration now restores them: both Raid summaries report 192 eligible
+  entries from 2249 active caught copies, with 42 projected forms. The earlier
+  comparison that returned 190 in both hosts reused native's incomplete input;
+  it did not establish correct catalog parity.
+- A direct signed-in Vite Max visit used a compact catalog without the Hero
+  bases needed to resolve owned crowned Zacian/Zamazenta. It now loads full
+  base identities and supplemental moves/Max profiles. Guest loading remains
+  compact, with separate request caches. Both hosts produce exactly identical
+  damage, tank, and healing rankings for the account: 15 entries from 63 caught
+  Max copies, including both crowned attackers. A browser check without a
+  preloaded variant catalog confirms 15 owned rows on a direct Max visit.
+- Home's differing count came from local summary code including disabled
+  partners, not a server summary. Both hosts now share active-only counts.
+  Vite tag/ownership projections also exclude disabled copies and resolve
+  three legacy display identities using recorded species/costume/qualities.
+  Active caught count and visible caught rows now agree at 2249; Favorites
+  remain 167. The resolver does not change saved account records or guess a
+  substitute for an unknown costume/variant.
+- Native Raid/Max explanations are accessibility hints, matching Vite's
+  compact visible layout. Scope controls use a selected gradient and count
+  pill. Max role tabs share the type-filter frame and use canonical role
+  colours. First/second/third ranking medals use gold/silver/bronze. Raid move
+  icons accept the actual API type field.
+- Native stores now retain a shared recoverable database facade. An exact
+  released-handle rejection during native prepare/exec argument conversion
+  reopens the existing file and retries once. Concurrent old failures cannot
+  discard a newer connection. Execute/finalize, SQL, and ambiguous write
+  failures are never replayed. Twenty database/store tests pass, including
+  bounded recovery, concurrent operations, retained parameters, ordinary
+  failures, and potentially committed writes. No account data is cleared.
+
+The database guard addresses the observed failure path; the underlying Expo
+lifetime issue is not proven fixed. A related upstream Android shared-object
+report and proposed fix remain tracked in [Expo #49799](https://github.com/expo/expo/issues/49799)
+and [PR #49807](https://github.com/expo/expo/pull/49807). These are supporting
+investigation context, not proof of this app's precise native root cause.
+
+FAQ sections, topic controls, and search indexing avoid redundant renders.
+`a6155531` also retains unchanged answer content during expansion. Opt-in
+`EXPO_PUBLIC_NATIVE_UI_PERFORMANCE=true` allows timing normal account routes
+without enabling fixtures. Manual delivery builds have that probe disabled.
+Switching compiled flags requires a fresh Metro bundle; Gradle/Expo CI caches
+can otherwise reuse the previous flag. Both probe and normal APK identities
+are retained separately.
+
+Validation also includes 38 web tag/Home/roster/helper tests, six Max-loading
+and move-merging tests, 15 native Home/battle-model tests, 17 native tool/FAQ
+screen tests, mobile/web TypeScript, and targeted ESLint. Fresh account browser
+captures cover Raid, Max, collection, and Home in both themes (34 screenshots)
+at a 448-pixel width matching the phone's logical width (`90fb42fe`; later
+changes affect only native FAQ rendering). They remain private
+audit references and do not update the presentation package.
+
+The final normal `a6155531` APK passes light Home/Raid/Max/FAQ captures, FAQ
+search/clear/direct links, three cold-start/resume cycles, and the final
+2249-caught/167-Favorites ordering check. The phone is left on Favorites in
+light mode. Installed identity and exact timing limits are in the handoff
+and current-status documents.
+
+## Remaining qualification
+
+Controlled collection/tag scrolling and whole-app motion comparisons still
+need matched, repeated evidence. The current focused FAQ timing result and
+final APK phone checks are recorded in `CURRENT_NATIVE_TESTING_STATUS.md`.
+Further typography/spacing differences require per-page visual review;
+this batch does not assert pixel identity across the whole app. Long lifecycle
+soaks, two-account trade mutations, and physical iOS coverage remain separate
+approval gates. No further wholly missing main route was found in the audit.
+Native presentation videos and Phlosion changes remain subsequent work. One
+initial scope automation attempt after installation remained on Home and failed
+its Raid assertion; the subsequent run reached Raid and passed. The failed
+attempt is retained and is not counted as a successful route check.
 
 ## Local evidence
 
 - Native builds, installation identities, phone route captures, All/My flows,
   contact sheets, and same-input model comparison:
   `.artifacts/route-parity-2026-09-12/`.
+- Follow-up models, captures, tests, timing runs, and APK identities:
+  `.artifacts/parity-followup-2026-09-13/` and
+  `.artifacts/parity-followup-final-2026-09-13/`.
 - Native browser route evidence: `.artifacts/native-real-routes/`.
 - Vite dark reference:
   `../web/.artifacts/native-route-review/2026-09-13T05-22-48-871Z/package/`.

@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-12 (main-route account audit and native display/session repairs)
+Last targeted revalidation: 2026-09-13 (roster/count parity, FAQ rendering, database recovery)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,72 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Roster/count follow-up and measured performance — 2026-09-13
+
+The code candidate is `a6155531` (data/layout/database changes in `0fb69dab`,
+typed regression fixture in `90fb42fe`, final FAQ content reuse in `a6155531`).
+Full-data comparison now gives 192 owned Raid entries and identical 15-entry
+Max damage/tank/healing rankings across native and Vite. The direct Vite Max
+visit was checked with cached owned instances and no preloaded variant catalog;
+it renders both crowned attackers and all 15 rows. Home, collection, and tags
+agree on 2249 active caught and 167 Favorites without modifying account records.
+
+Dark phone checks on the normal `90fb42fe` APK pass Raid All/My (192), Max
+All/My (15), and Damage/Tank/Healing. Thirty-four new Vite account screenshots
+cover Raid, Max, Home, and collection in both themes at 448 logical pixels,
+with no captured runtime errors. These are private audit references, not new
+presentation videos or Phlosion assets. Final APK checks are recorded below.
+
+Ten same-Pixel repetitions on the `a6155531` release timing-probe APK pass all
+FAQ topic/expand interactions functionally. Topic median/p95 is 60.5/82.2 ms
+versus Vite 96.7/106.785 ms. Expand-all is 43.5/49.55 ms versus 42.15/202.5 ms:
+the strict median gate still misses by **1.35 ms**. Do not call this a complete
+FAQ performance pass. Native's earlier 114/60.5 ms topic/expand medians came
+from an older fixture build; the new runs use the normal signed-in route,
+without fixtures or data resets. Vite uses the public guest FAQ on the same
+phone. Both use the existing two-animation-frame interaction probes. Search
+and clear are functionally rechecked, not newly performance-qualified here.
+The first follow-up ten-run sample and final sample are both retained.
+
+Three current real-account tag-scroll traces on the normal `90fb42fe` APK use
+the corrected 95th-percentile query and identical six-cycle gesture workload.
+Frame p95s are 10.04, 11.48, and 11.91 ms; flagged-frame shares are 0.13%,
+24.93%, and 3.85%. The raw traces explain the variation: one App Resynced Jitter
+frame, 190 Buffer Stuffing frames, and four SurfaceFlinger CPU Deadline Missed
+frames across the three samples; no App Deadline Missed frames. Keep the full
+flagged-frame metric—do not remove Buffer Stuffing to manufacture a pass.
+These samples identify pacing/queueing as a follow-up; they are not a matched
+Vite scroll comparison or evidence that whole-app motion is approved.
+
+The SQLite repair provides bounded recovery for the observed released-handle
+prepare/exec argument rejection. Twenty database/store tests pass, including
+concurrent recovery and no replay of potentially completed writes. It does not
+establish that Expo's underlying shared-object lifetime issue is eliminated;
+long lifecycle/expiry/offline soaks remain open. Neither install nor testing
+clears the real account, signs out, or submits collection/profile/trade edits.
+
+### Final installed build
+
+The normal `a6155531` APK is installed on the Pixel with SHA-256
+`963fa4ebe129a012f0e92609df971592fd540ef5f306c148de5c5d60e45a27e3`.
+Its signing certificate and package are unchanged; fixture mode and the UI
+performance probe are disabled. The final light-mode Home/Raid/Max/FAQ captures
+have no observed route error text. Raid displays 192 owned entries; Max shows
+15 owned entries and 15 ranked results, with readable controls and card values.
+FAQ search, clear, and the direct Forever Friends answer link pass physically.
+Three cold Home starts followed by background/collection resumes retain 2249
+caught; sampled logs have no fatal/sync/released-handle markers and zero UI
+probe lines. This is short lifecycle evidence, not a long soak or a forced
+reproduction of Expo's intermittent native failure.
+
+The final account workflow passes 2249 caught, 167 Favorites, automatic Favorite
+descending, and CP 4713/4689/4688 first, with no sync warning. The phone is left
+on Favorites in its original light theme. Final evidence is under
+`.artifacts/parity-followup-final-2026-09-13/`.
+
 ## Main-route account audit and status-bar repair — 2026-09-12
 
-The current phone code candidate is `a501f03c`. It includes the fixed native
+The original route-audit phone candidate was `a501f03c`. It includes the fixed native
 status-bar surface (`1ab77bff`), recovery from the services' legacy authentication
 403 without discarding credentials after transient refresh failure (`0aff1ad5`),
 and four display corrections: light-mode PvP scope contrast, Max stat contrast,
@@ -28,13 +91,14 @@ the final profile/PvP/Max suites pass 30, including timestamp regressions under
 the Vancouver time zone. See `NATIVE_ROUTE_PARITY_REVIEW.md` for exact evidence
 boundaries, remaining discrepancies, and private artifact locations.
 
-No additional wholly missing main route was found. Remaining work includes
-Raid/Max roster-description layout, count projection differences, visual polish,
-controlled scrolling/motion comparisons, and the earlier intermittent SQLite
-lifecycle investigation. The direct server read confirms 2249 active caught
-and 167 active Favorites; a same-input Raid comparison returns 190 eligible
-entries in both implementations. Vite's differing captured counts require
-projection/catalog investigation, not adding disabled copies to native.
+No additional wholly missing main route was found. The subsequent `0fb69dab`
+follow-up repairs roster-description layout, shared active counts, form move
+hydration, direct Max loading, and selected role/ranking decorations. The old
+190-entry comparison reused incomplete native hydration; full canonical inputs
+now give 192 Raid entries and exactly matching 15-entry Max role rankings.
+Home's count discrepancy came from local summary code, not a server summary.
+See `NATIVE_ROUTE_PARITY_REVIEW.md` for the resolved root causes. Controlled
+whole-app motion and lifecycle qualification remain separate from these fixes.
 
 The status-bar overlap mentioned in the historical section below is repaired
 in this candidate. Current installation identity and final phone checks are in

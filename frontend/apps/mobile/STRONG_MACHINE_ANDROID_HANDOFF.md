@@ -1,8 +1,50 @@
 # Strong-machine Android performance handoff
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 
-## Current phone candidate
+## Current phone candidate — parity follow-up
+
+Code candidate: `a6155531961a51dd09adade33edc89c503dea6dd`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-a6155531-arm64-v8a.apk`.
+SHA-256: `963fa4ebe129a012f0e92609df971592fd540ef5f306c148de5c5d60e45a27e3`.
+
+The installed checksum matches the normal APK above. Device-smoke mode and
+the UI timing probe are disabled; account data and signing identity are retained.
+
+This build includes shared active collection counts, crown/fusion move hydration,
+correct direct owned-Max loading on Vite, compact native Raid/Max scope controls,
+role colours/medals, bounded SQLite connection recovery, and reduced FAQ renders.
+See `NATIVE_ROUTE_PARITY_REVIEW.md` for root causes and regression evidence.
+The `90fb42fe` normal APK already passed physical Raid All/My (192), Max All/My
+(15), and all Max roles in dark mode; `a6155531` changes only FAQ rendering.
+
+The final normal build took 79.7 seconds using the existing native tree and the
+same resource limits: two cores, CPUQuota 200%, MemoryHigh 6G, MemoryMax 8G,
+MemorySwapMax 512M, Java heap 2G, and two Gradle workers. A stronger machine was
+not required. All APKs retain `com.pokegonexus.app` and the existing signing
+certificate. Installation must use `adb install -r` and retain account data.
+
+The separate `a6155531-probe` APK has UI timing enabled but fixture mode disabled.
+Its SHA is `53e68e93da788ba46720122c64946760521222677123e63d4ded1a555e144d88`.
+It is diagnostic, not the final delivery artifact. Changing the compiled
+`EXPO_PUBLIC_NATIVE_UI_PERFORMANCE` flag requires rebundling with Metro's cache
+reset enabled: Expo suppresses that reset under CI. The normal APK's Hermes
+bytecode was inspected and returns before tracing when device-smoke mode is
+false. Do not infer probe state solely from an APK filename or build metadata.
+
+Final light-mode Home/Raid/Max/FAQ checks pass, including 192 owned Raid and
+15 owned/ranked Max entries. FAQ search, clear, and direct answer navigation
+pass. Three cold-start/background-resume cycles retain 2249 caught without
+observed fatal, sync, or released-database markers; the normal build emits no
+UI timing traces. The final account check passes 167 Favorites, Favorite
+descending, and CP 4713/4689/4688 first. The phone is left in light mode on
+Favorites. These short checks do not close the documented pacing/soak gates.
+
+Final installation and account/lifecycle evidence are recorded under
+`.artifacts/parity-followup-final-2026-09-13/`; earlier follow-up model/route/scroll
+checks are in `.artifacts/parity-followup-2026-09-13/`. These are private artifacts.
+
+## Previous phone candidate — main-route audit
 
 The Pixel 8 Pro now has `PokeGoNexus-manual-a501f03c-arm64-v8a.apk`, built from
 `a501f03c7f4fb59bed95c23ec00ab7b7b5ff782b`. Its installed SHA-256 matches:
