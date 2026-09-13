@@ -91,7 +91,8 @@ describe('NativeMaxScreen', () => {
       </SafeAreaProvider>,
     );
 
-    expect(screen.getByText('1 Max-ready entries from 1 caught Max Pokémon. Uses each copy\'s recorded level, IVs, Fast Move, and Max Move levels.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'MY POKÉMON 1' }).props.accessibilityHint).toBe('1 Max-ready entries from 1 caught Max Pokémon. Uses each copy\'s recorded level, IVs, Fast Move, and Max Move levels.');
+    expect(screen.queryByText(/Max-ready entries from/)).toBeNull();
     expect(screen.getByText('Leafy')).toBeTruthy();
     expect(screen.getByText('CP 987 · Level 37 · 87% IV')).toBeTruthy();
     expect(screen.getByText('Max Move · Grass')).toBeTruthy();

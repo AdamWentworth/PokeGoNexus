@@ -3,6 +3,7 @@ import type { PokemonVariant } from '../../../types/pokemonVariants';
 
 import { isSpecialMaxAttacker } from '../../../features/max/specialMaxPokemon';
 import { resolveRaidRosterFormProjections } from '../../Raid/utils/raidRosterForms';
+import { getInstanceVariantResolver } from '@pokemongonexus/shared-domain/instance-variant';
 
 export type MaxRosterScope = 'catalog' | 'owned';
 
@@ -83,9 +84,7 @@ export const buildMaxRoster = (
   variants: PokemonVariant[],
   instances: InstancesMap,
 ): MaxRosterSummary => {
-  const variantsById = new Map(
-    variants.map((variant) => [String(variant.variant_id), variant]),
-  );
+  const resolveVariant = getInstanceVariantResolver(variants);
   const caught = Object.entries(instances).filter(
     ([, instance]) => instance.is_caught && !instance.disabled,
   );
@@ -95,7 +94,7 @@ export const buildMaxRoster = (
   let unmappedCount = 0;
 
   caught.forEach(([key, instance]) => {
-    const base = variantsById.get(String(instance.variant_id));
+    const base = resolveVariant(instance);
     if (!base) {
       unmappedCount += 1;
       return;

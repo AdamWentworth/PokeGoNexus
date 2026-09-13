@@ -15,13 +15,27 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import type { Instances } from '@/types/instances';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import { createScopedLogger } from '@/utils/logger';
+import { mergePokemonMaxData, mergePokemonMoveData } from '@pokemongonexus/shared-domain/pokemon-data';
 
 const log = createScopedLogger('useMaxBattleData');
 
-let maxVariantsRequest: Promise<PokemonVariant[]> | null = null;
+const maxVariantsRequests = new Map<boolean, Promise<PokemonVariant[]>>();
 
-async function fetchMaxBattleVariants(): Promise<PokemonVariant[]> {
+async function fetchMaxBattleVariants(includeOwnedBases: boolean): Promise<PokemonVariant[]> {
   const manifest = await getPokemonCatalogManifest();
+  // Owned crowned entries reference their original species. The compact Max
+  // chunk omits those bases, so it cannot resolve the trainer's full roster.
+  if (includeOwnedBases) {
+    const [pokemon, maxPokemon, moves] = await Promise.all([
+      getPokemons({ manifest }),
+      getPokemonMaxDataChunk(manifest),
+      getPokemonMovesChunk(manifest),
+    ]);
+    return createPokemonVariants(mergePokemonMaxData(
+      mergePokemonMoveData(pokemon, moves ?? []),
+      maxPokemon ?? [],
+    ));
+  }
   const maxPokemon = await getPokemonMaxDataChunk(manifest);
 
   if (maxPokemon) {
@@ -39,18 +53,20 @@ async function fetchMaxBattleVariants(): Promise<PokemonVariant[]> {
   return variants;
 }
 
-function loadMaxBattleVariants(): Promise<PokemonVariant[]> {
-  if (!maxVariantsRequest) {
-    maxVariantsRequest = fetchMaxBattleVariants().catch((error) => {
-      maxVariantsRequest = null;
+function loadMaxBattleVariants(includeOwnedBases: boolean): Promise<PokemonVariant[]> {
+  let request = maxVariantsRequests.get(includeOwnedBases);
+  if (!request) {
+    request = fetchMaxBattleVariants(includeOwnedBases).catch((error) => {
+      maxVariantsRequests.delete(includeOwnedBases);
       throw error;
     });
+    maxVariantsRequests.set(includeOwnedBases, request);
   }
-  return maxVariantsRequest;
+  return request;
 }
 
 export function resetMaxBattleDataRequestForTests(): void {
-  maxVariantsRequest = null;
+  maxVariantsRequests.clear();
 }
 
 export function useMaxBattleData() {
@@ -78,7 +94,8 @@ export function useMaxBattleData() {
     }
 
     let active = true;
-    void loadMaxBattleVariants()
+    setLocalVariantsLoading(true);
+    void loadMaxBattleVariants(isLoggedIn)
       .then((loaded) => {
         if (!active) return;
         setLocalVariants(loaded);
@@ -93,7 +110,7 @@ export function useMaxBattleData() {
     return () => {
       active = false;
     };
-  }, [usesSharedCatalog]);
+  }, [isLoggedIn, usesSharedCatalog]);
 
   useEffect(() => {
     if (usesSharedCatalog) {

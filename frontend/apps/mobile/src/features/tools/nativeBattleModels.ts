@@ -49,6 +49,7 @@ import {
   type MaxRosterSummary,
 } from '@pokemongonexus/app-core/max-roster';
 import { getTypeEffectivenessMultiplier } from '@pokemongonexus/shared-domain/type-effectiveness';
+import { mergePokemonMaxData, mergePokemonMoveData } from '@pokemongonexus/shared-domain/pokemon-data';
 
 export const NATIVE_BATTLE_TYPES = ['bug', 'dark', 'dragon', 'electric', 'fairy', 'fighting', 'fire', 'flying', 'ghost', 'grass', 'ground', 'ice', 'normal', 'poison', 'psychic', 'rock', 'steel', 'water'] as const;
 export type NativeBattleType = typeof NATIVE_BATTLE_TYPES[number];
@@ -208,29 +209,15 @@ export const hydrateNativeToolCatalog = (
   moves: PokemonMovesChunk = [],
   raidData: PokemonRaidDataChunk = [],
 ): BasePokemon[] => {
-  const movesById = new Map(moves.map((entry) => [entry.pokemon_id, entry.moves]));
   const raidsById = new Map(raidData.map((entry) => [entry.pokemon_id, entry.raid_boss]));
-  return catalog.map((pokemon) => ({ ...pokemon, moves: movesById.get(pokemon.pokemon_id) ?? pokemon.moves ?? [], raid_boss: raidsById.get(pokemon.pokemon_id) ?? pokemon.raid_boss ?? [] }));
+  return mergePokemonMoveData(catalog, moves).map((pokemon) => ({ ...pokemon, moves: pokemon.moves ?? [], raid_boss: raidsById.get(pokemon.pokemon_id) ?? pokemon.raid_boss ?? [] }));
 };
 
 export const hydrateNativeMaxCatalog = (
   catalog: BasePokemon[],
   maxData: BasePokemon[] = [],
   moves: PokemonMovesChunk = [],
-): BasePokemon[] => {
-  const maxById = new Map(maxData.map((pokemon) => [pokemon.pokemon_id, pokemon]));
-  return hydrateNativeToolCatalog(catalog, moves).map((pokemon) => {
-    const supplement = maxById.get(pokemon.pokemon_id);
-    if (!supplement) return pokemon;
-    return {
-      ...pokemon,
-      max: supplement.max?.length ? supplement.max : pokemon.max,
-      max_battle_profiles: supplement.max_battle_profiles?.length
-        ? supplement.max_battle_profiles
-        : pokemon.max_battle_profiles,
-    };
-  });
-};
+): BasePokemon[] => mergePokemonMaxData(hydrateNativeToolCatalog(catalog, moves), maxData);
 
 export const canonicalNativeRaidSettings = (settings: NativeRaidSettings): RaidCounterSettings => ({
   attackerLevel: settings.attackerLevel,

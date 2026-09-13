@@ -1,3 +1,4 @@
+import { NativeRosterScopeControl } from '../components/tools/NativeRosterScopeControl';
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Image as ExpoImage } from 'expo-image';
 import {
@@ -375,42 +376,9 @@ export const NativeMaxScreen = ({
     />
   ), [light, switchView, view]);
 
-  const roster = useMemo(() => (
-    <View accessibilityLabel="Max Battle roster" style={[styles.roster, light && styles.panelLight]}>
-      {([['catalog', 'ALL POKÉMON'], ['owned', `MY POKÉMON${effectiveScope === 'owned' ? `   ${isLoading ? '…' : rosterSummary.eligibleCount}` : ''}`]] as const).map(([value, label]) => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: value === 'owned' && !signedIn, selected: effectiveScope === value }}
-          disabled={value === 'owned' && !signedIn}
-          key={value}
-          onPress={() => changeScope(value)}
-          style={[
-            styles.rosterButton,
-            light && styles.controlLight,
-            effectiveScope === value && styles.rosterActive,
-            value === 'owned' && !signedIn && styles.disabled,
-          ]}
-        >
-          <View style={styles.iconLabelRow}>
-            <NativeUiIcon color={effectiveScope === value ? '#071410' : light ? '#172124' : '#edf6f5'} name={value === 'catalog' ? 'catalog' : 'trainers'} size={14} />
-            <Text style={[styles.rosterText, light && styles.textLight, effectiveScope === value && styles.activeText]}>{label}</Text>
-          </View>
-        </Pressable>
-      ))}
-      {effectiveScope === 'owned' ? (
-        <Text accessibilityLiveRegion="polite" style={[styles.rosterDescription, light && styles.mutedLight]}>
-          {isLoading
-            ? 'Loading your Max roster'
-            : [
-              `${rosterSummary.eligibleCount} Max-ready entries from ${rosterSummary.caughtCount} caught Max Pokémon.`,
-              "Uses each copy's recorded level, IVs, Fast Move, and Max Move levels.",
-              rosterSummary.incompleteEntryCount > 0 ? `${rosterSummary.incompleteEntryCount} need complete battle details before ranking.` : '',
-              rosterSummary.unmappedCount > 0 ? `${rosterSummary.unmappedCount} could not be matched to the current catalog.` : '',
-            ].filter(Boolean).join(' ')}
-        </Text>
-      ) : null}
-    </View>
-  ), [changeScope, effectiveScope, isLoading, light, rosterSummary, signedIn]);
+  const roster = (
+    <NativeRosterScopeControl summary={rosterSummary} scope={effectiveScope} signedIn={signedIn} loading={isLoading} onChange={changeScope} />
+  );
 
   const roleTabs = (
     <View accessibilityLabel="Max Battle role" style={styles.roleTabs}>
@@ -420,14 +388,14 @@ export const NativeMaxScreen = ({
           accessibilityState={{ selected: role === value }}
           key={value}
           onPress={() => changeRole(value)}
-          style={[styles.roleButton, light && styles.controlLight, role === value && styles.roleActive]}
+          style={[styles.roleButton, light && styles.controlLight, role === value && styles[`${value}Active`]]}
         >
           <NativeUiIcon
-            color={role === value ? '#ffd9e7' : light ? '#102829' : '#edf5f4'}
+            color={light ? '#102829' : '#edf5f4'}
             name={icon}
             size={13}
           />
-          <Text style={[styles.roleText, light && styles.textLight, role === value && styles.roleActiveText]}>{label}</Text>
+          <Text style={[styles.roleText, light && styles.textLight]}>{label}</Text>
         </Pressable>
       ))}
     </View>
@@ -588,7 +556,7 @@ export const NativeMaxScreen = ({
       </Animated.View>
       {roster}
       {view === 'rankings'
-        ? <>{roleTabs}{typeFilter}</>
+        ? <View style={[styles.filterDeck, light && styles.panelLight]}>{roleTabs}{typeFilter}</View>
         : <>{bossPicker}{selectedBoss ? <NativeMaxBattleSimulator assetBaseUrl={assetBaseUrl} boss={selectedBoss} candidates={candidates} initialDifficulty={initialDifficulty} initialTrainerCount={initialTrainerCount} key={`${selectedBoss.variant_id}-${effectiveScope}`} onDifficultyChange={(difficulty) => onRouteStateChange?.({ difficulty: difficulty === getDefaultMaxBattleTier(selectedBoss) ? null : difficulty })} onTrainerCountChange={(trainerCount) => onRouteStateChange?.({ trainerCount })} rosterScope={effectiveScope} /> : null}{roleTabs}{bossBenchmarkNote}</>}
       {resultsHeader}
     </View>
@@ -700,19 +668,16 @@ const styles = StyleSheet.create({
   viewIndicator: { borderRadius: 10, backgroundColor: '#44d7ca' },
   viewText: { color: '#aebdbc', fontSize: 11, fontWeight: '900' },
   viewIcon: { marginRight: 5, color: '#aebdbc', fontSize: 11, fontWeight: '900' },
-  roster: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, borderWidth: 1, borderColor: '#315253', borderRadius: 9, padding: 5, backgroundColor: '#101919' },
-  rosterButton: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#435455', borderRadius: 999, backgroundColor: '#111919' },
-  rosterActive: { borderColor: '#44d7ca', backgroundColor: '#44d7ca' },
-  rosterText: { color: '#e7f1f0', fontSize: 10, fontWeight: '900' },
-  rosterDescription: { width: '100%', paddingHorizontal: 7, paddingVertical: 4, color: '#9bb0af', fontSize: 9.5, lineHeight: 14, textAlign: 'center' },
   iconLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   disabled: { opacity: .42 },
-  roleTabs: { flexDirection: 'row', gap: 6 },
-  roleButton: { flex: 1, minHeight: 53, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334849', borderRadius: 6, backgroundColor: '#101819' },
-  roleActive: { borderColor: '#de5a8a', backgroundColor: '#401629' },
-  roleActiveText: { color: '#ffd9e7' },
+  filterDeck: { overflow: 'hidden', borderWidth: 1, borderColor: '#315253', borderRadius: 8, backgroundColor: '#0f1819' },
+  roleTabs: { flexDirection: 'row', gap: 6, padding: 6 },
+  roleButton: { flex: 1, minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334849', borderRadius: 6, backgroundColor: '#101819' },
+  damageActive: { borderColor: '#f06aa4', backgroundColor: 'rgba(240,106,164,0.16)' },
+  tankActive: { borderColor: '#61a8ed', backgroundColor: 'rgba(97,168,237,0.16)' },
+  healingActive: { borderColor: '#53d9a8', backgroundColor: 'rgba(83,217,168,0.16)' },
   roleText: { color: '#edf5f4', fontSize: 10, fontWeight: '900' },
-  typeDeck: { gap: 8, borderWidth: 1, borderColor: '#315253', borderRadius: 8, padding: 11, backgroundColor: '#0f1819' },
+  typeDeck: { gap: 8, borderTopWidth: 1, borderColor: '#315253', padding: 11, backgroundColor: '#0f1819' },
   fieldLabel: { color: '#69d9cf', fontSize: 8, fontWeight: '900', letterSpacing: .5 },
   allTypes: { minHeight: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 6, backgroundColor: '#ddc064' },
   allTypesActive: { backgroundColor: '#f0d370' },

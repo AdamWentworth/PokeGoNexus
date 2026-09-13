@@ -2,6 +2,7 @@ import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances
 import type { TradeRecord } from '@pokemongonexus/shared-contracts/trades';
 import type { NativeCollectionRow } from '../collection/collectionModel';
 import { homeExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
+import { summarizeActiveCollection } from '@pokemongonexus/shared-domain/instances';
 
 export type NativeHomeCollectionSummary = {
   caught: number;
@@ -57,16 +58,7 @@ const isCurrentUser = (
 
 export const summarizeNativeHomeCollection = (
   instances: Record<string, PokemonInstance>,
-): NativeHomeCollectionSummary => Object.values(instances).reduce<NativeHomeCollectionSummary>(
-  (summary, instance) => ({
-    caught: summary.caught + (instance.is_caught ? 1 : 0),
-    favorites: summary.favorites + (instance.is_caught && instance.favorite ? 1 : 0),
-    forTrade: summary.forTrade + (instance.is_caught && instance.is_for_trade ? 1 : 0),
-    wanted: summary.wanted + (instance.is_wanted ? 1 : 0),
-    mostWanted: summary.mostWanted + (instance.is_wanted && instance.most_wanted ? 1 : 0),
-  }),
-  { ...EMPTY_NATIVE_HOME_COLLECTION },
-);
+): NativeHomeCollectionSummary => summarizeActiveCollection(instances);
 
 export const summarizeNativeHomeTrades = (
   trades: TradeRecord[],

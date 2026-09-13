@@ -54,6 +54,8 @@ describe('NativeRaidScreen', () => {
   it('switches roster scope and preserves independent Vite-style row disclosures', () => {
     renderRaid({ catalog: nativeRaidCatalog, instances: {}, signedIn: true });
     expect(screen.getByText('Your top raid attackers')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'MY POKÉMON 0' }).props.accessibilityHint).toContain('0 raid-ready entries from 0 caught.');
+    expect(screen.queryByText(/raid-ready entries from/)).toBeNull();
     fireEvent.press(screen.getByText('ALL POKÉMON'));
     expect(screen.getByText('Top raid attackers')).toBeTruthy();
     const rows = buildNativeRaidAttackers({ catalog: nativeRaidCatalog }).slice(0, 2);

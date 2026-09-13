@@ -38,6 +38,13 @@ const row = (id: string): NativeCollectionRow => ({
 });
 
 describe('nativeHomeDashboardModel', () => {
+  it('excludes disabled fusion partners from every collection count', () => {
+    expect(summarizeNativeHomeCollection({
+      caught: instance({}),
+      partner: instance({ disabled: true, favorite: true, is_for_trade: true, is_wanted: true, most_wanted: true }),
+    })).toEqual({ caught: 1, favorites: 0, forTrade: 0, wanted: 0, mostWanted: 0 });
+  });
+
   it('counts caught, trade, wanted, favorite, and most-wanted instances independently', () => {
     expect(summarizeNativeHomeCollection({
       favorite: instance({ instance_id: 'favorite', favorite: true }),

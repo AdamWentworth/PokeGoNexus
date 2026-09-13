@@ -6,6 +6,7 @@ import {
   isEligibleRaidAttacker,
 } from "./raidCatalog";
 import { resolveRaidRosterFormProjections } from "./raidRosterForms";
+import { getInstanceVariantResolver } from '@pokemongonexus/shared-domain/instance-variant';
 
 export type RaidRosterScope = "catalog" | "owned";
 
@@ -48,9 +49,7 @@ export const buildRaidRoster = (
   variants: PokemonVariant[],
   instances: InstancesMap,
 ): RaidRosterSummary => {
-  const variantsById = new Map(
-    variants.map((variant) => [String(variant.variant_id), variant]),
-  );
+  const resolveVariant = getInstanceVariantResolver(variants);
   const caught = Object.entries(instances).filter(
     ([, instance]) => instance.is_caught && !instance.disabled,
   );
@@ -65,7 +64,7 @@ export const buildRaidRoster = (
   const attackers: PokemonVariant[] = [];
 
   caught.forEach(([key, instance]) => {
-    const base = variantsById.get(String(instance.variant_id));
+    const base = resolveVariant(instance);
     if (!base) {
       unmappedCount += 1;
       return;

@@ -82,7 +82,7 @@ export const NativeCombatRankingCard = memo(function NativeCombatRankingCard({ a
       style={({ pressed }) => [styles.card, light && styles.cardLight, pressed && styles.pressed]}
     >
       <View style={styles.topRow}>
-        <View style={[styles.rank, rank <= 3 && styles.rankTop]}><Text style={styles.rankText}>{rank}</Text></View>
+        <View style={[styles.rank, rank === 1 && styles.rankGold, rank === 2 && styles.rankSilver, rank === 3 && styles.rankBronze]}><Text style={[styles.rankText, rank <= 3 && styles.rankTopText]}>{rank}</Text></View>
         <View style={styles.stage}>
           {entry.imageUri ? <ExpoImage cachePolicy="memory-disk" contentFit="contain" source={{ uri: uri(assetBaseUrl, entry.imageUri) }} style={styles.image} transition={0} /> : null}
           {entry.maxKind ? <ExpoImage cachePolicy="memory-disk" contentFit="contain" source={{ uri: uri(assetBaseUrl, `/images/${entry.maxKind}.png`) }} style={styles.maxIcon} transition={0} /> : null}
@@ -141,7 +141,10 @@ const styles = StyleSheet.create({
   pressed: { opacity: .72 },
   topRow: { minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
   rank: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: '#29343a' },
-  rankTop: { backgroundColor: '#c09119' },
+  rankGold: { backgroundColor: '#f3cf63' },
+  rankSilver: { backgroundColor: '#d9e7ea' },
+  rankBronze: { backgroundColor: '#d99156' },
+  rankTopText: { color: '#16120a' },
   rankText: { color: '#fff', fontSize: 13, fontWeight: '900' },
   stage: { width: 58, height: 60, alignItems: 'center', justifyContent: 'center' },
   image: { width: '100%', height: '100%' },

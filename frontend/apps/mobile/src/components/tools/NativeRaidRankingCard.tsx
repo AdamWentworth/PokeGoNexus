@@ -57,11 +57,11 @@ export const NativeRaidRankingCard = ({ assetBaseUrl, attackerLevel = '50.0', en
       : `Expected ${formatOutcomeLabel(faints, 'faint')} and ${formatOutcomeLabel(relobbies, 'relobby')}.`;
     return (
       <View accessibilityLabel={`Rank ${rank}, ${entry.name} raid counter`} style={[styles.counterCard, light && styles.cardLight]}>
-        <View style={[styles.rank, rank <= 3 && styles.rankTop]}><Text style={styles.rankText}>{rank}</Text></View>
+        <View style={[styles.rank, rank === 1 && styles.rankGold, rank === 2 && styles.rankSilver, rank === 3 && styles.rankBronze]}><Text style={[styles.rankText, rank <= 3 && styles.rankTopText]}>{rank}</Text></View>
         <Image fadeDuration={0} resizeMode="contain" source={{ uri: uri(assetBaseUrl, entry.imageUri) }} style={styles.counterImage} />
         <View style={styles.counterMain}>
           <Text numberOfLines={1} style={[styles.counterName, light && styles.textLight]}>{entry.name}</Text>
-          <View style={styles.counterMoves}>{[entry.fastMove, entry.chargedMove].map((move, index) => <View accessibilityLabel={`${index === 0 ? 'Fast' : 'Charged'} move: ${move?.name ?? 'Unknown'}, ${move?.type_name ?? 'unknown'} type`} key={`${move?.move_id ?? 'move'}-${index}`} style={styles.counterMove}>{move?.type_name ? <Image fadeDuration={0} accessibilityElementsHidden source={{ uri: uri(assetBaseUrl, `/images/types/${move.type_name.toLocaleLowerCase()}.png`) }} style={styles.moveType} /> : null}<Text numberOfLines={1} style={[styles.counterMoveName, light && styles.textLight]}>{move?.name ?? '—'}</Text></View>)}</View>
+          <View style={styles.counterMoves}>{[entry.fastMove, entry.chargedMove].map((move, index) => <View accessibilityLabel={`${index === 0 ? 'Fast' : 'Charged'} move: ${move?.name ?? 'Unknown'}, ${move?.type_name || move?.type || 'unknown'} type`} key={`${move?.move_id ?? 'move'}-${index}`} style={styles.counterMove}>{(move?.type_name || move?.type) ? <Image fadeDuration={0} accessibilityElementsHidden source={{ uri: uri(assetBaseUrl, `/images/types/${(move.type_name || move.type).trim().toLocaleLowerCase()}.png`) }} style={styles.moveType} /> : null}<Text numberOfLines={1} style={[styles.counterMoveName, light && styles.textLight]}>{move?.name ?? '—'}</Text></View>)}</View>
           <Text numberOfLines={1} style={[styles.counterMeta, light && styles.mutedLight]}>CP {entry.cp.toLocaleString()}{entry.rosterDetail ? ` · ${entry.rosterDetail}` : ` at level ${attackerLevel.replace('.0', '')}`}</Text>
         </View>
         <View style={styles.counterStats}>
@@ -82,7 +82,7 @@ export const NativeRaidRankingCard = ({ assetBaseUrl, attackerLevel = '50.0', en
         onPress={onToggle}
         style={[styles.summary, compact && styles.summaryCompact]}
       >
-        <View style={[styles.rank, compact && styles.rankCompact, rank <= 3 && styles.rankTop]}><Text style={styles.rankText}>{rank}</Text></View>
+        <View style={[styles.rank, compact && styles.rankCompact, rank === 1 && styles.rankGold, rank === 2 && styles.rankSilver, rank === 3 && styles.rankBronze]}><Text style={[styles.rankText, rank <= 3 && styles.rankTopText]}>{rank}</Text></View>
         <Image fadeDuration={0} resizeMode="contain" source={{ uri: uri(assetBaseUrl, entry.imageUri) }} style={styles.image} />
         <View style={styles.copy}>
           <Text numberOfLines={1} style={[styles.name, compact && styles.nameCompact, light && styles.textLight]}>{entry.name}</Text>
@@ -104,10 +104,10 @@ export const NativeRaidRankingCard = ({ assetBaseUrl, attackerLevel = '50.0', en
       <View style={[styles.moves, light && styles.movesLight]}>
         {[entry.fastMove, entry.chargedMove].map((move, index) => (
           <View key={`${move?.move_id ?? 'move'}-${index}`} style={[styles.moveCell, (index === 0 ? entry.fastMatchesType : entry.chargedMatchesType) && styles.moveCellTypeMatch]}>
-            {move?.type_name ? (
+            {(move?.type_name || move?.type) ? (
               <Image fadeDuration={0}
                 accessibilityElementsHidden
-                source={{ uri: uri(assetBaseUrl, `/images/types/${move.type_name.toLocaleLowerCase()}.png`) }}
+                source={{ uri: uri(assetBaseUrl, `/images/types/${(move.type_name || move.type).trim().toLocaleLowerCase()}.png`) }}
                 style={styles.moveType}
               />
             ) : null}
@@ -145,7 +145,10 @@ const styles = StyleSheet.create({
   summaryCompact: { minHeight: 67, paddingTop: 4 },
   rank: { width: 27, height: 27, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#2a3738' },
   rankCompact: { width: 32, height: 32, borderRadius: 16 },
-  rankTop: { backgroundColor: '#80601c' },
+  rankGold: { backgroundColor: '#f3cf63' },
+  rankSilver: { backgroundColor: '#d9e7ea' },
+  rankBronze: { backgroundColor: '#d99156' },
+  rankTopText: { color: '#16120a' },
   rankText: { color: '#fff', fontSize: 11, fontWeight: '900' },
   image: { width: 57, height: 57 },
   copy: { minWidth: 0, flex: 1 },

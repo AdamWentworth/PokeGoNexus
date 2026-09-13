@@ -1,3 +1,4 @@
+import { NativeRosterScopeControl } from '../components/tools/NativeRosterScopeControl';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -357,42 +358,7 @@ export const NativeRaidScreen = ({
   );
 
   const roster = (
-    <View accessibilityLabel="Raid attacker roster" style={[styles.roster, light && styles.panelLight]}>
-      {([['catalog', 'ALL POKÉMON'], ['owned', `MY POKÉMON${effectiveScope === 'owned' ? `   ${isLoading ? '…' : rosterSummary.eligibleCount}` : ''}`]] as const).map(([value, label]) => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: value === 'owned' && !signedIn, selected: effectiveScope === value }}
-          disabled={value === 'owned' && !signedIn}
-          key={value}
-          onPress={() => { if (value === 'catalog') beginPerformance('raid_roster_result_painted'); setScope(value); }}
-          style={[
-            styles.rosterButton,
-            light && styles.controlLight,
-            effectiveScope === value && styles.rosterActive,
-            value === 'owned' && !signedIn && styles.disabled,
-          ]}
-        >
-          <View style={styles.iconLabelRow}>
-            <NativeUiIcon color={effectiveScope === value ? '#071410' : light ? '#172124' : '#edf6f5'} name={value === 'catalog' ? 'catalog' : 'trainers'} size={14} />
-            <Text style={[styles.rosterText, light && styles.textLight, effectiveScope === value && styles.rosterTextActive]}>{label}</Text>
-          </View>
-        </Pressable>
-      ))}
-      {effectiveScope === 'owned' ? (
-        <Text accessibilityLiveRegion="polite" style={[styles.rosterDescription, light && styles.mutedLight]}>
-          {isLoading
-            ? 'Loading your raid roster'
-            : [
-              `${rosterSummary.eligibleCount} raid-ready entries from ${rosterSummary.caughtCount} caught.`,
-              "Uses each copy's current level, IVs, CP, and recorded moves.",
-              rosterSummary.projectedFormCount > 0 ? `${rosterSummary.projectedFormCount} available fusion, crowned, or Mega form entries included.` : '',
-              rosterSummary.incompleteEntryCount > 0 ? `${rosterSummary.incompleteEntryCount} caught entries need complete battle details before ranking.` : '',
-              rosterSummary.hiddenPowerEstimatedCount > 0 ? `${rosterSummary.hiddenPowerEstimatedCount} Hidden Power rolls use a marked type estimate.` : '',
-              rosterSummary.unmappedCount > 0 ? `${rosterSummary.unmappedCount} could not be matched to the current catalog.` : '',
-            ].filter(Boolean).join(' ')}
-        </Text>
-      ) : null}
-    </View>
+    <NativeRosterScopeControl summary={rosterSummary} scope={effectiveScope} signedIn={signedIn} loading={isLoading} onChange={(value) => { if (value === 'catalog') beginPerformance('raid_roster_result_painted'); setScope(value); }} />
   );
 
   const toolbar = (
@@ -649,13 +615,7 @@ const styles = StyleSheet.create({
   modeIcon: { color: '#d5e5e5', fontSize: 11, fontWeight: '900' },
   modeText: { color: '#d5e5e5', fontSize: 10.5, fontWeight: '900' },
   modeTextActive: { color: '#071214' },
-  roster: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, borderWidth: 1, borderColor: '#355153', borderRadius: 13, padding: 5, backgroundColor: '#101819' },
-  rosterButton: { flex: 1, minHeight: 37, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#435758', borderRadius: 999, backgroundColor: '#1b2526' },
-  rosterActive: { borderColor: '#2fd6d0', backgroundColor: '#45dbc4' },
-  rosterText: { color: '#e6f1f1', fontSize: 9.5, fontWeight: '900' },
   iconLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  rosterTextActive: { color: '#071214' },
-  rosterDescription: { width: '100%', paddingHorizontal: 7, paddingVertical: 4, color: '#a3b5b6', fontSize: 9.5, lineHeight: 14, textAlign: 'center' },
   disabled: { opacity: .45 },
   toolbar: { gap: 7 },
   fieldLabel: { color: '#a3b5b6', fontSize: 9, fontWeight: '900', letterSpacing: .8 },

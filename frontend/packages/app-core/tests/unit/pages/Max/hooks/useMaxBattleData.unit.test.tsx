@@ -75,6 +75,8 @@ describe('useMaxBattleData', () => {
       chunks: { maxData: { endpoint: '/max-data' } },
     });
     serviceMocks.maxData.mockResolvedValue([{ pokemon_id: 1 }]);
+    serviceMocks.pokemon.mockResolvedValue([{ pokemon_id: 1, moves: [], fusion: [] }, { pokemon_id: 888, moves: [], fusion: [] }]);
+    serviceMocks.moves.mockResolvedValue([]);
     createVariants.mockReturnValue([maxVariant]);
   });
 
@@ -89,7 +91,7 @@ describe('useMaxBattleData', () => {
     expect(serviceMocks.moves).not.toHaveBeenCalled();
   });
 
-  it('hydrates owned data against the compact variants for a direct Max visit', async () => {
+  it('includes original species for owned crowned forms on a direct Max visit', async () => {
     authState.isLoggedIn = true;
     loadInstances.mockResolvedValue({
       caught: { variant_id: '0001-dynamax', is_caught: true },
@@ -100,7 +102,23 @@ describe('useMaxBattleData', () => {
     await waitFor(() => expect(result.current.instancesLoading).toBe(false));
 
     expect(loadInstances).toHaveBeenCalledWith([maxVariant], true);
+    expect(serviceMocks.pokemon).toHaveBeenCalledOnce();
+    expect(serviceMocks.moves).toHaveBeenCalledOnce();
+    expect(createVariants).toHaveBeenCalledWith(expect.arrayContaining([
+      expect.objectContaining({ pokemon_id: 888 }),
+    ]));
     expect(result.current.instances).toHaveProperty('caught');
+  });
+
+  it('does not reuse a guest-only catalog when the trainer signs in', async () => {
+    const { result, rerender } = renderHook(() => useMaxBattleData());
+    await waitFor(() => expect(result.current.variantsLoading).toBe(false));
+    expect(serviceMocks.pokemon).not.toHaveBeenCalled();
+    authState.isLoggedIn = true;
+    loadInstances.mockResolvedValue({});
+    rerender();
+    await waitFor(() => expect(serviceMocks.pokemon).toHaveBeenCalledOnce());
+    await waitFor(() => expect(result.current.variantsLoading).toBe(false));
   });
 
   it('reuses an already-hydrated shared catalog instead of fetching again', () => {

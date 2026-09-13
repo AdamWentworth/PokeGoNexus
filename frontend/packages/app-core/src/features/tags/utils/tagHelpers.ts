@@ -42,7 +42,7 @@ export function buildTagItem(
     variantType: variant.variantType,
 
     pokemon_id: pokemonId,
-    variant_id: inst.variant_id ?? variant.variant_id,
+    variant_id: variant.variant_id ?? inst.variant_id,
     cp: inst.cp ?? null,
     hp,
     shiny: !!inst.shiny,

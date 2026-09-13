@@ -6,6 +6,29 @@ type InstanceLike = {
 
 type InstancePatch = Partial<PokemonInstance>;
 
+export type ActiveCollectionCounts = {
+  caught: number;
+  favorites: number;
+  forTrade: number;
+  wanted: number;
+  mostWanted: number;
+};
+
+export const summarizeActiveCollection = (
+  instances: Record<string, PokemonInstance>,
+): ActiveCollectionCounts => {
+  const summary: ActiveCollectionCounts = { caught: 0, favorites: 0, forTrade: 0, wanted: 0, mostWanted: 0 };
+  for (const instance of Object.values(instances)) {
+    if (instance.disabled) continue;
+    if (instance.is_caught) summary.caught += 1;
+    if (instance.is_caught && instance.favorite) summary.favorites += 1;
+    if (instance.is_caught && instance.is_for_trade) summary.forTrade += 1;
+    if (instance.is_wanted) summary.wanted += 1;
+    if (instance.is_wanted && instance.most_wanted) summary.mostWanted += 1;
+  }
+  return summary;
+};
+
 const UUID_AT_END_REGEX =
   /([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
 

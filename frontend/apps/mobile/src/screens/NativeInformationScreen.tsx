@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -232,7 +232,7 @@ const GettingStartedScreen = ({
     );
 };
 
-const InformationSection = ({
+const InformationSection = memo(({
   expanded,
   isFaq,
   light,
@@ -244,7 +244,7 @@ const InformationSection = ({
   isFaq: boolean;
   light: boolean;
   onNavigate: (path: string) => void;
-  onToggle: () => void;
+  onToggle: (id: string) => void;
   section: NativeInformationSection;
 }) => {
   const bodyVisible = !isFaq || expanded;
@@ -255,11 +255,11 @@ const InformationSection = ({
         accessibilityRole={isFaq ? 'button' : undefined}
         accessibilityState={isFaq ? { expanded } : undefined}
         disabled={!isFaq}
-        onPress={onToggle}
+        onPress={() => onToggle(section.id)}
         style={styles.sectionHeader}
       >
         <View style={styles.sectionHeaderCopy}>
-          {section.category ? <Text style={[styles.sectionCategory, light && styles.blueTextLight]}>{section.category}</Text> : null}
+          {section.category ? <Text style={[styles.sectionCategory, light && styles.blueTextLight]}>{isFaq ? faqCategoryLabel(section.category) : section.category}</Text> : null}
           <Text accessibilityRole="header" style={[styles.sectionTitle, light && styles.textLight]}>{section.title}</Text>
           {section.detail ? <Text style={[styles.sectionDetail, light && styles.mutedLight]}>{section.detail}</Text> : null}
         </View>
@@ -326,7 +326,9 @@ const InformationSection = ({
       ) : null}
     </View>
   );
-};
+});
+
+InformationSection.displayName = 'InformationSection';
 
 const NativeLegalSection = ({
   light,
@@ -376,6 +378,38 @@ const NativeLegalSection = ({
   </View>
 );
 
+const FaqHero = memo(({ light, page }: { light: boolean; page: NativeInformationPage }) => (
+  <View style={[styles.faqHero, light && styles.faqHeroLight]}>
+    <View style={[styles.faqHeroIcon, light && styles.faqHeroIconLight]}>
+      <NativeUiIcon color="#299cf5" name="help" size={32} />
+    </View>
+    <Text style={[styles.eyebrow, light && styles.blueTextLight]}>{page.eyebrow}</Text>
+    <Text accessibilityRole="header" style={[styles.faqTitle, light && styles.textLight]}>{page.title}</Text>
+    <Text style={[styles.faqIntro, light && styles.mutedLight]}>{page.intro}</Text>
+  </View>
+));
+
+FaqHero.displayName = 'FaqHero';
+
+const FaqCategoryControl = memo(({ meta, light, selected, count, onSelect }: {
+  meta: typeof FAQ_CATEGORIES[number];
+  light: boolean;
+  selected: boolean;
+  count: number;
+  onSelect: (category: string) => void;
+}) => (
+  <Pressable accessibilityLabel={`Browse ${meta.countLabel} questions`} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => onSelect(meta.category)} style={[styles.faqCategory, light && styles.faqCategoryLight, selected && styles.faqCategorySelected, selected && light && styles.faqCategorySelectedLight]}>
+  <View style={[styles.faqCategoryIcon, light && styles.faqCategoryIconLight]}>
+    <NativeUiIcon color="#299cf5" name={meta.icon} size={20} />
+  </View>
+  <View style={styles.faqCategoryCopy}><Text style={[styles.faqCategoryTitle, light && styles.textLight]}>{meta.countLabel}</Text><Text style={[styles.faqCategoryDetail, light && styles.mutedLight]}>{meta.description}</Text></View>
+  <View style={[styles.faqCategoryCount, light && styles.faqCategoryCountLight]}><Text style={styles.faqCategoryCountText}>{count}</Text></View>
+  <Text style={[styles.faqCategoryArrow, light && styles.mutedLight]}>›</Text>
+        </Pressable>
+));
+
+FaqCategoryControl.displayName = 'FaqCategoryControl';
+
 const NativeInformationPageScreen = ({ assetBaseUrl, initialFaqId, isLoggedIn = false, onBack, onNavigate, page }: Props) => {
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
@@ -407,27 +441,40 @@ const NativeInformationPageScreen = ({ assetBaseUrl, initialFaqId, isLoggedIn = 
     ? activeCategory
     : null;
   const normalizedQuery = query.trim().toLocaleLowerCase();
-  const visibleSections = isFaq
-    ? page.sections.filter((section) => {
-        if (normalizedQuery) {
-          return [section.title, ...(section.paragraphs ?? []), faqCategoryLabel(section.category)]
-            .join(' ')
-            .toLocaleLowerCase()
-            .includes(normalizedQuery);
-        }
-        if (validActiveCategory) return section.category === validActiveCategory;
-        return FAQ_COMMON_IDS.has(section.id);
-      })
-    : validActiveCategory
-      ? page.sections.filter(({ category }) => category === activeCategory)
-      : page.sections;
+  const indexedSections = useMemo(() => page.sections.map((section) => ({
+    section,
+    searchText: [section.title, ...(section.paragraphs ?? []), faqCategoryLabel(section.category)]
+      .join(' ').toLocaleLowerCase(),
+  })), [page.sections]);
+  const visibleSections = useMemo(() => indexedSections.filter(({ section, searchText }) => {
+    if (isFaq && normalizedQuery) return searchText.includes(normalizedQuery);
+    if (validActiveCategory) return section.category === validActiveCategory;
+    return !isFaq || FAQ_COMMON_IDS.has(section.id);
+  }).map(({ section }) => section), [indexedSections, isFaq, normalizedQuery, validActiveCategory]);
   const allVisibleOpen = visibleSections.length > 0
     && visibleSections.every(({ id }) => openIds.has(id));
-  const commitFaqInteraction = (event: string, update: () => void) => {
+  const commitFaqInteraction = useCallback((event: string, update: () => void) => {
     const startedAt = captureNativeUiInteractionStart();
     update();
     markNativeUiPerformanceAfterPaint(event, startedAt);
-  };
+  }, []);
+  const toggleSection = useCallback((id: string) => {
+    commitFaqInteraction('information_faq_answer_result_painted', () => setOpenIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    }));
+  }, [commitFaqInteraction]);
+  const selectCategory = useCallback((category: string) => {
+    commitFaqInteraction('information_faq_category_result_painted', () => {
+      setActiveCategory(category);
+      setQuery('');
+    });
+  }, [commitFaqInteraction]);
+  const categoryCounts = useMemo(() => new Map(FAQ_CATEGORIES.map(({ category }) => [
+    category, page.sections.filter((section) => section.category === category).length,
+  ])), [page.sections]);
 
   useEffect(() => {
     if (!initialFaqSection || faqResultsY === null || faqListY === null || faqTargetY === null) {
@@ -460,14 +507,7 @@ const NativeInformationPageScreen = ({ assetBaseUrl, initialFaqId, isLoggedIn = 
       <View style={[styles.root, light && styles.rootLight]} testID="native-information-faq">
         <ScrollView ref={faqScrollRef} contentContainerStyle={{ paddingTop: 8 + insets.top, paddingBottom: 96 + insets.bottom, paddingHorizontal: 10 }} keyboardShouldPersistTaps="handled">
           <View style={[styles.informationShell, light && styles.informationShellLight]}>
-          <View style={[styles.faqHero, light && styles.faqHeroLight]}>
-            <View style={[styles.faqHeroIcon, light && styles.faqHeroIconLight]}>
-              <NativeUiIcon color="#299cf5" name="help" size={32} />
-            </View>
-            <Text style={[styles.eyebrow, light && styles.blueTextLight]}>{page.eyebrow}</Text>
-            <Text accessibilityRole="header" style={[styles.faqTitle, light && styles.textLight]}>{page.title}</Text>
-            <Text style={[styles.faqIntro, light && styles.mutedLight]}>{page.intro}</Text>
-          </View>
+          <FaqHero light={light} page={page} />
 
           <View style={[styles.faqTools, light && styles.faqToolsLight]}>
             <View style={[styles.faqSearch, light && styles.faqSearchLight]}>
@@ -483,18 +523,11 @@ const NativeInformationPageScreen = ({ assetBaseUrl, initialFaqId, isLoggedIn = 
               {query ? <Pressable accessibilityLabel="Clear FAQ search" accessibilityRole="button" onPress={() => commitFaqInteraction('information_faq_clear_result_painted', () => setQuery(''))} style={styles.faqClear}><Text style={[styles.faqClearText, light && styles.textLight]}>×</Text></Pressable> : null}
             </View>
             <View accessibilityLabel="Browse FAQ topics" style={styles.faqCategories}>
-              {FAQ_CATEGORIES.map((meta) => {
-                const selected = activeCategory === meta.category;
-                const count = page.sections.filter(({ category }) => category === meta.category).length;
-                return <Pressable accessibilityLabel={`Browse ${meta.countLabel} questions`} accessibilityRole="button" accessibilityState={{ selected }} key={meta.category} onPress={() => commitFaqInteraction('information_faq_category_result_painted', () => { setActiveCategory(meta.category); setQuery(''); })} style={[styles.faqCategory, light && styles.faqCategoryLight, selected && styles.faqCategorySelected, selected && light && styles.faqCategorySelectedLight]}>
-                  <View style={[styles.faqCategoryIcon, light && styles.faqCategoryIconLight]}>
-                    <NativeUiIcon color="#299cf5" name={meta.icon} size={20} />
-                  </View>
-                  <View style={styles.faqCategoryCopy}><Text style={[styles.faqCategoryTitle, light && styles.textLight]}>{meta.countLabel}</Text><Text style={[styles.faqCategoryDetail, light && styles.mutedLight]}>{meta.description}</Text></View>
-                  <View style={[styles.faqCategoryCount, light && styles.faqCategoryCountLight]}><Text style={styles.faqCategoryCountText}>{count}</Text></View>
-                  <Text style={[styles.faqCategoryArrow, light && styles.mutedLight]}>›</Text>
-                </Pressable>;
-              })}
+              {FAQ_CATEGORIES.map((meta) => (
+                <FaqCategoryControl key={meta.category} meta={meta} light={light}
+                  selected={activeCategory === meta.category} count={categoryCounts.get(meta.category) ?? 0}
+                  onSelect={selectCategory} />
+              ))}
             </View>
           </View>
 
@@ -517,7 +550,7 @@ const NativeInformationPageScreen = ({ assetBaseUrl, initialFaqId, isLoggedIn = 
                 : undefined}
               style={styles.sections}
             >
-              {visibleSections.map((section) => <View key={section.id} onLayout={section.id === initialFaqSection?.id ? ({ nativeEvent }) => setFaqTargetY(nativeEvent.layout.y) : undefined}><InformationSection expanded={openIds.has(section.id)} isFaq light={light} onNavigate={onNavigate} onToggle={() => commitFaqInteraction('information_faq_answer_result_painted', () => setOpenIds((current) => { const next = new Set(current); if (next.has(section.id)) next.delete(section.id); else next.add(section.id); return next; }))} section={{ ...section, category: faqCategoryLabel(section.category) }} /></View>)}
+              {visibleSections.map((section) => <View key={section.id} onLayout={section.id === initialFaqSection?.id ? ({ nativeEvent }) => setFaqTargetY(nativeEvent.layout.y) : undefined}><InformationSection expanded={openIds.has(section.id)} isFaq light={light} onNavigate={onNavigate} onToggle={toggleSection} section={section} /></View>)}
               {!visibleSections.length ? <View style={[styles.faqEmpty, light && styles.sectionLight]}><Text style={styles.faqEmptyIcon}>⌕</Text><Text style={[styles.faqEmptyTitle, light && styles.textLight]}>No matching questions</Text><Text style={[styles.faqEmptyText, light && styles.mutedLight]}>Try a shorter phrase or search all categories.</Text><Pressable accessibilityRole="button" onPress={() => { setActiveCategory(null); setQuery(''); }} style={[styles.faqPill, light && styles.faqPillLight]}><Text style={[styles.faqPillText, light && styles.textLight]}>Reset FAQ filters</Text></Pressable></View> : null}
             </View>
           </View>
@@ -619,12 +652,7 @@ const NativeInformationPageScreen = ({ assetBaseUrl, initialFaqId, isLoggedIn = 
               key={section.id}
               light={light}
               onNavigate={onNavigate}
-              onToggle={() => setOpenIds((current) => {
-                const next = new Set(current);
-                if (next.has(section.id)) next.delete(section.id);
-                else next.add(section.id);
-                return next;
-              })}
+              onToggle={toggleSection}
               section={section}
             />
           ))}

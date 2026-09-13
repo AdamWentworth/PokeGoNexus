@@ -1,6 +1,6 @@
-import type { BasePokemon, Move } from '@pokemongonexus/shared-contracts/pokemon';
+import type { BasePokemon, CrownForm, Move } from '@pokemongonexus/shared-contracts/pokemon';
 import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances';
-import { buildNativeMaxRankings, buildNativeRaidAttackers, buildNativeRaidBosses, buildNativeRaidCounterAttackersAsync, hydrateNativeToolCatalog, nativeTypeEffectiveness } from '../../../src/features/tools/nativeBattleModels';
+import { buildNativeMaxRankings, buildNativeRaidAttackers, buildNativeRaidBosses, buildNativeRaidCounterAttackersAsync, buildNativeRaidRosterSummary, hydrateNativeToolCatalog, nativeTypeEffectiveness } from '../../../src/features/tools/nativeBattleModels';
 
 const fast = { move_id: 1, name: 'Vine Whip', type_id: 10, raid_power: 10, pvp_power: 5, raid_energy: 8, pvp_energy: 8, raid_cooldown: 1, pvp_turns: 2, is_fast: 1, type_name: 'grass', legacy: false, type: 'grass' } as Move;
 const charged = { ...fast, move_id: 2, name: 'Power Whip', raid_power: 90, raid_energy: -50, raid_cooldown: 2.5, is_fast: 0 } as Move;
@@ -38,6 +38,21 @@ const raidBoss = {
 };
 
 describe('native battle models', () => {
+  it('ranks an owned crowned form after loading its separate move pool', () => {
+    const crownFast = { ...fast, move_id: 20, name: 'Metal Claw', type: 'steel', type_name: 'steel' };
+    const crownCharged = { ...charged, move_id: 21, name: 'Behemoth Blade', type: 'steel', type_name: 'steel' };
+    const zacian = {
+      ...pokemon, pokemon_id: 888, pokedex_number: 888, name: 'Zacian',
+      crownForms: [{ id: 1, base_pokemon_id: 888, crown_pokemon_id: 2290, display_form: 'Crowned Sword', name: 'Zacian', image_url: '/crowned-zacian.png', attack: 332, defense: 240, stamina: 192, type1_name: 'Fairy', type2_name: 'Steel', moves: [] } as unknown as CrownForm],
+    };
+    const catalog = hydrateNativeToolCatalog([zacian], [{ pokemon_id: 888, moves: [fast, charged], fusion: [], crownForms: [{ id: 1, moves: [crownFast, crownCharged] }] }]);
+    const instances = { zacian: { ...ownedInstance, instance_id: 'zacian', pokemon_id: 888, variant_id: '0888-default', crown: true, fast_move_id: 20, charged_move1_id: 21 } };
+    const roster = buildNativeRaidRosterSummary(catalog, instances);
+    expect(roster.eligibleCount).toBe(1);
+    expect(roster.attackers[0]).toMatchObject({ name: 'Crowned Sword Zacian', raidRoster: { formSource: 'crown' } });
+    expect(buildNativeMaxRankings({ catalog, instances, scope: 'owned', role: 'damage' })[0]?.maxRanking?.maxMoveName).toBe('Behemoth Blade');
+  });
+
   it('hydrates move and raid chunks and ranks legal attackers', () => {
     const hydrated = hydrateNativeToolCatalog([pokemon], [{ pokemon_id: 1, moves: [fast, charged], fusion: [], crownForms: [] }], [{ pokemon_id: 1, raid_boss: [raidBoss] }]);
     expect(buildNativeRaidBosses(hydrated)).toHaveLength(1);

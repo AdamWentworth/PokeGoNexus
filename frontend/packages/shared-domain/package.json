@@ -6,7 +6,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./instances": "./src/instances.ts",
+    "./instance-variant": "./src/instance-variant.ts",
     "./catalog": "./src/catalog.ts",
+    "./pokemon-data": "./src/pokemon-data.ts",
     "./collection-sort": "./src/collection-sort.ts",
     "./pokemon-display": "./src/pokemon-display.ts",
     "./fusion-backgrounds": "./src/fusion-backgrounds.ts",

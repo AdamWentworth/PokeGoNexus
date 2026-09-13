@@ -7,6 +7,8 @@ vi.mock('@/utils/imageHelpers', () => ({
 }));
 
 import { initializePokemonTags } from '@/features/tags/utils/initializePokemonTags';
+import { getFilteredPokemonsByOwnership } from '@/hooks/filtering/usePokemonOwnershipFilter';
+import { summarizeHomeCollection } from '@/pages/Home/homeDashboardModel';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 
@@ -97,6 +99,34 @@ function makeInstance(overrides: Partial<PokemonInstance> = {}): PokemonInstance
 }
 
 describe('initializePokemonTags', () => {
+  it('keeps active totals, tag buckets, and visible rows aligned for legacy identities', () => {
+    const variants = [makeVariant(), makeVariant({ variant_id: '0104-Cempasúchil_default', pokemon_id: 104, variantType: 'costume_9', currentImage: '/costume.png' })];
+    const instances = {
+      missing: makeInstance({ instance_id: 'missing', variant_id: null as unknown as string, is_caught: true }),
+      costume: makeInstance({ instance_id: 'costume', pokemon_id: 104, variant_id: '0104-Cempas├║chil_default', costume_id: 9, is_caught: true }),
+      partner: makeInstance({ instance_id: 'partner', is_caught: true, disabled: true, favorite: true }),
+    };
+    const before = JSON.stringify(instances);
+    const tags = initializePokemonTags(instances, variants);
+    expect(summarizeHomeCollection(instances)).toMatchObject({ caught: 2, favorites: 0 });
+    expect(Object.keys(tags.caught)).toEqual(['missing', 'costume']);
+    const rows = getFilteredPokemonsByOwnership(variants, instances, 'caught', tags);
+    expect(rows.map((row) => row.variant_id)).toEqual(['0001-default', '0104-Cempasúchil_default']);
+    expect(rows[1].currentImage).toBe('/costume.png');
+    expect(rows[1].instanceData.instance_id).toBe('costume');
+    expect(JSON.stringify(instances)).toBe(before);
+    const staleTags = { ...tags, caught: { ...tags.caught, partner: tags.caught.missing } };
+    expect(getFilteredPokemonsByOwnership(variants, instances, 'caught', staleTags)).toHaveLength(2);
+  });
+
+  it('does not substitute another costume or invent an unknown variant', () => {
+    const instances = {
+      costume: makeInstance({ instance_id: 'costume', variant_id: 'damaged-costume', costume_id: 99, is_caught: true }),
+      unknown: makeInstance({ instance_id: 'unknown', variant_id: 'unrecognized-form', is_caught: true }),
+    };
+    expect(initializePokemonTags(instances, [makeVariant()]).caught).toEqual({});
+  });
+
   beforeEach(() => {
     determineImageUrlMock.mockClear();
   });
@@ -195,11 +225,11 @@ describe('initializePokemonTags', () => {
 
   it('uses image override helper for female/mega/fusion/purified cases', () => {
     const variant = makeVariant({
-      female_data: { female_available: true } as any,
-      megaEvolutions: [{ key: 'mega' }] as any,
-      fusion: [{ key: 'fusion' }] as any,
+      female_data: { female_available: true } as PokemonVariant['female_data'],
+      megaEvolutions: [{ key: 'mega' }] as unknown as PokemonVariant['megaEvolutions'],
+      fusion: [{ key: 'fusion' }] as unknown as PokemonVariant['fusion'],
       currentImage: '/images/default/pokemon_1.png',
-    } as any);
+    });
 
     const out = initializePokemonTags(
       {
