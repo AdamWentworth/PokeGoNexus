@@ -806,6 +806,7 @@ export const NativeTrainerProfileScreen = ({
                 <View
                   key={!editorDraft ? `highlight-${index + 1}` : undefined}
                   style={[
+                    !editorDraft && (compactHeader ? styles.showcaseSlotCompact : styles.showcaseSlot),
                     compactHeader && index % 3 !== 2 && styles.gridRightBorder,
                     compactHeader && index < 3 && styles.gridBottomBorder,
                     !compactHeader && index < 5 && styles.gridRightBorder,
@@ -1154,6 +1155,8 @@ const styles = StyleSheet.create({
   memberLabel: { color: '#9db5b4', fontSize: 9, fontWeight: '900', letterSpacing: 0.7 },
   memberValue: { color: '#f7fbfa', fontSize: 12, fontWeight: '800', textAlign: 'right' },
   showcase: { minHeight: 112, flexDirection: 'row', flexWrap: 'wrap', borderBottomWidth: 1, borderColor: '#315052' },
+  showcaseSlot: { width: '16.6667%' },
+  showcaseSlotCompact: { width: '33.3333%' },
   gridRightBorder: { borderRightWidth: 1, borderRightColor: '#315052' },
   gridBottomBorder: { borderBottomWidth: 1, borderBottomColor: '#315052' },
   gridBorderLight: { borderColor: '#9bb8b1' },

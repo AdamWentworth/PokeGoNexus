@@ -12,15 +12,18 @@ const formatNumber = (value?: number | null): string => (
   typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('en-US') : 'Not shared'
 );
 
-const formatDate = (value?: string | null): string => {
+const formatDate = (value?: string | null, calendarDate = false): string => {
   if (!value) return 'Not shared';
-  const date = new Date(value);
+  // The API can serialize the start date as midnight UTC. It is a calendar
+  // date, so preserve its date portion instead of shifting it to device time.
+  const dateValue = calendarDate ? /^\d{4}-\d{2}-\d{2}/.exec(value)?.[0] ?? value : value;
+  const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return 'Not shared';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    timeZone: /^\d{4}-\d{2}-\d{2}$/.test(value) ? 'UTC' : undefined,
+    timeZone: /^\d{4}-\d{2}-\d{2}$/.test(dateValue) ? 'UTC' : undefined,
   }).format(date);
 };
 
@@ -76,7 +79,7 @@ export const buildNativeTrainerProfileModel = (
       ? `${formatNumber(profile.user.total_xp)} XP`
       : 'XP not shared',
     memberSinceLabel: formatDate(profile.user.app_joined_at),
-    startedLabel: formatDate(profile.user.pogo_started_on),
+    startedLabel: formatDate(profile.user.pogo_started_on, true),
     locationLabel: profile.location?.trim() || 'Not shared',
     trainerCodeLabel: formatTrainerCode(profile.trainer_code),
     titles: profile.trainer_titles.flatMap((title) => {

@@ -690,6 +690,7 @@ export const NativePvpScreen = ({
               onPress={() => selectScope(value)}
               style={[
                 styles.scopeButton,
+                light && styles.controlLight,
                 scope === value && styles.scopeActive,
                 value === "owned" && !signedIn && styles.disabled,
               ]}

@@ -121,7 +121,7 @@ export const NativeCombatRankingCard = memo(function NativeCombatRankingCard({ a
           {metrics.map(([label, value], index) => (
             <View key={label} style={[styles.metricCell, light && styles.metricCellLight]}>
               <Text numberOfLines={1} style={[styles.metricCellLabel, light && styles.mutedLight]}>{label}</Text>
-              <Text numberOfLines={1} style={[styles.metricCellValue, index === 0 && styles.primaryMetric, light && index === 0 && styles.accentLight]}>{value}</Text>
+              <Text numberOfLines={1} style={[styles.metricCellValue, light && styles.textLight, index === 0 && styles.primaryMetric, light && index === 0 && styles.accentLight]}>{value}</Text>
             </View>
           ))}
         </View>

@@ -3,6 +3,21 @@ import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances
 import { buildNativeTrainerProfileModel } from '../../../../src/features/social/nativeTrainerProfileModel';
 
 describe('buildNativeTrainerProfileModel', () => {
+  it.each(['2016-07-06', '2016-07-06T00:00:00Z', '2016-07-06T00:00:00+14:00'])(
+    'keeps the trainer start calendar date from %s across device time zones',
+    (startedOn) => {
+      const profile = {
+        user: { user_id: 'user-1', username: 'Trainer', pogo_started_on: startedOn, app_joined_at: '2026-01-02T00:00:00Z' },
+        trainer_titles: [],
+        highlights: [],
+        stats: { caught: 0, for_trade: 0, wanted: 0, favorites: 0, registered: 0 },
+        viewer: { relationship: 'self', can_view_profile: true, can_view_collection: true },
+      } as TrainerProfile<PokemonInstance>;
+
+      expect(buildNativeTrainerProfileModel(profile).startedLabel).toBe('Jul 6, 2016');
+    },
+  );
+
   it('preserves the canonical trainer identity, stats, titles, and viewer permissions', () => {
     const profile = {
       user: {
