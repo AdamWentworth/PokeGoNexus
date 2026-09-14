@@ -2734,7 +2734,7 @@ export const NativeInstanceDetailScreen = ({
               {!isWanted && (cp != null || editorVisible) ? (
                 editorVisible ? (
                   <View style={styles.inlineCpEditor}>
-                    <Text style={[styles.cpLabel, desktopLayout && styles.cpLabelDesktop]}>CP</Text>
+                    <Text style={[styles.cpLabel, { color: '#ffffff' }, desktopLayout && styles.cpLabelDesktop]}>CP</Text>
                     <TextInput
                       accessibilityLabel="Combat Power"
                       keyboardType="number-pad"
@@ -2749,7 +2749,7 @@ export const NativeInstanceDetailScreen = ({
                   </View>
                 ) : (
                   <Text style={styles.cpText}>
-                    <Text style={[styles.cpLabel, desktopLayout && styles.cpLabelDesktop]}>CP</Text>
+                    <Text style={[styles.cpLabel, { color: '#ffffff' }, desktopLayout && styles.cpLabelDesktop]}>CP</Text>
                     <Text style={[styles.cpValue, desktopLayout && styles.cpValueDesktop]}>{cp}</Text>
                   </Text>
                 )

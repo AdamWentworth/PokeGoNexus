@@ -1247,7 +1247,9 @@ export const buildNativeInstanceDetail = (
     raidPower: getPokemonMovePower(move, 'raid'),
     pvpPower: getPokemonMovePower(move, 'pvp'),
   }])).values()];
-  const baseMoveOptions = toMoveOptions(fusionMovePokemon.moves);
+  // The catalog's top-level learnset also contains fusion-tagged rows.
+  // Vite's move controls exclude these after separation.
+  const baseMoveOptions = toMoveOptions(fusionMovePokemon.moves.filter((move) => move.fusion_id == null));
   const crownMoves = crown ? moveEntry?.crownForms.find((entry) => entry.id === crown.id)?.moves : null;
   const moveOptions = fusion
     ? toMoveOptions(resolveFusionMovePool({
@@ -1383,6 +1385,9 @@ export const buildNativeInstanceDetail = (
         ));
         return [{
           ...partnerRow,
+          // A consumed partner carries the main fusion's form marker, but the
+          // picker presents the partner itself, as Vite's FuseOverlay does.
+          name: candidate.nickname?.trim() || partnerPokemon.name,
           imageUri: absoluteImageUri(resolvePokemonInstanceImagePath({ ...candidate, disabled: false, is_fused: false }, partnerPokemon), assetOrigin),
           level: candidate.level,
           speciesName: partnerPokemon.name,

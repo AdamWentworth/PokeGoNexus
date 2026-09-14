@@ -650,11 +650,34 @@ describe('native collection model', () => {
     expect(buildNativeTagSummaries(rows, instances, envelope, 'caught')[0].rows).toEqual([]);
   });
 
+  it('removes fusion-tagged moves from the base learnset while retaining base moves in charged-only fusion pools', () => {
+    const fusionPokemon = { ...pokemon, fusion: [
+      { fusion_id: 1, name: 'Dusk Mane', base_pokemon_id1: 6, base_pokemon_id2: 150 },
+      { fusion_id: 2, name: 'Dawn Wings', base_pokemon_id1: 6, base_pokemon_id2: 150 },
+    ] } as unknown as BasePokemon;
+    const move = (move_id: number, name: string, fusion_id: number | null, is_fast: number) => ({
+      move_id, name, fusion_id, is_fast, type_name: 'Psychic', legacy: false,
+    });
+    const metalClaw = move(1, 'Metal Claw', null, 1);
+    const futureSight = move(2, 'Future Sight', null, 0);
+    const sunsteel = move(3, 'Sunsteel Strike', 1, 0);
+    const moongeist = move(4, 'Moongeist Beam', 2, 0);
+    const result = buildNativeInstanceDetail({ main: instance({
+      instance_id: 'instance-1', is_fused: true, fusion_form: 'Dawn Wings',
+    }) }, [fusionPokemon], [{
+      pokemon_id: 6, moves: [metalClaw, futureSight, sunsteel, moongeist], crownForms: [],
+      fusion: [{ fusion_id: 1, moves: [sunsteel] }, { fusion_id: 2, moves: [moongeist] }],
+    }] as never, 'instance-1', 'https://pokegonexus.com');
+    expect(result?.baseMoveOptions?.map((entry) => entry.name)).toEqual(['Metal Claw', 'Future Sight']);
+    expect(result?.moveOptions?.map((entry) => entry.name)).toEqual(['Metal Claw', 'Future Sight', 'Moongeist Beam']);
+    expect(result?.fusionOptions?.[0].moveOptions.map((entry) => entry.name)).toEqual(['Metal Claw', 'Future Sight', 'Sunsteel Strike']);
+  });
+
   it('includes available partners and its own disabled partner, including legacy backlinks, with distinguishing metadata', () => {
     const fusionPokemon = { ...pokemon, fusion: [{
       fusion_id: 2, name: 'Test fusion', base_pokemon_id1: 6, base_pokemon_id2: 150,
     }] } as unknown as BasePokemon;
-    const partnerPokemon = { ...pokemon, pokemon_id: 150, name: 'Mewtwo', backgrounds: [{
+    const partnerPokemon = { ...pokemon, fusion: fusionPokemon.fusion, pokemon_id: 150, name: 'Mewtwo', backgrounds: [{
       background_id: 21, name: 'Moon sky', image_url: '/moon.png',
     }] } as unknown as BasePokemon;
     const candidate = (id: string, patch: Partial<PokemonInstance> = {}) => instance({
@@ -673,7 +696,7 @@ describe('native collection model', () => {
     const candidates = result?.fusionOptions?.[0].partnerRows;
     expect(candidates?.map((entry) => entry.id)).toEqual(['linked', 'available', 'backlink']);
     expect(candidates?.[0]).toEqual(expect.objectContaining({
-      cp: 4000, level: 40, speciesName: 'Mewtwo', backgroundName: 'Moon sky',
+      name: 'Mewtwo', cp: 4000, level: 40, speciesName: 'Mewtwo', backgroundName: 'Moon sky',
       locationBackgroundUri: 'https://pokegonexus.com/moon.png',
       imageUri: 'https://pokegonexus.com/images/charizard-shiny.png',
     }));
