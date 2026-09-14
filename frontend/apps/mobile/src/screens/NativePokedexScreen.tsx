@@ -293,6 +293,7 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
   const compactRegions = width <= 720;
   const columns = width <= 720 ? 4 : Math.max(4, Math.floor((width - 24) / 150));
   const [scrollY] = useState(() => new Animated.Value(0));
+  const headerTranslation = useMemo(() => Animated.multiply(scrollY, -1), [scrollY]);
   const scrollOffsetRef = useRef(0);
   const activeCategoryRef = useRef<NativePokedexCategory>('pokemon');
   const listRef = useRef<FlatList<PokedexListRow>>(null);
@@ -664,7 +665,7 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
         overlay={<Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0,
           paddingHorizontal: 12, paddingTop: 8 + insets.top,
           backgroundColor: light ? '#f8fff9' : '#090d12',
-          transform: [{ translateY: Animated.multiply(scrollY, -1) }],
+          transform: [{ translateY: headerTranslation }],
         }}>{categoryHeader}</Animated.View>}
       >
       <Animated.FlatList

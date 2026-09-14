@@ -44,10 +44,13 @@ describe('NativeKeyedPageSlider', () => {
     act(() => progress.setValue(224));
     const track = view.UNSAFE_getAllByType(Animated.View).find((node) => node.props.testID === 'native-keyed-page-track');
     const style = StyleSheet.flatten(track?.props.style);
-    expect(style.transform[0].translateX.__getValue()).toBe(-224);
+    const translation = style.transform[0].translateX;
+    expect(translation.__getValue()).toBe(-224);
     expect(StyleSheet.flatten(view.getByTestId('native-keyed-page-shiny').props.style).left).toBe(448);
     act(() => callbacks.at(-1)?.({ finished: true }));
     expect(view.queryByText('pokemon category', { includeHiddenElements: true })).toBeNull();
+    const settledTrack = view.UNSAFE_getAllByType(Animated.View).find((node) => node.props.testID === 'native-keyed-page-track');
+    expect(StyleSheet.flatten(settledTrack?.props.style).transform[0].translateX).toBe(translation);
     expect(view.getAllByText('Controls')).toHaveLength(1);
   });
 

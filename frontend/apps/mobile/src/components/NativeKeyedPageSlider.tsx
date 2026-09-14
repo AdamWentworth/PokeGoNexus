@@ -101,10 +101,11 @@ export const NativeKeyedPageSlider = ({
 
   const firstPosition = Math.min(...state.pages.map((page) => page.position));
   const lastPosition = Math.max(...state.pages.map((page) => page.position));
+  const trackTranslation = useMemo(() => Animated.multiply(progress, -1), [progress]);
   const trackStyle = useMemo(() => [StyleSheet.absoluteFill, {
     left: firstPosition * width, right: undefined, width: (lastPosition - firstPosition + 1) * width,
-    transform: [{ translateX: Animated.multiply(progress, -1) }],
-  }], [firstPosition, lastPosition, progress, width]);
+    transform: [{ translateX: trackTranslation }],
+  }], [firstPosition, lastPosition, trackTranslation, width]);
 
   return <TransitionContext.Provider value={state.pages.length > 1}><View style={styles.viewport} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
     testID="native-keyed-page-slider">
