@@ -874,7 +874,9 @@ export const NativePvpScreen = ({
           </>}
           />
         </NativeRetainedWorkspacePage>
-        {(['team', 'battle', 'iv-rank'] as const).map((panel) => <NativeRetainedWorkspacePage active={workspace === panel} key={panel}>
+        {/* Mount the tool panels together on first use so a direct jump to IV Rank
+            also has real content in the intermediate pages traversed by the track. */}
+        {(['team', 'battle', 'iv-rank'] as const).map((panel) => <NativeRetainedWorkspacePage active={workspace !== 'rankings'} key={panel}>
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,

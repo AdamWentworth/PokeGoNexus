@@ -153,6 +153,15 @@ describe('NativePvpScreen', () => {
     expect(screen.getByText('Role profile')).toBeTruthy();
   });
 
+  it('fills intermediate panels before the first direct slide from Rankings to IV Rank', () => {
+    renderScreen();
+    expect(screen.queryByText('THREE-POKÉMON TEAM', { includeHiddenElements: true })).toBeNull();
+    fireEvent.press(screen.getByText('IV Rank'));
+    expect(screen.getByText('Find the strongest IV spread for this league')).toBeTruthy();
+    expect(screen.getByText('THREE-POKÉMON TEAM', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('Simulate a focused matchup', { includeHiddenElements: true })).toBeTruthy();
+  });
+
   it('paints pending feedback before running shared battle mechanics', async () => {
     renderScreen();
     fireEvent.press(screen.getByText('Battle Lab'));

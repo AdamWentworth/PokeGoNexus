@@ -440,22 +440,24 @@ export const NativePokedexDetailScreen = ({ allEntries, allPokemon, assetBaseUrl
           <View style={styles.registrationPill}><View style={styles.registrationPillCell}><Text style={styles.registrationPillLabel}>Registered</Text><Text style={styles.registrationPillValue}>{registeredCount}</Text></View><View style={styles.registrationPillDivider} /><View style={styles.registrationPillCell}><Text style={styles.registrationPillLabel}>Available</Text><Text style={styles.registrationPillValue}>{slots.length}</Text></View></View>
         </View>
 
-        <NativeSlidingSegmentedControl
-          accessibilityLabel="Pokédex entry sections"
-          buttonStyle={styles.tab}
-          indicatorStyle={[styles.tabIndicator, { backgroundColor: colors[0], top: undefined, bottom: 0, height: 4 }]}
-          indicatorTestID="native-pokedex-detail-tab-indicator"
-          items={TABS.map(([value, label]) => ({ value, label }))}
-          onChange={(value) => { beginPerformance('pokedex_detail_tab_result_painted'); setTab(value); }}
-          progress={motion.progress}
-          renderItem={(item, selected) => <View style={{ alignItems: 'center' }}>
-            <Text style={[styles.tabText, light && styles.textLight, selected && styles.tabTextActive, light && selected && styles.tabTextActiveLight]}>{item.label}</Text>
-            {item.value === 'more' ? <Text numberOfLines={1} style={[styles.tabDetail, selected && { color: colors[1] }, light && styles.mutedLight]}>{activeComboSection?.label ?? 'Index'}</Text> : null}
-          </View>}
-          style={[styles.tabs, themedPanel, light && styles.cardLight]}
-          testID="native-pokedex-detail-tabs"
-          value={tab}
-        />
+        <View testID="native-pokedex-detail-stationary-tabs">
+          <NativeSlidingSegmentedControl
+            accessibilityLabel="Pokédex entry sections"
+            buttonStyle={styles.tab}
+            indicatorStyle={[styles.tabIndicator, { backgroundColor: colors[0], top: undefined, bottom: 0, height: 4 }]}
+            indicatorTestID="native-pokedex-detail-tab-indicator"
+            items={TABS.map(([value, label]) => ({ value, label }))}
+            onChange={(value) => { beginPerformance('pokedex_detail_tab_result_painted'); setTab(value); }}
+            progress={motion.progress}
+            renderItem={(item, selected) => <View style={{ alignItems: 'center' }}>
+              <Text style={[styles.tabText, light && styles.textLight, selected && styles.tabTextActive, light && selected && styles.tabTextActiveLight]}>{item.label}</Text>
+              {item.value === 'more' ? <Text numberOfLines={1} style={[styles.tabDetail, selected && { color: colors[1] }, light && styles.mutedLight]}>{activeComboSection?.label ?? 'Index'}</Text> : null}
+            </View>}
+            style={[styles.tabs, themedPanel, light && styles.cardLight]}
+            testID="native-pokedex-detail-tabs"
+            value={tab}
+          />
+        </View>
         {error ? <View accessibilityRole="alert" style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
         {isSaving ? <View style={styles.saving}><ActivityIndicator color={colors[0]} /><Text style={[styles.savingText, light && styles.mutedLight]}>Updating Pokédex…</Text></View> : null}
 
