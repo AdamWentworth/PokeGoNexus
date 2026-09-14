@@ -429,7 +429,7 @@ export const NativePokedexDetailScreen = ({ allEntries, allPokemon, assetBaseUrl
 
   return (
     <View style={[styles.root, light && styles.rootLight]} testID="native-pokedex-detail-screen">
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: 8, paddingBottom: 100 + insets.bottom }]} keyboardShouldPersistTaps="always" nestedScrollEnabled stickyHeaderIndices={[2]} style={{ marginTop: insets.top }}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: 8 + insets.top, paddingBottom: 100 + insets.bottom }]} keyboardShouldPersistTaps="always" nestedScrollEnabled>
         <View style={styles.topbar}><Pressable accessibilityLabel="Back to Pokédex" accessibilityRole="button" onPress={onBack} style={[styles.back, light && styles.backLight]}><NativeBackIcon color={light ? '#172124' : '#ffffff'} size={20} /></Pressable><Text style={[styles.topTitle, light && styles.textLight]}>Pokédex entry</Text><View style={styles.backPlaceholder} /></View>
         <View style={[styles.hero, { borderColor: `${colors[0]}99` }, light && styles.heroLight]}>
           <HeroBackdrop colors={colors} light={light} />
