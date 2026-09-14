@@ -325,7 +325,7 @@ export const NativePvpScreen = ({
   const [visibleLimit, setVisibleLimit] = useState(50);
   const [battleSeed, setBattleSeed] = useState<PvpBattleSeed | null>(null);
   useEffect(() => {
-    if (workspace === "iv-rank" || scope === "owned") onCatalogNeeded?.();
+    if (workspace !== "rankings" || scope === "owned") onCatalogNeeded?.();
     if (scope === "owned") onOwnedDataNeeded?.();
   }, [onCatalogNeeded, onOwnedDataNeeded, scope, workspace]);
   const deferredFormat = useDeferredValue(format);

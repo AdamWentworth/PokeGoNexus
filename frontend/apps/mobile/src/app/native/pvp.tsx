@@ -17,7 +17,7 @@ export default function NativePvpRoute() {
   const [catalogRequested, setCatalogRequested] = useState(false);
   const [ownedDataRequested, setOwnedDataRequested] = useState(false);
   const catalogQuery = useNativeToolCatalogQuery(catalogRequested);
-  const movesQuery = useNativeMovesDataQuery(ownedDataRequested);
+  const movesQuery = useNativeMovesDataQuery(catalogRequested);
   const rankingsQuery = useNativePvpDataQuery();
   const collectionQuery = useNativeCollectionSnapshotQuery(
     session.user?.user_id ?? null,
@@ -34,7 +34,7 @@ export default function NativePvpRoute() {
   );
   const error = [
     catalogRequested ? catalogQuery.error : null,
-    ownedDataRequested ? movesQuery.error : null,
+    catalogRequested ? movesQuery.error : null,
     rankingsQuery.error,
     ownedDataRequested ? collectionQuery.error : null,
   ]
@@ -56,7 +56,7 @@ export default function NativePvpRoute() {
         instances={collectionQuery.data?.instances ?? {}}
         isLoading={rankingsQuery.isPending
           || Boolean(catalogRequested && catalogQuery.isPending)
-          || Boolean(ownedDataRequested && movesQuery.isPending)
+          || Boolean(catalogRequested && movesQuery.isPending)
           || Boolean(session.user && ownedDataRequested && collectionQuery.isPending)}
         onBack={() => router.canGoBack() ? router.back() : router.replace('/native')}
         onCatalogNeeded={requestCatalog}
@@ -65,7 +65,7 @@ export default function NativePvpRoute() {
         onRetry={() => {
           void rankingsQuery.refetch();
           if (catalogRequested) void catalogQuery.refetch();
-          if (ownedDataRequested) void movesQuery.refetch();
+          if (catalogRequested) void movesQuery.refetch();
           if (session.user && ownedDataRequested) void collectionQuery.refetch();
         }}
         payload={rankingsQuery.data ?? null}
