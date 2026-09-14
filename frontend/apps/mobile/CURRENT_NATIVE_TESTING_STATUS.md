@@ -13,33 +13,43 @@ public-information performance result are documented in
 
 ## Instance location backgrounds — 2026-09-13
 
-Code candidate: `567f5dd4`. Location artwork now has a separate layer beneath the
+Code candidate: `f71a31a0`. Location artwork now has a separate layer beneath the
 CP arc and opaque details frame. The Pokémon sprite and its badges remain above
 the frame, while the background cannot paint over the name, types, caught ribbon
-or lower content. A vertical fade removes the hard top edge left by the tall
-radial mask; artwork remains aligned to its top. This applies to caught, trade
-and wanted instance overlays. Collection cards retain their existing mask.
+or lower content. A single rounded oval mask replaces the tall mask and horizontal
+top fade from `567f5dd4`, following the requested rounder appearance. The oval fades
+out before the top edge and includes the brightness layer; artwork remains aligned
+to its top. Vite's CSS and the shared mask contract use the same revised radii.
+This applies to caught, trade and wanted instance overlays. Collection cards
+retain their existing mask.
 
 The stage anchor preserves the existing header/image/panel geometry without
 waiting for a layout measurement. Existing backdrop, instance and fusion suites
-pass all 55 tests; mobile typecheck and source lint pass.
+pass all 55 tests; three cross-host contract checks, mobile typecheck and source
+lint pass.
 
-The normal cached APK built in 81.7 seconds under the two-core/8GB limits:
-`.artifacts/manual-standalone/PokeGoNexus-manual-567f5dd4-arm64-v8a.apk`.
-SHA-256: `51e37a8be3bdd61ed19f59639c572405aff6cda53a4b9aa68291318ec755410b`.
-Private evidence: `.artifacts/location-background-2026-09-13/`.
+The normal cached APK built in 81.9 seconds under the two-core/8GB limits:
+`.artifacts/manual-standalone/PokeGoNexus-manual-f71a31a0-arm64-v8a.apk`.
+SHA-256: `fb36fb0a202b4a2e6e9bd7e73dbe85719b5890b26bf0acf7661c478fbc501c02`.
+Private evidence: `.artifacts/rounded-background-2026-09-13/`.
 Installed in place on the Pixel 8 Pro with matching signature/checksum and
 fixtures/probes disabled. The public APK is unchanged.
 
-Before/after phone screenshots confirm the 4030 CP Shiny Dawn Wings Necrozma's
-top edge fades smoothly, the arc is visible over the artwork, and the background
-stays below the opaque frame in normal and edit views. Scrolling and the background
-selector pass; the 4090 CP Dusk Mane without a location card retains its sprite
-overlap and layout. Closing the draft preserves the saved instance. The final flow
-reports no fatal, Fabric, view ownership/removal or ANR failures and returns to
-Favorite descending with 2249 caught and 167 Favorites. No account edits were
-submitted and no data was cleared. This is targeted validation of the shared
-instance rendering change, not full migration certification.
+The installed `f71a31a0` screenshots confirm the 4030 CP Shiny Dawn Wings Necrozma
+has a rounded top/side fade, with the arc visible and the artwork behind the
+details frame. The 4090 CP Dusk Mane without a location card retains its layout.
+The automated flow reached both normal views, then the phone switched to Shiny
+Black Kyurem during the edit step. That run did not pass the edit-view assertion;
+it recorded zero fatal, Fabric, view ownership/removal or ANR failures. The Kyurem
+capture also shows the rounded background beneath the frame. No account edits
+were submitted and no app data was cleared.
+
+Edit/scroll/picker/cancel checks passed on the preceding `567f5dd4` APK, with
+2249 caught and 167 Favorites preserved. The revised mask's edit rendering is
+covered by the focused unit suites; a final physical edit-view recheck remains
+unverified. The interrupted run is retained in `screen-change-interrupted-device/`
+and a short follow-up flow is prepared as `finish-device.yaml` in the private
+artifact directory. This targeted change does not certify the full migration.
 
 ## Caught-instance fusion — 2026-09-13
 

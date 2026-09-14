@@ -4,21 +4,24 @@ Last updated: 2026-09-13
 
 ## Current phone candidate — instance location backgrounds
 
-Code candidate: `567f5dd44d860ba3c05080b2cc7f9c3c597e45b1`.
-Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-567f5dd4-arm64-v8a.apk`.
-SHA-256: `51e37a8be3bdd61ed19f59639c572405aff6cda53a4b9aa68291318ec755410b`.
+Code candidate: `f71a31a087a4fd152c8a83409dc7bfd14629c698`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-f71a31a0-arm64-v8a.apk`.
+SHA-256: `fb36fb0a202b4a2e6e9bd7e73dbe85719b5890b26bf0acf7661c478fbc501c02`.
 
-Location artwork fades smoothly at the top and sits below the details frame;
+Location artwork uses a single rounder oval fade and sits below the details frame;
 the Pokémon sprite still overlaps the frame. Header, arc and panel positions
-are preserved. 55 existing focused tests, mobile typecheck and source lint pass.
-The cached build took 81.7 seconds under the two-core/8GB limits; no stronger
+are preserved. Vite CSS and the shared contract use the revised mask. 55 existing
+focused tests, three cross-host contract checks, mobile typecheck and source lint
+pass. The cached build took 81.9 seconds under the two-core/8GB limits; no stronger
 machine was needed. Installed signature/checksum match and fixtures/probes are
-disabled. Before/after phone checks pass on Shiny Dawn Wings with its background
-and Dusk Mane without one, including normal/edit views, scrolling, the background
-selector and draft cancellation. No runtime failures or account writes occurred.
-The phone returns to Favorite descending with 2249 caught and 167 Favorites.
-Private evidence is under `.artifacts/location-background-2026-09-13/`; the public
-APK is unchanged. See the current-status document for the validation boundary.
+disabled. Normal-view screenshots confirm the rounded background on Shiny Dawn
+Wings and preserved Dusk Mane layout. The phone changed to Shiny Black Kyurem
+during the edit step, so the final physical edit check is unverified; this run
+must not be counted as a passing complete flow. No runtime failures or account
+writes were recorded. Edit/scroll/picker/cancel checks passed on `567f5dd4` before
+this mask refinement. Private evidence and the prepared follow-up flow are under
+`.artifacts/rounded-background-2026-09-13/`; the public APK is unchanged. See the
+current-status document for the validation boundary.
 
 ## Previous phone candidate — caught-instance fusion
 
