@@ -2811,11 +2811,12 @@ export const NativeInstanceDetailScreen = ({
             </View>
           ) : null}
 
-          <View style={[
-            styles.imageStage,
+          {/* Keep the backdrop in a separate sibling layer: raising the sprite
+              must never raise its location artwork above the details panel. */}
+          <View pointerEvents="none" style={[
+            styles.locationBackdropAnchor,
             {
               width: locationBackdropLayout.stageSize,
-              height: locationBackdropLayout.stageSize,
               marginTop: -locationBackdropLayout.stageLift,
             },
           ]}>
@@ -2838,6 +2839,15 @@ export const NativeInstanceDetailScreen = ({
                 />
               </View>
             ) : null}
+          </View>
+
+          <View style={[
+            styles.imageStage,
+            {
+              width: locationBackdropLayout.stageSize,
+              height: locationBackdropLayout.stageSize,
+            },
+          ]}>
             {displayLucky ? (
               <Image fadeDuration={0}
                 accessibilityElementsHidden
@@ -3298,13 +3308,14 @@ const styles = StyleSheet.create({
   conditionChipText: { fontSize: 11 },
   stageHeader: { width: '100%', alignItems: 'center', zIndex: 7 },
   arc: { position: 'absolute', zIndex: 1, alignSelf: 'center' },
-  imageStage: { zIndex: 3, width: 296, height: 296, alignItems: 'center', justifyContent: 'center', marginTop: -48 },
+  locationBackdropAnchor: { zIndex: 0, height: 0, overflow: 'visible' },
+  imageStage: { zIndex: 3, width: 296, height: 296, alignItems: 'center', justifyContent: 'center' },
   locationBackdrop: { position: 'absolute', left: '50%' },
   luckyBackdrop: { position: 'absolute', zIndex: 2, width: 296, height: 296 },
   pokemonImage: { zIndex: 4, width: 290, height: 290 },
   maxBadge: { position: 'absolute', zIndex: 5, top: 5, right: 5, width: 104, height: 104 },
   purifiedBadge: { position: 'absolute', zIndex: 5, bottom: 5, left: 5, width: 54, height: 54 },
-  detailsPanel: { width: '100%', minHeight: 300, alignItems: 'center', marginTop: -51, paddingTop: 64, paddingBottom: 18, borderRadius: 12, overflow: 'hidden' },
+  detailsPanel: { zIndex: 2, width: '100%', minHeight: 300, alignItems: 'center', marginTop: -51, paddingTop: 64, paddingBottom: 18, borderRadius: 12, overflow: 'hidden' },
   wantedDetailsPanel: { marginTop: -42, paddingTop: 43 },
   wantedDetailsPanelDesktop: { marginTop: -85, paddingTop: 43 },
   tradeDetailsPanel: { marginTop: -60, paddingTop: 67 },

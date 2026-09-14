@@ -2,7 +2,9 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, {
   Defs,
+  G,
   Image as SvgImage,
+  LinearGradient,
   Mask,
   RadialGradient,
   Rect,
@@ -29,6 +31,18 @@ export const NativePokemonLocationBackdrop = memo(function NativePokemonLocation
     >
       <Svg height="100%" width="100%">
         <Defs>
+          {variant === 'instance' ? (
+            <>
+              <LinearGradient id="location-backdrop-top-fade" x1="0%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+                <Stop offset="8%" stopColor="#ffffff" stopOpacity="0.35" />
+                <Stop offset="20%" stopColor="#ffffff" stopOpacity="1" />
+              </LinearGradient>
+              <Mask id="location-backdrop-top-mask">
+                <Rect fill="url(#location-backdrop-top-fade)" height="100%" width="100%" />
+              </Mask>
+            </>
+          ) : null}
           <RadialGradient
             cx={mask.cx}
             cy={mask.cy}
@@ -68,20 +82,24 @@ export const NativePokemonLocationBackdrop = memo(function NativePokemonLocation
             <Rect fill="url(#location-backdrop-mask)" height="100%" width="100%" />
           </Mask>
         </Defs>
-        <SvgImage
-          height="100%"
-          href={toNativeCollectionImageSource('', uri)}
-          mask="url(#location-backdrop-fade)"
-          preserveAspectRatio={variant === 'instance' ? 'xMidYMin slice' : 'xMidYMid slice'}
-          testID="native-location-backdrop-image"
-          width="100%"
-        />
-        <Rect
-          fill="url(#location-backdrop-brightness)"
-          height="100%"
-          testID="native-location-backdrop-brightness"
-          width="100%"
-        />
+        {/* The tall radial mask is opaque at the viewport's top edge. Fade both
+            artwork and brightness there so the SVG cannot leave a straight cut. */}
+        <G mask={variant === 'instance' ? 'url(#location-backdrop-top-mask)' : undefined}>
+          <SvgImage
+            height="100%"
+            href={toNativeCollectionImageSource('', uri)}
+            mask="url(#location-backdrop-fade)"
+            preserveAspectRatio={variant === 'instance' ? 'xMidYMin slice' : 'xMidYMid slice'}
+            testID="native-location-backdrop-image"
+            width="100%"
+          />
+          <Rect
+            fill="url(#location-backdrop-brightness)"
+            height="100%"
+            testID="native-location-backdrop-brightness"
+            width="100%"
+          />
+        </G>
       </Svg>
     </View>
   );
