@@ -52,7 +52,7 @@ export const collectionExperienceParityContract = {
   locationBackdrop: {
     viewportWidthRatio: 0.86,
     maxWidth: 447,
-    topOffset: -20,
+    topOffset: -44,
     standardStageSize: 296,
     standardStageLift: 48,
     wantedStage: {

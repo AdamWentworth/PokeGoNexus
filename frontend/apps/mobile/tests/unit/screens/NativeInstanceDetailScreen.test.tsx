@@ -116,8 +116,8 @@ describe('NativeInstanceDetailScreen', () => {
 
   it('matches Vite location-card geometry for every instance overlay width and status', () => {
     expect(resolveNativeInstanceLocationBackdropLayout(412, 'caught')).toEqual({
-      backdropHeight: 316,
-      backdropTop: -20,
+      backdropHeight: 340,
+      backdropTop: -44,
       backdropWidth: 354.32,
       maxBadgeSize: 103.6,
       pokemonSize: 290.08,
@@ -128,8 +128,8 @@ describe('NativeInstanceDetailScreen', () => {
     expect(resolveNativeInstanceLocationBackdropLayout(412, 'trade'))
       .toEqual(resolveNativeInstanceLocationBackdropLayout(412, 'caught'));
     expect(resolveNativeInstanceLocationBackdropLayout(360, 'wanted')).toEqual({
-      backdropHeight: 188,
-      backdropTop: -20,
+      backdropHeight: 212,
+      backdropTop: -44,
       backdropWidth: 309.6,
       maxBadgeSize: 58.8,
       pokemonSize: 164.64,
@@ -138,8 +138,8 @@ describe('NativeInstanceDetailScreen', () => {
       stageSize: 168,
     });
     expect(resolveNativeInstanceLocationBackdropLayout(412, 'wanted')).toEqual(expect.objectContaining({
-      backdropHeight: 205,
-      backdropTop: -20,
+      backdropHeight: 229,
+      backdropTop: -44,
       backdropWidth: 354.32,
       maxBadgeSize: 64.75,
       purifiedBadgeSize: 37,
@@ -149,8 +149,8 @@ describe('NativeInstanceDetailScreen', () => {
     expect(resolveNativeInstanceLocationBackdropLayout(412, 'wanted').pokemonSize)
       .toBeCloseTo(181.3, 8);
     expect(resolveNativeInstanceLocationBackdropLayout(700, 'wanted')).toEqual({
-      backdropHeight: 258,
-      backdropTop: -20,
+      backdropHeight: 282,
+      backdropTop: -44,
       backdropWidth: 447,
       maxBadgeSize: 83.3,
       pokemonSize: 233.24,

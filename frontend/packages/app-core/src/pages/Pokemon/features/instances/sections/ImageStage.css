@@ -15,7 +15,7 @@
 
 /* Caught overlay only: expand location backdrop to the same max-width column */
 .caught-instance .image-container .background-container {
-  top: -20px;
+  top: -44px;
   left: 50%;
   right: auto;
   width: min(86vw, 447px);

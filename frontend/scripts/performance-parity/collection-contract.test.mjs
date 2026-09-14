@@ -81,7 +81,7 @@ test('every bounded Pokémon interaction has Vite and physical-native performanc
 });
 
 test('native instance location backdrops stay pinned to Vite geometry and masking', () => {
-  assert.match(viteImageStageStyles, /top:\s*-20px;/, 'Vite backdrop top crop');
+  assert.match(viteImageStageStyles, /top:\s*-44px;/, 'Vite backdrop top offset');
   assert.match(viteImageStageStyles, /width:\s*min\(86vw,\s*447px\);/, 'Vite backdrop width');
   assert.match(
     viteImageStageStyles,
