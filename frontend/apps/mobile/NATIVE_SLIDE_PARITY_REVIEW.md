@@ -12,6 +12,19 @@ errors without a fatal exception. `82f3070b` removes the stack's singular screen
 reuse; the new navigation checker includes Fabric soft errors and actual return
 navigation. See the current status and handoff documents for that correction.
 
+## Instance loading follow-up — 2026-09-13
+
+`e1e060ab` removes the deferred lower-detail rendering that mixed the new instance's
+identity with the outgoing moves, IVs and provenance. Both move pages now size
+intrinsically, avoiding a later height correction when shadow bonuses or move
+counts change. Adjacent data and artwork are prepared together for own and public
+trainer overlays; the large images use the prepared memory/disk cache.
+
+The existing 120 ms handoff and 220 ms entrance contract is preserved. A complete
+detail update is required before the entrance begins. Artwork loading remains
+asynchronous, with neighboring assets prepared ahead of use and no wait on failed
+image requests. See the current testing status for measurements and device results.
+
 ## Tool workspace follow-up — 2026-09-13
 
 Raid, Community Rankings, Max Battles and all four PvP tools now put a retained

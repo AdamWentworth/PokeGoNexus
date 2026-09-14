@@ -2,7 +2,27 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — tool workspace slides
+## Current phone candidate — instance swipe loading
+
+Code candidate: `e1e060ab93c57f2169f2a310bb70096f1e2d2768`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e1e060ab-arm64-v8a.apk`.
+SHA-256: `cf83900b413dc1be3a8941f9d598468059625e0086b5b08adac8ba039dabbd25`.
+
+Installed in place on the Pixel 8 Pro; signing certificate and installed checksum
+match. Native-preview is enabled, fixtures and timing probes are disabled, and
+account data is retained. The cached build took 82.0 seconds under the existing
+two-core/8GB limits. No stronger machine is needed for this change.
+
+Swiping commits all instance detail sections together, prepares adjacent artwork
+in the rendered image cache, and lets native layout size the move pages without
+retaining the previous instance's height. Both own and public-trainer overlays
+use the shared neighbor preparation. Canonical motion and route identity remain.
+
+The source status, measured limits, phone evidence and reusable normal-account
+flow are documented in `CURRENT_NATIVE_TESTING_STATUS.md`. Private artifacts:
+`.artifacts/instance-swipe-loading-2026-09-13/`. The public APK is unchanged.
+
+## Previous phone candidate — tool workspace slides
 
 Code candidate: `c9b67d45d01584565bbe2e448b18147da9371c8f`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-c9b67d45-arm64-v8a.apk`.

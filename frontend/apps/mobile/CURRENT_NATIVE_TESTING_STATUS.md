@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (tool workspace slides and canceled tag presses)
+Last targeted revalidation: 2026-09-13 (instance swipe loading)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,64 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Instance swipe loading — 2026-09-13
+
+Current code candidate: `e1e060ab`. Instance names, physical stats, moves, IVs and
+catch details now update in one React commit. The earlier optimization froze the
+outgoing lower sections until a later animation frame and transition, so the
+incoming Pokémon could temporarily display its predecessor's moves and IVs.
+Its old regression explicitly required that mismatch; the test now forbids it.
+
+The two move-mode pages have matching geometry and now use native intrinsic
+height. A changed move count or shadow bonus no longer waits for a JS layout
+measurement to discard the previous Pokémon's panel height. The shared pager's
+existing fill/content modes and transition timing are retained for other routes.
+
+Own and public-trainer overlays share neighbor preparation. Collection order is
+memoized separately from the active instance. Only the two neighboring details
+and their artwork are prepared after interactions; failed image requests are
+nonblocking. The hero and background use the same Expo Image memory/disk cache
+as preparation, with no fade and an image-source recycling key. Location and
+move/type icons warm their existing native cache. Queries and the current
+native-stack route are reused during sibling navigation.
+
+Validation: 74 focused assertions across six suites pass, including atomic detail
+updates, uncached/offline image failures, preparation cancellation, sorted neighbor
+order, detail-cache reuse and the existing gesture/pager/editor regressions.
+Mobile typecheck and source lint pass. The normal APK passes six next-button
+changes, six finger swipes back to the first Favorite, move-mode switching,
+vertical scrolling, further instance navigation and Close back to Favorites.
+The runtime checker reports zero app fatal exceptions, native ownership/removal
+failures, Fabric mount errors or ANRs. No account edits were submitted.
+Direct normal-build PNGs show the incoming Shadow Mewtwo artwork, moves, IVs and
+catch details together while the content is still entering. Final tag/grid
+captures retain 2,249 caught Pokémon and 167 Favorites, Favorite descending with
+CP 4713 / 4689 / 4688 first. The phone is left on that Favorites grid.
+
+The first phone run overlapped manual navigation and is excluded. A second setup
+assumed a filter deep link would reset the already-retained collection state;
+the final flow opens the collection and selects Favorites explicitly through
+Tags. Only the completed normal-build run is recorded as passing.
+
+The opt-in diagnostic build recorded 33 actual instance navigations: complete
+detail commit 151–189 ms (median 174 ms), transition completion 375–415 ms (median
+399 ms). Changed artwork displayed 26–229 ms after detail commit (median 59 ms).
+This fixes inconsistent content and prepares imagery; it is not evidence of a
+large reduction in animation duration. The earlier 12-press sample measured only
+the incoming stage commit (median 157.5 ms), with lower details still deferred,
+and used a different instance order. These are observations, not a matched
+whole-app performance benchmark.
+
+The normal APK was built in 82.0 seconds under the existing two-core/8GB limits
+and installed in place on the Pixel 8 Pro, preserving account data and signing
+identity. SHA-256: `cf83900b413dc1be3a8941f9d598468059625e0086b5b08adac8ba039dabbd25`.
+Fixtures and diagnostic probes are disabled. Private evidence is in
+`.artifacts/instance-swipe-loading-2026-09-13/`; the public APK is unchanged.
+Reusable account-safe flow: `.maestro-release/native-instance-swipe-navigation.yaml`.
+
 ## Tool workspace slides and tag drag correction — 2026-09-13
 
-The current app candidate is `c9b67d45`. Raid, all four PvP tools, Community
+The previous app candidate was `c9b67d45`. Raid, all four PvP tools, Community
 Rankings and Max Battles now slide retained content below stationary workspace
 navigation, with one native animation driving the selected button and body.
 Per-Pokémon Pokédex sections use the same motion while preserving Vite's vertical
