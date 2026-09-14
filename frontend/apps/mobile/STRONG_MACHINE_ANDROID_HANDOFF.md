@@ -2,7 +2,39 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — retained Profile/Friends workspace
+## Current phone candidate — tool workspace slides
+
+Code candidate: `c9b67d45d01584565bbe2e448b18147da9371c8f`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-c9b67d45-arm64-v8a.apk`.
+SHA-256: `fb4e17fcd90765b5ac53c571035ef564e4517fd87d3d28985e0ecfdf86dc102e`.
+
+Installed on the Pixel 8 Pro in place with the same signing certificate and a
+matching installed checksum. Native-preview is enabled; fixtures and timing
+probes are disabled. Account data is retained. The final cached build took 81.6
+seconds under the existing two-core/8GB limits, so this change did not require a
+stronger machine.
+
+Raid, PvP, Community Rankings and Max now keep their tool panels mounted beneath
+stationary navigation, and the selected button follows the content's animation.
+Pokédex entry sections slide below the hero/tab bar using Vite's document scroll
+behavior. Pressing a collection tag does not replace the Pokémon grid before the
+press is confirmed, so dragging into Pokémon preserves its current list. Public
+PvP tools now load move mechanics without relying on a previous Raid/Max visit.
+Search and Trades remain unchanged.
+
+See `CURRENT_NATIVE_TESTING_STATUS.md` for focused tests, device checks, the
+Favorites drag evidence and remaining migration gates. The reusable normal-account
+flow is `.maestro-release/native-tool-workspace-navigation.yaml`; run it with:
+
+```bash
+python3 scripts/check-android-navigation.py --serial DEVICE_SERIAL \
+  --flow .maestro-release/native-tool-workspace-navigation.yaml
+```
+
+Private artifacts are in `.artifacts/tool-workspace-slides-2026-09-13/`. The public
+APK path has not been replaced by these private local candidates.
+
+## Previous phone candidate — retained Profile/Friends workspace
 
 Code candidate: `e24708c63a7605288df4e6f026bf4888f1399e1a`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e24708c6-arm64-v8a.apk`.

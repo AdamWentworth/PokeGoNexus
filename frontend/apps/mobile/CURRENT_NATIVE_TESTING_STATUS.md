@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (retained Profile/Friends workspace)
+Last targeted revalidation: 2026-09-13 (tool workspace slides and canceled tag presses)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,73 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Tool workspace slides and tag drag correction — 2026-09-13
+
+The current app candidate is `c9b67d45`. Raid, all four PvP tools, Community
+Rankings and Max Battles now slide retained content below stationary workspace
+navigation, with one native animation driving the selected button and body.
+Per-Pokémon Pokédex sections use the same motion while preserving Vite's vertical
+document scrolling and keeping the hero above the tabs. Search, Trades and the
+shared horizontal pager implementation are unchanged.
+
+Raid setup/log drafts, PvP teams and battle setup, Max simulator selections,
+ranking disclosures, pagination and scroll positions survive workspace visits.
+Community Rankings keeps separate outgoing/incoming row arrays. Max's saved
+ranking search does not filter the Boss teams panel. A direct PvP jump to IV Rank
+mounts intermediate tool pages before the track crosses them.
+
+The cold-process PvP check exposed a dependency gap: opening IV Rank could load
+catalog entries without move mechanics, making the public Battle Lab unavailable.
+Opening any public PvP tool now requests both resources; personal collection data
+remains deferred until My Pokémon is selected. This is covered at the route and
+screen boundaries.
+
+A tag press-in no longer changes the Pokémon grid or resets its scroll position.
+Only a confirmed tag tap commits new rows and starts the slide. A phone drag that
+began on Shadow Shinies kept Favorites selected, including in the captured middle
+frame: 167 Pokémon, Favorite descending, first CPs 4713 / 4689 / 4688. The real
+account check also retained 2,249 caught Pokémon, with no sync warning or account
+writes. An earlier automation attempt hit the floating action button over the
+bottom tag; the successful repeat started inside the Shadow Shinies card.
+
+Validation:
+
+- 73 targeted tests across 10 suites pass across focused runs, including retained
+  tool state, distinct ranking rows, non-adjacent PvP navigation, shared indicator
+  progress and confirmed/canceled tag presses. Mobile typecheck and source lint
+  pass (`npm run lint -- --ignore-pattern '.artifacts/**'`; generated, ignored
+  capture bundles make the unfiltered lint command fail).
+- The initial phone candidate completed three round trips through each of the
+  five requested sections. Direct PNGs verify synchronized button/body movement
+  in Raid, PvP, Rankings and Max, with each outgoing panel still present.
+  Final-build Pokédex PNGs also show the hero/tab bar staying in place while
+  Info/Battle and More/Registered content slides below it.
+- The final `c9b67d45` APK passes a fresh-process direct PvP Rankings → IV Rank →
+  Battle Lab check before visiting Raid, three round trips through every PvP tool
+  and every Pokédex section, and the caught/Favorites account regression. The
+  checker reports zero app fatal exceptions, native ownership/removal failures,
+  Fabric mount errors or ANRs. No account edits were submitted.
+
+The normal final APK was built in 81.6 seconds under the existing two-core/8GB
+limits and installed in place on the Pixel 8 Pro. The installed SHA-256 is
+`fb4e17fcd90765b5ac53c571035ef564e4517fd87d3d28985e0ecfdf86dc102e`.
+Fixtures and timing probes are disabled; no stronger machine was needed.
+
+Reusable flow: `.maestro-release/native-tool-workspace-navigation.yaml`.
+The navigation checker accepts `--flow` and checks app-owned crashes plus native
+view ownership/removal, Fabric mount errors and ANRs. The first device log also
+contains an unrelated `com.google.android.odad` system-service crash; it is
+excluded by process identity, not silently counted as an application pass.
+
+Private evidence: `.artifacts/tool-workspace-slides-2026-09-13/`, including build
+and installation identities, navigation output, direct PNGs and tag-drag captures.
+Earlier candidate identities are retained in subdirectories. Intermediate MP4
+recording artifacts described below remain unsuitable as motion evidence. These
+checks do not close the existing whole-app performance or lifecycle gates.
+
 ## Retained Profile/Friends workspace — 2026-09-13
 
-The current app candidate is `e24708c6`. At the user's request, their Profile and
+The previous app candidate was `e24708c6`. At the user's request, their Profile and
 Friends now share one screen. The trainer heading and workspace bar stay fixed;
 a single gradient selection button and the complete panel below move together
 on the shared 300ms native animation. Both panels stay mounted, preserving the

@@ -346,9 +346,9 @@ const NativeTagCard = memo(function NativeTagCard({
             onPress={() => onPressTag(tag)}
             onPressIn={onPressInTag ? () => onPressInTag(tag) : undefined}
             onPressOut={onPressOutTag ? () => onPressOutTag(tag) : undefined}
-            // Let a vertical drag establish itself before doing hidden-grid
-            // staging. A normal tap still leaves ample finger-down time for
-            // the destination commit, while tag-list scrolling stays inert.
+            // Let a vertical drag establish itself before reserving background
+            // work. Only a confirmed onPress changes the Pokémon grid; a
+            // page swipe keeps its current filter, rows and scroll position.
             unstable_pressDelay={onPressInTag ? NATIVE_TAG_PREVIEW_PRESS_DELAY_MS : undefined}
           >
             {cardContents}

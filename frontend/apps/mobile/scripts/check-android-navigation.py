@@ -15,8 +15,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--serial')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--flow', type=Path, help='Maestro flow to check; defaults to Profile/Friends')
     args = parser.parse_args()
     mobile = Path(__file__).resolve().parents[1]
+    flow = args.flow.resolve() if args.flow else mobile / '.maestro-release/native-profile-friends-navigation.yaml'
     output = args.output or mobile / '.artifacts' / (
         'navigation-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     )
@@ -30,7 +32,7 @@ def main():
     maestro = ['maestro'] + (['--device', args.serial] if args.serial else [])
     result = subprocess.run([
         *maestro, 'test', '--test-output-dir', str(output / 'maestro'),
-        str(mobile / '.maestro-release/native-profile-friends-navigation.yaml'),
+        str(flow),
     ], check=False)
     log = subprocess.check_output(
         [*adb, 'logcat', '-d', '-T', started, '-v', 'threadtime'],
@@ -40,7 +42,7 @@ def main():
     # Fabric may break the entire screen tree without terminating the process.
     # A surviving PID and the absence of FATAL EXCEPTION are insufficient.
     patterns = {
-        'fatalException': r'FATAL EXCEPTION',
+        'fatalException': r'FATAL EXCEPTION[^\n]*\n[^\n]*Process: com\.pokegonexus\.app(?:,|:)',
         'nativeViewOwnership': r'View already has a parent',
         'nativeViewRemoval': r'removeViewAt tried to remove',
         'fabricMountFailure': r' E .*SurfaceMountingManager:.*(?:Exception|Error|failed)',
@@ -50,6 +52,7 @@ def main():
     passed = result.returncode == 0 and not any(failures.values())
     summary = {
         'passed': passed,
+        'flow': str(flow),
         'maestroExitCode': result.returncode,
         'runtimeFailures': failures,
         'accountDataCleared': False,

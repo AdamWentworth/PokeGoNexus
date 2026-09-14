@@ -12,6 +12,44 @@ errors without a fatal exception. `82f3070b` removes the stack's singular screen
 reuse; the new navigation checker includes Fabric soft errors and actual return
 navigation. See the current status and handoff documents for that correction.
 
+## Tool workspace follow-up — 2026-09-13
+
+Raid, Community Rankings, Max Battles and all four PvP tools now put a retained
+horizontal content track beneath their stationary heading and workspace buttons.
+The selected button and full content track use the same native animation clock.
+Unvisited expensive tools open on first use; subsequent visits retain drafts,
+expanded details, pagination and vertical position. PvP opens its tool panels
+together on first use so a direct Rankings-to-IV-Rank jump traverses real panels.
+
+Each Pokémon's Pokédex entry keeps Vite's vertical document scrolling, with the
+hero and section bar above the sliding body. Registered, Info, Battle and More
+remain mounted, including More's combination search and filters. A minimum body
+height keeps short sections from pulling the hero and tabs down during a slide.
+The section bar scrolls with the document as it does in Vite; it is stationary
+during the horizontal transition.
+
+Community Rankings derives separate wanted/rarest row arrays, so changing mode
+cannot replace the outgoing page's rows. Max's ranking search and pagination
+survive a Boss teams visit; that saved search does not filter the boss panel.
+Raid setup/log drafts and Max simulator selections stay mounted across visits.
+PvP keeps teams and battle setup rather than resetting them on a workspace tap.
+Opening any public PvP tool now requests both the catalog and move mechanics.
+Previously, visiting IV Rank on a fresh process could hydrate moves with incomplete
+catalog data and leave Battle Lab unavailable until another route loaded moves.
+A route regression checks that public tools request those dependencies without
+requesting the personal collection.
+
+Collection tag press-in now reserves background work without changing the grid,
+filter or scroll position. A canceled press or drag keeps the existing Pokémon
+visible. A confirmed tag tap commits its rows before starting the slide; confirmed
+Favorites taps still apply Favorite descending. Search, Trades and the shared
+horizontal pager implementation are unchanged.
+
+Focused regression coverage includes shared indicator progress halfway through a
+slide, first-use retention, non-adjacent PvP navigation, real team/setup state,
+distinct ranking rows, and confirmed versus canceled tag presses. Device results
+and APK identity are recorded in the current status and Android handoff documents.
+
 ## Profile/Friends workspace follow-up — 2026-09-13
 
 The user's requested interaction supersedes separate owner Profile/Friends route
