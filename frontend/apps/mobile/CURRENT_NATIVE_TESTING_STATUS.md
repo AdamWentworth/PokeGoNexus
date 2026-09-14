@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (caught-instance fusion)
+Last targeted revalidation: 2026-09-13 (instance location backgrounds)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -10,6 +10,36 @@ navigation outcomes, interaction order, terminology, and perceived motion.
 The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
+
+## Instance location backgrounds — 2026-09-13
+
+Code candidate: `567f5dd4`. Location artwork now has a separate layer beneath the
+CP arc and opaque details frame. The Pokémon sprite and its badges remain above
+the frame, while the background cannot paint over the name, types, caught ribbon
+or lower content. A vertical fade removes the hard top edge left by the tall
+radial mask; artwork remains aligned to its top. This applies to caught, trade
+and wanted instance overlays. Collection cards retain their existing mask.
+
+The stage anchor preserves the existing header/image/panel geometry without
+waiting for a layout measurement. Existing backdrop, instance and fusion suites
+pass all 55 tests; mobile typecheck and source lint pass.
+
+The normal cached APK built in 81.7 seconds under the two-core/8GB limits:
+`.artifacts/manual-standalone/PokeGoNexus-manual-567f5dd4-arm64-v8a.apk`.
+SHA-256: `51e37a8be3bdd61ed19f59639c572405aff6cda53a4b9aa68291318ec755410b`.
+Private evidence: `.artifacts/location-background-2026-09-13/`.
+Installed in place on the Pixel 8 Pro with matching signature/checksum and
+fixtures/probes disabled. The public APK is unchanged.
+
+Before/after phone screenshots confirm the 4030 CP Shiny Dawn Wings Necrozma's
+top edge fades smoothly, the arc is visible over the artwork, and the background
+stays below the opaque frame in normal and edit views. Scrolling and the background
+selector pass; the 4090 CP Dusk Mane without a location card retains its sprite
+overlap and layout. Closing the draft preserves the saved instance. The final flow
+reports no fatal, Fabric, view ownership/removal or ANR failures and returns to
+Favorite descending with 2249 caught and 167 Favorites. No account edits were
+submitted and no data was cleared. This is targeted validation of the shared
+instance rendering change, not full migration certification.
 
 ## Caught-instance fusion — 2026-09-13
 

@@ -2,7 +2,25 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — caught-instance fusion
+## Current phone candidate — instance location backgrounds
+
+Code candidate: `567f5dd44d860ba3c05080b2cc7f9c3c597e45b1`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-567f5dd4-arm64-v8a.apk`.
+SHA-256: `51e37a8be3bdd61ed19f59639c572405aff6cda53a4b9aa68291318ec755410b`.
+
+Location artwork fades smoothly at the top and sits below the details frame;
+the Pokémon sprite still overlaps the frame. Header, arc and panel positions
+are preserved. 55 existing focused tests, mobile typecheck and source lint pass.
+The cached build took 81.7 seconds under the two-core/8GB limits; no stronger
+machine was needed. Installed signature/checksum match and fixtures/probes are
+disabled. Before/after phone checks pass on Shiny Dawn Wings with its background
+and Dusk Mane without one, including normal/edit views, scrolling, the background
+selector and draft cancellation. No runtime failures or account writes occurred.
+The phone returns to Favorite descending with 2249 caught and 167 Favorites.
+Private evidence is under `.artifacts/location-background-2026-09-13/`; the public
+APK is unchanged. See the current-status document for the validation boundary.
+
+## Previous phone candidate — caught-instance fusion
 
 Code candidate: `d5ed02e4ae39898d28755b7236b7eee5d96a053a`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-d5ed02e4-arm64-v8a.apk`.
