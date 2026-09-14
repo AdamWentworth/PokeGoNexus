@@ -1,8 +1,11 @@
+import { useNativeReducedMotion } from '../features/settings/useNativeMotion';
 import { NativeRosterScopeControl } from '../components/tools/NativeRosterScopeControl';
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Image as ExpoImage } from 'expo-image';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   FlatList,
   Pressable,
   StyleSheet,
@@ -128,6 +131,27 @@ const NativeMaxTypeGrid = memo(function NativeMaxTypeGrid({
   );
 });
 
+// Vite animates the All/My roster stage, while the tool header stays still.
+const useMaxRosterEntrance = (scope: NativeRosterScope) => {
+  const reduceMotion = useNativeReducedMotion();
+  const [progress] = useState(() => new Animated.Value(1));
+  useLayoutEffect(() => {
+    progress.stopAnimation();
+    if (reduceMotion) { progress.setValue(1); return; }
+    progress.setValue(0);
+    const animation = Animated.timing(progress, {
+      toValue: 1, duration: 220, easing: Easing.bezier(0, 0, 0.58, 1),
+      isInteraction: false, useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [progress, reduceMotion, scope]);
+  return useMemo(() => ({
+    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }),
+    transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [scope === 'owned' ? 16 : -16, 0] }) }],
+  }), [progress, scope]);
+};
+
 export const NativeMaxScreen = ({
   assetBaseUrl,
   catalog,
@@ -182,6 +206,7 @@ export const NativeMaxScreen = ({
   const effectiveScope = signedIn
     ? scopeOverride ?? initialScope ?? 'owned'
     : 'catalog';
+  const rosterEntrance = useMaxRosterEntrance(effectiveScope);
   const deferredBossQuery = useDeferredValue(bossQuery);
   const deferredQuery = useDeferredValue(query);
   const rosterSummary = useMemo(
@@ -553,16 +578,18 @@ export const NativeMaxScreen = ({
         {viewTabs}
       </View>
       {roster}
+      <Animated.View style={rosterEntrance} testID="native-max-roster-entrance">
       {view === 'rankings'
         ? <View style={[styles.filterDeck, light && styles.panelLight]}>{roleTabs}{typeFilter}</View>
         : <>{bossPicker}{selectedBoss ? <NativeMaxBattleSimulator assetBaseUrl={assetBaseUrl} boss={selectedBoss} candidates={candidates} initialDifficulty={initialDifficulty} initialTrainerCount={initialTrainerCount} key={`${selectedBoss.variant_id}-${effectiveScope}`} onDifficultyChange={(difficulty) => onRouteStateChange?.({ difficulty: difficulty === getDefaultMaxBattleTier(selectedBoss) ? null : difficulty })} onTrainerCountChange={(trainerCount) => onRouteStateChange?.({ trainerCount })} rosterScope={effectiveScope} /> : null}{roleTabs}{bossBenchmarkNote}</>}
       {resultsHeader}
+      </Animated.View>
     </View>
   );
 
   const remainingRankings = rankings.length - visibleRankings.length;
   const footer = (
-    <View style={styles.footer}>
+    <Animated.View style={[styles.footer, rosterEntrance]}>
       {remainingRankings > 0 ? (
         <Pressable
           accessibilityLabel={`Show ${Math.min(resultsPageSize, remainingRankings)} more Max rankings`}
@@ -597,7 +624,7 @@ export const NativeMaxScreen = ({
           </Text>
         ) : null}
       </Pressable>
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -617,6 +644,7 @@ export const NativeMaxScreen = ({
           ListHeaderComponent={header}
           ListEmptyComponent={null}
           renderItem={({ item, index }) => (
+            <Animated.View style={rosterEntrance}>
             <NativeCombatRankingCard
               assetBaseUrl={assetBaseUrl}
               entry={item}
@@ -624,6 +652,7 @@ export const NativeMaxScreen = ({
               onPress={() => onOpenPokemon(item)}
               rank={index + 1}
             />
+            </Animated.View>
           )}
           windowSize={1}
         />

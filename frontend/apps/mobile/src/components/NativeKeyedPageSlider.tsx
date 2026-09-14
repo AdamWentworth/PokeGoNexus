@@ -15,17 +15,17 @@ export const NativeSlidingPageHeader = ({ children }: { children: ReactNode }) =
 };
 
 type Page = { key: string; position: number; node: ReactNode };
-const SlidePage = ({ page, active, progress, width, children }: {
-  page: Page; active: boolean; progress: Animated.Value; width: number; children: ReactNode;
+const SlidePage = ({ page, active, width, origin, children }: {
+  page: Page; active: boolean; width: number; origin: number; children: ReactNode;
 }) => {
   const style = useMemo(() => [StyleSheet.absoluteFill, {
-    transform: [{ translateX: Animated.multiply(Animated.subtract(page.position, progress), width) }],
-  }], [page.position, progress, width]);
-  return <Animated.View accessibilityElementsHidden={!active} aria-hidden={!active}
+    left: (page.position - origin) * width, right: undefined, width,
+  }], [origin, page.position, width]);
+  return <View collapsable={false} accessibilityElementsHidden={!active} aria-hidden={!active}
     importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
     pointerEvents={active ? 'auto' : 'none'} testID={`native-keyed-page-${page.key}`} style={style}>
     {children}
-  </Animated.View>;
+  </View>;
 };
 const easing = Easing.bezier(...collectionExperienceParityContract.pageTransitionEasing);
 
@@ -66,26 +66,35 @@ export const NativeKeyedPageSlider = ({
       });
     };
     if (reduceMotion || width === 0 || state.pages.length === 1) {
-      progress.setValue(target);
+      progress.setValue(target * width);
       finish();
       return;
     }
     const animation = Animated.timing(progress, {
-      toValue: target, duration: collectionExperienceParityContract.pageTransitionMs,
+      toValue: target * width, duration: collectionExperienceParityContract.pageTransitionMs,
       easing, useNativeDriver: true, isInteraction: false,
     });
     animation.start(({ finished }) => { if (finished) finish(); });
     return () => { cancelled = true; animation.stop(); };
   }, [progress, reduceMotion, state.pages.length, target, width]);
 
+  const firstPosition = Math.min(...state.pages.map((page) => page.position));
+  const lastPosition = Math.max(...state.pages.map((page) => page.position));
+  const trackStyle = useMemo(() => [StyleSheet.absoluteFill, {
+    left: firstPosition * width, right: undefined, width: (lastPosition - firstPosition + 1) * width,
+    transform: [{ translateX: Animated.multiply(progress, -1) }],
+  }], [firstPosition, lastPosition, progress, width]);
+
   return <TransitionContext.Provider value={state.pages.length > 1}><View style={styles.viewport} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
     testID="native-keyed-page-slider">
+    <Animated.View style={trackStyle} testID="native-keyed-page-track">
     {state.pages.map((page) => {
       const active = page.key === activeKey;
-      return <SlidePage key={page.key} page={page} active={active} progress={progress} width={width}>
+      return <SlidePage key={page.key} page={page} active={active} width={width} origin={firstPosition}>
         {active ? children : page.node}
       </SlidePage>;
     })}
+    </Animated.View>
     {state.pages.length > 1 ? overlay : null}
   </View></TransitionContext.Provider>;
 };

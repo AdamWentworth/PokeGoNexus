@@ -459,7 +459,7 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
         onHandlerStateChange={handleNativePanStateChange}
         testID="native-horizontal-page-pan"
       >
-        <View collapsable={false} style={styles.gestureSurface}>{viewport}</View>
+        <Animated.View collapsable={false} style={styles.gestureSurface}>{viewport}</Animated.View>
       </PanGestureHandler>
     );
   }
