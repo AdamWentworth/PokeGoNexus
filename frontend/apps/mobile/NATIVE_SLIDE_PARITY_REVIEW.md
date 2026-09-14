@@ -12,6 +12,25 @@ errors without a fatal exception. `82f3070b` removes the stack's singular screen
 reuse; the new navigation checker includes Fabric soft errors and actual return
 navigation. See the current status and handoff documents for that correction.
 
+## Profile/Friends workspace follow-up — 2026-09-13
+
+The user's requested interaction supersedes separate owner Profile/Friends route
+visits. `e24708c6` keeps both panels mounted in one screen, with the trainer header
+and workspace bar stationary. A single gradient selection background moves with
+the entire panel below through the same native animation clock. Friends keeps
+its independent four-tab slider. Profile drafts, search drafts, selected sub-tabs
+and scroll positions survive workspace switches; Edit is on the trainer card.
+The bar and action menu update workspace parameters without growing Back history.
+Existing Friends links retain their sub-tab when entering the shared workspace.
+The earlier native screen ownership fix remains required and is retained.
+
+The normal-account regression passes five round trips, all Friends tabs, Back
+and old Friends notification links, with no native rendering errors. Direct
+mid-transition PNG captures verify the shared motion; screenrecord video capture
+frames are not accepted as clean presentation media. Light/dark screenshots and
+unsaved draft retention were checked on the real account. No account edits were
+submitted. Full evidence and automation limitations are in the current status.
+
 ## Implementation
 
 - Pokémon/Tags/Wishlist, Search, Trades, and Friends use the shared 300ms page

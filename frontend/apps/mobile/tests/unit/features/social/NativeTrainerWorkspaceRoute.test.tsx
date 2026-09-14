@@ -62,13 +62,13 @@ describe('NativeTrainerWorkspaceRoute', () => {
     const view = render(<Workspace />);
     await act(async () => Promise.resolve());
     const hardwareBack = subscribe.mock.calls.at(-1)![1];
-    expect(hardwareBack()).toBe(true);
+    expect(hardwareBack({ type: 'hardwareBackPress', timeStamp: 0 })).toBe(true);
     expect(mockRouter.setParams).toHaveBeenLastCalledWith({ workspace: 'profile' });
     fireEvent.press(view.getByRole('button', { name: 'Back' }));
     expect(mockRouter.back).not.toHaveBeenCalled();
     mockParams = { workspace: 'profile' };
     view.rerender(<Workspace />);
-    expect(subscribe.mock.calls.at(-1)![1]()).toBe(false);
+    expect(subscribe.mock.calls.at(-1)![1]({ type: 'hardwareBackPress', timeStamp: 0 })).toBe(false);
     fireEvent.press(view.getByRole('button', { name: 'Back' }));
     expect(mockRouter.back).toHaveBeenCalledTimes(1);
   });

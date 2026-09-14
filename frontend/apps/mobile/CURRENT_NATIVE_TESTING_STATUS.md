@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (Profile/Friends native navigation recovery)
+Last targeted revalidation: 2026-09-13 (retained Profile/Friends workspace)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,55 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Retained Profile/Friends workspace — 2026-09-13
+
+The current app candidate is `e24708c6`. At the user's request, their Profile and
+Friends now share one screen. The trainer heading and workspace bar stay fixed;
+a single gradient selection button and the complete panel below move together
+on the shared 300ms native animation. Both panels stay mounted, preserving the
+profile editor, vertical position, Friends sub-tab and search draft. The Edit
+control sits on the trainer card. The outer workspace changes through its buttons;
+horizontal gestures within Friends continue to control Friends' four sub-tabs.
+
+Workspace switches update route parameters without pushing native screens. Both
+the workspace bar and action menu use this path. Back from Friends selects
+Profile; Back from Profile leaves the workspace. Existing `/native/friends` links
+redirect into the shared Profile workspace and retain notification sub-tabs.
+Public `/native/profile/:username` cards keep their independent route behavior.
+The native stack ownership fix from `82f3070b` remains in place.
+
+The normal APK was built locally in 83.2 seconds and installed in place on the
+Pixel 8 Pro with fixtures and timing probes disabled. Its installed SHA-256 is
+`9a625c90ab78c19fab49df6453e5b4aa515e6d5ef66bfe3d929f76b0bf9f3032`.
+Build and installation identity are private under
+`.artifacts/trainer-workspace-2026-09-13/`.
+
+The 46 focused tests across the shared slider, workspace, routing and existing
+Profile/Friends screens pass, as do mobile typecheck and targeted lint. The
+normal-account phone regression passes five complete round trips, all four
+Friends tabs, local Android Back followed by leaving the workspace, and legacy
+Friends links with retained Requests selection. Its runtime log window has zero
+fatal, ownership, removal, Fabric mounting or ANR errors.
+
+Direct PNG captures during the transition show the fixed header and synchronized
+button/body positions. Android screenrecord footage at both tested resolutions contains overlapping
+intermediate capture frames not seen in those direct captures; it is not accepted
+as clean presentation media. Rapid reversals settle on the intended panel.
+The real-account draft check verifies that an unsaved trainer name and Friends
+search text survive switching. Its centered automated scroll hit the draggable
+showcase instead of reaching Cancel; a gutter swipe reached Cancel, the draft
+was discarded, and subsequent assertions verify the editor and test name are
+absent. No profile, relationship or collection changes were submitted.
+
+Light and dark screenshots preserve the fixed header, panel hierarchy and
+full-screen background. The account check passes 2249 caught, 167 Favorites,
+automatic Favorite descending and CP 4713/4689/4688 first, with no sync warning.
+The final runtime window has zero fatal, ownership, removal, Fabric mounting or
+ANR errors. The phone is left on Profile in dark theme.
+
 ## Profile/Friends native navigation recovery — 2026-09-13
 
-The current code candidate is `82f3070b`. The preceding `fdf94ecb` APK could leave
+The preceding code candidate was `82f3070b`. The preceding `fdf94ecb` APK could leave
 the entire app blank when returning from Friends to Profile. The user report
 and a normal-account Maestro reproduction confirm native view-ownership and
 removal errors. Android logged these as soft exceptions while the process stayed

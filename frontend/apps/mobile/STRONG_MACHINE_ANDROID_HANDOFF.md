@@ -2,7 +2,39 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — native navigation recovery
+## Current phone candidate — retained Profile/Friends workspace
+
+Code candidate: `e24708c63a7605288df4e6f026bf4888f1399e1a`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e24708c6-arm64-v8a.apk`.
+SHA-256: `9a625c90ab78c19fab49df6453e5b4aa515e6d5ef66bfe3d929f76b0bf9f3032`.
+
+Installed on the Pixel 8 Pro with the same package and signing certificate using
+`adb install -r`; the installed checksum matches. Native-preview is enabled,
+fixtures and timing probes are disabled, and account data is retained. The cached
+local build took 83.2 seconds under the existing two-core/8GB limits. A stronger
+machine was not needed for this change.
+
+Profile and Friends are retained panels below a stationary header/navigation
+bar. One animation drives both the gradient selected button and full content
+track. Workspace switches update parameters instead of pushing native screens;
+Back selects Profile from Friends, then leaves the workspace from Profile.
+Both panels retain local state. Friends links and notification tabs enter this
+shared screen; public trainer cards keep their own routes.
+
+The normal-account regression passes five round trips, all Friends tabs, local
+Back/exit behavior and legacy Friends notification links, with no fatal or Fabric
+rendering errors. Direct PNG captures verify intermediate button/body positions;
+screenrecord video composites are not accepted as presentation-ready footage.
+An unsaved profile-name draft and Friends search text survive workspace switches;
+the draft was discarded without saving. Focused source tests pass 46 assertions,
+plus mobile typecheck and targeted lint.
+Light/dark captures pass visual review. Account checks retain 2249 caught,
+167 Favorites and Favorite-descending order (CP 4713/4689/4688 first).
+
+Private build/install and visual evidence:
+`.artifacts/trainer-workspace-2026-09-13/`.
+
+## Previous phone candidate — native navigation recovery
 
 Code candidate: `82f3070b6f6a35fa4cc7bcc3cd27961ef2870b3c`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-82f3070b-arm64-v8a.apk`.
