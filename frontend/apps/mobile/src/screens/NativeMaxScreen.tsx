@@ -578,7 +578,7 @@ export const NativeMaxScreen = ({
         {viewTabs}
       </View>
       {roster}
-      <Animated.View style={rosterEntrance} testID="native-max-roster-entrance">
+      <Animated.View style={[styles.headerStack, rosterEntrance]} testID="native-max-roster-entrance">
       {view === 'rankings'
         ? <View style={[styles.filterDeck, light && styles.panelLight]}>{roleTabs}{typeFilter}</View>
         : <>{bossPicker}{selectedBoss ? <NativeMaxBattleSimulator assetBaseUrl={assetBaseUrl} boss={selectedBoss} candidates={candidates} initialDifficulty={initialDifficulty} initialTrainerCount={initialTrainerCount} key={`${selectedBoss.variant_id}-${effectiveScope}`} onDifficultyChange={(difficulty) => onRouteStateChange?.({ difficulty: difficulty === getDefaultMaxBattleTier(selectedBoss) ? null : difficulty })} onTrainerCountChange={(trainerCount) => onRouteStateChange?.({ trainerCount })} rosterScope={effectiveScope} /> : null}{roleTabs}{bossBenchmarkNote}</>}

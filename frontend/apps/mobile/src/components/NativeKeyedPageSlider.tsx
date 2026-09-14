@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useLayoutEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import { useNativeReducedMotion } from '../features/settings/useNativeMotion';
@@ -15,13 +15,13 @@ export const NativeSlidingPageHeader = ({ children }: { children: ReactNode }) =
 };
 
 type Page = { key: string; position: number; node: ReactNode };
-const SlidePage = ({ page, active, width, origin, children }: {
-  page: Page; active: boolean; width: number; origin: number; children: ReactNode;
+const SlidePage = ({ page, active, width, origin, onReady, children }: {
+  page: Page; active: boolean; width: number; origin: number; onReady: (key: string) => void; children: ReactNode;
 }) => {
   const style = useMemo(() => [StyleSheet.absoluteFill, {
     left: (page.position - origin) * width, right: undefined, width,
   }], [origin, page.position, width]);
-  return <View collapsable={false} accessibilityElementsHidden={!active} aria-hidden={!active}
+  return <View onLayout={(event) => { if (event.nativeEvent.layout.width > 0) onReady(page.key); }} collapsable={false} accessibilityElementsHidden={!active} aria-hidden={!active}
     importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
     pointerEvents={active ? 'auto' : 'none'} testID={`native-keyed-page-${page.key}`} style={style}>
     {children}
@@ -38,6 +38,8 @@ export const NativeKeyedPageSlider = ({
 }: { activeKey: string; activeIndex: number; children: ReactNode; overlay?: ReactNode }) => {
   const reduceMotion = useNativeReducedMotion();
   const [width, setWidth] = useState(0);
+  const [readyPages, setReadyPages] = useState<Set<string>>(() => new Set());
+  const markReady = useCallback((key: string) => setReadyPages((current) => current.has(key) ? current : new Set([...current, key])), []);
   const [progress] = useState(() => new Animated.Value(0));
   const [state, setState] = useState({
     key: activeKey, index: activeIndex, position: 0, node: children,
@@ -56,11 +58,16 @@ export const NativeKeyedPageSlider = ({
     setState({ ...state, node: children });
   }
   const target = state.position;
+  const ready = readyPages.has(activeKey);
   useLayoutEffect(() => {
     let cancelled = false;
     progress.stopAnimation();
     const finish = () => {
       if (cancelled) return;
+      setReadyPages((current) => {
+        const kept = [...current].filter((key) => key === activeKey);
+        return kept.length === current.size ? current : new Set(kept);
+      });
       setState((current) => current.pages.length === 1 ? current : {
         ...current, pages: current.pages.filter((page) => page.key === current.key),
       });
@@ -70,13 +77,27 @@ export const NativeKeyedPageSlider = ({
       finish();
       return;
     }
+    if (!ready) return;
     const animation = Animated.timing(progress, {
       toValue: target * width, duration: collectionExperienceParityContract.pageTransitionMs,
       easing, useNativeDriver: true, isInteraction: false,
     });
-    animation.start(({ finished }) => { if (finished) finish(); });
-    return () => { cancelled = true; animation.stop(); };
-  }, [progress, reduceMotion, state.pages.length, target, width]);
+    // A newly mounted virtualized page must have native layout and a paint
+    // opportunity before its animation clock starts. Starting in the mounting
+    // commit lets Android spend the entire slide building the incoming tree.
+    let paintFrame: number | null = null;
+    const layoutFrame = requestAnimationFrame(() => {
+      paintFrame = requestAnimationFrame(() => {
+        animation.start(({ finished }) => { if (finished) finish(); });
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(layoutFrame);
+      if (paintFrame != null) cancelAnimationFrame(paintFrame);
+      animation.stop();
+    };
+  }, [activeKey, progress, ready, reduceMotion, state.pages.length, target, width]);
 
   const firstPosition = Math.min(...state.pages.map((page) => page.position));
   const lastPosition = Math.max(...state.pages.map((page) => page.position));
@@ -90,7 +111,7 @@ export const NativeKeyedPageSlider = ({
     <Animated.View style={trackStyle} testID="native-keyed-page-track">
     {state.pages.map((page) => {
       const active = page.key === activeKey;
-      return <SlidePage key={page.key} page={page} active={active} width={width} origin={firstPosition}>
+      return <SlidePage key={page.key} page={page} active={active} width={width} origin={firstPosition} onReady={markReady}>
         {active ? children : page.node}
       </SlidePage>;
     })}

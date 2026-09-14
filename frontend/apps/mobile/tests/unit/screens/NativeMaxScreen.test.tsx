@@ -171,4 +171,18 @@ describe('NativeMaxScreen', () => {
       trainerCount: null,
     });
   });
+  it('uses the roster entrance for All/My changes without replaying it on role changes', () => {
+    const timing = jest.spyOn(Animated, 'timing');
+    render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}>
+      <NativeMaxScreen assetBaseUrl="https://pokegonexus.com" catalog={catalog} instances={{ leafy: owned }} onBack={jest.fn()} onOpenPokemon={jest.fn()} onRetry={jest.fn()} signedIn />
+    </SafeAreaProvider>);
+    timing.mockClear();
+    fireEvent.press(screen.getByRole('button', { name: 'ALL POKÉMON' }));
+    expect(timing).toHaveBeenCalledWith(expect.any(Animated.Value), expect.objectContaining({ duration: 220, useNativeDriver: true }));
+    timing.mockClear();
+    fireEvent.press(screen.getByText('Tank'));
+    expect(timing.mock.calls.some(([, config]) => config.duration === 220)).toBe(false);
+    timing.mockRestore();
+  });
+
 });
