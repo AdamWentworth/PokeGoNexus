@@ -1537,11 +1537,12 @@ describe('NativeInstanceDetailScreen', () => {
     );
 
     await openCaughtEditor();
-    fireEvent.press(screen.getByRole('button', { name: 'Power form: Dawn Wings Necrozma' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Fuse Dawn Wings Necrozma' }));
+    fireEvent.press(screen.getByTestId('native-fusion-partner-lunala-2'));
+    fireEvent.press(screen.getByRole('button', { name: 'Fuse' }));
     fireEvent.press(screen.getByRole('button', { name: 'Choose location background' }));
     expect(screen.getByRole('button', { name: 'Use Fusion sky background' })).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Use Fusion sky background' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Power form: Lunala Two' }));
     fireEvent.press(screen.getByRole('button', { name: 'Choose charged move' }));
     expect(screen.getByText('Moongeist Beam')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Close charged move selector' }));

@@ -1,4 +1,5 @@
 import { getPokemonGenders } from '@pokemongonexus/shared-domain/pokemon-gender';
+import { resolvePokemonActiveFusionEntry } from '@pokemongonexus/shared-domain/pokemon-display';
 import * as Crypto from 'expo-crypto';
 import type {
   PokemonInstance,
@@ -316,13 +317,16 @@ export const persistNativeInstanceDetailMutation = async ({
       if (!desiredPartnerKey) throw new Error('The selected fusion partner is no longer in your collection.');
       if (desiredPartnerKey === mutation.collectionKey) throw new Error('A Pokémon cannot fuse with itself.');
       const partner = snapshot.instances[desiredPartnerKey];
-      const activeFusionId = Object.entries(normalizedPatch.fusion ?? {}).find(([, enabled]) => Boolean(enabled))?.[0];
-      const fusionDefinition = snapshot.catalog
-        .find((pokemon) => pokemon.pokemon_id === mutation.previous.pokemon_id)
-        ?.fusion.find((candidate) => (
-          (activeFusionId != null && candidate.fusion_id === Number(activeFusionId))
-          || candidate.name === normalizedPatch.fusion_form
-        ));
+      const fusionDefinition = resolvePokemonActiveFusionEntry({
+        isFused: true,
+        fusionForm: normalizedPatch.fusion_form,
+        // Registration history is not the active form. Resolve the explicit
+        // choice first, using the same identity rules as the displayed form.
+        fusionEntries: snapshot.catalog
+          .find((pokemon) => pokemon.pokemon_id === mutation.previous.pokemon_id)
+          ?.fusion.filter((candidate) => candidate.base_pokemon_id1 === mutation.previous.pokemon_id),
+        storedFusion: normalizedPatch.fusion,
+      });
       if (!fusionDefinition) {
         throw new Error('The selected fusion form is not available for this Pokémon.');
       }

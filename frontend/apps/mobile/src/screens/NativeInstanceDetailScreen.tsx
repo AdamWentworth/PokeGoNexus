@@ -38,6 +38,7 @@ import type {
 } from '../features/collection/nativeInstanceDetailMutation';
 import { getPokemonGenders, nextPokemonGender } from '@pokemongonexus/shared-domain/pokemon-gender';
 import { NativeHorizontalPageSlider } from '../components/NativeHorizontalPageSlider';
+import { NativeFusionControls } from '../features/collection/NativeFusionControls';
 import { NativeUiIcon } from '../components/NativeUiIcon';
 import type {
   PokemonSizeClass,
@@ -173,6 +174,7 @@ type NativeInstanceEditDraft = {
   crownForm: string | null;
   fused: boolean;
   fusionId: number | null;
+  fusionHistory: NativeInstanceDetailPatch['fusion'];
   fusionForm: string | null;
   fusedWith: string | null;
 };
@@ -257,10 +259,11 @@ const createEditDraft = (detail: NativeInstanceDetail): NativeInstanceEditDraft 
   crownForm: detail.instance?.fusion_form ?? detail.crownOptions?.[0]?.form ?? null,
   fused: Boolean(detail.instance?.is_fused),
   fusionId: detail.instance?.is_fused
-    ? detail.fusionOptions?.find((option) => option.name === detail.instance?.fusion_form)?.id ?? null
+    ? detail.activeFusionId ?? detail.fusionOptions?.find((option) => option.name === detail.instance?.fusion_form || String(option.id) === detail.instance?.fusion_form)?.id ?? null
     : null,
+  fusionHistory: detail.instance?.fusion ?? null,
   fusionForm: detail.instance?.is_fused ? detail.instance.fusion_form : null,
-  fusedWith: detail.instance?.is_fused ? detail.instance.fused_with : null,
+  fusedWith: detail.instance?.is_fused ? detail.fusionPartnerRow?.id ?? detail.instance.fused_with : null,
 });
 
 const BALL_OPTIONS = POKEMON_BALL_OPTIONS.map(({ value, label }) => [value, label] as const);
@@ -815,6 +818,7 @@ const NativeMovesPanel = ({
 };
 
 const NativeMoveSelector = ({
+  disabled = false,
   damageMode,
   assetBaseUrl,
   isShadow,
@@ -824,6 +828,7 @@ const NativeMoveSelector = ({
   value,
   onChange,
 }: {
+  disabled?: boolean;
   damageMode: PokemonMoveDamageMode;
   assetBaseUrl: string;
   isShadow: boolean;
@@ -852,12 +857,14 @@ const NativeMoveSelector = ({
         <Pressable
           accessibilityLabel={`Choose ${label.toLowerCase()}`}
           accessibilityRole="button"
+          accessibilityState={{ disabled }}
+          disabled={disabled}
           onPress={() => setOpen(true)}
           style={[styles.choiceField, { backgroundColor: palette.input, borderColor: palette.border }]}
           testID={selectorTestId}
         >
           <Text numberOfLines={1} style={[styles.choiceFieldValue, { color: palette.text }]}>
-            {selected?.name ?? 'Unselected move'}{selected?.legacy ? '*' : ''}
+            {selected?.name ?? (disabled && value != null ? `Move #${value}` : 'Unselected move')}{selected?.legacy ? '*' : ''}
           </Text>
         </Pressable>
         <Text style={[styles.choiceFieldPower, { color: palette.text }]}>
@@ -1421,46 +1428,6 @@ const MaxMoveLevelPicker = ({
   );
 };
 
-const PowerFormOption = ({
-  disabled = false,
-  imageUri,
-  label,
-  selected,
-  palette,
-  onPress,
-}: {
-  disabled?: boolean;
-  imageUri: string | null;
-  label: string;
-  selected: boolean;
-  palette: typeof LIGHT;
-  onPress: () => void;
-}) => (
-  <Pressable
-    accessibilityLabel={`Power form: ${label}`}
-    accessibilityRole="button"
-    accessibilityState={{ disabled, selected }}
-    disabled={disabled}
-    onPress={onPress}
-    style={[
-      styles.powerFormOption,
-      { borderColor: selected ? '#5faeff' : palette.border },
-      selected && styles.powerFormOptionSelected,
-      disabled && styles.powerFormOptionDisabled,
-    ]}
-  >
-    {imageUri ? (
-      <Image fadeDuration={0}
-        accessibilityElementsHidden
-        resizeMode="contain"
-        source={{ uri: imageUri }}
-        style={styles.powerFormImage}
-      />
-    ) : null}
-    <Text numberOfLines={2} style={[styles.powerFormLabel, { color: palette.text }]}>{label}</Text>
-  </Pressable>
-);
-
 const NativePowerControls = ({
   assetBaseUrl,
   detail,
@@ -1488,18 +1455,18 @@ const NativePowerControls = ({
     && !draft.shadow
     && !draft.fused
     && (detail.crownOptions?.length ?? 0) > 0;
-  const supportsFusion = isCaught
-    && !draft.shadow
-    && !draft.megaEnabled
-    && !draft.crowned
-    && (detail.fusionOptions?.length ?? 0) > 0;
+  const supportsFusion = isCaught && (draft.fused || (
+    !draft.shadow && !draft.purified && !draft.megaEnabled && !draft.crowned
+    && (detail.fusionOptions?.length ?? 0) > 0
+  ));
   const supportsMaxMoves = !isWanted
     && Boolean(detail.row.maxKind || detail.specialMaxBaseEligible || draft.crowned)
     && !draft.shadow
     && !draft.purified
     && detail.instance?.costume_id == null;
-  const selectedFusion = detail.fusionOptions?.find((option) => option.id === draft.fusionId) ?? null;
   const compatibleMovePatch = (options: NativeInstanceMoveOption[] | undefined) => {
+    // Vite preserves the saved selection while a form's learnset is unavailable.
+    if (!options?.length) return {};
     const supports = (id: number | null, kind: NativeInstanceMoveOption['kind']) => (
       id == null || Boolean(options?.some((move) => move.id === id && move.kind === kind))
     );
@@ -1534,7 +1501,7 @@ const NativePowerControls = ({
 
   return (
     <View style={[styles.powerPanel, { borderColor: palette.divider }]}>
-      <View style={styles.powerActionRow}>
+      {supportsMega || supportsCrown || supportsMaxMoves ? <View style={styles.powerActionRow}>
         {supportsMaxMoves ? (
           <Pressable
             accessibilityLabel={`${showMaxOptions ? 'Close' : 'Open'} Max Move upgrades`}
@@ -1603,7 +1570,7 @@ const NativePowerControls = ({
               fusionForm: null,
               fusedWith: null,
               ...compatibleMovePatch(draft.crowned
-                ? detail.moveOptions
+                ? detail.baseMoveOptions ?? detail.moveOptions
                 : activeCrown.moveOptions ?? detail.moveOptions),
             })}
             style={styles.powerActionPill}
@@ -1621,67 +1588,30 @@ const NativePowerControls = ({
             <Text style={styles.powerActionText}>CHANGE FORM</Text>
           </Pressable>
         ) : null}
-      </View>
+      </View> : null}
       {supportsFusion ? (
-        <View style={styles.editFieldGroup}>
-          <View style={styles.powerFormOptions}>
-            <PowerFormOption
-              imageUri={detail.appearanceImageUris?.base ?? detail.row.imageUri}
-              label="Base form"
-              onPress={() => onChange({
-                fused: false,
-                fusionId: null,
-                fusionForm: null,
-                fusedWith: null,
-                ...compatibleMovePatch(detail.moveOptions),
-                ...compatibleBackgroundPatch(detail.backgroundOptions),
-              })}
-              palette={palette}
-              selected={!draft.fused}
-            />
-            {(detail.fusionOptions ?? []).map((option) => {
-              const firstPartner = option.partnerRows[0] ?? null;
-              return (
-                <PowerFormOption
-                  disabled={!firstPartner}
-                  imageUri={option.imageUri}
-                  key={option.id}
-                  label={firstPartner ? option.name : `${option.name} · partner needed`}
-                  onPress={() => onChange({
-                    fused: true,
-                    fusionId: option.id,
-                    fusionForm: option.name,
-                    fusedWith: firstPartner?.id ?? null,
-                    megaEnabled: false,
-                    megaForm: null,
-                    crowned: false,
-                    ...compatibleMovePatch(option.moveOptions),
-                    ...compatibleBackgroundPatch(option.backgroundOptions),
-                  })}
-                  palette={palette}
-                  selected={draft.fused && draft.fusionId === option.id}
-                />
-              );
-            })}
-          </View>
-          {draft.fused && selectedFusion ? (
-            <View style={styles.fusionPartnerPanel}>
-              <Text style={[styles.editFieldLabel, { color: palette.secondary }]}>FUSION PARTNER</Text>
-              <View style={styles.powerFormOptions}>
-                {selectedFusion.partnerRows.map((partner) => (
-                  <PowerFormOption
-                    imageUri={partner.imageUri}
-                    key={partner.id}
-                    label={partner.name}
-                    onPress={() => onChange({ fusedWith: partner.id })}
-                    palette={palette}
-                    selected={draft.fusedWith === partner.id}
-                  />
-                ))}
-              </View>
-            </View>
-          ) : null}
-        </View>
+        <NativeFusionControls
+          assetBaseUrl={assetBaseUrl}
+          detail={detail}
+          editing
+          fused={draft.fused}
+          fusionId={draft.fusionId}
+          fusedWith={draft.fusedWith}
+          key={detail.row.id}
+          palette={palette}
+          onSeparate={() => onChange({
+            fused: false, fusionId: null, fusionForm: null, fusedWith: null,
+            ...compatibleMovePatch(detail.baseMoveOptions ?? detail.moveOptions),
+            ...compatibleBackgroundPatch(detail.baseBackgroundOptions ?? detail.backgroundOptions),
+          })}
+          onFuse={(option, partnerId) => onChange({
+            fused: true, fusionId: option.id, fusionForm: option.name, fusedWith: partnerId,
+            fusionHistory: { ...draft.fusionHistory, [option.id]: true },
+            megaEnabled: false, megaForm: null, crowned: false,
+            ...compatibleMovePatch(option.moveOptions),
+            ...compatibleBackgroundPatch(option.backgroundOptions),
+          })}
+        />
       ) : null}
       {supportsMaxMoves && showMaxOptions ? (
         <View style={styles.maxMovesPanel}>
@@ -1978,12 +1908,13 @@ const NativeInstanceEditFields = ({
   const selectedCrownMoves = draft.crowned
     ? detail.crownOptions?.find((option) => option.form === draft.crownForm)?.moveOptions
     : null;
-  const editMoveOptions = selectedFusionMoves ?? selectedCrownMoves ?? detail.moveOptions ?? [];
+  const missingFusionMoves = draft.fused && !selectedFusionMoves?.length;
+  const editMoveOptions = selectedFusionMoves ?? selectedCrownMoves ?? detail.baseMoveOptions ?? detail.moveOptions ?? [];
   const hasPowerPanel = Boolean(
     (!isWanted && !draft.shadow && !draft.fused && (detail.megaOptions?.length ?? 0) > 0)
     || (!isWanted && !draft.shadow && !draft.fused && (detail.crownOptions?.length ?? 0) > 0)
-    || (isCaught && !draft.shadow && !draft.megaEnabled && !draft.crowned
-      && (detail.fusionOptions?.length ?? 0) > 0)
+    || (isCaught && (draft.fused || (!draft.shadow && !draft.purified && !draft.megaEnabled && !draft.crowned
+      && (detail.fusionOptions?.length ?? 0) > 0)))
     || (!isWanted && Boolean(detail.row.maxKind || detail.specialMaxBaseEligible || draft.crowned)
       && !draft.shadow && !draft.purified && detail.instance?.costume_id == null),
   );
@@ -2008,12 +1939,16 @@ const NativeInstanceEditFields = ({
         !hasPowerPanel && { borderTopColor: palette.divider, borderTopWidth: 2 },
         { borderBottomColor: palette.divider },
       ]}>
+        {missingFusionMoves ? <Text accessibilityRole="alert" style={{ color: palette.secondary }}>
+          Fusion moves are unavailable. Saved moves will be kept until the learnset loads.
+        </Text> : null}
         <NativeMovePages palette={palette}>
           {(moveDamageMode) => <>
         <NativeMoveSelector
           assetBaseUrl={assetBaseUrl}
           isShadow={Boolean(draft.shadow && !draft.purified)}
           damageMode={moveDamageMode}
+          disabled={missingFusionMoves}
           label="Fast move"
           onChange={(fastMove) => onChange({ fastMove })}
           options={editMoveOptions.filter((move) => move.kind === 'fast')}
@@ -2024,6 +1959,7 @@ const NativeInstanceEditFields = ({
           assetBaseUrl={assetBaseUrl}
           isShadow={Boolean(draft.shadow && !draft.purified)}
           damageMode={moveDamageMode}
+          disabled={missingFusionMoves}
           label="Charged move"
           onChange={(chargedMove1) => onChange({ chargedMove1 })}
           options={editMoveOptions.filter((move) => move.kind === 'charged')}
@@ -2035,6 +1971,7 @@ const NativeInstanceEditFields = ({
             assetBaseUrl={assetBaseUrl}
           isShadow={Boolean(draft.shadow && !draft.purified)}
           damageMode={moveDamageMode}
+          disabled={missingFusionMoves}
             label="Second charged move"
             onChange={(chargedMove2) => onChange({ chargedMove2 })}
             options={editMoveOptions.filter((move) => move.kind === 'charged')}
@@ -2512,12 +2449,13 @@ export const NativeInstanceDetailScreen = ({
         ? selectedMegaOption.typeIconUris
         : selectedCrownOption?.typeIconUris?.length
           ? selectedCrownOption.typeIconUris
-          : detail.row.typeIconUris
+          : detail.baseTypeIconUris ?? detail.row.typeIconUris
     : detail.row.typeIconUris;
   const showPhysicalRow = weight != null
     || height != null
     || (isCaught && displayTypeIconUris.length > 0);
   const activeBackgroundOptions = selectedFusionOption?.backgroundOptions
+    ?? (editorVisible && !activeDraft.fused ? detail.baseBackgroundOptions : detail.backgroundOptions)
     ?? detail.backgroundOptions
     ?? [];
   const displayLucky = editorVisible
@@ -2675,9 +2613,7 @@ export const NativeInstanceDetailScreen = ({
             crown: activeDraft.fused ? false : activeDraft.crowned,
             is_fused: activeDraft.fused,
             fused_with: activeDraft.fused ? activeDraft.fusedWith : null,
-            fusion: activeDraft.fused && activeDraft.fusionId != null
-              ? { [activeDraft.fusionId]: true }
-              : instance?.fusion,
+            fusion: activeDraft.fusionHistory,
             fusion_form: activeDraft.fused
               ? activeDraft.fusionForm
               : activeDraft.crowned
@@ -3100,6 +3036,7 @@ export const NativeInstanceDetailScreen = ({
             {!editorVisible
               && isCaught
               && !displayShadow
+              && !instance?.is_fused
               && !instance?.mega
               && !instance?.is_mega
               && (detail.megaOptions?.length ?? 0) > 0 ? (
@@ -3112,6 +3049,20 @@ export const NativeInstanceDetailScreen = ({
                   <Text style={styles.megaEligibilityText}>MEGA EVOLVE</Text>
                 </View>
               ) : null}
+
+            {!editorVisible && isCaught ? (
+              <NativeFusionControls
+                assetBaseUrl={assetBaseUrl}
+                detail={detail}
+                editing={false}
+                fused={Boolean(instance?.is_fused)}
+                fusionId={detail.activeFusionId ?? createEditDraft(detail).fusionId}
+                fusedWith={detail.fusionPartnerRow?.id ?? instance?.fused_with ?? null}
+                palette={palette}
+                onFuse={() => undefined}
+                onSeparate={() => undefined}
+              />
+            ) : null}
 
             {!editorVisible ? (
               <NativeInstanceReadOnlyDetailSections
@@ -3587,25 +3538,6 @@ const styles = StyleSheet.create({
   maxPowerButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
   maxPowerIcon: { width: 35, height: 35 },
   powerTitle: { fontSize: 14, fontWeight: '900' },
-  powerFormOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  powerFormOption: {
-    minWidth: 148,
-    minHeight: 46,
-    flexGrow: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderRadius: 999,
-  },
-  powerFormOptionSelected: { backgroundColor: 'rgba(40,137,226,0.18)' },
-  powerFormOptionDisabled: { opacity: 0.45 },
-  powerFormImage: { width: 34, height: 34 },
-  powerFormLabel: { fontSize: 11, lineHeight: 13, fontWeight: '900', textAlign: 'center' },
-  fusionPartnerPanel: { gap: 7, paddingTop: 2 },
   maxMovesPanel: { width: '100%', gap: 9 },
   maxMovesHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   maxMovesIcon: { width: 34, height: 34 },

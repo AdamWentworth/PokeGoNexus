@@ -307,6 +307,33 @@ describe('persistNativeInstanceDetailMutation', () => {
     expect(onQueued).toHaveBeenCalledTimes(2);
   });
 
+  it.each(['Dawn Wings Necrozma', '2'])('switches registered forms using the active choice %s and releases the old partner', async (fusionForm) => {
+    const outbox = makeOutbox();
+    const fusionSnapshot: NativeCollectionSnapshot = {
+      ...snapshot,
+      catalog: [{ ...necrozmaCatalogEntry, fusion: [
+        { ...necrozmaCatalogEntry.fusion[0], fusion_id: 1, name: 'Dusk Mane Necrozma', base_pokemon_id2: 791 },
+        ...necrozmaCatalogEntry.fusion,
+      ] }],
+      instances: {
+        'instance-1': { ...snapshot.instances['instance-1'], pokemon_id: 800, is_fused: true, fused_with: 'solgaleo', fusion_form: 'Dusk Mane Necrozma', fusion: { 1: true } },
+        solgaleo: { ...snapshot.instances['instance-1'], instance_id: 'solgaleo', pokemon_id: 791, disabled: true, is_fused: true, fused_with: 'instance-1' },
+        lunala: { ...snapshot.instances['instance-1'], instance_id: 'lunala', pokemon_id: 792 },
+      },
+    };
+    const result = await persistNativeInstanceDetailMutation({
+      userId: 'user-1', snapshot: fusionSnapshot, requestedInstanceId: 'instance-1',
+      patch: { is_fused: true, fused_with: 'lunala', fusion_form: fusionForm, fusion: { 1: true, 2: true } },
+      outbox, receiverClient: { post: jest.fn() }, sendImmediately: false,
+    });
+    expect(result.companionMutations.map((entry) => entry.updated)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ instance_id: 'solgaleo', disabled: false, is_fused: false, fused_with: null }),
+      expect.objectContaining({ instance_id: 'lunala', disabled: true, is_fused: true, fused_with: 'instance-1' }),
+    ]));
+    expect(result.mutation.updated.fusion).toEqual({ 1: true, 2: true });
+    expect(outbox.queue).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects a fusion partner whose species does not match the selected form', async () => {
     const fusionSnapshot: NativeCollectionSnapshot = {
       ...snapshot,

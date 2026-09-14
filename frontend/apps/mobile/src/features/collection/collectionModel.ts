@@ -9,6 +9,7 @@ import type {
   CustomTagsEnvelope,
   PokemonTagOrderKey,
 } from '@pokemongonexus/shared-contracts/users';
+import { resolveFusionMovePool } from '@pokemongonexus/app-core/fusion-move-pool';
 import { buildPokemonCatalogEntries } from '@pokemongonexus/shared-domain/catalog';
 import {
   projectPokemonCollectionSortSource,
@@ -121,6 +122,12 @@ export type NativeInstanceBackgroundOption = {
   imageUri: string;
 };
 
+export type NativeFusionPartnerRow = NativeCollectionRow & {
+  level?: number | null;
+  speciesName?: string;
+  backgroundName?: string | null;
+};
+
 export type NativeInstanceDetail = {
   row: NativeCollectionRow;
   instance?: PokemonInstance;
@@ -155,6 +162,10 @@ export type NativeInstanceDetail = {
     stats?: { attack: number; defense: number; stamina: number };
     typeIconUris?: string[];
   }[];
+  baseMoveOptions?: NativeInstanceMoveOption[];
+  baseBackgroundOptions?: NativeInstanceBackgroundOption[];
+  baseTypeIconUris?: string[];
+  activeFusionId?: number | null;
   fusionOptions?: {
     id: number;
     imageUri: string | null;
@@ -163,7 +174,7 @@ export type NativeInstanceDetail = {
     stats?: { attack: number; defense: number; stamina: number };
     typeIconUris?: string[];
     partnerPokemonId: number;
-    partnerRows: NativeCollectionRow[];
+    partnerRows: NativeFusionPartnerRow[];
     backgroundOptions: NativeInstanceBackgroundOption[];
     partnerBackgroundIds: Record<string, number | null>;
     comboBackgrounds: {
@@ -1219,25 +1230,40 @@ export const buildNativeInstanceDetail = (
   const moveEntry = moves.find((candidate) => candidate.pokemon_id === instance.pokemon_id);
   const fusion = activeFusion(instance, pokemon);
   const crown = activeCrown(instance, pokemon);
-  const specificMoves = fusion
-    ? moveEntry?.fusion.find((entry) => entry.fusion_id === fusion.fusion_id)?.moves
-    : crown
-      ? moveEntry?.crownForms.find((entry) => entry.id === crown.id)?.moves
-      : null;
-  const movePool = specificMoves?.length ? specificMoves : moveEntry?.moves ?? [];
-  const moveOptions = [...new Map(movePool.map((move) => [move.move_id, {
+  const fusionMovePokemon = {
+    moves: moveEntry?.moves ?? [],
+    fusion: (pokemon.fusion ?? []).map((entry) => ({
+      ...entry,
+      moves: moveEntry?.fusion.find((candidate) => candidate.fusion_id === entry.fusion_id)?.moves ?? entry.moves,
+    })),
+  };
+  const toMoveOptions = (pool: Move[]): NativeInstanceMoveOption[] => [...new Map(pool.map((move) => [move.move_id, {
     id: move.move_id,
     name: move.name,
     kind: move.is_fast ? 'fast' as const : 'charged' as const,
     legacy: move.legacy,
     typeName: move.type_name,
-    typeIconUri: absoluteImageUri(
-      buildPokemonMoveTypeIconPath(move.type_name || move.type),
-      assetOrigin,
-    ) ?? undefined,
+    typeIconUri: absoluteImageUri(buildPokemonMoveTypeIconPath(move.type_name || move.type), assetOrigin) ?? undefined,
     raidPower: getPokemonMovePower(move, 'raid'),
     pvpPower: getPokemonMovePower(move, 'pvp'),
   }])).values()];
+  const baseMoveOptions = toMoveOptions(fusionMovePokemon.moves);
+  const crownMoves = crown ? moveEntry?.crownForms.find((entry) => entry.id === crown.id)?.moves : null;
+  const moveOptions = fusion
+    ? toMoveOptions(resolveFusionMovePool({
+        pokemon: fusionMovePokemon,
+        fusion: { is_fused: true, fusion_form: instance.fusion_form, storedFusionObject: instance.fusion },
+      }).moves)
+    : crown
+      ? toMoveOptions(crownMoves?.length ? crownMoves : fusionMovePokemon.moves)
+      : baseMoveOptions;
+  const baseBackgroundOptions = (pokemon.backgrounds ?? [])
+    .filter((background) => Number(background.costume_id ?? 0) === Number(instance.costume_id ?? 0))
+    .map((background) => ({
+      id: background.background_id,
+      name: background.location || background.name,
+      imageUri: absoluteImageUri(background.image_url, assetOrigin) ?? background.image_url,
+    }));
   const resolvedBackgroundPool = resolvePokemonDisplayFusionBackgroundPool({
     pokemon,
     fusion: {
@@ -1260,6 +1286,8 @@ export const buildNativeInstanceDetail = (
     base: absoluteImageUri(resolvePokemonInstanceImagePath({
       ...instance,
       crown: false,
+      is_fused: false,
+      fusion_form: null,
       is_mega: false,
       mega: false,
       mega_form: null,
@@ -1332,24 +1360,37 @@ export const buildNativeInstanceDetail = (
   const activePartnerKey = instance.fused_with
     ? resolveInstanceCollectionKey(instances, instance.fused_with)
     : null;
+  const collectionRowsById = new Map(collectionRows.map((candidate) => [candidate.id, candidate]));
   const fusionOptions = (pokemon.fusion ?? [])
     .filter((entry) => (
       entry.base_pokemon_id1 === pokemon.pokemon_id
       && typeof entry.fusion_id === 'number'
     ))
     .map((entry) => {
-      const partnerRows = Object.entries(instances).flatMap(([key, candidate]) => {
-        const isActivePartner = activePartnerKey === key;
+      const partnerRows = Object.entries(instances).flatMap(([key, candidate]): NativeFusionPartnerRow[] => {
         if (candidate.pokemon_id !== entry.base_pokemon_id2 || !candidate.is_caught) return [];
+        const isActivePartner = activePartnerKey === key
+          || (Boolean(candidate.fused_with)
+            && resolveInstanceCollectionKey(instances, candidate.fused_with!) === collectionKey);
         if (!isActivePartner && (candidate.is_for_trade || candidate.is_fused || candidate.disabled)) return [];
-        const existing = collectionRows.find((row) => (
-          row.id === candidate.instance_id || row.id === key
+        const partnerPokemon = catalog.find((species) => species.pokemon_id === candidate.pokemon_id);
+        if (!partnerPokemon) return [];
+        const partnerRow = collectionRowsById.get(candidate.instance_id ?? key)
+          ?? buildNativeCollectionRows({ [key]: { ...candidate, disabled: false } }, catalog, assetOrigin)[0];
+        if (!partnerRow) return [];
+        const partnerBackground = partnerPokemon.backgrounds?.find((background) => (
+          String(background.background_id) === candidate.location_card
         ));
-        if (existing) return [existing];
-        return buildNativeCollectionRows({
-          [key]: { ...candidate, disabled: false },
-        }, catalog, assetOrigin);
-      });
+        return [{
+          ...partnerRow,
+          imageUri: absoluteImageUri(resolvePokemonInstanceImagePath({ ...candidate, disabled: false, is_fused: false }, partnerPokemon), assetOrigin),
+          level: candidate.level,
+          speciesName: partnerPokemon.name,
+          backgroundName: partnerBackground?.name ?? null,
+          locationBackgroundUri: absoluteImageUri(partnerBackground?.image_url ?? null, assetOrigin),
+        }];
+      }).sort((a, b) => Number(b.id === instances[activePartnerKey ?? '']?.instance_id)
+        - Number(a.id === instances[activePartnerKey ?? '']?.instance_id));
       const resolvedFusionBackgrounds = resolvePokemonDisplayFusionBackgroundPool({
         pokemon,
         fusion: {
@@ -1402,21 +1443,10 @@ export const buildNativeInstanceDetail = (
             : entry.image_url ?? null,
           assetOrigin,
         ),
-        moveOptions: (moveEntry?.fusion.find((candidate) => (
-          candidate.fusion_id === entry.fusion_id
-        ))?.moves ?? []).map((move) => ({
-          id: move.move_id,
-          name: move.name,
-          kind: move.is_fast ? 'fast' as const : 'charged' as const,
-          legacy: move.legacy,
-          typeName: move.type_name,
-          typeIconUri: absoluteImageUri(
-            buildPokemonMoveTypeIconPath(move.type_name || move.type),
-            assetOrigin,
-          ) ?? undefined,
-          raidPower: getPokemonMovePower(move, 'raid'),
-          pvpPower: getPokemonMovePower(move, 'pvp'),
-        })),
+        moveOptions: toMoveOptions(resolveFusionMovePool({
+          pokemon: fusionMovePokemon,
+          fusion: { is_fused: true, fusion_form: String(entry.fusion_id) },
+        }).moves),
         name: entry.name || `Fusion ${entry.fusion_id}`,
         stats: entry.attack == null || entry.defense == null || entry.stamina == null
           ? undefined
@@ -1466,6 +1496,12 @@ export const buildNativeInstanceDetail = (
     provenance,
     preferences,
     moveOptions,
+    baseMoveOptions,
+    baseBackgroundOptions,
+    baseTypeIconUris: [pokemon.type_1_icon ?? buildPokemonTypeIconPath(pokemon.type1_name), pokemon.type_2_icon ?? buildPokemonTypeIconPath(pokemon.type2_name)]
+      .map((path) => absoluteImageUri(path ?? null, assetOrigin))
+      .filter((uri): uri is string => Boolean(uri)),
+    activeFusionId: fusion?.fusion_id ?? null,
     backgroundOptions,
     appearanceImageUris,
     megaOptions,

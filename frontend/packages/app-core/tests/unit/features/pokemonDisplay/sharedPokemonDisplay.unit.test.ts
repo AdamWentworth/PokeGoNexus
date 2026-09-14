@@ -137,6 +137,16 @@ describe('shared Pokémon presentation decisions', () => {
     )).toBe('/fusion-shiny.png');
   });
 
+  it.each(['12', 'fusion_12', 'dawn-wings'])('prioritizes active form %s over registration history', (fusionForm) => {
+    const fusionEntries = [{ ...pokemon.fusion[0], fusion_id: 1, name: 'Dusk Mane' }, ...pokemon.fusion];
+    expect(resolvePokemonActiveFusionEntry({
+      isFused: true, fusionForm, fusionEntries, storedFusion: { 1: true, 12: true },
+    })?.fusion_id).toBe(12);
+    expect(resolvePokemonActiveFusionEntry({
+      isFused: true, fusionEntries, storedFusion: { 12: true },
+    })?.fusion_id).toBe(12);
+  });
+
   it('resolves Gigantamax and shiny Gigantamax artwork', () => {
     expect(resolvePokemonInstanceImagePath(
       instance({ gigantamax: true }),

@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Shared source-of-truth app core for web/mobile/desktop hosts.",
   "exports": {
+    "./fusion-move-pool": "./src/features/pokemonDisplay/fusionMovePool.ts",
     "./pokemon-variants": "./src/features/variants/utils/createPokemonVariants.ts",
     "./raid-model": "./src/pages/Raid/utils/raidRankings.ts",
     "./raid-roster": "./src/pages/Raid/utils/raidRoster.ts",

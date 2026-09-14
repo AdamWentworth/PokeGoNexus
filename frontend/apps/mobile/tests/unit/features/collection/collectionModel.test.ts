@@ -650,9 +650,40 @@ describe('native collection model', () => {
     expect(buildNativeTagSummaries(rows, instances, envelope, 'caught')[0].rows).toEqual([]);
   });
 
+  it('includes available partners and its own disabled partner, including legacy backlinks, with distinguishing metadata', () => {
+    const fusionPokemon = { ...pokemon, fusion: [{
+      fusion_id: 2, name: 'Test fusion', base_pokemon_id1: 6, base_pokemon_id2: 150,
+    }] } as unknown as BasePokemon;
+    const partnerPokemon = { ...pokemon, pokemon_id: 150, name: 'Mewtwo', backgrounds: [{
+      background_id: 21, name: 'Moon sky', image_url: '/moon.png',
+    }] } as unknown as BasePokemon;
+    const candidate = (id: string, patch: Partial<PokemonInstance> = {}) => instance({
+      instance_id: id, pokemon_id: 150, variant_id: '0150-default', ...patch,
+    });
+    const result = buildNativeInstanceDetail({
+      main: instance({ instance_id: 'instance-1', is_fused: true, fusion_form: '2', fused_with: 'linked' }),
+      linked: candidate('linked', { disabled: true, is_fused: true, fused_with: 'instance-1', shiny: true, level: 40, cp: 4000, location_card: '21' }),
+      available: candidate('available'),
+      backlink: candidate('backlink', { disabled: true, is_fused: true, fused_with: 'instance-1' }),
+      trade: candidate('trade', { is_for_trade: true }),
+      disabled: candidate('disabled', { disabled: true }),
+      busy: candidate('busy', { is_fused: true, fused_with: 'another-main' }),
+      uncaught: candidate('uncaught', { is_caught: false }),
+    }, [fusionPokemon, partnerPokemon], [], 'instance-1', 'https://pokegonexus.com');
+    const candidates = result?.fusionOptions?.[0].partnerRows;
+    expect(candidates?.map((entry) => entry.id)).toEqual(['linked', 'available', 'backlink']);
+    expect(candidates?.[0]).toEqual(expect.objectContaining({
+      cp: 4000, level: 40, speciesName: 'Mewtwo', backgroundName: 'Moon sky',
+      locationBackgroundUri: 'https://pokegonexus.com/moon.png',
+      imageUri: 'https://pokegonexus.com/images/charizard-shiny.png',
+    }));
+  });
+
   it('builds a native detail model from shared instance identity and move metadata', () => {
     const detailPokemon = {
       ...pokemon,
+      type_1_icon: '/images/types/fire.png',
+      type_2_icon: '/images/types/flying.png',
       megaEvolutions: [{
         id: 61,
         form: 'x',
@@ -852,6 +883,9 @@ describe('native collection model', () => {
         id: 2,
         imageUri: 'https://pokegonexus.com/images/shiny-fused-charizard.png',
         moveOptions: [{
+          id: 101, name: 'Fire Spin', kind: 'fast', legacy: false, typeName: 'Fire',
+          typeIconUri: 'https://pokegonexus.com/images/types/fire.png', raidPower: 14, pvpPower: 9,
+        }, {
           id: 202,
           name: 'Fusion Flare',
           kind: 'charged',
@@ -927,5 +961,12 @@ describe('native collection model', () => {
       imageUri: 'https://pokegonexus.com/images/fusion-location.png',
     }]);
     expect(fusedDetail.fusionPartnerRow).toEqual(expect.objectContaining({ id: 'partner-1' }));
+    expect(fusedDetail.activeFusionId).toBe(2);
+    expect(fusedDetail.appearanceImageUris?.base).toBe('https://pokegonexus.com/images/charizard-shiny.png');
+    expect(fusedDetail.baseBackgroundOptions?.map((option) => option.id)).toEqual([9]);
+    expect(fusedDetail.baseTypeIconUris).toEqual([
+      'https://pokegonexus.com/images/types/fire.png',
+      'https://pokegonexus.com/images/types/flying.png',
+    ]);
   });
 });

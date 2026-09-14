@@ -83,17 +83,27 @@ export const resolvePokemonActiveFusionEntry = ({
   if (!isFused || !Array.isArray(fusionEntries) || fusionEntries.length === 0) {
     return undefined;
   }
+  const explicitId = parsePokemonFusionId(fusionForm)
+    ?? parsePokemonFusionId(String(fusionForm ?? '').match(/^(?:shiny[_\s-]?)?fusion[_\s-]?(\d+)$/i)?.[1]);
+  const byId = fusionEntries.find((entry) => entry.fusion_id === explicitId);
+  if (byId) return byId;
   const normalizedForm = normalizePokemonFormToken(fusionForm);
   if (normalizedForm) {
-    return fusionEntries.find(
+    const byName = fusionEntries.find(
       (entry) => normalizePokemonFormToken(entry.name) === normalizedForm,
-    ) ?? fusionEntries[0];
+    );
+    if (byName) return byName;
   }
   const storedId = parsePokemonFusionId(storedFusion?.fusion_id)
     ?? parsePokemonFusionId(storedFusion?.id);
-  return storedId == null
-    ? fusionEntries[0]
-    : fusionEntries.find((entry) => entry.fusion_id === storedId) ?? fusionEntries[0];
+  const storedIds = [storedId, ...Object.entries(storedFusion ?? {})
+    .filter(([, enabled]) => Boolean(enabled))
+    .map(([id]) => parsePokemonFusionId(id))];
+  for (const id of storedIds) {
+    const stored = fusionEntries.find((entry) => entry.fusion_id === id);
+    if (stored) return stored;
+  }
+  return fusionEntries.length === 1 ? fusionEntries[0] : undefined;
 };
 
 export const getPokemonCrownFormLabel = (
