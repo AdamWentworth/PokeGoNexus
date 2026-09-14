@@ -42,20 +42,22 @@ SHA-256: `36abe2fee04cdf625a0a2e33a0e8f021ec5d72e8a3d0f0c7ef1eb9a69bf58c7f`.
 Installed in place with matching signature and checksum; fixtures and timing
 probes are disabled. No stronger machine was needed. The public APK is unchanged.
 
-Phone validation boundary: the first candidate (`4425c0ee`) passed the full
-no-save flow on the 4090 CP Dusk Mane and 4030 CP Shiny Dawn Wings Necrozma:
-Separate, base preview, empty-partner handling, Cancel, the existing Solgaleo/Lunala
-selection, Fuse preview, Close and reopening unchanged saved forms/CP. The flow
-reported zero app fatal, Fabric, ownership/removal or ANR errors. Its screenshots
-exposed two further gaps: fusion-tagged base moves and the consumed partner's
-inherited fusion name. Both are corrected in `d5ed02e4` and covered by regressions.
+The final APK (`d5ed02e4`) passed the complete no-save phone flow on the user's
+4090 CP Dusk Mane and 4030 CP Shiny Dawn Wings Necrozma. Separate restores base
+Necrozma artwork/types and previews 3674/3619 CP respectively. Base charged move
+choices include Future Sight and exclude Sunsteel Strike/Moongeist Beam; Dusk
+Mane's fused choices include Sunsteel Strike and exclude Moongeist Beam. The
+partner selector correctly identifies Solgaleo and Lunala, including Lunala's
+GoFest2024 Umbra background. Empty-partner handling, Cancel and Fuse previews
+pass. Closing each draft and reopening preserves the saved fusion, CP and moves.
 
-The final APK is installed and reopened the 4090 CP caught overlay correctly.
-Its final full flow remains pending: Android's notification shade interrupted
-one run, and the phone locked during the retry. Neither run reported an app
-runtime failure, but they are not passing final-build verification. Resume
-`.artifacts/caught-fusion-2026-09-13/final-device.yaml` once the phone is unlocked.
-No account edits were submitted and no app data was cleared.
+The final run reports zero fatal, Fabric, view ownership/removal or ANR failures.
+Account counts remain 2249 caught and 167 Favorites, with Favorite descending
+restored. No account edits were submitted and no app data was cleared. Phone
+evidence is in `final-device/result.json` and its Maestro screenshots under the
+private artifact directory above; earlier interrupted runs are retained there.
+Save/link mutations are covered by isolated tests, not writes to the user's
+account. This targeted pass does not certify the full migration.
 
 ## Caught-instance trade conditions — 2026-09-13
 

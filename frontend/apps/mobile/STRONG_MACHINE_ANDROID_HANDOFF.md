@@ -19,11 +19,14 @@ checksum and certificate match; fixtures/probes are disabled and app data retain
 No stronger machine was needed. Evidence is private under
 `.artifacts/caught-fusion-2026-09-13/`; the public APK is unchanged.
 
-The full no-save fusion flow passed on the first candidate, exposing two visual
-issues repaired in the current code: fusion-only base moves and partner names.
-The final APK's full phone recheck is pending an unlocked device; notification
-shade and lock-screen interruptions prevented completion. No app runtime failures
-were recorded. See the current-status document for the exact validation boundary.
+The final APK passed the complete no-save phone flow for the user's 4090 CP Dusk
+Mane and 4030 CP Shiny Dawn Wings Necrozma: Separate restores the base preview and
+learnset, the picker identifies Solgaleo/Lunala and their backgrounds, unavailable
+partners are handled, and Fuse previews the selected form. Close discards drafts;
+reopening preserves saved CP, moves and fusion. Counts remain 2249 caught and 167
+Favorites with Favorite descending restored. No runtime failures, account edits
+or data resets were recorded. See `final-device/result.json` under the private
+evidence directory and the current-status document for the validation boundary.
 
 ## Previous phone candidate — caught-instance trade conditions
 
