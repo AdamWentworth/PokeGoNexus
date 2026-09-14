@@ -2,7 +2,27 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — instance swipe loading
+## Current phone candidate — caught-instance trade conditions
+
+Code candidate: `9ae69388585e04d5f192df21a571beeb2fccfc52`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-9ae69388-arm64-v8a.apk`.
+SHA-256: `b4a35d11a47591e23dccf68e5ef778ab336f8adff59c22f12d949fa16b747686`.
+
+Caught overlays no longer display trade conditions from populated preference fields.
+The reported Lucky Shiny Groudon (4059 CP) had a mirror flag that triggered the old
+incorrect panel; listing status and saved account data are unaffected. Real listing
+preferences and the existing Lucky Pokémon listing rejection remain covered.
+
+83 focused assertions, typecheck and source lint pass. The normal cached build took
+82.5 seconds under the two-core/8GB limits; no stronger machine was needed. Fixtures
+and timing probes are disabled. See `CURRENT_NATIVE_TESTING_STATUS.md` and private
+`.artifacts/instance-trade-conditions-2026-09-13/` evidence for device validation.
+The exact Groudon case passes on the phone in top and scrolled views; Close returns
+to the unchanged Favorites order. No runtime failures, account edits or data resets
+were recorded. The installed checksum and signing certificate match. The public
+APK is unchanged.
+
+## Previous phone candidate — instance swipe loading
 
 Code candidate: `e1e060ab93c57f2169f2a310bb70096f1e2d2768`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e1e060ab-arm64-v8a.apk`.

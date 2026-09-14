@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (instance swipe loading)
+Last targeted revalidation: 2026-09-13 (caught-instance trade conditions)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,45 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Caught-instance trade conditions — 2026-09-13
+
+Current code candidate: `9ae69388`. Native previously projected any populated
+friendship, lucky-preference or mirror field into a conditions summary, then
+rendered it on every non-Wanted overlay. This incorrectly included caught Pokémon.
+The reported 4059 CP Shiny Groudon was reproduced on the phone: its Caught/Lucky
+presentation included “TRADE CONDITIONS / Mirror trade / Required” despite having
+no For Trade status. A saved mirror flag triggered the incorrect display.
+
+Caught details now produce no listing-preference summary, and the view independently
+requires Trade status before rendering that panel. Wanted friendship controls and
+actual Trade/Wanted listing preferences remain available. No stored instance fields
+are changed. Existing organizer validation continues to reject Lucky Pokémon from
+For Trade. This matches Vite's separation of caught details and listing preferences.
+
+Validation: 83 assertions across the collection model, instance screen and organizer
+mutation suites pass; mobile typecheck and source lint pass. Tests cover default
+friendship values, saved mirror/lucky preferences, Lucky and previously traded
+caught Pokémon, older cached detail summaries and legitimate listing conditions.
+Phone reproduction and corrected-build evidence are under
+`.artifacts/instance-trade-conditions-2026-09-13/`.
+
+The exact Groudon case passes on the installed normal APK: CP 4059, Lucky artwork,
+Mud Shot and Precipice Blades remain, with no Trade conditions, Mirror trade or
+Edit preferences in either the top or scrolled lower section. Close and cleared
+search restore 167 Favorites in descending order (CP 4713 / 4689 / 4688 first),
+without a sync warning. The post-install dashboard retains 2,249 caught Pokémon.
+The runtime checker reports zero app fatal, Fabric, ownership/removal or ANR
+failures. Signing identity and installed checksum match; account data was not
+cleared and no account edits were submitted.
+
+The normal cached build took 82.5 seconds under the existing two-core/8GB limits.
+APK: `.artifacts/manual-standalone/PokeGoNexus-manual-9ae69388-arm64-v8a.apk`.
+SHA-256: `b4a35d11a47591e23dccf68e5ef778ab336f8adff59c22f12d949fa16b747686`.
+Fixtures and timing probes are disabled. The public APK path is unchanged.
+
 ## Instance swipe loading — 2026-09-13
 
-Current code candidate: `e1e060ab`. Instance names, physical stats, moves, IVs and
+Previous code candidate: `e1e060ab`. Instance names, physical stats, moves, IVs and
 catch details now update in one React commit. The earlier optimization froze the
 outgoing lower sections until a later animation frame and transition, so the
 incoming Pokémon could temporarily display its predecessor's moves and IVs.
