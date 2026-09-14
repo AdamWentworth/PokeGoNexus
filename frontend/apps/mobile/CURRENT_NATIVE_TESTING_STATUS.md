@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (caught-instance trade conditions)
+Last targeted revalidation: 2026-09-13 (caught-instance fusion)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,55 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Caught-instance fusion — 2026-09-13
+
+Code candidate: `d5ed02e4`. Native now follows Vite's caught fusion workflow:
+read-only Fuse/Separate pills; editing opens a cancellable partner selector with
+nickname/species, CP, level, shiny artwork and location background; Fuse commits
+only the draft. Separate restores base artwork, types, stats/CP, move choices and
+background choices. The consumed partner remains selectable when separating and
+fusing again, including legacy backlinks, while unavailable partners are excluded.
+Buttons use Vite's glyphs, form previews, green gradient and white text.
+
+The old native implementation immediately selected the first partner and treated
+some saved fusion properties as base-form properties. It also omitted base moves
+from fusion learnsets containing only charged moves. Native now consumes Vite's
+fusion move resolver directly; an unavailable learnset preserves saved moves and
+disables move editing with an explanation. Explicit active form IDs/names take
+precedence over registration history for display and partner validation. Saves
+retain registration history and atomically release/link companion instances. Base
+move choices exclude fusion-tagged rows, and partner labels use the partner
+species/nickname rather than the consumed instance's inherited fusion marker.
+
+Validation: 107 native assertions across five suites, 20 shared/Vite assertions
+across two suites, mobile typecheck and source lint pass. The missing Separate
+control was reproduced on the user's 4090 CP Dusk Mane Necrozma. Private build and
+phone evidence: `.artifacts/caught-fusion-2026-09-13/`.
+
+The normal cached APK built in 80.3 seconds under the existing two-core/8GB limits.
+APK: `.artifacts/manual-standalone/PokeGoNexus-manual-d5ed02e4-arm64-v8a.apk`.
+SHA-256: `36abe2fee04cdf625a0a2e33a0e8f021ec5d72e8a3d0f0c7ef1eb9a69bf58c7f`.
+Installed in place with matching signature and checksum; fixtures and timing
+probes are disabled. No stronger machine was needed. The public APK is unchanged.
+
+Phone validation boundary: the first candidate (`4425c0ee`) passed the full
+no-save flow on the 4090 CP Dusk Mane and 4030 CP Shiny Dawn Wings Necrozma:
+Separate, base preview, empty-partner handling, Cancel, the existing Solgaleo/Lunala
+selection, Fuse preview, Close and reopening unchanged saved forms/CP. The flow
+reported zero app fatal, Fabric, ownership/removal or ANR errors. Its screenshots
+exposed two further gaps: fusion-tagged base moves and the consumed partner's
+inherited fusion name. Both are corrected in `d5ed02e4` and covered by regressions.
+
+The final APK is installed and reopened the 4090 CP caught overlay correctly.
+Its final full flow remains pending: Android's notification shade interrupted
+one run, and the phone locked during the retry. Neither run reported an app
+runtime failure, but they are not passing final-build verification. Resume
+`.artifacts/caught-fusion-2026-09-13/final-device.yaml` once the phone is unlocked.
+No account edits were submitted and no app data was cleared.
+
 ## Caught-instance trade conditions — 2026-09-13
 
-Current code candidate: `9ae69388`. Native previously projected any populated
+Previous code candidate: `9ae69388`. Native previously projected any populated
 friendship, lucky-preference or mirror field into a conditions summary, then
 rendered it on every non-Wanted overlay. This incorrectly included caught Pokémon.
 The reported 4059 CP Shiny Groudon was reproduced on the phone: its Caught/Lucky

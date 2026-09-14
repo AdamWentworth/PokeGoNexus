@@ -2,7 +2,30 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — caught-instance trade conditions
+## Current phone candidate — caught-instance fusion
+
+Code candidate: `d5ed02e4ae39898d28755b7236b7eee5d96a053a`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-d5ed02e4-arm64-v8a.apk`.
+SHA-256: `36abe2fee04cdf625a0a2e33a0e8f021ec5d72e8a3d0f0c7ef1eb9a69bf58c7f`.
+
+Vite-style Fuse/Separate controls, explicit partner selection with CP/level and
+background previews, correct base-form restoration, canonical fusion learnsets,
+legacy form identity and preserved fusion history. Linked instances continue to
+save atomically. See `CURRENT_NATIVE_TESTING_STATUS.md` for scope and validation.
+
+107 native and 20 shared/Vite assertions, mobile typecheck and source lint pass.
+The normal cached build took 80.3 seconds under the two-core/8GB limits. Installed
+checksum and certificate match; fixtures/probes are disabled and app data retained.
+No stronger machine was needed. Evidence is private under
+`.artifacts/caught-fusion-2026-09-13/`; the public APK is unchanged.
+
+The full no-save fusion flow passed on the first candidate, exposing two visual
+issues repaired in the current code: fusion-only base moves and partner names.
+The final APK's full phone recheck is pending an unlocked device; notification
+shade and lock-screen interruptions prevented completion. No app runtime failures
+were recorded. See the current-status document for the exact validation boundary.
+
+## Previous phone candidate — caught-instance trade conditions
 
 Code candidate: `9ae69388585e04d5f192df21a571beeb2fccfc52`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-9ae69388-arm64-v8a.apk`.
