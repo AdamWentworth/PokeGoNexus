@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (white caught dates and full-screen backgrounds)
+Last targeted revalidation: 2026-09-13 (page slides, instance moves and species gender)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,52 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Page slides, instance moves and species gender — 2026-09-13
+
+The current code candidate is `fdf94ecb`. Collection, Search, Trades and Friends
+share native-driven gesture motion and synchronized indicators. Move modes in
+both the instance view and editor now slide full-width pages with Vite timing;
+mode selection persists when opening the editor. Shadow bonuses and legacy
+markers also appear in the editor. Species gender rules are shared with Vite,
+enforced in the editor and checked before new mutations enter the outbox.
+
+Pokédex category changes retain the outgoing region/list page, wait for incoming
+native layout and paint, then move one track beneath a stationary header. Rapid
+reversals cannot retire the current page. Raid/Max/PvP/Rankings no longer add an
+unsupported workspace nudge; Max retains the separate All/My roster entrance.
+See `NATIVE_SLIDE_PARITY_REVIEW.md` for source comparison and candidate history.
+
+The normal APK is installed with SHA-256
+`9845e5eb335fee7ae3af4aa31bb640a8bc017e29cd9a5dd22a2cc474de2efc92`.
+The original package, signer and account data are retained; device fixtures and
+UI timing probes are disabled. The bounded local build took 80.9 seconds.
+There are 152 passing targeted native tests and 11 Vite tests, with affected
+suites rerun after the Android corrections. Both app typechecks and targeted
+changed-file lint pass.
+
+Physical evidence on `6adf1126` covers taps/drags on all four hubs, read-only and
+editable move pages, and five real-account gender cases: Mewtwo, Gallade, Latias,
+Salamence and a Castform Wanted requirement. No drafts were saved. The final
+`fdf94ecb` recordings additionally cover Pokédex region/index motion, rapid
+reversals, Android Back, Max All/My, collection drag and instance navigation.
+Light/dark captures preserve white ribbon text, recorded balls and full-screen
+backgrounds. The final log window contains no fatal exceptions.
+
+The account workflow before the final theme captures passed 2249 caught, 167
+Favorites, Favorite descending and CP 4713/4689/4688 first. Dark theme was then
+restored. A repeat Caught deep link returned to the already-mounted Favorites
+view, so that repeat workflow stopped at its Caught-filter assertion; its failure
+screenshot still shows 167 Favorites with the expected first three CP values.
+This retained-filter navigation behavior is a separate follow-up, not an account
+count failure. Private final evidence is under
+`.artifacts/slides-gender-release-2026-09-13/`.
+
+These recordings verify the reported motion paths; they do not close matched
+frame-time, long-session, offline or expiry gates for the entire application.
+
 ## White caught dates and full-screen backgrounds — 2026-09-13
 
-The current code candidate is `e518c7f4`. Caught-ribbon text and its date divider
+The preceding code candidate was `e518c7f4`. Caught-ribbon text and its date divider
 are white in both native and Vite. The root no longer paints an opaque layer over
 the camera/status-bar region: route backgrounds fill the screen again, while
 screens retain their existing content insets. Instance overlays use light status

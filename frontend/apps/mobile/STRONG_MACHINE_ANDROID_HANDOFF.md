@@ -2,7 +2,41 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — white ribbon and full-screen backgrounds
+## Current phone candidate — slides, moves and species gender
+
+Code candidate: `fdf94ecbd7f4fe738c01ee15bc8eaab6909fd92d`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-fdf94ecb-arm64-v8a.apk`.
+SHA-256: `9845e5eb335fee7ae3af4aa31bb640a8bc017e29cd9a5dd22a2cc474de2efc92`.
+
+Installed on the Pixel 8 Pro with `adb install -r`. The installed checksum and
+original signing certificate match; session and account data are retained.
+This is normal native-preview, with device fixtures and UI timing probes disabled.
+It includes native-driven hub gestures, full-width instance move pages, shared
+species gender eligibility, retained outgoing Pokédex pages and Max roster motion.
+`NATIVE_SLIDE_PARITY_REVIEW.md` records implementation and validation boundaries.
+
+The cached native build completed locally in 80.9 seconds with two CPU cores,
+CPUQuota 200%, MemoryHigh 6G, MemoryMax 8G, MemorySwapMax 512M, Java heap 2G and
+two Gradle workers. A stronger machine was not required. Build/install identity
+and final device evidence are private under
+`.artifacts/slides-gender-release-2026-09-13/`.
+
+The initial `7cbac5b8` candidate was rejected on-device; build the final source
+above. A pre-task rollback APK is retained at
+`.artifacts/slides-gender-2026-09-13/previous-before-final.apk` (`e518c7f4`).
+Do not use the rejected candidate as a rollback recommendation.
+
+The repair has 152 passing targeted native tests and 11 Vite tests, plus both
+app typechecks. All four hub gesture paths and five species/requirement gender
+cases passed on `6adf1126`; subsequent changes affect only Pokédex rendering and
+Max roster spacing. Final-source recordings show Pokédex region/index slides,
+rapid reversals, Max All/My, collection drag and instance navigation with no app
+restart. The sampled final log contains no fatal exceptions. Both-theme captures
+retain the white ribbon and full-screen fixes. Account checks and the retained
+filter encountered by the repeat deep-link check are documented in
+`CURRENT_NATIVE_TESTING_STATUS.md`. Existing performance/lifecycle gates remain.
+
+## Previous phone candidate — white ribbon and full-screen backgrounds
 
 Code candidate: `e518c7f430b3b1307ecdc0056cbd641ece1b3604`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e518c7f4-arm64-v8a.apk`.
