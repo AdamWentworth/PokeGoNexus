@@ -1,3 +1,4 @@
+import { Image as ExpoImage } from 'expo-image';
 import {
   ActivityIndicator,
   Animated,
@@ -5,8 +6,6 @@ import {
   Image,
   Modal,
   type LayoutChangeEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,7 +26,6 @@ import {
   useEffect,
   useRef,
   useState,
-  startTransition,
 } from 'react';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import type {
@@ -70,6 +68,8 @@ import {
   useNativeReducedMotion,
 } from '../features/settings/useNativeMotion';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
+import { nativeInstanceBackgroundPath } from '../features/collection/nativeInstanceArtwork';
+import { markNativeUiPerformance } from '../observability/nativeUiPerformanceTrace';
 import {
   captureNativeUiInteractionStart,
   markNativeUiPerformanceAfterPaint,
@@ -310,14 +310,6 @@ const toAssetUrl = (baseUrl: string, path: string): string => (
     : `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
 );
 
-const primaryTypeName = (
-  detail: NativeInstanceDetail,
-  typeIconUris = detail.row.typeIconUris,
-): string => {
-  const match = typeIconUris[0]?.match(/\/([^/?]+)\.png(?:\?|$)/i);
-  return match?.[1]?.toLowerCase() ?? 'normal';
-};
-
 const typeNamesFromIconUris = (typeIconUris: string[]): string[] => (
   typeIconUris.map((uri) => uri.match(/\/([^/?]+)\.png(?:\?|$)/i)?.[1]?.toLowerCase() ?? 'unknown')
 );
@@ -329,28 +321,6 @@ const pokemonTypesAccessibilityLabel = (typeIconUris: string[]): string => (
 const pokemonTypesTestId = (typeIconUris: string[]): string => (
   `native-instance-types-${typeNamesFromIconUris(typeIconUris).join('-') || 'unknown'}`
 );
-
-const backgroundPath = (
-  detail: NativeInstanceDetail,
-  overrides?: {
-    lucky?: boolean;
-    shadow?: boolean;
-    purified?: boolean;
-    typeIconUris?: string[];
-  },
-): string => {
-  const instance = detail.instance;
-  const shadow = overrides?.shadow ?? instance?.shadow;
-  const purified = overrides?.purified ?? instance?.purified;
-  if (shadow && !purified) return '/images/backgrounds/bg_shadow.png';
-  const canonicalLucky = Boolean(
-    detail.row.lucky || instance?.lucky || (instance?.is_wanted && instance.pref_lucky),
-  );
-  if (overrides?.lucky ?? canonicalLucky) {
-    return '/images/backgrounds/bg_lucky.png';
-  }
-  return `/images/backgrounds/bg_${primaryTypeName(detail, overrides?.typeIconUris)}.png`;
-};
 
 const STATUS = {
   caught: { accent: '#58c7eb', label: null },
@@ -773,7 +743,7 @@ const NativeMovePages = ({
     <NativeHorizontalPageSlider
       activeIndex={mode === 'raid' ? 0 : 1}
       onIndexChange={(index) => changeMode(MOVE_MODES[index])}
-      sizing="content"
+      sizing="tallest"
       swipeEnabled={false}
       transitionDuration={220}
       transitionEasing={MOVE_PAGE_EASING}
@@ -2419,11 +2389,8 @@ export const NativeInstanceDetailScreen = ({
     message: string;
   } | null>(null);
   const [backgroundPickerInstanceId, setBackgroundPickerInstanceId] = useState<string | null>(null);
-  const [frozenLowerDetail, setFrozenLowerDetail] = useState<NativeInstanceDetail | null>(null);
-  const lowerDetailReleaseFrameRef = useRef<number | null>(null);
   const onEditPreferencesRef = useRef(onEditPreferences);
   const onOpenTargetRef = useRef(onOpenTarget);
-  const settledScrollOffsetRef = useRef(0);
   const scrollRef = useRef<ScrollView>(null);
   useEffect(() => {
     onEditPreferencesRef.current = onEditPreferences;
@@ -2432,28 +2399,6 @@ export const NativeInstanceDetailScreen = ({
   const editPreferences = useCallback(() => onEditPreferencesRef.current?.(), []);
   const openTarget = useCallback((instanceId: string) => {
     onOpenTargetRef.current?.(instanceId);
-  }, []);
-  const rememberSettledScrollOffset = useCallback((
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
-    settledScrollOffsetRef.current = event.nativeEvent.contentOffset.y;
-  }, []);
-  const releaseLowerDetail = useCallback(() => {
-    if (lowerDetailReleaseFrameRef.current !== null) return;
-    lowerDetailReleaseFrameRef.current = requestAnimationFrame(() => {
-      lowerDetailReleaseFrameRef.current = null;
-      startTransition(() => setFrozenLowerDetail(null));
-    });
-  }, []);
-  const beginInstanceTransition = useCallback(() => {
-    if (detail && Math.abs(settledScrollOffsetRef.current) <= 8) {
-      setFrozenLowerDetail(detail);
-    }
-  }, [detail]);
-  useEffect(() => () => {
-    if (lowerDetailReleaseFrameRef.current !== null) {
-      cancelAnimationFrame(lowerDetailReleaseFrameRef.current);
-    }
   }, []);
   useEffect(() => {
     if (!editingInstanceId) return undefined;
@@ -2551,7 +2496,6 @@ export const NativeInstanceDetailScreen = ({
     : level;
   const showArc = Number.isFinite(displayLevel);
   const backgroundPickerOpen = backgroundPickerInstanceId === detail.row.id;
-  const lowerDetail = frozenLowerDetail ?? detail;
   const selectedFusionOption = activeDraft.fused
     ? detail.fusionOptions?.find((option) => option.id === activeDraft.fusionId) ?? null
     : null;
@@ -2599,6 +2543,15 @@ export const NativeInstanceDetailScreen = ({
         ? detail.appearanceImageUris?.purified ?? detail.row.imageUri
         : detail.appearanceImageUris?.base ?? detail.row.imageUri
     : detail.row.imageUri;
+  const displayBackgroundUri = toAssetUrl(assetBaseUrl, nativeInstanceBackgroundPath(
+    detail,
+    editing ? {
+      lucky: displayLucky,
+      purified: displayPurified,
+      shadow: displayShadow,
+      typeIconUris: displayTypeIconUris,
+    } : undefined,
+  ));
   const selectedLocationBackgroundUri = editorVisible
     ? (() => {
         const selected = activeBackgroundOptions.find(
@@ -2760,32 +2713,22 @@ export const NativeInstanceDetailScreen = ({
       <NativeInstanceSwipeFrame
         activeItemKey={detail.row.id}
         background={(
-          <Image fadeDuration={0}
-          accessibilityElementsHidden
-          blurRadius={3}
-          resizeMode="cover"
-          source={{
-            uri: toAssetUrl(
-              assetBaseUrl,
-              backgroundPath(detail, editing ? {
-                lucky: displayLucky,
-                purified: displayPurified,
-                shadow: displayShadow,
-                typeIconUris: displayTypeIconUris,
-              } : undefined),
-            ),
-          }}
-          style={styles.fullBackground}
-          testID="native-instance-background"
+          <ExpoImage
+            accessibilityElementsHidden
+            blurRadius={3}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            recyclingKey={displayBackgroundUri}
+            source={{ uri: displayBackgroundUri }}
+            style={styles.fullBackground}
+            testID="native-instance-background"
+            transition={0}
           />
         )}
         disabled={editingInstanceId === detail.row.id
           || backgroundPickerInstanceId === detail.row.id}
         onNext={onNext}
         onPrevious={onPrevious}
-        onTargetCommitted={releaseLowerDetail}
-        onTransitionEnd={releaseLowerDetail}
-        onTransitionStart={beginInstanceTransition}
       >
         <ScrollView
           contentContainerStyle={[
@@ -2798,8 +2741,6 @@ export const NativeInstanceDetailScreen = ({
           directionalLockEnabled
           keyboardShouldPersistTaps="always"
           nestedScrollEnabled
-          onMomentumScrollEnd={rememberSettledScrollOffset}
-          onScrollEndDrag={rememberSettledScrollOffset}
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
@@ -2976,9 +2917,15 @@ export const NativeInstanceDetailScreen = ({
               />
             ) : null}
             {displayImageUri ? (
-              <Image fadeDuration={0}
+              <ExpoImage
                 accessibilityLabel={detail.row.name}
-                resizeMode="contain"
+                cachePolicy="memory-disk"
+                contentFit="contain"
+                onDisplay={() => markNativeUiPerformance('instance_overlay_artwork_displayed', {
+                  targetKey: detail.row.id,
+                })}
+                recyclingKey={displayImageUri}
+                transition={0}
                 source={{ uri: displayImageUri }}
                 style={[
                   styles.pokemonImage,
@@ -3170,18 +3117,14 @@ export const NativeInstanceDetailScreen = ({
               <NativeInstanceReadOnlyDetailSections
                 assetBaseUrl={assetBaseUrl}
                 canEdit={canEdit}
-                caughtDate={lowerDetail === detail
-                  ? caughtDate
-                  : !isWanted && lowerDetail.instance?.date_caught
-                    ? lowerDetail.instance.date_caught.slice(0, 10)
-                    : null}
-                detail={lowerDetail}
+                caughtDate={caughtDate}
+                detail={detail}
                 light={light}
                 movesWarning={movesWarning}
                 onEditPreferences={editPreferences}
                 onOpenTarget={openTarget}
                 palette={palette}
-                statusAccent={(light ? LIGHT_STATUS : STATUS)[lowerDetail.row.status].accent}
+                statusAccent={status.accent}
               />
             ) : null}
 

@@ -1,27 +1,16 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
-import type { PokemonMovesChunk } from '@pokemongonexus/shared-contracts/pokemon';
 import { useNativeSession } from '../../../auth/NativeSessionContext';
 import {
   useNativeCollectionSnapshotQuery,
   useNativePokemonMovesQuery,
 } from '../../../features/collection/collectionQueries';
-import {
-  buildNativeCollectionRows,
-  buildNativeInstanceDetail,
-} from '../../../features/collection/collectionModel';
-import {
-  navigateNativeInstanceSibling,
-  resolveNativeInstanceNeighbors,
-} from '../../../features/collection/nativeInstanceNavigationContext';
+import { navigateNativeInstanceSibling } from '../../../features/collection/nativeInstanceNavigationContext';
+import { useNativeInstanceNavigationData } from '../../../features/collection/useNativeInstanceNavigationData';
 import { useNativeFavoriteMutation } from '../../../features/collection/useNativeFavoriteMutation';
 import { useNativeInstanceDetailMutation } from '../../../features/collection/useNativeInstanceDetailMutation';
 import { runtimeConfig } from '../../../config/runtimeConfig';
 import { NativeInstanceDetailScreen } from '../../../screens/NativeInstanceDetailScreen';
 import { NativeProtectedSessionGate } from '../../../components/NativeProtectedSessionGate';
-import { runAfterNativeUiInteractions } from '../../../interaction/nativeUiInteractionScheduler';
-
-const EMPTY_MOVES: PokemonMovesChunk = [];
 
 export default function NativeInstanceDetailRoute() {
   const router = useRouter();
@@ -40,46 +29,12 @@ export default function NativeInstanceDetailRoute() {
     session.user?.user_id ?? '',
     instanceId,
   );
-  const detail = useMemo(() => {
-    if (!snapshotQuery.data || !instanceId) return null;
-    return buildNativeInstanceDetail(
-      snapshotQuery.data.instances,
-      snapshotQuery.data.catalog,
-      movesQuery.data ?? EMPTY_MOVES,
-      instanceId,
-      runtimeConfig.api.frontendAppUrl,
-    );
-  }, [instanceId, movesQuery.data, snapshotQuery.data]);
-  const neighbors = useMemo(() => {
-    if (!snapshotQuery.data) return { previousId: null, nextId: null };
-    const fallbackIds = buildNativeCollectionRows(
-      snapshotQuery.data.instances,
-      snapshotQuery.data.catalog,
-      runtimeConfig.api.frontendAppUrl,
-    ).map((row) => row.id);
-    return resolveNativeInstanceNeighbors({ instanceId, fallbackIds });
-  }, [instanceId, snapshotQuery.data]);
-  useEffect(() => {
-    if (!snapshotQuery.data) return undefined;
-    const { catalog, instances } = snapshotQuery.data;
-    const moves = movesQuery.data ?? EMPTY_MOVES;
-    const siblingIds = [neighbors.previousId, neighbors.nextId].filter(
-      (candidate): candidate is string => Boolean(candidate),
-    );
-    if (siblingIds.length === 0) return undefined;
-    const scheduled = runAfterNativeUiInteractions(() => {
-      siblingIds.forEach((siblingId) => {
-        buildNativeInstanceDetail(
-          instances,
-          catalog,
-          moves,
-          siblingId,
-          runtimeConfig.api.frontendAppUrl,
-        );
-      });
-    });
-    return scheduled.cancel;
-  }, [movesQuery.data, neighbors.nextId, neighbors.previousId, snapshotQuery.data]);
+  const { detail, neighbors } = useNativeInstanceNavigationData({
+    snapshot: snapshotQuery.data,
+    moves: movesQuery.data,
+    instanceId,
+    assetBaseUrl: runtimeConfig.api.frontendAppUrl,
+  });
   const openInstance = (nextInstanceId: string) => router.replace({
     pathname: '/native/collection/[instanceId]',
     params: { instanceId: nextInstanceId },

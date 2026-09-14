@@ -36,7 +36,8 @@ type Props = PropsWithChildren<{
   onIndexChange: (index: number) => void;
   scrollX?: Animated.Value;
   dragX?: Animated.Value;
-  sizing?: 'fill' | 'content';
+  /** Tallest uses native layout for pages with matching height, without a JS measurement pass. */
+  sizing?: 'fill' | 'content' | 'tallest';
   swipeEnabled?: boolean;
   transitionDuration?: number;
   transitionEasing?: (value: number) => number;
@@ -163,7 +164,7 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
   );
   const trackStyle = useMemo(() => [
     styles.track,
-    sizing === 'content' && styles.contentTrack,
+    sizing !== 'fill' && styles.contentTrack,
     {
       transform: [{ translateX: trackTranslateX }],
       width: width * panelCount,
@@ -419,6 +420,7 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
       style={[
         styles.viewport,
         sizing === 'content' && { flex: 0, height: panelHeights[safeIndex] },
+        sizing === 'tallest' && { flex: 0 },
       ]}
       testID="native-horizontal-page-slider"
     >

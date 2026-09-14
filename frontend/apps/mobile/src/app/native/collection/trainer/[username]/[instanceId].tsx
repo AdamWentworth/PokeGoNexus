@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { parseTradeVariantReference } from '@pokemongonexus/shared-domain/trade-proposal-candidates';
 import { useNativeSession } from '../../../../../auth/NativeSessionContext';
 import {
-  buildNativeCollectionRows,
   buildNativeInstanceDetail,
 } from '../../../../../features/collection/collectionModel';
 import {
@@ -13,8 +12,8 @@ import {
 } from '../../../../../features/collection/collectionQueries';
 import {
   navigateNativeInstanceSibling,
-  resolveNativeInstanceNeighbors,
 } from '../../../../../features/collection/nativeInstanceNavigationContext';
+import { useNativeInstanceNavigationData } from '../../../../../features/collection/useNativeInstanceNavigationData';
 import { useNativePokemonOrganizerMutation } from '../../../../../features/collection/useNativePokemonOrganizerMutation';
 import { NativeTradeProposalSheet } from '../../../../../features/trades/NativeTradeProposalSheet';
 import {
@@ -54,18 +53,13 @@ export default function NativeForeignInstanceRoute() {
   const proposalMutation = useNativeCreateTradeProposal(userId ?? 'signed-out');
   const [proposalTargetId, setProposalTargetId] = useState<string | null>(null);
   const success = foreignQuery.data?.type === 'success' ? foreignQuery.data : null;
-  const rows = useMemo(() => success ? buildNativeCollectionRows(
-    success.instances,
-    success.catalog,
-    runtimeConfig.api.frontendAppUrl,
-  ) : [], [success]);
-  const detail = useMemo(() => success ? buildNativeInstanceDetail(
-    success.instances,
-    success.catalog,
-    movesQuery.data ?? [],
+  const { detail, neighbors } = useNativeInstanceNavigationData({
+    snapshot: success,
+    moves: movesQuery.data,
     instanceId,
-    runtimeConfig.api.frontendAppUrl,
-  ) : null, [instanceId, movesQuery.data, success]);
+    assetBaseUrl: runtimeConfig.api.frontendAppUrl,
+    sameStatusOnly: true,
+  });
   const selectedTargetDetail = useMemo(() => (
     success && proposalTargetId
       ? buildNativeInstanceDetail(
@@ -142,12 +136,6 @@ export default function NativeForeignInstanceRoute() {
       return candidate ? [candidate] : [];
     });
   }, [movesQuery.data, ownedQuery.data, proposalSelection]);
-  const neighbors = useMemo(() => resolveNativeInstanceNeighbors({
-    instanceId,
-    fallbackIds: rows
-      .filter((row) => row.status === detail?.row.status)
-      .map((row) => row.id),
-  }), [detail?.row.status, instanceId, rows]);
   const resultError = foreignQuery.error instanceof Error
     ? foreignQuery.error.message
     : foreignQuery.data?.type === 'forbidden'

@@ -132,7 +132,7 @@ describe('NativeInstanceDetailScreen', () => {
     });
   });
 
-  it('starts the incoming instance stage before reconciling its lower detail sections', async () => {
+  it('commits the incoming identity and all detail sections together before entrance', async () => {
     const animationCompletions: ((result: { finished: boolean }) => void)[] = [];
     const deferredFrames: FrameRequestCallback[] = [];
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
@@ -171,6 +171,9 @@ describe('NativeInstanceDetailScreen', () => {
     );
     await act(async () => Promise.resolve());
 
+    fireEvent(screen.getByTestId('native-horizontal-page-0'), 'layout', {
+      nativeEvent: { layout: { width: 360, height: 64, x: 0, y: 0 } },
+    });
     fireEvent.press(screen.getByTestId('native-instance-next'));
     act(() => animationCompletions.shift()?.({ finished: true }));
     expect(onNext).toHaveBeenCalledTimes(1);
@@ -178,6 +181,7 @@ describe('NativeInstanceDetailScreen', () => {
     const incomingDetail: NativeInstanceDetail = {
       ...detail,
       row: { ...detail.row, id: 'instance-2', name: 'Shiny Squirtle' },
+      ivs: [{ label: 'Attack', value: 3 }],
       moves: [{
         ...detail.moves[0],
         value: 'Water Gun',
@@ -188,13 +192,12 @@ describe('NativeInstanceDetailScreen', () => {
     rerender(<NativeInstanceDetailScreen {...commonProps} detail={incomingDetail} />);
 
     expect(screen.getByText('Shiny Squirtle')).toBeTruthy();
-    expect(screen.getByText('Fire Spin')).toBeTruthy();
-    expect(screen.queryByText('Water Gun')).toBeNull();
-    expect(deferredFrames).toHaveLength(1);
-
-    act(() => deferredFrames.shift()?.(0));
     expect(screen.getByText('Water Gun')).toBeTruthy();
     expect(screen.queryByText('Fire Spin')).toBeNull();
+    expect(screen.getByText('3')).toBeTruthy();
+    expect(screen.queryByText('15')).toBeNull();
+    expect(deferredFrames).toHaveLength(0);
+    expect(StyleSheet.flatten(screen.getByTestId('native-horizontal-page-slider').props.style).height).toBeUndefined();
 
     act(() => animationCompletions.shift()?.({ finished: true }));
     jest.restoreAllMocks();
@@ -1139,7 +1142,7 @@ describe('NativeInstanceDetailScreen', () => {
     expect(screen.getByTestId(
       'native-instance-background',
       { includeHiddenElements: true },
-    ).props.source.uri).toContain(
+    ).props.source[0].uri).toContain(
       '/images/backgrounds/bg_dragon.png',
     );
     fireEvent.press(screen.getByRole('button', { name: 'Change Mega form' }));
