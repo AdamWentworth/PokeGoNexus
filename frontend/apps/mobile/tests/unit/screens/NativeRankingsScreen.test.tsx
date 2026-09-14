@@ -1,8 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import { webCssVarTokens } from '@pokemongonexus/shared-ui-tokens';
-import { Animated, Easing } from 'react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { Animated } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { ComponentProps } from 'react';
+import { NATIVE_HORIZONTAL_PAGE_TRANSITION_MS } from '../../../src/components/NativeHorizontalPageSlider';
 import { NativeRankingsScreen } from '../../../src/screens/NativeRankingsScreen';
 
 const row = {
@@ -37,52 +37,59 @@ const renderRankings = (overrides: Partial<ComponentProps<typeof NativeRankingsS
     snapshotLabel: 'Recently updated',
     ...overrides,
   };
-  render(
+  const view = render(
     <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}>
       <NativeRankingsScreen {...props} />
     </SafeAreaProvider>,
   );
-  return props;
+  return { ...props, view };
 };
 
 describe('NativeRankingsScreen', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    act(() => jest.runOnlyPendingTimers());
+    jest.useRealTimers();
+  });
   it('changes ranking controls and opens the exact signed-in Pokémon workflow', () => {
     const props = renderRankings();
     expect(screen.getByText('Community Rankings')).toBeTruthy();
-    fireEvent.press(screen.getByText('Rarest owned'));
+    fireEvent.press(screen.getByRole('tab', { name: 'Rarest owned' }));
     expect(props.onChangeMode).toHaveBeenCalledWith('rarest');
     fireEvent.press(screen.getByLabelText('View wishlist, rank 1, Shiny Bulbasaur'));
     expect(props.onOpenEntry).toHaveBeenCalledWith(row);
   });
 
-  it('slides the ranking-mode indicator immediately with Vite motion timing', () => {
+  it('slides distinct ranking rows while retaining each panel and its expanded help', () => {
     const timing = jest.spyOn(Animated, 'timing');
-    const onChangeMode = jest.fn();
-    renderRankings({ onChangeMode });
+    const rareRow = { ...row, entry: { ...row.entry, id: '0002-default', name: 'Ivysaur' } };
+    const counts = { all: 1, missing: 0, owned: 1, trade: 0, wanted: 1 };
+    const props = renderRankings({ workspaces: {
+      wanted: { rows: [row], collectionFilterCounts: counts, selectedCategory: 'all' },
+      rarest: { rows: [rareRow], collectionFilterCounts: counts, selectedCategory: 'all' },
+    } });
+    const switchMode = (selectedMode: 'wanted' | 'rarest') => props.view.rerender(
+      <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}>
+        <NativeRankingsScreen {...props} selectedMode={selectedMode} />
+      </SafeAreaProvider>,
+    );
+    fireEvent(screen.getByTestId('native-horizontal-page-slider'), 'layout', { nativeEvent: { layout: { width: 390, height: 650 } } });
+    fireEvent.press(screen.getByText('How these rankings work'));
+    const wantedPanel = screen.getByTestId('native-rankings-panel-wanted');
     timing.mockClear();
-
-    fireEvent(
-      screen.getByTestId('native-rankings-mode-switcher'),
-      'layout',
-      { nativeEvent: { layout: { height: 56, width: 374, x: 0, y: 0 } } },
-    );
-    fireEvent.press(screen.getByText('Rarest owned'));
-
-    expect(screen.getByTestId('native-rankings-mode-indicator', {
-      includeHiddenElements: true,
-    })).toBeTruthy();
-    expect(timing).toHaveBeenCalledWith(
-      expect.any(Animated.Value),
-      expect.objectContaining({
-        duration: webCssVarTokens.motionSeconds.fast * 1000,
-        easing: Easing.ease,
-        isInteraction: false,
-        toValue: 1,
-        useNativeDriver: true,
-      }),
-    );
-    expect(timing.mock.invocationCallOrder[0])
-      .toBeLessThan(onChangeMode.mock.invocationCallOrder[0]);
+    fireEvent.press(screen.getByRole('tab', { name: 'Rarest owned' }));
+    expect(props.onChangeMode).toHaveBeenCalledWith('rarest');
+    switchMode('rarest');
+    expect(timing).toHaveBeenCalledWith(expect.any(Animated.Value), expect.objectContaining({
+      duration: NATIVE_HORIZONTAL_PAGE_TRANSITION_MS, toValue: 390, useNativeDriver: true,
+    }));
+    expect(screen.getByText('Ivysaur')).toBeTruthy();
+    expect(screen.queryByText('Shiny Bulbasaur')).toBeNull();
+    expect(screen.getByText('Shiny Bulbasaur', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId('native-rankings-panel-wanted', { includeHiddenElements: true })).toBe(wantedPanel);
+    switchMode('wanted');
+    expect(screen.getByText(/Duplicate wanted copies do not add votes/)).toBeTruthy();
+    expect(screen.getByText('Shiny Bulbasaur')).toBeTruthy();
     timing.mockRestore();
   });
 

@@ -101,6 +101,11 @@ describe('NativeRaidScreen', () => {
     expect(screen.getByLabelText('Raid party result')).toBeTruthy();
     fireEvent.press(screen.getByText('◷  Log raid'));
     expect(screen.getByLabelText('trainers').props.value).toBe('3');
+    const draft = screen.getByLabelText('trainers');
+    fireEvent.press(screen.getByText('Attacker rankings'));
+    fireEvent.press(screen.getByText('Boss counters'));
+    expect(screen.getByLabelText('trainers')).toBe(draft);
+    expect(screen.getByLabelText('trainers').props.value).toBe('3');
   });
   it('exposes canonical advanced boss controls inside Raid setup', async () => {
     renderRaid();

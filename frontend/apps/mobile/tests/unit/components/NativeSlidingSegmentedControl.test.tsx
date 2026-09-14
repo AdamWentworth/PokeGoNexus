@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { webCssVarTokens } from '@pokemongonexus/shared-ui-tokens';
-import { Animated, Easing, Text } from 'react-native';
+import { Animated, Easing, StyleSheet, Text } from 'react-native';
 import {
   NativeSlidingSegmentedControl,
   resolveNativeSlidingSegmentMetrics,
@@ -18,6 +18,36 @@ describe('NativeSlidingSegmentedControl', () => {
       indicatorWidth: 180,
       itemOffset: 184,
     });
+  });
+
+  it('follows the content track halfway through a slide without a competing animation', () => {
+    const scrollX = new Animated.Value(0);
+    const timing = jest.spyOn(Animated, 'timing');
+    const onChange = jest.fn();
+    const view = render(<NativeSlidingSegmentedControl
+      accessibilityLabel="Example views"
+      indicatorTestID="example-indicator"
+      items={items}
+      onChange={onChange}
+      progress={Animated.divide(scrollX, 390)}
+      renderItem={(item) => <Text>{item.label}</Text>}
+      testID="example-switcher"
+      value="first"
+    />);
+    fireEvent(view.getByTestId('example-switcher'), 'layout', {
+      nativeEvent: { layout: { width: 374, height: 56 } },
+    });
+    const offset = () => StyleSheet.flatten(view.getByTestId('example-indicator', { includeHiddenElements: true }).props.style).transform[0].translateX;
+    expect(offset()).toBe(0);
+    act(() => scrollX.setValue(195));
+    expect(offset()).toBe(92);
+    act(() => scrollX.setValue(390));
+    expect(offset()).toBe(184);
+    timing.mockClear();
+    fireEvent.press(view.getByText('Second view'));
+    expect(onChange).toHaveBeenCalledWith('second');
+    expect(timing).not.toHaveBeenCalled();
+    timing.mockRestore();
   });
 
   it('starts the shared native-thread transition before changing expensive content', () => {

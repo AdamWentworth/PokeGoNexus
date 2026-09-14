@@ -35,6 +35,7 @@ type Props<Value extends string> = {
   indicatorTestID?: string;
   items: readonly NativeSlidingSegmentedItem<Value>[];
   onChange: (value: Value) => void;
+  progress?: Animated.AnimatedDivision<number>;
   renderItem: (
     item: NativeSlidingSegmentedItem<Value>,
     selected: boolean,
@@ -71,6 +72,7 @@ export const NativeSlidingSegmentedControl = <Value extends string>({
   indicatorTestID,
   items,
   onChange,
+  progress,
   renderItem,
   style,
   testID,
@@ -83,8 +85,8 @@ export const NativeSlidingSegmentedControl = <Value extends string>({
   const indicatorIndexRef = useRef(selectedIndex);
   const metrics = resolveNativeSlidingSegmentMetrics(containerWidth, items.length);
   const indicatorTranslateX = useMemo(
-    () => Animated.multiply(indicatorPosition, metrics.itemOffset),
-    [indicatorPosition, metrics.itemOffset],
+    () => Animated.multiply(progress ?? indicatorPosition, metrics.itemOffset),
+    [indicatorPosition, metrics.itemOffset, progress],
   );
 
   const moveIndicator = useCallback((nextIndex: number) => {
@@ -104,6 +106,7 @@ export const NativeSlidingSegmentedControl = <Value extends string>({
   }, [indicatorPosition, reduceMotion]);
 
   useEffect(() => {
+    if (progress) return;
     if (indicatorIndexRef.current !== selectedIndex) {
       moveIndicator(selectedIndex);
       return;
@@ -112,7 +115,7 @@ export const NativeSlidingSegmentedControl = <Value extends string>({
       indicatorPosition.stopAnimation();
       indicatorPosition.setValue(selectedIndex);
     }
-  }, [indicatorPosition, moveIndicator, reduceMotion, selectedIndex]);
+  }, [indicatorPosition, moveIndicator, progress, reduceMotion, selectedIndex]);
 
   return (
     <View
@@ -150,7 +153,7 @@ export const NativeSlidingSegmentedControl = <Value extends string>({
               if (selected) return;
               // Acknowledge the tap on the native animation thread before the
               // parent swaps or recomputes an expensive destination workspace.
-              moveIndicator(index);
+              if (!progress) moveIndicator(index);
               onChange(item.value);
             }}
             style={({ pressed }) => [

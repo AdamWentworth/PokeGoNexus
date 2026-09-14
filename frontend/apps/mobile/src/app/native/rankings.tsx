@@ -55,29 +55,26 @@ export default function NativeRankingsRoute() {
     () => buildPokemonCatalogEntries(catalogQuery.data ?? []),
     [catalogQuery.data],
   );
-  const rowsBeforeCollectionFilter = useMemo(
-    () => buildNativeRankingRows({
-      catalog: rankingCatalog,
-      category,
-      collectionFilter: 'all',
-      instances: snapshotQuery.data?.instances,
-      mode,
-      payload: rankingsQuery.data,
-      query,
+  const workspaces = useMemo(() => Object.fromEntries(
+    (['wanted', 'rarest'] as const).map((workspaceMode) => {
+      const selectedCategory = workspaceMode === 'wanted' && category === 'shadow' ? 'all' : category;
+      const unfiltered = buildNativeRankingRows({
+        catalog: rankingCatalog,
+        category: selectedCategory,
+        collectionFilter: 'all',
+        instances: snapshotQuery.data?.instances,
+        mode: workspaceMode,
+        payload: rankingsQuery.data,
+        query,
+      });
+      return [workspaceMode, {
+        collectionFilterCounts: countNativeRankingCollectionFilters(unfiltered),
+        rows: filterNativeRankingRowsByCollection(unfiltered, session.user ? collectionFilter : 'all'),
+        selectedCategory,
+      }];
     }),
-    [category, mode, query, rankingCatalog, rankingsQuery.data, snapshotQuery.data?.instances],
-  );
-  const collectionFilterCounts = useMemo(
-    () => countNativeRankingCollectionFilters(rowsBeforeCollectionFilter),
-    [rowsBeforeCollectionFilter],
-  );
-  const rows = useMemo(
-    () => filterNativeRankingRowsByCollection(
-      rowsBeforeCollectionFilter,
-      session.user ? collectionFilter : 'all',
-    ),
-    [collectionFilter, rowsBeforeCollectionFilter, session.user],
-  );
+  ) as NonNullable<React.ComponentProps<typeof NativeRankingsScreen>['workspaces']>, [category, collectionFilter, query, rankingCatalog, rankingsQuery.data, session.user, snapshotQuery.data?.instances]);
+  const { rows, collectionFilterCounts } = workspaces[mode];
   const error = [
     catalogQuery.error,
     rankingsQuery.error,
@@ -131,6 +128,7 @@ export default function NativeRankingsRoute() {
   return <>
     <NativeRankingsScreen
       assetBaseUrl={runtimeConfig.api.frontendAppUrl}
+      workspaces={workspaces}
       collectionFilterCounts={collectionFilterCounts}
       collectorCount={Math.max(
         rankingsQuery.data?.snapshot.collector_users ?? 0,
@@ -157,7 +155,6 @@ export default function NativeRankingsRoute() {
       onChangeMode={(next) => {
         setMode(next);
         const nextCategory = next === 'wanted' && category === 'shadow' ? 'all' : category;
-        if (nextCategory !== category) setCategory(nextCategory);
         updateRouteState({ category: nextCategory, mode: next });
       }}
       onChangeQuery={(next) => {
@@ -172,7 +169,7 @@ export default function NativeRankingsRoute() {
       onRetry={retry}
       privacyThreshold={rankingsQuery.data?.privacy_threshold ?? 3}
       rows={rows}
-      selectedCategory={category}
+      selectedCategory={workspaces[mode].selectedCategory}
       selectedCollectionFilter={collectionFilter}
       selectedMode={mode}
       showCollectionFilters={Boolean(session.user)}

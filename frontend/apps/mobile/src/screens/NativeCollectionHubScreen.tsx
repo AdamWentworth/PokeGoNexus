@@ -160,7 +160,6 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
   const [query, setQuery] = useState(initialQuery);
   const [activeView, setActiveView] = useState<NativePokemonHubView>(initialView);
   const [selectedTagKey, setSelectedTagKey] = useState<string | null>(resolvedInitialTagKey);
-  const [stagedTagKey, setStagedTagKey] = useState<string | null>(null);
   const [sidePanelTagKey, setSidePanelTagKey] = useState<string | null>(resolvedInitialTagKey);
   const [visibleCollectionCount, setVisibleCollectionCount] = useState(() => {
     const initialTag = [...inventoryTags, ...wishlistTags]
@@ -193,12 +192,10 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     touchStartedAt: number | null;
   } | null>(null);
   const pendingTagMotionReadyRef = useRef(false);
-  const stagedTagKeyRef = useRef<string | null>(null);
-  const stagedTagReadyRef = useRef(false);
-  const stagedVisibleRowCountRef = useRef(0);
-  const stagedTagPreviewStartedAtRef = useRef<number | null>(null);
-  const stagedTagCancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stagedTagInteractionReleaseRef = useRef<(() => void) | null>(null);
+  const pressedTagKeyRef = useRef<string | null>(null);
+  const tagPressStartedAtRef = useRef<number | null>(null);
+  const tagPressCancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tagPressInteractionReleaseRef = useRef<(() => void) | null>(null);
   const sidePanelTagTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearTagRequestStartedAtRef = useRef<number | null>(null);
   const selectionRequestStartedAtRef = useRef<number | null>(null);
@@ -220,11 +217,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
         : null),
     [availableTags, requireTagSelection, selectedTagKey],
   );
-  const stagedTag = useMemo(
-    () => availableTags.find((tag) => tag.key === stagedTagKey) ?? null,
-    [availableTags, stagedTagKey],
-  );
-  const collectionTag = stagedTag ?? selectedTag;
+  const collectionTag = selectedTag;
   const sidePanelTag = useMemo(
     () => availableTags.find((tag) => tag.key === sidePanelTagKey)
       ?? (sidePanelTagKey === selectedTag?.key ? selectedTag : null),
@@ -362,10 +355,10 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
 
   useEffect(() => () => {
     pendingTagMotionRef.current = null;
-    if (stagedTagCancelTimerRef.current) clearTimeout(stagedTagCancelTimerRef.current);
+    if (tagPressCancelTimerRef.current) clearTimeout(tagPressCancelTimerRef.current);
     if (sidePanelTagTimerRef.current) clearTimeout(sidePanelTagTimerRef.current);
-    stagedTagInteractionReleaseRef.current?.();
-    stagedTagInteractionReleaseRef.current = null;
+    tagPressInteractionReleaseRef.current?.();
+    tagPressInteractionReleaseRef.current = null;
     if (hostedSortMenuCloseTimerRef.current) {
       clearTimeout(hostedSortMenuCloseTimerRef.current);
       hostedSortMenuCloseTimerRef.current = null;
@@ -459,15 +452,6 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     visibleRowCount: number,
     committedQuery: string,
   ) => {
-    if (stagedTagKeyRef.current && !pendingTagMotionRef.current) {
-      stagedTagReadyRef.current = true;
-      stagedVisibleRowCountRef.current = visibleRowCount;
-      return;
-    }
-    // Filter tiles stage their immutable result into the concealed grid during
-    // press-in. Do not publish its count or performance result until onPress
-    // adopts the same query; the visible search UI remains unchanged if the
-    // press turns into a vertical drag and is cancelled.
     if (committedQuery !== query) return;
     if (query.trim()) {
       setVisibleCollectionCount((current) => (
@@ -513,44 +497,36 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     if (
       activeViewRef.current === 'pokemon'
       || selectedTagKeyRef.current === tag.key
-      || stagedTagKeyRef.current === tag.key
+      || pressedTagKeyRef.current === tag.key
     ) return;
-    if (stagedTagCancelTimerRef.current) {
-      clearTimeout(stagedTagCancelTimerRef.current);
-      stagedTagCancelTimerRef.current = null;
+    if (tagPressCancelTimerRef.current) {
+      clearTimeout(tagPressCancelTimerRef.current);
+      tagPressCancelTimerRef.current = null;
     }
-    stagedTagInteractionReleaseRef.current?.();
-    stagedTagInteractionReleaseRef.current = beginNativeUiInteraction();
-    stagedTagPreviewStartedAtRef.current = Date.now();
+    tagPressInteractionReleaseRef.current?.();
+    tagPressInteractionReleaseRef.current = beginNativeUiInteraction();
+    tagPressStartedAtRef.current = Date.now();
     markNativeUiPerformance('collection_tag_preview_started', {
       rowCount: tag.rows.length,
       tagKey: tag.key,
     });
-    // Pressable reports press-in before release. Use that otherwise idle finger
-    // interval to reconcile the hidden middle grid, exactly as Vite keeps its
-    // offscreen DOM ready. No selected-tag or page state changes yet, so a
-    // cancelled press cannot navigate or alter the visible tag panel.
-    collectionSurfaceRef.current?.resetScroll();
-    stagedTagKeyRef.current = tag.key;
-    stagedTagReadyRef.current = false;
-    stagedVisibleRowCountRef.current = 0;
-    setStagedTagKey(tag.key);
+    // A press may become a page swipe. Reserve background work, but keep the
+    // mounted Pokémon list, its filter and its scroll position unchanged until
+    // onPress confirms an actual tag selection.
+    pressedTagKeyRef.current = tag.key;
   }, []);
 
   const cancelTagPreview = useCallback((tag: NativeTagSummary) => {
-    if (stagedTagCancelTimerRef.current) clearTimeout(stagedTagCancelTimerRef.current);
-    // RN dispatches press-out immediately before onPress for a successful tap.
-    // Defer cancellation one turn so onPress can adopt the staged rows first.
-    stagedTagCancelTimerRef.current = setTimeout(() => {
-      stagedTagCancelTimerRef.current = null;
-      if (stagedTagKeyRef.current !== tag.key) return;
-      stagedTagKeyRef.current = null;
-      stagedTagReadyRef.current = false;
-      stagedVisibleRowCountRef.current = 0;
-      stagedTagPreviewStartedAtRef.current = null;
-      setStagedTagKey(null);
-      stagedTagInteractionReleaseRef.current?.();
-      stagedTagInteractionReleaseRef.current = null;
+    if (tagPressCancelTimerRef.current) clearTimeout(tagPressCancelTimerRef.current);
+    // RN sends press-out before onPress for a tap. Defer release one turn so
+    // a confirmed selection can hand the interaction reservation to its slide.
+    tagPressCancelTimerRef.current = setTimeout(() => {
+      tagPressCancelTimerRef.current = null;
+      if (pressedTagKeyRef.current !== tag.key) return;
+      pressedTagKeyRef.current = null;
+      tagPressStartedAtRef.current = null;
+      tagPressInteractionReleaseRef.current?.();
+      tagPressInteractionReleaseRef.current = null;
     }, 0);
   }, []);
 
@@ -563,35 +539,23 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     // tag after a manual sort. A cancelled press must preserve the current sort.
     const sortChanged = tag.key === 'system:favorites'
       && collectionSurfaceRef.current?.applySort('favorite', 'descending');
-    const touchStartedAt = stagedTagPreviewStartedAtRef.current;
+    const touchStartedAt = tagPressStartedAtRef.current;
     tagSelectionTraceRef.current = { key: tag.key, startedAt };
-    if (stagedTagCancelTimerRef.current) {
-      clearTimeout(stagedTagCancelTimerRef.current);
-      stagedTagCancelTimerRef.current = null;
+    if (tagPressCancelTimerRef.current) {
+      clearTimeout(tagPressCancelTimerRef.current);
+      tagPressCancelTimerRef.current = null;
     }
-    const stagedDestinationAlreadyCommitted = (
-      stagedTagKeyRef.current === tag.key && stagedTagReadyRef.current
-    );
-    const destinationAlreadyCommitted = !sortChanged && (
-      stagedDestinationAlreadyCommitted || selectedTagKeyRef.current === tag.key
-    );
+    const destinationAlreadyCommitted = !sortChanged && selectedTagKeyRef.current === tag.key;
     markNativeUiPerformance('collection_tag_pressed', {
       destinationAlreadyCommitted,
-      previewLeadMs: stagedTagPreviewStartedAtRef.current === null
+      previewLeadMs: tagPressStartedAtRef.current === null
         ? null
-        : startedAt - stagedTagPreviewStartedAtRef.current,
+        : startedAt - tagPressStartedAtRef.current,
       rowCount: tag.rows.length,
       tagKey: tag.key,
     });
-    const stagedVisibleRowCount = stagedVisibleRowCountRef.current;
-    stagedTagKeyRef.current = null;
-    stagedTagReadyRef.current = false;
-    stagedVisibleRowCountRef.current = 0;
-    stagedTagPreviewStartedAtRef.current = null;
-    setStagedTagKey(null);
-    if (stagedDestinationAlreadyCommitted && query.trim()) {
-      setVisibleCollectionCount(stagedVisibleRowCount);
-    }
+    pressedTagKeyRef.current = null;
+    tagPressStartedAtRef.current = null;
     if (sidePanelTagTimerRef.current) {
       clearTimeout(sidePanelTagTimerRef.current);
       sidePanelTagTimerRef.current = null;
@@ -616,8 +580,8 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
     // preparePage has now reserved the complete track animation. Hand off the
     // press-in reservation so background cache/image work stays paused without
     // leaving two overlapping scheduler holds alive for the same gesture.
-    stagedTagInteractionReleaseRef.current?.();
-    stagedTagInteractionReleaseRef.current = null;
+    tagPressInteractionReleaseRef.current?.();
+    tagPressInteractionReleaseRef.current = null;
     pendingTagMotionRef.current = {
       delaySidePanelTag,
       key: tag.key,
@@ -625,11 +589,8 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
       touchStartedAt,
     };
     pendingTagMotionReadyRef.current = destinationAlreadyCommitted;
-    // Press-in has already reconciled this tag into the concealed middle
-    // grid. Start the UI-thread transform directly on release instead of
-    // spending another one-to-three frames waiting for the selected-tag/header
-    // bookkeeping commit. The rendered destination remains the staged tag
-    // until React atomically adopts the identical selected tag below.
+    // Reopening the current tag can slide immediately. A new tag waits for
+    // its confirmed data projection to commit before the grid enters.
     if (destinationAlreadyCommitted) startPendingTagMotion();
     if (selectedCountRef.current > 0) setSelectedIds(new Set());
 
@@ -654,7 +615,7 @@ export const NativeCollectionHubScreen = memo(function NativeCollectionHubScreen
       scrollOffset: 0,
       ...favoriteSort,
     });
-  }, [onContextChange, query, startPendingTagMotion]);
+  }, [onContextChange, startPendingTagMotion]);
 
   const toggleSelection = useCallback((entryId: string) => {
     setSelectedIds((current) => {

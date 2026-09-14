@@ -1,3 +1,6 @@
+import { NativeHorizontalPageSlider } from '../components/NativeHorizontalPageSlider';
+import { NativeRetainedWorkspacePage } from '../components/NativeRetainedWorkspacePage';
+import { useNativeWorkspaceMotion } from '../components/useNativeWorkspaceMotion';
 import { NativeRosterScopeControl } from '../components/tools/NativeRosterScopeControl';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -77,6 +80,7 @@ export const NativeRaidScreen = ({
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
   const [view, setView] = useState<ViewMode>('rankings');
+  const motion = useNativeWorkspaceMotion();
   const [scopeOverride, setScope] = useState<NativeRosterScope | null>(null);
   const [selectedType, setSelectedType] = useState('');
   const [query, setQuery] = useState('');
@@ -189,9 +193,9 @@ export const NativeRaidScreen = ({
     };
   }, [bossCounterKey, catalog, effectiveScope, effectiveSettings, instances, selectedBoss, view]);
 
-  const rankings = useMemo(() => {
+  const rankingPages = useMemo(() => (['rankings', 'boss'] as const).map((mode) => {
     const normalizedQuery = deferredQuery.trim().toLocaleLowerCase();
-    const rows = (view === 'boss'
+    const rows = (mode === 'boss'
       ? [...bossCounterEntries]
       : buildNativeRaidAttackers({
           catalog,
@@ -205,7 +209,7 @@ export const NativeRaidScreen = ({
       entry.chargedMove?.name,
       ...entry.types,
     ].some((value) => value?.toLocaleLowerCase().includes(normalizedQuery)));
-    if (view === 'rankings') {
+    if (mode === 'rankings') {
       const metricValue = (entry: typeof rows[number]) => {
         if (deferredRankingMetric === 'cp') return entry.cp;
         if (deferredRankingMetric === 'dps') return entry.dps;
@@ -219,7 +223,7 @@ export const NativeRaidScreen = ({
       ));
     }
     return rows.slice(0, 30);
-  }, [
+  }), [
     bossCounterEntries,
     catalog,
     deferredEffectiveSettings,
@@ -230,8 +234,8 @@ export const NativeRaidScreen = ({
     deferredSortDirection,
     instances,
     signedIn,
-    view,
   ]);
+  const rankings = rankingPages[view === 'rankings' ? 0 : 1];
   const customPartyScores = useMemo(() => {
     const seen = new Set<string>();
     return bossCounterEntries.filter((entry) => {
@@ -290,11 +294,8 @@ export const NativeRaidScreen = ({
         setBossCounterEntries([]);
         setBossCountersLoading(true);
       }
-    } else {
-      setBossCountersLoading(false);
     }
     setView(next);
-    setExpandedIds(new Set());
   };
   const selectBoss = (id: string) => {
     beginPerformance('raid_boss_selected_result_painted');
@@ -345,6 +346,7 @@ export const NativeRaidScreen = ({
       indicatorTestID="native-raid-view-indicator"
       items={RAID_VIEW_ITEMS}
       onChange={switchView}
+      progress={motion.progress}
       renderItem={(item, selected) => <>
         <NativeUiIcon color={selected ? '#06120f' : light ? '#172124' : '#ecf5f4'} name={item.value === 'rankings' ? 'chart' : 'target'} size={14} />
         <Text style={[styles.modeText, light && styles.textLight, selected && styles.modeTextActive]}>{item.label}</Text>
@@ -359,232 +361,241 @@ export const NativeRaidScreen = ({
     <NativeRosterScopeControl summary={rosterSummary} scope={effectiveScope} signedIn={signedIn} loading={isLoading} onChange={(value) => { if (value === 'catalog') beginPerformance('raid_roster_result_painted'); setScope(value); }} />
   );
 
-  const toolbar = (
-    <View style={styles.toolbar}>
-      <Text style={[styles.fieldLabel, light && styles.mutedLight]}>{view === 'boss' ? 'COUNTER SEARCH' : 'ATTACKER SEARCH'}</Text>
-      <TextInput
-        accessibilityLabel={view === 'boss' ? 'Search raid counters' : 'Search raid rankings'}
-        onChangeText={(value) => { beginPerformance('raid_search_result_painted'); setQuery(value); }}
-        placeholder="Pokémon, type, or move"
-        placeholderTextColor={light ? '#708183' : '#809294'}
-        style={[styles.search, light && styles.inputLight]}
-        value={query}
-      />
-      <View style={styles.toolbarActions}>
-        <View accessibilityLabel="Result detail" style={[styles.movesetTabs, light && styles.controlLight]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: settings.bestOnly }}
-            onPress={() => changeMovesetDetail(true)}
-            style={[styles.movesetButton, settings.bestOnly && styles.movesetActive]}
-          >
-            <Text style={[styles.movesetText, light && styles.textLight, settings.bestOnly && styles.movesetTextActive]}>BEST MOVESET</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: !settings.bestOnly }}
-            onPress={() => changeMovesetDetail(false)}
-            style={[styles.movesetButton, !settings.bestOnly && styles.movesetActive]}
-          >
-            <Text style={[styles.movesetText, light && styles.textLight, !settings.bestOnly && styles.movesetTextActive]}>ALL MOVESETS</Text>
-          </Pressable>
-        </View>
-        {view === 'rankings' ? <Pressable
-          accessibilityLabel="Ranking settings"
-          accessibilityRole="button"
-          accessibilityState={{ expanded: settingsOpen }}
-          onPress={() => { beginPerformance('raid_settings_painted'); setSettingsOpen((current) => !current); }}
-          style={[styles.settingsButton, light && styles.controlLight, settingsOpen && styles.settingsActive]}
-          testID="raid-ranking-settings"
-        >
-          <View style={styles.iconLabelRow}>
-            <NativeUiIcon color={light ? '#172124' : '#edf6f5'} name="filters" size={14} />
-            <Text style={[styles.settingsText, light && styles.textLight]}>SETTINGS {settingsOpen ? '⌃' : '⌄'}</Text>
-          </View>
-        </Pressable> : null}
-      </View>
-      {view === 'rankings' && settingsOpen ? (
-        <NativeRaidSettingsPanel
-          includeAttackerLevel={effectiveScope !== 'owned'}
-          includeBossControls={Boolean(selectedType)}
-          includeRelobbyControls
-          onChange={changeSettings}
-          settings={settings}
+  const renderWorkspace = (mode: ViewMode) => {
+    const rankings = rankingPages[mode === 'rankings' ? 0 : 1];
+    const countersLoading = mode === 'boss' && bossCountersLoading;
+    const toolbar = (
+      <View style={styles.toolbar}>
+        <Text style={[styles.fieldLabel, light && styles.mutedLight]}>{mode === 'boss' ? 'COUNTER SEARCH' : 'ATTACKER SEARCH'}</Text>
+        <TextInput
+          accessibilityLabel={mode === 'boss' ? 'Search raid counters' : 'Search raid rankings'}
+          onChangeText={(value) => { beginPerformance('raid_search_result_painted'); setQuery(value); }}
+          placeholder="Pokémon, type, or move"
+          placeholderTextColor={light ? '#708183' : '#809294'}
+          style={[styles.search, light && styles.inputLight]}
+          value={query}
         />
-      ) : null}
-      {view === 'rankings' ? (
-        <View accessibilityLabel="Ranking metric" style={[styles.metricSort, light && styles.controlLight]}>
-          {([['edps', 'eDPS'], ['dps', 'DPS'], ['tdo', 'TDO'], ['er', 'ER'], ['cp', 'CP']] as const).map(([metric, label]) => {
-            const selected = rankingMetric === metric;
-            return (
-              <Pressable
-                accessibilityLabel={`Sort by ${label}${selected ? `, currently ${sortDirection}` : ''}`}
-                accessibilityRole="button"
-                key={metric}
-                onPress={() => selectRankingMetric(metric)}
-                style={[styles.metricSortButton, selected && styles.metricSortActive]}
-              >
-                <Text style={[styles.metricSortText, light && styles.textLight, selected && styles.metricSortTextActive]}>{label}</Text>
-                <Text style={[styles.metricSortIcon, selected && styles.metricSortTextActive]}>{selected ? sortDirection === 'descending' ? '⌄' : '⌃' : '↕'}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-    </View>
-  );
-
-  const bossPicker = view === 'boss' ? (
-    <View style={styles.bossSection}>
-      {selectedBoss ? (
-        <View style={[styles.selectedBoss, light && styles.panelLight]}>
-          <Image fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, selectedBoss.imageUri) }} style={styles.selectedBossImage} />
-          <View style={styles.bossSummaryCopy}>
-            <Text style={[styles.eyebrow, light && styles.accentLight]}>RAID BOSS</Text>
-            <Text style={[styles.bossTitle, light && styles.textLight]}>{selectedBoss.name}</Text>
-            <View style={styles.bossMetaRow}>{selectedBossBadge !== 'Pokemon' ? <Text style={styles.bossBadge}>{selectedBossBadge}</Text> : null}<Text style={[styles.bossMeta, light && styles.mutedLight]}>{selectedBossStats ? `CP ${selectedBossStats.bossCp.toLocaleString()} · ` : ''}{selectedBoss.variant.type1_name}{selectedBoss.variant.type2_name ? ` / ${selectedBoss.variant.type2_name}` : ''}</Text></View>
-          </View>
-        </View>
-      ) : null}
-      <TextInput
-        accessibilityLabel="Find boss"
-        onChangeText={(value) => { beginPerformance('raid_boss_search_result_painted'); setBossQuery(value); }}
-        onSubmitEditing={() => { if (bossSuggestions[0]) selectBoss(bossSuggestions[0].id); }}
-        placeholder="Search raid bosses"
-        placeholderTextColor={light ? '#708183' : '#809294'}
-        returnKeyType="search"
-        style={[styles.search, styles.bossSearch, light && styles.inputLight]}
-        value={bossQuery}
-      />
-      {bossQuery.trim() ? (
-        <View accessibilityLabel="Raid boss suggestions" style={[styles.bossSuggestions, light && styles.panelLight]}>
-          {bossSuggestions.length > 0 ? bossSuggestions.map((boss) => (
+        <View style={styles.toolbarActions}>
+          <View accessibilityLabel="Result detail" style={[styles.movesetTabs, light && styles.controlLight]}>
             <Pressable
-              accessibilityLabel={`Select ${boss.name} raid boss`}
               accessibilityRole="button"
-              accessibilityState={{ selected: selectedBoss?.id === boss.id }}
-              key={boss.id}
-              onPress={() => selectBoss(boss.id)}
-              style={[styles.bossSuggestion, selectedBoss?.id === boss.id && styles.bossSuggestionActive]}
+              accessibilityState={{ selected: settings.bestOnly }}
+              onPress={() => changeMovesetDetail(true)}
+              style={[styles.movesetButton, settings.bestOnly && styles.movesetActive]}
             >
-              <Image fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, boss.imageUri) }} style={styles.bossSuggestionImage} />
-              <Text numberOfLines={1} style={[styles.bossSuggestionName, light && styles.textLight]}>{boss.name}</Text>
-              <Text style={[styles.bossSuggestionNumber, light && styles.mutedLight]}>#{String(boss.pokemon.pokedex_number).padStart(4, '0')}</Text>
+              <Text style={[styles.movesetText, light && styles.textLight, settings.bestOnly && styles.movesetTextActive]}>BEST MOVESET</Text>
             </Pressable>
-          )) : <Text style={[styles.noBosses, light && styles.mutedLight]}>No matching raid boss found.</Text>}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: !settings.bestOnly }}
+              onPress={() => changeMovesetDetail(false)}
+              style={[styles.movesetButton, !settings.bestOnly && styles.movesetActive]}
+            >
+              <Text style={[styles.movesetText, light && styles.textLight, !settings.bestOnly && styles.movesetTextActive]}>ALL MOVESETS</Text>
+            </Pressable>
+          </View>
+          {mode === 'rankings' ? <Pressable
+            accessibilityLabel="Ranking settings"
+            accessibilityRole="button"
+            accessibilityState={{ expanded: settingsOpen }}
+            onPress={() => { beginPerformance('raid_settings_painted'); setSettingsOpen((current) => !current); }}
+            style={[styles.settingsButton, light && styles.controlLight, settingsOpen && styles.settingsActive]}
+            testID="raid-ranking-settings"
+          >
+            <View style={styles.iconLabelRow}>
+              <NativeUiIcon color={light ? '#172124' : '#edf6f5'} name="filters" size={14} />
+              <Text style={[styles.settingsText, light && styles.textLight]}>SETTINGS {settingsOpen ? '⌃' : '⌄'}</Text>
+            </View>
+          </Pressable> : null}
         </View>
-      ) : null}
-    </View>
-  ) : null;
+        {mode === 'rankings' && settingsOpen ? (
+          <NativeRaidSettingsPanel
+            includeAttackerLevel={effectiveScope !== 'owned'}
+            includeBossControls={Boolean(selectedType)}
+            includeRelobbyControls
+            onChange={changeSettings}
+            settings={settings}
+          />
+        ) : null}
+        {mode === 'rankings' ? (
+          <View accessibilityLabel="Ranking metric" style={[styles.metricSort, light && styles.controlLight]}>
+            {([['edps', 'eDPS'], ['dps', 'DPS'], ['tdo', 'TDO'], ['er', 'ER'], ['cp', 'CP']] as const).map(([metric, label]) => {
+              const selected = rankingMetric === metric;
+              return (
+                <Pressable
+                  accessibilityLabel={`Sort by ${label}${selected ? `, currently ${sortDirection}` : ''}`}
+                  accessibilityRole="button"
+                  key={metric}
+                  onPress={() => selectRankingMetric(metric)}
+                  style={[styles.metricSortButton, selected && styles.metricSortActive]}
+                >
+                  <Text style={[styles.metricSortText, light && styles.textLight, selected && styles.metricSortTextActive]}>{label}</Text>
+                  <Text style={[styles.metricSortIcon, selected && styles.metricSortTextActive]}>{selected ? sortDirection === 'descending' ? '⌄' : '⌃' : '↕'}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+      </View>
+    );
 
-  const heading = view === 'boss'
-    ? `Best counters${selectedBoss ? ` vs ${selectedBoss.name}` : ''}`
-    : selectedType
-      ? `${effectiveScope === 'owned' ? 'Your top' : 'Top'} ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} raid attackers`
+    const bossPicker = mode === 'boss' ? (
+      <View style={styles.bossSection}>
+        {selectedBoss ? (
+          <View style={[styles.selectedBoss, light && styles.panelLight]}>
+            <Image fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, selectedBoss.imageUri) }} style={styles.selectedBossImage} />
+            <View style={styles.bossSummaryCopy}>
+              <Text style={[styles.eyebrow, light && styles.accentLight]}>RAID BOSS</Text>
+              <Text style={[styles.bossTitle, light && styles.textLight]}>{selectedBoss.name}</Text>
+              <View style={styles.bossMetaRow}>{selectedBossBadge !== 'Pokemon' ? <Text style={styles.bossBadge}>{selectedBossBadge}</Text> : null}<Text style={[styles.bossMeta, light && styles.mutedLight]}>{selectedBossStats ? `CP ${selectedBossStats.bossCp.toLocaleString()} · ` : ''}{selectedBoss.variant.type1_name}{selectedBoss.variant.type2_name ? ` / ${selectedBoss.variant.type2_name}` : ''}</Text></View>
+            </View>
+          </View>
+        ) : null}
+        <TextInput
+          accessibilityLabel="Find boss"
+          onChangeText={(value) => { beginPerformance('raid_boss_search_result_painted'); setBossQuery(value); }}
+          onSubmitEditing={() => { if (bossSuggestions[0]) selectBoss(bossSuggestions[0].id); }}
+          placeholder="Search raid bosses"
+          placeholderTextColor={light ? '#708183' : '#809294'}
+          returnKeyType="search"
+          style={[styles.search, styles.bossSearch, light && styles.inputLight]}
+          value={bossQuery}
+        />
+        {bossQuery.trim() ? (
+          <View accessibilityLabel="Raid boss suggestions" style={[styles.bossSuggestions, light && styles.panelLight]}>
+            {bossSuggestions.length > 0 ? bossSuggestions.map((boss) => (
+              <Pressable
+                accessibilityLabel={`Select ${boss.name} raid boss`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedBoss?.id === boss.id }}
+                key={boss.id}
+                onPress={() => selectBoss(boss.id)}
+                style={[styles.bossSuggestion, selectedBoss?.id === boss.id && styles.bossSuggestionActive]}
+              >
+                <Image fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, boss.imageUri) }} style={styles.bossSuggestionImage} />
+                <Text numberOfLines={1} style={[styles.bossSuggestionName, light && styles.textLight]}>{boss.name}</Text>
+                <Text style={[styles.bossSuggestionNumber, light && styles.mutedLight]}>#{String(boss.pokemon.pokedex_number).padStart(4, '0')}</Text>
+              </Pressable>
+            )) : <Text style={[styles.noBosses, light && styles.mutedLight]}>No matching raid boss found.</Text>}
+          </View>
+        ) : null}
+      </View>
+    ) : null;
+
+    const heading = mode === 'boss'
+      ? `Best counters${selectedBoss ? ` vs ${selectedBoss.name}` : ''}`
+      : selectedType
+        ? `${effectiveScope === 'owned' ? 'Your top' : 'Top'} ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} raid attackers`
+        : effectiveScope === 'owned'
+          ? 'Your top raid attackers'
+          : 'Top raid attackers';
+
+    const header = (
+      <View style={styles.headerStack}>
+        {roster}
+        {mode === 'rankings' ? <NativeRaidTypeFilter assetBaseUrl={assetBaseUrl} onChange={(type) => { beginPerformance('raid_type_result_painted'); setSelectedType(type); }} selectedType={selectedType} /> : bossPicker}
+        <View style={styles.leaderboardHeading}>
+          <Text style={[styles.resultsTitle, light && styles.textLight]}>{heading}</Text>
+          <Pressable accessibilityLabel="How raid rankings work" accessibilityRole="button" onPress={onMethodology} style={[styles.info, light && styles.controlLight]}>
+            <Text style={[styles.infoText, light && styles.accentLight]}>ⓘ</Text>
+          </Pressable>
+        </View>
+        {toolbar}
+        {mode === 'boss' && selectedBoss ? <NativeRaidBossSetupPanel assetBaseUrl={assetBaseUrl} boss={selectedBoss} dodgeCalibrationApplied={observedDodgeSuccessRate != null} includeAttackerLevel={effectiveScope !== 'owned'} key={selectedBoss.id} onMethodology={onMethodology} onObservedDodgeRateChange={setObservedDodgeSuccessRate} onSettingsChange={changeSettings} onShadowBossModeChange={(mode) => { beginPerformance('raid_modifier_result_painted'); setShadowBossMode(mode); }} onShadowRaidChange={(enabled) => { beginPerformance('raid_modifier_result_painted'); setShadowRaid(enabled); }} ownerKey={ownerKey} scores={customPartyScores} selectedBossIsShadowRaid={selectedBossIsShadowRaid} settings={effectiveSettings} shadowBossMode={shadowBossMode} shadowMechanicsEnabled={shadowMechanicsEnabled} shadowRaid={shadowRaid} /> : null}
+        {isLoading || countersLoading ? <View accessibilityRole="progressbar" style={styles.state}><ActivityIndicator color="#2fd6d0" /><Text style={[styles.stateCopy, light && styles.mutedLight]}>{countersLoading ? 'Modeling raid timelines…' : 'Loading battle data…'}</Text></View> : null}
+        {error ? (
+          <View accessibilityRole="alert" style={styles.error}>
+            <Text style={styles.errorTitle}>Raid Planner unavailable</Text>
+            <Text style={styles.errorCopy}>{error}</Text>
+            <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryText}>Try again</Text></Pressable>
+          </View>
+        ) : null}
+      </View>
+    );
+
+    const emptyPresentation = mode === 'boss'
+      ? !selectedBoss
+        ? {
+            title: 'No raid boss data yet.',
+            copy: 'Overall and type leaderboards can still rank attackers while boss data loads.',
+          }
+        : bossCounterEntries.length > 0
+          ? { title: 'No counters match the current filters.', copy: '' }
+          : effectiveScope === 'owned' && rosterSummary.eligibleCount === 0
+            ? {
+                title: 'No caught raid-ready Pokémon',
+                copy: `Mark Pokémon as caught to build a personalized counter team for ${selectedBoss.name}.`,
+              }
+            : {
+                title: 'No compatible raid counters',
+                copy: 'The selected roster has no legal movesets for this battle.',
+              }
       : effectiveScope === 'owned'
-        ? 'Your top raid attackers'
-        : 'Top raid attackers';
-
-  const header = (
-    <View style={styles.headerStack}>
-      <View style={styles.stationaryHeader}>
-        {productHeader}
-        {modeTabs}
-      </View>
-      {roster}
-      {view === 'rankings' ? <NativeRaidTypeFilter assetBaseUrl={assetBaseUrl} onChange={(type) => { beginPerformance('raid_type_result_painted'); setSelectedType(type); }} selectedType={selectedType} /> : bossPicker}
-      <View style={styles.leaderboardHeading}>
-        <Text style={[styles.resultsTitle, light && styles.textLight]}>{heading}</Text>
-        <Pressable accessibilityLabel="How raid rankings work" accessibilityRole="button" onPress={onMethodology} style={[styles.info, light && styles.controlLight]}>
-          <Text style={[styles.infoText, light && styles.accentLight]}>ⓘ</Text>
-        </Pressable>
-      </View>
-      {toolbar}
-      {view === 'boss' && selectedBoss ? <NativeRaidBossSetupPanel assetBaseUrl={assetBaseUrl} boss={selectedBoss} dodgeCalibrationApplied={observedDodgeSuccessRate != null} includeAttackerLevel={effectiveScope !== 'owned'} key={selectedBoss.id} onMethodology={onMethodology} onObservedDodgeRateChange={setObservedDodgeSuccessRate} onSettingsChange={changeSettings} onShadowBossModeChange={(mode) => { beginPerformance('raid_modifier_result_painted'); setShadowBossMode(mode); }} onShadowRaidChange={(enabled) => { beginPerformance('raid_modifier_result_painted'); setShadowRaid(enabled); }} ownerKey={ownerKey} scores={customPartyScores} selectedBossIsShadowRaid={selectedBossIsShadowRaid} settings={effectiveSettings} shadowBossMode={shadowBossMode} shadowMechanicsEnabled={shadowMechanicsEnabled} shadowRaid={shadowRaid} /> : null}
-      {isLoading || bossCountersLoading ? <View accessibilityRole="progressbar" style={styles.state}><ActivityIndicator color="#2fd6d0" /><Text style={[styles.stateCopy, light && styles.mutedLight]}>{bossCountersLoading ? 'Modeling raid timelines…' : 'Loading battle data…'}</Text></View> : null}
-      {error ? (
-        <View accessibilityRole="alert" style={styles.error}>
-          <Text style={styles.errorTitle}>Raid Planner unavailable</Text>
-          <Text style={styles.errorCopy}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryText}>Try again</Text></Pressable>
-        </View>
-      ) : null}
-    </View>
-  );
-
-  const emptyPresentation = view === 'boss'
-    ? !selectedBoss
-      ? {
-          title: 'No raid boss data yet.',
-          copy: 'Overall and type leaderboards can still rank attackers while boss data loads.',
-        }
-      : bossCounterEntries.length > 0
-        ? { title: 'No counters match the current filters.', copy: '' }
-        : effectiveScope === 'owned' && rosterSummary.eligibleCount === 0
+        ? selectedType
           ? {
-              title: 'No caught raid-ready Pokémon',
-              copy: `Mark Pokémon as caught to build a personalized counter team for ${selectedBoss.name}.`,
+              title: 'No compatible attackers',
+              copy: `None of your caught Pokémon have a usable ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} moveset for this ranking.`,
             }
           : {
-              title: 'No compatible raid counters',
-              copy: 'The selected roster has no legal movesets for this battle.',
+              title: 'No compatible attackers',
+              copy: 'No caught attackers match the current filters. Add level, IV, and move details to improve personalized rankings.',
             }
-    : effectiveScope === 'owned'
-      ? selectedType
-        ? {
-            title: 'No compatible attackers',
-            copy: `None of your caught Pokémon have a usable ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} moveset for this ranking.`,
-          }
-        : {
-            title: 'No compatible attackers',
-            copy: 'No caught attackers match the current filters. Add level, IV, and move details to improve personalized rankings.',
-          }
-      : selectedType
-        ? {
-            title: 'No compatible attackers',
-            copy: `No eligible attackers have a ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} fast or charged move.`,
-          }
-        : { title: 'No compatible attackers', copy: 'No attackers match the current filters.' };
+        : selectedType
+          ? {
+              title: 'No compatible attackers',
+              copy: `No eligible attackers have a ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} fast or charged move.`,
+            }
+          : { title: 'No compatible attackers', copy: 'No attackers match the current filters.' };
 
-  return (
-    <View style={[styles.root, light && styles.rootLight]} testID="native-raid-screen">
-      <View style={styles.workspaceViewport} testID="native-raid-workspace-motion">
-        <FlatList
-          contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 4 + insets.top, paddingBottom: 96 + insets.bottom }}
-          data={rankings}
-          keyExtractor={(entry) => entry.id}
-          keyboardShouldPersistTaps="always"
-          nestedScrollEnabled
-          ListHeaderComponent={header}
-          ListEmptyComponent={!isLoading && !bossCountersLoading && !error ? (
-            <View style={[styles.empty, light && styles.emptyLight]}>
-              <Text style={[styles.emptyTitle, light && styles.textLight]}>{emptyPresentation.title}</Text>
-              {emptyPresentation.copy ? <Text style={[styles.stateCopy, light && styles.mutedLight]}>{emptyPresentation.copy}</Text> : null}
-            </View>
-          ) : null}
-          renderItem={({ item, index }) => (
-            <NativeRaidRankingCard
-              assetBaseUrl={assetBaseUrl}
-              entry={item}
-              attackerLevel={settings.attackerLevel}
-              expanded={expandedIds.has(item.id)}
-              onToggle={() => {
-                beginPerformance('raid_row_detail_painted');
-                setExpandedIds((current) => {
-                  const next = new Set(current);
-                  if (next.has(item.id)) next.delete(item.id);
-                  else next.add(item.id);
-                  return next;
-                });
-              }}
-              primaryMetric={view === 'rankings' ? rankingMetric : 'dps'}
-              rank={index + 1}
-            />
-          )}
-        />
-      </View>
+    return (
+          <FlatList
+            removeClippedSubviews={false}
+            contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 0, paddingBottom: 96 + insets.bottom }}
+            data={rankings}
+            keyExtractor={(entry) => entry.id}
+            keyboardShouldPersistTaps="always"
+            nestedScrollEnabled
+            ListHeaderComponent={header}
+            ListEmptyComponent={!isLoading && !countersLoading && !error ? (
+              <View style={[styles.empty, light && styles.emptyLight]}>
+                <Text style={[styles.emptyTitle, light && styles.textLight]}>{emptyPresentation.title}</Text>
+                {emptyPresentation.copy ? <Text style={[styles.stateCopy, light && styles.mutedLight]}>{emptyPresentation.copy}</Text> : null}
+              </View>
+            ) : null}
+            renderItem={({ item, index }) => (
+              <NativeRaidRankingCard
+                assetBaseUrl={assetBaseUrl}
+                entry={item}
+                attackerLevel={settings.attackerLevel}
+                expanded={expandedIds.has(item.id)}
+                onToggle={() => {
+                  beginPerformance('raid_row_detail_painted');
+                  setExpandedIds((current) => {
+                    const next = new Set(current);
+                    if (next.has(item.id)) next.delete(item.id);
+                    else next.add(item.id);
+                    return next;
+                  });
+                }}
+                primaryMetric={mode === 'rankings' ? rankingMetric : 'dps'}
+                rank={index + 1}
+              />
+            )}
+          />
+    );
+  };
+
+  return <View style={[styles.root, light && styles.rootLight]} testID="native-raid-screen">
+    <View style={[styles.stationaryHeader, { paddingHorizontal: 8, paddingTop: 4 + insets.top, paddingBottom: 8 }]} testID="native-raid-stationary-header">
+      {productHeader}
+      {modeTabs}
     </View>
-  );
+    <View onLayout={motion.onLayout} style={styles.workspaceViewport} testID="native-raid-workspace-motion">
+      <NativeHorizontalPageSlider activeIndex={view === 'rankings' ? 0 : 1} onIndexChange={(index) => switchView(index === 0 ? 'rankings' : 'boss')} scrollX={motion.scrollX} swipeEnabled={false}>
+        {(['rankings', 'boss'] as const).map((mode) => <NativeRetainedWorkspacePage active={view === mode} key={mode}>{renderWorkspace(mode)}</NativeRetainedWorkspacePage>)}
+      </NativeHorizontalPageSlider>
+    </View>
+  </View>;
 };
 
 const styles = StyleSheet.create({

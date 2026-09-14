@@ -1,3 +1,6 @@
+import { NativeHorizontalPageSlider } from '../components/NativeHorizontalPageSlider';
+import { NativeRetainedWorkspacePage } from '../components/NativeRetainedWorkspacePage';
+import { useNativeWorkspaceMotion } from '../components/useNativeWorkspaceMotion';
 import { useNativeReducedMotion } from '../features/settings/useNativeMotion';
 import { NativeRosterScopeControl } from '../components/tools/NativeRosterScopeControl';
 import { memo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -174,6 +177,7 @@ export const NativeMaxScreen = ({
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
   const [view, setView] = useState<MaxView>(initialView);
+  const motion = useNativeWorkspaceMotion(initialView === 'bosses' ? 1 : 0);
   const [scopeOverride, setScope] = useState<NativeRosterScope | null>(null);
   const [role, setRole] = useState<NativeMaxRole>(initialRole);
   const [selectedType, setSelectedType] = useState(initialSelectedType);
@@ -182,7 +186,7 @@ export const NativeMaxScreen = ({
   const [bossQuery, setBossQuery] = useState('');
   const [methodOpen, setMethodOpen] = useState(false);
 
-  const [pagination, setPagination] = useState({ key: '', limit: MAX_RESULTS_PAGE_SIZE });
+  const [pagination, setPagination] = useState<Record<MaxView, { key: string; limit: number }>>({ rankings: { key: '', limit: MAX_RESULTS_PAGE_SIZE }, bosses: { key: '', limit: MAX_BOSS_RESULTS_INITIAL_SIZE } });
   const performanceStartsRef = useRef(new Map<string, number>());
   const beginPerformance = useCallback((event: string) => {
     performanceStartsRef.current.set(event, Date.now());
@@ -214,7 +218,7 @@ export const NativeMaxScreen = ({
     [catalog, instances],
   );
   const candidates = useMemo(
-    () => view === 'bosses' && selectedBoss
+    () => selectedBoss
       ? buildNativeMaxRoleCandidates({
           bossVariant: selectedBoss,
           catalog,
@@ -222,17 +226,17 @@ export const NativeMaxScreen = ({
           scope: effectiveScope,
         })
       : EMPTY_MAX_ROLE_CANDIDATES,
-    [catalog, effectiveScope, instances, selectedBoss, view],
+    [catalog, effectiveScope, instances, selectedBoss],
   );
-  const rankings = useMemo(() => {
-    const normalized = deferredQuery.trim().toLocaleLowerCase();
+  const rankingPages = useMemo(() => (['rankings', 'bosses'] as const).map((mode) => {
+    const normalized = mode === 'rankings' ? deferredQuery.trim().toLocaleLowerCase() : '';
     const entries = buildNativeMaxRankings({
-      bossVariant: view === 'bosses' ? selectedBoss : null,
+      bossVariant: mode === 'bosses' ? selectedBoss : null,
       catalog,
       instances,
       role,
       scope: effectiveScope,
-      selectedType: view === 'rankings' ? selectedType : '',
+      selectedType: mode === 'rankings' ? selectedType : '',
     });
     return entries.filter((entry) => !normalized || [
       entry.name,
@@ -242,21 +246,14 @@ export const NativeMaxScreen = ({
       entry.maxRanking?.maxMoveType,
       ...entry.types,
     ].some((value) => value?.toLocaleLowerCase().includes(normalized)));
-  }, [catalog, deferredQuery, effectiveScope, instances, role, selectedBoss, selectedType, view]);
-  const paginationKey = [bossId, query, role, effectiveScope, selectedType, view].join('\u0000');
-  const initialVisibleLimit = view === 'bosses'
-    ? MAX_BOSS_RESULTS_INITIAL_SIZE
-    : MAX_RESULTS_PAGE_SIZE;
-  const resultsPageSize = view === 'bosses'
-    ? MAX_BOSS_RESULTS_PAGE_SIZE
-    : MAX_RESULTS_PAGE_SIZE;
-  const visibleLimit = pagination.key === paginationKey
-    ? pagination.limit
-    : initialVisibleLimit;
-  const visibleRankings = useMemo(
-    () => rankings.slice(0, visibleLimit),
-    [rankings, visibleLimit],
-  );
+  }), [catalog, deferredQuery, effectiveScope, instances, role, selectedBoss, selectedType]);
+  const rankings = rankingPages[view === 'rankings' ? 0 : 1];
+  const paginationKeyFor = (mode: MaxView) => (mode === 'rankings'
+    ? [query, role, effectiveScope, selectedType, mode]
+    : [bossId, role, effectiveScope, mode]).join('\u0000');
+  const visibleLimit = pagination[view].key === paginationKeyFor(view)
+    ? pagination[view].limit
+    : view === 'bosses' ? MAX_BOSS_RESULTS_INITIAL_SIZE : MAX_RESULTS_PAGE_SIZE;
   const bossSuggestions = useMemo(() => {
     const normalized = deferredBossQuery.trim().toLocaleLowerCase();
     if (!normalized) return [];
@@ -323,7 +320,6 @@ export const NativeMaxScreen = ({
     if (next === view) return;
     beginPerformance('max_view_result_painted');
     setView(next);
-    setQuery('');
     onRouteStateChange?.({ view: next });
   }, [beginPerformance, onRouteStateChange, view]);
   const changeScope = useCallback((next: NativeRosterScope) => {
@@ -389,6 +385,7 @@ export const NativeMaxScreen = ({
       indicatorTestID="native-max-view-indicator"
       items={MAX_VIEW_ITEMS}
       onChange={switchView}
+      progress={motion.progress}
       renderItem={(item, selected) => <>
         <NativeUiIcon color={selected ? '#06120f' : light ? '#172124' : '#ecf5f4'} name={item.value === 'rankings' ? 'chart' : 'target'} size={14} />
         <Text style={[styles.viewText, light && styles.textLight, selected && styles.activeText]}>{item.label}</Text>
@@ -397,7 +394,7 @@ export const NativeMaxScreen = ({
       testID="native-max-view-switcher"
       value={view}
     />
-  ), [light, switchView, view]);
+  ), [light, motion.progress, switchView, view]);
 
   const roster = (
     <NativeRosterScopeControl summary={rosterSummary} scope={effectiveScope} signedIn={signedIn} loading={isLoading} onChange={changeScope} />
@@ -424,241 +421,259 @@ export const NativeMaxScreen = ({
     </View>
   );
 
-  const typeFilterLabel = role === 'damage' ? 'Max Move type' : 'Incoming attack type';
-  const typeFilter = view === 'rankings' ? (
-    <View accessibilityLabel={typeFilterLabel} style={[styles.typeDeck, light && styles.panelLight]}>
-      <Text style={[styles.fieldLabel, light && styles.mutedLight]}>
-        {role === 'damage' ? 'MAX MOVE TYPE' : 'INCOMING ATTACK TYPE'}
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ selected: selectedType === '' }}
-        onPress={() => changeType('')}
-        style={[styles.allTypes, selectedType === '' && styles.allTypesActive]}
-      >
-        <Text style={styles.allTypesText}>All types</Text>
-      </Pressable>
-      <NativeMaxTypeGrid
-        assetBaseUrl={assetBaseUrl}
-        light={light}
-        onSelect={changeType}
-        selectedType={selectedType}
-      />
-    </View>
-  ) : null;
-
-  const bossPicker = view === 'bosses' && selectedBoss ? (
-    <View accessibilityLabel="Max Battle boss" style={[styles.bossPicker, light && styles.panelLight]}>
-      <View style={styles.selectedBoss}>
-        <View style={[styles.selectedBossStage, light && styles.cardLight]}>
-          <ExpoImage
-            cachePolicy="memory-disk"
-            contentFit="contain"
-            source={{ uri: absoluteUri(assetBaseUrl, selectedBoss.currentImage || selectedBoss.image_url) }}
-            style={styles.selectedBossImage}
-            transition={0}
-          />
-        </View>
-        <View style={styles.selectedBossCopy}>
-          <Text style={[styles.fieldLabel, light && styles.accentLight]}>MAX BATTLE BOSS</Text>
-          <Text style={[styles.selectedBossName, light && styles.textLight]}>{selectedBoss.name}</Text>
-          <Text style={[styles.selectedBossTypes, light && styles.mutedLight]}>
-            {[selectedBoss.type1_name, selectedBoss.type2_name].filter(Boolean).join(' / ')}
-          </Text>
-        </View>
-      </View>
-      <TextInput
-        accessibilityLabel="Search Max Battle bosses"
-        onChangeText={changeBossQuery}
-        onSubmitEditing={() => { if (bossSuggestions[0]) selectBoss(bossSuggestions[0].variant_id); }}
-        placeholder="Search Max Battle bosses"
-        placeholderTextColor={light ? '#718283' : '#829394'}
-        returnKeyType="search"
-        style={[styles.search, styles.bossSearch, light && styles.inputLight]}
-        value={bossQuery}
-      />
-      {deferredBossQuery.trim() ? (
-        <View accessibilityLabel="Boss results" style={styles.bossResults}>
-          {bossSuggestions.length ? bossSuggestions.map((boss) => {
-            const maxKind = boss.variantType.includes('gigantamax') ? 'gigantamax' : 'dynamax';
-            return (
-              <Pressable
-                accessibilityLabel={`Select ${boss.name} Max boss`}
-                accessibilityRole="button"
-                key={boss.variant_id}
-                onPress={() => selectBoss(boss.variant_id)}
-                style={[styles.bossResult, light && styles.cardLight]}
-              >
-                <View style={styles.bossResultStage}>
-                  <ExpoImage cachePolicy="memory-disk" contentFit="contain" source={{ uri: absoluteUri(assetBaseUrl, boss.currentImage || boss.image_url) }} style={styles.bossResultImage} transition={0} />
-                  <ExpoImage cachePolicy="memory-disk" contentFit="contain" source={{ uri: absoluteUri(assetBaseUrl, `/images/${maxKind}.png`) }} style={styles.bossResultMaxIcon} transition={0} />
-                </View>
-                <Text numberOfLines={2} style={[styles.bossResultName, light && styles.textLight]}>{boss.name}</Text>
-                <Text style={[styles.bossResultNumber, light && styles.mutedLight]}>#{String(boss.pokedex_number).padStart(4, '0')}</Text>
-              </Pressable>
-            );
-          }) : (
-            <Text style={[styles.stateCopy, light && styles.mutedLight]}>No matching Max boss found.</Text>
-          )}
-        </View>
-      ) : null}
-    </View>
-  ) : null;
-
-  const heading = view === 'bosses' && selectedBoss
-    ? `Top ${role === 'healing' ? 'healers' : role === 'tank' ? 'tanks' : 'damage picks'} vs ${selectedBoss.name}`
-    : roleHeading(role, selectedType);
-  const assumptions = effectiveScope === 'owned'
-    ? 'Recorded level · recorded IVs · recorded Fast Move · unlocked Max Move levels'
-    : 'Level 50 · 15/15/15 IVs · Max Moves Level 3';
-
-  const resultsHeader = (
-    <View style={[styles.resultsPanel, light && styles.panelLight]}>
-      <View style={styles.resultsContext}>
-        <Text style={[styles.fieldLabel, light && styles.accentLight]}>{view === 'bosses' ? 'ROLE ALTERNATIVES' : selectedType.toUpperCase() || 'ALL MAX POKÉMON'}</Text>
-        <Text style={[styles.rankedPill, light && styles.rankedPillLight]}>{rankings.length} RANKED</Text>
-      </View>
-      <Text style={[styles.resultsTitle, light && styles.textLight]}>{heading}</Text>
-      <Text style={[styles.assumptions, light && styles.mutedLight]}>
-        {view === 'bosses'
-          ? 'Compare replacements for the selected role in your three-Pokémon party.'
-          : assumptions}
-      </Text>
-      {view === 'rankings' ? (
-        <TextInput
-          accessibilityLabel="Search Max rankings"
-          onChangeText={changeQuery}
-          placeholder="Pokémon or move"
-          placeholderTextColor={light ? '#718283' : '#829394'}
-          style={[styles.search, light && styles.inputLight]}
-          value={query}
-        />
-      ) : null}
-      {isLoading ? (
-        <View style={styles.state}>
-          <ActivityIndicator color="#42d6c8" />
-          <Text style={[styles.stateCopy, light && styles.mutedLight]}>Preparing Max rankings…</Text>
-        </View>
-      ) : null}
-      {error ? (
-        <View accessibilityRole="alert" style={styles.error}>
-          <Text style={styles.errorTitle}>Max Battles unavailable</Text>
-          <Text style={styles.errorCopy}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryText}>Try again</Text></Pressable>
-        </View>
-      ) : null}
-      {!isLoading && !error && rankings.length === 0 ? (
-        <View style={styles.resultsEmpty}>
-          <Text style={[styles.emptyTitle, light && styles.textLight]}>No eligible Max Pokémon</Text>
-          <Text style={[styles.stateCopy, light && styles.mutedLight]}>Try another role, type, boss, or roster.</Text>
-        </View>
-      ) : null}
-    </View>
-  );
-
-  const bossBenchmarkNote = view === 'bosses' && selectedBoss ? (
-    <View accessibilityLabel="Boss ranking method" style={[styles.benchmark, light && styles.panelLight]}>
-      <Text style={[styles.benchmarkTitle, light && styles.textLight]}>Standardized matchup</Text>
-      <Text style={[styles.benchmarkCopy, light && styles.mutedLight]}>
-        {effectiveScope === 'owned'
-          ? 'Recorded level, IVs, Fast Move, and unlocked Max Move levels'
-          : 'Level 50 · 15/15/15 IVs · level-3 Max moves'}
-        {' · '}
-        {rankings[0]?.maxRanking?.bossBenchmark?.pressureSource === 'legal-movesets'
-          ? 'expected pressure across legal boss movesets'
-          : 'typed benchmark pressure when boss moves are unavailable'}
-      </Text>
-    </View>
-  ) : null;
-
-  const header = (
-    <View style={styles.headerStack}>
-      <View style={styles.stationaryHeader}>
-        {productHeader}
-        {viewTabs}
-      </View>
-      {roster}
-      <Animated.View style={[styles.headerStack, rosterEntrance]} testID="native-max-roster-entrance">
-      {view === 'rankings'
-        ? <View style={[styles.filterDeck, light && styles.panelLight]}>{roleTabs}{typeFilter}</View>
-        : <>{bossPicker}{selectedBoss ? <NativeMaxBattleSimulator assetBaseUrl={assetBaseUrl} boss={selectedBoss} candidates={candidates} initialDifficulty={initialDifficulty} initialTrainerCount={initialTrainerCount} key={`${selectedBoss.variant_id}-${effectiveScope}`} onDifficultyChange={(difficulty) => onRouteStateChange?.({ difficulty: difficulty === getDefaultMaxBattleTier(selectedBoss) ? null : difficulty })} onTrainerCountChange={(trainerCount) => onRouteStateChange?.({ trainerCount })} rosterScope={effectiveScope} /> : null}{roleTabs}{bossBenchmarkNote}</>}
-      {resultsHeader}
-      </Animated.View>
-    </View>
-  );
-
-  const remainingRankings = rankings.length - visibleRankings.length;
-  const footer = (
-    <Animated.View style={[styles.footer, rosterEntrance]}>
-      {remainingRankings > 0 ? (
+  const renderWorkspace = (mode: MaxView) => {
+    const rankings = rankingPages[mode === 'rankings' ? 0 : 1];
+    const paginationKey = paginationKeyFor(mode);
+    const initialVisibleLimit = mode === 'bosses'
+      ? MAX_BOSS_RESULTS_INITIAL_SIZE
+      : MAX_RESULTS_PAGE_SIZE;
+    const resultsPageSize = mode === 'bosses'
+      ? MAX_BOSS_RESULTS_PAGE_SIZE
+      : MAX_RESULTS_PAGE_SIZE;
+    const visibleLimit = pagination[mode].key === paginationKey
+      ? pagination[mode].limit
+      : initialVisibleLimit;
+    const visibleRankings = rankings.slice(0, visibleLimit);
+    const typeFilterLabel = role === 'damage' ? 'Max Move type' : 'Incoming attack type';
+    const typeFilter = mode === 'rankings' ? (
+      <View accessibilityLabel={typeFilterLabel} style={[styles.typeDeck, light && styles.panelLight]}>
+        <Text style={[styles.fieldLabel, light && styles.mutedLight]}>
+          {role === 'damage' ? 'MAX MOVE TYPE' : 'INCOMING ATTACK TYPE'}
+        </Text>
         <Pressable
-          accessibilityLabel={`Show ${Math.min(resultsPageSize, remainingRankings)} more Max rankings`}
           accessibilityRole="button"
-          onPress={() => {
-            beginPerformance('max_more_result_painted');
-            setPagination({
-              key: paginationKey,
-              limit: Math.min(rankings.length, visibleLimit + resultsPageSize),
-            });
-          }}
-          style={[styles.showMore, light && styles.controlLight]}
+          accessibilityState={{ selected: selectedType === '' }}
+          onPress={() => changeType('')}
+          style={[styles.allTypes, selectedType === '' && styles.allTypesActive]}
         >
-          <Text style={[styles.showMoreText, light && styles.textLight]}>
-            Show {Math.min(resultsPageSize, remainingRankings)} more
-          </Text>
+          <Text style={styles.allTypesText}>All types</Text>
         </Pressable>
-      ) : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: methodOpen }}
-        onPress={() => {
-          beginPerformance('max_method_result_painted');
-          setMethodOpen((current) => !current);
-        }}
-        style={styles.method}
-      >
-        <Text style={[styles.methodTitle, light && styles.textLight]}>▸  How Max roles are ranked</Text>
-        {methodOpen ? (
-          <Text style={[styles.methodCopy, light && styles.mutedLight]}>
-            Damage uses Attack, active Max or G-Max power, STAB, and effectiveness. Tank uses effective bulk and boss pressure. Healing uses the active Max Spirit level and team recovery.
-          </Text>
-        ) : null}
-      </Pressable>
-    </Animated.View>
-  );
-
-  return (
-    <View style={[styles.root, light && styles.rootLight]} testID="native-max-screen">
-      <View style={styles.workspaceViewport} testID="native-max-workspace-motion">
-        <FlatList
-          contentContainerStyle={{ paddingHorizontal: 7, paddingTop: 3 + insets.top, paddingBottom: 96 + insets.bottom }}
-          data={visibleRankings}
-          initialNumToRender={2}
-          keyExtractor={(_entry, index) => String(index)}
-          keyboardShouldPersistTaps="always"
-          maxToRenderPerBatch={2}
-          nestedScrollEnabled
-          removeClippedSubviews
-          updateCellsBatchingPeriod={100}
-          ListFooterComponent={footer}
-          ListHeaderComponent={header}
-          ListEmptyComponent={null}
-          renderItem={({ item, index }) => (
-            <Animated.View style={rosterEntrance}>
-            <NativeCombatRankingCard
-              assetBaseUrl={assetBaseUrl}
-              entry={item}
-              metricLabel={roleMetric(role)}
-              onPress={() => onOpenPokemon(item)}
-              rank={index + 1}
-            />
-            </Animated.View>
-          )}
-          windowSize={1}
+        <NativeMaxTypeGrid
+          assetBaseUrl={assetBaseUrl}
+          light={light}
+          onSelect={changeType}
+          selectedType={selectedType}
         />
       </View>
+    ) : null;
+
+    const bossPicker = mode === 'bosses' && selectedBoss ? (
+      <View accessibilityLabel="Max Battle boss" style={[styles.bossPicker, light && styles.panelLight]}>
+        <View style={styles.selectedBoss}>
+          <View style={[styles.selectedBossStage, light && styles.cardLight]}>
+            <ExpoImage
+              cachePolicy="memory-disk"
+              contentFit="contain"
+              source={{ uri: absoluteUri(assetBaseUrl, selectedBoss.currentImage || selectedBoss.image_url) }}
+              style={styles.selectedBossImage}
+              transition={0}
+            />
+          </View>
+          <View style={styles.selectedBossCopy}>
+            <Text style={[styles.fieldLabel, light && styles.accentLight]}>MAX BATTLE BOSS</Text>
+            <Text style={[styles.selectedBossName, light && styles.textLight]}>{selectedBoss.name}</Text>
+            <Text style={[styles.selectedBossTypes, light && styles.mutedLight]}>
+              {[selectedBoss.type1_name, selectedBoss.type2_name].filter(Boolean).join(' / ')}
+            </Text>
+          </View>
+        </View>
+        <TextInput
+          accessibilityLabel="Search Max Battle bosses"
+          onChangeText={changeBossQuery}
+          onSubmitEditing={() => { if (bossSuggestions[0]) selectBoss(bossSuggestions[0].variant_id); }}
+          placeholder="Search Max Battle bosses"
+          placeholderTextColor={light ? '#718283' : '#829394'}
+          returnKeyType="search"
+          style={[styles.search, styles.bossSearch, light && styles.inputLight]}
+          value={bossQuery}
+        />
+        {deferredBossQuery.trim() ? (
+          <View accessibilityLabel="Boss results" style={styles.bossResults}>
+            {bossSuggestions.length ? bossSuggestions.map((boss) => {
+              const maxKind = boss.variantType.includes('gigantamax') ? 'gigantamax' : 'dynamax';
+              return (
+                <Pressable
+                  accessibilityLabel={`Select ${boss.name} Max boss`}
+                  accessibilityRole="button"
+                  key={boss.variant_id}
+                  onPress={() => selectBoss(boss.variant_id)}
+                  style={[styles.bossResult, light && styles.cardLight]}
+                >
+                  <View style={styles.bossResultStage}>
+                    <ExpoImage cachePolicy="memory-disk" contentFit="contain" source={{ uri: absoluteUri(assetBaseUrl, boss.currentImage || boss.image_url) }} style={styles.bossResultImage} transition={0} />
+                    <ExpoImage cachePolicy="memory-disk" contentFit="contain" source={{ uri: absoluteUri(assetBaseUrl, `/images/${maxKind}.png`) }} style={styles.bossResultMaxIcon} transition={0} />
+                  </View>
+                  <Text numberOfLines={2} style={[styles.bossResultName, light && styles.textLight]}>{boss.name}</Text>
+                  <Text style={[styles.bossResultNumber, light && styles.mutedLight]}>#{String(boss.pokedex_number).padStart(4, '0')}</Text>
+                </Pressable>
+              );
+            }) : (
+              <Text style={[styles.stateCopy, light && styles.mutedLight]}>No matching Max boss found.</Text>
+            )}
+          </View>
+        ) : null}
+      </View>
+    ) : null;
+
+    const heading = mode === 'bosses' && selectedBoss
+      ? `Top ${role === 'healing' ? 'healers' : role === 'tank' ? 'tanks' : 'damage picks'} vs ${selectedBoss.name}`
+      : roleHeading(role, selectedType);
+    const assumptions = effectiveScope === 'owned'
+      ? 'Recorded level · recorded IVs · recorded Fast Move · unlocked Max Move levels'
+      : 'Level 50 · 15/15/15 IVs · Max Moves Level 3';
+
+    const resultsHeader = (
+      <View style={[styles.resultsPanel, light && styles.panelLight]}>
+        <View style={styles.resultsContext}>
+          <Text style={[styles.fieldLabel, light && styles.accentLight]}>{mode === 'bosses' ? 'ROLE ALTERNATIVES' : selectedType.toUpperCase() || 'ALL MAX POKÉMON'}</Text>
+          <Text style={[styles.rankedPill, light && styles.rankedPillLight]}>{rankings.length} RANKED</Text>
+        </View>
+        <Text style={[styles.resultsTitle, light && styles.textLight]}>{heading}</Text>
+        <Text style={[styles.assumptions, light && styles.mutedLight]}>
+          {mode === 'bosses'
+            ? 'Compare replacements for the selected role in your three-Pokémon party.'
+            : assumptions}
+        </Text>
+        {mode === 'rankings' ? (
+          <TextInput
+            accessibilityLabel="Search Max rankings"
+            onChangeText={changeQuery}
+            placeholder="Pokémon or move"
+            placeholderTextColor={light ? '#718283' : '#829394'}
+            style={[styles.search, light && styles.inputLight]}
+            value={query}
+          />
+        ) : null}
+        {isLoading ? (
+          <View style={styles.state}>
+            <ActivityIndicator color="#42d6c8" />
+            <Text style={[styles.stateCopy, light && styles.mutedLight]}>Preparing Max rankings…</Text>
+          </View>
+        ) : null}
+        {error ? (
+          <View accessibilityRole="alert" style={styles.error}>
+            <Text style={styles.errorTitle}>Max Battles unavailable</Text>
+            <Text style={styles.errorCopy}>{error}</Text>
+            <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryText}>Try again</Text></Pressable>
+          </View>
+        ) : null}
+        {!isLoading && !error && rankings.length === 0 ? (
+          <View style={styles.resultsEmpty}>
+            <Text style={[styles.emptyTitle, light && styles.textLight]}>No eligible Max Pokémon</Text>
+            <Text style={[styles.stateCopy, light && styles.mutedLight]}>Try another role, type, boss, or roster.</Text>
+          </View>
+        ) : null}
+      </View>
+    );
+
+    const bossBenchmarkNote = mode === 'bosses' && selectedBoss ? (
+      <View accessibilityLabel="Boss ranking method" style={[styles.benchmark, light && styles.panelLight]}>
+        <Text style={[styles.benchmarkTitle, light && styles.textLight]}>Standardized matchup</Text>
+        <Text style={[styles.benchmarkCopy, light && styles.mutedLight]}>
+          {effectiveScope === 'owned'
+            ? 'Recorded level, IVs, Fast Move, and unlocked Max Move levels'
+            : 'Level 50 · 15/15/15 IVs · level-3 Max moves'}
+          {' · '}
+          {rankings[0]?.maxRanking?.bossBenchmark?.pressureSource === 'legal-movesets'
+            ? 'expected pressure across legal boss movesets'
+            : 'typed benchmark pressure when boss moves are unavailable'}
+        </Text>
+      </View>
+    ) : null;
+
+    const header = (
+      <View style={styles.headerStack}>
+        {roster}
+        <Animated.View style={[styles.headerStack, rosterEntrance]} testID="native-max-roster-entrance">
+        {mode === 'rankings'
+          ? <View style={[styles.filterDeck, light && styles.panelLight]}>{roleTabs}{typeFilter}</View>
+          : <>{bossPicker}{selectedBoss ? <NativeMaxBattleSimulator assetBaseUrl={assetBaseUrl} boss={selectedBoss} candidates={candidates} initialDifficulty={initialDifficulty} initialTrainerCount={initialTrainerCount} key={`${selectedBoss.variant_id}-${effectiveScope}`} onDifficultyChange={(difficulty) => onRouteStateChange?.({ difficulty: difficulty === getDefaultMaxBattleTier(selectedBoss) ? null : difficulty })} onTrainerCountChange={(trainerCount) => onRouteStateChange?.({ trainerCount })} rosterScope={effectiveScope} /> : null}{roleTabs}{bossBenchmarkNote}</>}
+        {resultsHeader}
+        </Animated.View>
+      </View>
+    );
+
+    const remainingRankings = rankings.length - visibleRankings.length;
+    const footer = (
+      <Animated.View style={[styles.footer, rosterEntrance]}>
+        {remainingRankings > 0 ? (
+          <Pressable
+            accessibilityLabel={`Show ${Math.min(resultsPageSize, remainingRankings)} more Max rankings`}
+            accessibilityRole="button"
+            onPress={() => {
+              beginPerformance('max_more_result_painted');
+              setPagination((current) => ({ ...current, [mode]: {
+                key: paginationKey,
+                limit: Math.min(rankings.length, visibleLimit + resultsPageSize),
+              } }));
+            }}
+            style={[styles.showMore, light && styles.controlLight]}
+          >
+            <Text style={[styles.showMoreText, light && styles.textLight]}>
+              Show {Math.min(resultsPageSize, remainingRankings)} more
+            </Text>
+          </Pressable>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: methodOpen }}
+          onPress={() => {
+            beginPerformance('max_method_result_painted');
+            setMethodOpen((current) => !current);
+          }}
+          style={styles.method}
+        >
+          <Text style={[styles.methodTitle, light && styles.textLight]}>▸  How Max roles are ranked</Text>
+          {methodOpen ? (
+            <Text style={[styles.methodCopy, light && styles.mutedLight]}>
+              Damage uses Attack, active Max or G-Max power, STAB, and effectiveness. Tank uses effective bulk and boss pressure. Healing uses the active Max Spirit level and team recovery.
+            </Text>
+          ) : null}
+        </Pressable>
+      </Animated.View>
+    );
+
+    return (
+          <FlatList
+            contentContainerStyle={{ paddingHorizontal: 7, paddingTop: 0, paddingBottom: 96 + insets.bottom }}
+            data={visibleRankings}
+            initialNumToRender={2}
+            keyExtractor={(_entry, index) => String(index)}
+            keyboardShouldPersistTaps="always"
+            maxToRenderPerBatch={2}
+            nestedScrollEnabled
+            removeClippedSubviews={false}
+            updateCellsBatchingPeriod={100}
+            ListFooterComponent={footer}
+            ListHeaderComponent={header}
+            ListEmptyComponent={null}
+            renderItem={({ item, index }) => (
+              <Animated.View style={rosterEntrance}>
+              <NativeCombatRankingCard
+                assetBaseUrl={assetBaseUrl}
+                entry={item}
+                metricLabel={roleMetric(role)}
+                onPress={() => onOpenPokemon(item)}
+                rank={index + 1}
+              />
+              </Animated.View>
+            )}
+            windowSize={1}
+          />
+    );
+  };
+
+  return <View style={[styles.root, light && styles.rootLight]} testID="native-max-screen">
+    <View style={[styles.stationaryHeader, { paddingHorizontal: 7, paddingTop: 3 + insets.top, paddingBottom: 9 }]} testID="native-max-stationary-header">
+      {productHeader}
+      {viewTabs}
     </View>
-  );
+    <View onLayout={motion.onLayout} style={styles.workspaceViewport} testID="native-max-workspace-motion">
+      <NativeHorizontalPageSlider activeIndex={view === 'rankings' ? 0 : 1} onIndexChange={(index) => switchView(index === 0 ? 'rankings' : 'bosses')} scrollX={motion.scrollX} swipeEnabled={false}>
+        {(['rankings', 'bosses'] as const).map((mode) => <NativeRetainedWorkspacePage active={view === mode} key={mode}>{renderWorkspace(mode)}</NativeRetainedWorkspacePage>)}
+      </NativeHorizontalPageSlider>
+    </View>
+  </View>;
 };
 
 const styles = StyleSheet.create({

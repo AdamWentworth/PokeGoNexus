@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { webCssVarTokens } from '@pokemongonexus/shared-ui-tokens';
-import { Animated, Easing } from 'react-native';
+import { Animated } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { PokemonInstance } from '@pokemongonexus/shared-contracts/instances';
 import type { BasePokemon, Move } from '@pokemongonexus/shared-contracts/pokemon';
+import { NATIVE_HORIZONTAL_PAGE_TRANSITION_MS } from '../../../src/components/NativeHorizontalPageSlider';
 import { NativeMaxScreen } from '../../../src/screens/NativeMaxScreen';
 const fast = { move_id: 1, name: 'Vine Whip', raid_power: 10, raid_energy: 8, raid_cooldown: 1, is_fast: 1, type_name: 'grass', type: 'grass' } as Move;
 const charged = { ...fast, move_id: 2, name: 'Power Whip', raid_power: 90, raid_energy: -50, raid_cooldown: 2.5, is_fast: 0 } as Move;
@@ -45,11 +45,20 @@ describe('NativeMaxScreen', () => {
     fireEvent.press(screen.getByText('Boss teams'));
     expect(screen.getByText('Can this group beat Dynamax Bulbasaur?')).toBeTruthy();
     expect(screen.getByText('More help needed')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Add one Trainer'));
+    const trainers = screen.getByLabelText(/\d+ Trainers/);
+    const trainerLabel = trainers.props.accessibilityLabel;
+    fireEvent.press(screen.getByText('Max rankings'));
+    expect(screen.getByText('Top tanks')).toBeTruthy();
+    fireEvent.press(screen.getByText('Boss teams'));
+    expect(screen.getByLabelText(trainerLabel)).toBe(trainers);
   });
 
-  it('slides the shared view indicator before swapping the Max workspace', () => {
+  it('slides the content beneath a retained header using the shared page clock', () => {
     const timing = jest.spyOn(Animated, 'timing');
     render(<SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 24, right: 0, bottom: 20, left: 0 } }}><NativeMaxScreen assetBaseUrl="https://pokegonexus.com" catalog={catalog} onBack={jest.fn()} onOpenPokemon={jest.fn()} onRetry={jest.fn()} signedIn={false} /></SafeAreaProvider>);
+    const header = screen.getByTestId('native-max-stationary-header');
+    fireEvent(screen.getByTestId('native-horizontal-page-slider'), 'layout', { nativeEvent: { layout: { width: 390, height: 650 } } });
     timing.mockClear();
 
     fireEvent(
@@ -65,14 +74,14 @@ describe('NativeMaxScreen', () => {
     expect(timing).toHaveBeenCalledWith(
       expect.any(Animated.Value),
       expect.objectContaining({
-        duration: webCssVarTokens.motionSeconds.fast * 1000,
-        easing: Easing.ease,
-        isInteraction: false,
-        toValue: 1,
+        duration: NATIVE_HORIZONTAL_PAGE_TRANSITION_MS,
+        toValue: 390,
         useNativeDriver: true,
       }),
     );
     expect(screen.getByText('Can this group beat Dynamax Bulbasaur?')).toBeTruthy();
+    expect(screen.getByTestId('native-max-stationary-header')).toBe(header);
+    expect(screen.getByText('Top damage dealers', { includeHiddenElements: true })).toBeTruthy();
     timing.mockRestore();
   });
 

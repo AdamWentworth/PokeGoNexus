@@ -1,3 +1,6 @@
+import { NativeHorizontalPageSlider } from '../components/NativeHorizontalPageSlider';
+import { NativeRetainedWorkspacePage } from '../components/NativeRetainedWorkspacePage';
+import { useNativeWorkspaceMotion } from '../components/useNativeWorkspaceMotion';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -301,6 +304,7 @@ export const NativePvpScreen = ({
   }, []);
   const formats = useMemo(() => buildNativePvpFormats(payload), [payload]);
   const [workspace, setWorkspace] = useState<NativePvpWorkspace>("rankings");
+  const motion = useNativeWorkspaceMotion();
   const [formatKey, setFormatKey] = useState("great");
   const format =
     formats.find((item) => item.key === formatKey) ?? formats[0] ?? null;
@@ -331,7 +335,7 @@ export const NativePvpScreen = ({
   const deferredWorkspace = useDeferredValue(workspace);
 
   const evaluationPlan = useMemo(() => (
-    deferredScope === 'owned' && deferredWorkspace !== 'iv-rank'
+    deferredScope === 'owned'
       ? buildNativePvpRosterEvaluationPlan({
         catalog,
         cpLimit: deferredFormat?.cpLimit ?? null,
@@ -341,7 +345,7 @@ export const NativePvpScreen = ({
         mechanics: deferredMechanics,
       })
       : null
-  ), [catalog, deferredFormat, deferredMechanics, deferredScope, deferredWorkspace, instances]);
+  ), [catalog, deferredFormat, deferredMechanics, deferredScope, instances]);
   const [ownedEvaluation, setOwnedEvaluation] = useState<{
     error: string | null;
     key: string | null;
@@ -481,13 +485,7 @@ export const NativePvpScreen = ({
   useEffect(() => finishPerformance("pvp_more_result_painted"), [finishPerformance, visibleLimit]);
   const updateWorkspace = (next: NativePvpWorkspace) => {
     beginPerformance("pvp_workspace_result_painted");
-    if (next === "battle") setBattleSeed(null);
-    if (next === "iv-rank") setFormatKey(league);
     setWorkspace(next);
-    setExpanded(null);
-    setVisibleLimit(50);
-    setCupOpen(false);
-    setRulesOpen(false);
   };
   const openSeededBattle = (memberKeys: string[], opponentKey: string) => {
     beginPerformance("pvp_workspace_result_painted");
@@ -499,10 +497,6 @@ export const NativePvpScreen = ({
       rightTeamKeys: [opponentKey],
     });
     setWorkspace("battle");
-    setExpanded(null);
-    setVisibleLimit(50);
-    setCupOpen(false);
-    setRulesOpen(false);
   };
   const selectFormat = (key: string) => {
     beginPerformance(["great", "ultra", "master"].includes(key)
@@ -529,8 +523,7 @@ export const NativePvpScreen = ({
     : scope === "owned"
       ? toolRoster.summary.eligibleCount
       : (format?.entries.length ?? 0);
-  const header = (
-    <View>
+  const workspaceHeader = (
       <View >
         <View style={styles.topbar}>
           <Image fadeDuration={0}
@@ -576,6 +569,7 @@ export const NativePvpScreen = ({
           indicatorTestID="native-pvp-workspace-indicator"
           items={PVP_WORKSPACE_ITEMS}
           onChange={updateWorkspace}
+          progress={motion.progress}
           renderItem={(item, selected) => {
             const icon = WORKSPACES.find(([value]) => value === item.value)?.[2] ?? 'list';
             return <View style={styles.workspaceLabel}>
@@ -588,24 +582,27 @@ export const NativePvpScreen = ({
           value={workspace}
         />
       </View>
+  );
+  const renderPanelHeader = (panel: NativePvpWorkspace) => (
+    <View>
       <View style={[styles.leagueTabs, light && styles.sectionLight]}>
         {LEAGUES.map(([key, label, detail]) => (
           <Pressable
             accessibilityLabel={`${label}, ${detail}`}
             accessibilityRole="button"
-            accessibilityState={{ selected: format?.league === key && !activeCup }}
+            accessibilityState={{ selected: format?.league === key && (panel === "iv-rank" || !activeCup) }}
             key={key}
             onPress={() => selectFormat(key)}
             style={[
               styles.league,
-              format?.league === key && !activeCup && styles.leagueActive,
+              format?.league === key && (panel === "iv-rank" || !activeCup) && styles.leagueActive,
             ]}
           >
             <Text
               style={[
                 styles.leagueTitle,
                 light && styles.textLight,
-                format?.league === key && !activeCup && styles.leagueTextActive,
+                format?.league === key && (panel === "iv-rank" || !activeCup) && styles.leagueTextActive,
               ]}
             >
               {label}
@@ -614,7 +611,7 @@ export const NativePvpScreen = ({
               style={[
                 styles.leagueDetail,
                 light && styles.mutedLight,
-                format?.league === key && !activeCup && styles.leagueDetailActive,
+                format?.league === key && (panel === "iv-rank" || !activeCup) && styles.leagueDetailActive,
               ]}
             >
               {detail}
@@ -622,7 +619,7 @@ export const NativePvpScreen = ({
           </Pressable>
         ))}
       </View>
-      {workspace !== "iv-rank" ? (
+      {panel !== "iv-rank" ? (
         <View>
           <Pressable
             accessibilityLabel="Current PvP cup"
@@ -649,7 +646,7 @@ export const NativePvpScreen = ({
           ) : null}
         </View>
       ) : null}
-      {workspace !== "iv-rank" && activeCup && format?.rules.length ? (
+      {panel !== "iv-rank" && activeCup && format?.rules.length ? (
         <View style={[styles.rules, light && styles.panelLight]}>
           <Pressable
             accessibilityLabel="Format rules"
@@ -669,7 +666,7 @@ export const NativePvpScreen = ({
           </Text> : null}
         </View>
       ) : null}
-      {workspace !== "iv-rank" ? (
+      {panel !== "iv-rank" ? (
         <View style={[styles.scopeRow, light && styles.sectionLight]}>
           {(
             [
@@ -756,17 +753,19 @@ export const NativePvpScreen = ({
       </Text>
     </View>
   ) : null;
-  if (deferredWorkspace === "rankings")
-    return (
-      <View
-        style={[styles.root, light && styles.rootLight]}
-        testID="native-pvp-screen"
-      >
-        <View style={styles.workspaceViewport} testID="native-pvp-workspace-motion">
+  const ivFormat = formats.find((item) => item.key === league) ?? format;
+  return <View style={[styles.root, light && styles.rootLight]} testID="native-pvp-screen">
+    <View style={{ paddingHorizontal: 12, paddingTop: 8 + insets.top, paddingBottom: 8 }} testID="native-pvp-stationary-header">
+      {workspaceHeader}
+    </View>
+    <View onLayout={motion.onLayout} style={styles.workspaceViewport} testID="native-pvp-workspace-motion">
+      <NativeHorizontalPageSlider activeIndex={WORKSPACES.findIndex(([key]) => key === workspace)} onIndexChange={(index) => updateWorkspace(WORKSPACES[index]?.[0] ?? 'rankings')} scrollX={motion.scrollX} swipeEnabled={false}>
+        <NativeRetainedWorkspacePage active={workspace === 'rankings'}>
           <FlatList
+          removeClippedSubviews={false}
           contentContainerStyle={{
             paddingHorizontal: 12,
-            paddingTop: 8 + insets.top,
+            paddingTop: 0,
             paddingBottom: 96 + insets.bottom,
           }}
           data={rankingRows.slice(0, visibleLimit)}
@@ -775,7 +774,7 @@ export const NativePvpScreen = ({
           nestedScrollEnabled
           ListHeaderComponent={
             <>
-              {header}
+              {renderPanelHeader('rankings')}
               <View style={styles.roleRail}>
                 {ROLES.map(([value, label, icon]) => (
                   <Pressable
@@ -874,23 +873,19 @@ export const NativePvpScreen = ({
             {sourceFooter}
           </>}
           />
-        </View>
-      </View>
-    );
-  return (
-    <View style={[styles.root, light && styles.rootLight]} testID="native-pvp-screen">
-      <View style={styles.workspaceViewport} testID="native-pvp-workspace-motion">
+        </NativeRetainedWorkspacePage>
+        {(['team', 'battle', 'iv-rank'] as const).map((panel) => <NativeRetainedWorkspacePage active={workspace === panel} key={panel}>
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: 8 + insets.top, paddingBottom: 96 + insets.bottom },
+            { paddingTop: 0, paddingBottom: 96 + insets.bottom },
           ]}
           keyboardShouldPersistTaps="always"
-          ref={workspaceScrollRef}
+          ref={panel === "battle" ? workspaceScrollRef : undefined}
           nestedScrollEnabled
         >
-          {header}
-          {deferredWorkspace === "team" ? (
+          {renderPanelHeader(panel)}
+          {panel === "team" ? (
             <NativePvpTeamBuilder
           assetBaseUrl={assetBaseUrl}
           candidates={toolCandidates}
@@ -903,7 +898,7 @@ export const NativePvpScreen = ({
           persistSelection={persistTeamBuilder}
           storageKey={`${format?.key ?? "great"}:${scope}`}
         />
-          ) : deferredWorkspace === "battle" ? (
+          ) : panel === "battle" ? (
             <NativePvpBattleLab
           assetBaseUrl={assetBaseUrl}
           candidates={toolCandidates}
@@ -931,22 +926,23 @@ export const NativePvpScreen = ({
             <NativePvpIvRank
           assetBaseUrl={assetBaseUrl}
           catalog={catalog}
-          cpLimit={format?.cpLimit ?? null}
+          cpLimit={ivFormat?.cpLimit ?? null}
           instances={instances}
           isLoading={Boolean(isLoading)}
           league={league}
           light={light}
-          rankings={format?.entries ?? []}
+          rankings={ivFormat?.entries ?? []}
           scope={scope}
           setScope={selectScope}
           signedIn={signedIn}
         />
           )}
-          {deferredWorkspace !== "iv-rank" ? sourceFooter : null}
+          {panel !== "iv-rank" ? sourceFooter : null}
         </ScrollView>
-      </View>
+        </NativeRetainedWorkspacePage>)}
+      </NativeHorizontalPageSlider>
     </View>
-  );
+  </View>;
 };
 
 const styles = StyleSheet.create({

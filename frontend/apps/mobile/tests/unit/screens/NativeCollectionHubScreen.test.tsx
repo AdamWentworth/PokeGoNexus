@@ -372,7 +372,7 @@ describe('NativeCollectionHubScreen', () => {
     timeout.mockRestore();
   });
 
-  it('commits a pressed tag into the hidden grid before release starts the slide', () => {
+  it('keeps the grid unchanged on press-in and commits a tag only after a confirmed tap', () => {
     const timing = jest.spyOn(Animated, 'timing');
     const onContextChange = jest.fn();
     render(
@@ -400,16 +400,17 @@ describe('NativeCollectionHubScreen', () => {
     onContextChange.mockClear();
 
     const favorites = screen.getByRole('button', { name: /Open Favorites/i });
+    const originalCard = screen.getByTestId('parity-card-0150-default', { includeHiddenElements: true });
     fireEvent(favorites, 'pressIn');
 
-    expect(screen.getByTestId(
+    expect(screen.queryByTestId(
       'parity-card-caught-bulbasaur',
       { includeHiddenElements: true },
-    )).toBeTruthy();
-    expect(screen.queryByTestId(
+    )).toBeNull();
+    expect(screen.getByTestId(
       'parity-card-0150-default',
       { includeHiddenElements: true },
-    )).toBeNull();
+    )).toBe(originalCard);
     expect(screen.getByRole('tab', { name: /tags/i }).props.accessibilityState).toEqual({
       selected: true,
     });
@@ -425,6 +426,8 @@ describe('NativeCollectionHubScreen', () => {
       toValue: 412,
       useNativeDriver: true,
     }));
+    expect(screen.getByTestId('parity-card-caught-bulbasaur')).toBeTruthy();
+    expect(screen.queryByTestId('parity-card-0150-default')).toBeNull();
     // The Favorites preset must commit before motion reveals the destination.
     expect(screen.getByLabelText('Sort by FAVORITE descending')).toBeTruthy();
     expect(onContextChange).toHaveBeenCalledWith(expect.objectContaining({
@@ -433,7 +436,7 @@ describe('NativeCollectionHubScreen', () => {
     }));
   });
 
-  it('restores the hidden grid without navigation when a tag press is cancelled', () => {
+  it('keeps the hidden grid unchanged when a tag press is cancelled', () => {
     const timing = jest.spyOn(Animated, 'timing');
     render(
       <SafeAreaProvider initialMetrics={{

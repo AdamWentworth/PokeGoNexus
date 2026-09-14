@@ -116,10 +116,10 @@ describe('NativePvpScreen', () => {
     renderScreen();
     expect(screen.getByText('PvP Rankings')).toBeTruthy();
     expect(screen.getByText('Bulbasaur')).toBeTruthy();
+    fireEvent.changeText(screen.getByLabelText('Search PvP rankings'), 'Bulbasaur');
     fireEvent.press(screen.getByLabelText('Show details for Bulbasaur'));
     expect(screen.getByText('Role profile')).toBeTruthy();
     expect(screen.getByText('Stat product')).toBeTruthy();
-    fireEvent.changeText(screen.getByLabelText('Search PvP rankings'), 'Bulbasaur');
     fireEvent.press(screen.getByText('Team Builder'));
     expect(screen.getByText('THREE-POKÉMON TEAM')).toBeTruthy();
     expect(screen.getByText('0 / 3')).toBeTruthy();
@@ -144,6 +144,13 @@ describe('NativePvpScreen', () => {
     fireEvent.press(screen.getByText('Bulbasaur'));
     expect(screen.getByText('APPRAISAL IVS')).toBeTruthy();
     expect(screen.getByText('RANK 1 SPREAD')).toBeTruthy();
+    fireEvent.press(screen.getByText('Team Builder'));
+    expect(screen.getByText('3 / 3')).toBeTruthy();
+    expect(screen.getByLabelText('Edit Lead, Bulbasaur')).toBeTruthy();
+    expect(screen.getByLabelText('Edit Safe Swap, Ivysaur')).toBeTruthy();
+    fireEvent.press(screen.getByText('Rankings'));
+    expect(screen.getByLabelText('Search PvP rankings').props.value).toBe('Bulbasaur');
+    expect(screen.getByText('Role profile')).toBeTruthy();
   });
 
   it('paints pending feedback before running shared battle mechanics', async () => {

@@ -1,3 +1,6 @@
+import { NativeHorizontalPageSlider } from '../components/NativeHorizontalPageSlider';
+import { NativeRetainedWorkspacePage } from '../components/NativeRetainedWorkspacePage';
+import { useNativeWorkspaceMotion } from '../components/useNativeWorkspaceMotion';
 import { Image as ExpoImage } from 'expo-image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -29,6 +32,7 @@ import { useNativeColorScheme } from '../features/settings/useNativeColorScheme'
 import { markNativeUiPerformanceAfterPaint } from '../observability/nativeUiInteractionTiming';
 
 type Props = {
+  workspaces?: Record<NativeRankingMode, Pick<Props, 'rows' | 'collectionFilterCounts' | 'selectedCategory'>>;
   assetBaseUrl: string;
   collectionFilterCounts: Record<NativeRankingCollectionFilter, number>;
   collectorCount: number;
@@ -221,10 +225,10 @@ const RankingCard = memo(({
 });
 RankingCard.displayName = 'RankingCard';
 
-export const NativeRankingsScreen = ({
+const NativeRankingWorkspacePanel = ({
   assetBaseUrl,
   collectionFilterCounts,
-  collectorCount,
+  collectorCount: _collectorCount,
   error = null,
   hasSnapshot = true,
   query = '',
@@ -248,7 +252,6 @@ export const NativeRankingsScreen = ({
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
-  const compact = useWindowDimensions().width <= 420;
   const [methodOpen, setMethodOpen] = useState(false);
   const [picker, setPicker] = useState<'category' | 'collection' | 'mode' | null>(null);
   const [pagination, setPagination] = useState({ key: '', limit: INITIAL_RESULT_COUNT });
@@ -344,36 +347,6 @@ export const NativeRankingsScreen = ({
   }, [availableCategories, collectionFilterCounts, picker]);
   const header = (
     <View>
-      <View >
-        <View style={[styles.productHeader, compact && styles.productHeaderCompact]}>
-          <Image accessibilityElementsHidden fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, '/images/btn_rankings.png') }} style={[styles.productIcon, compact && styles.productIconCompact]} />
-          <View style={[styles.headerCopy, compact && styles.headerCopyCompact]}>
-            <Text style={[styles.eyebrow, light && styles.accentLight]}>TRAINER COLLECTIONS</Text>
-            <Text accessibilityRole="header" style={[styles.title, light && styles.textLight]}>Community Rankings</Text>
-          </View>
-          <View style={[styles.population, compact && styles.populationCompact, light && styles.populationLight]}>
-            <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="trainers" size={19} />
-            <View><Text style={[styles.populationValue, light && styles.textLight]}>{collectorCount.toLocaleString()}</Text><Text style={[styles.populationLabel, compact && styles.populationLabelCompact, light && styles.mutedLight]}>TRAINERS</Text></View>
-          </View>
-        </View>
-
-        <NativeSlidingSegmentedControl
-          accessibilityLabel="Community ranking"
-          buttonStyle={styles.segmentButton}
-          indicatorStyle={styles.segmentIndicator}
-          indicatorTestID="native-rankings-mode-indicator"
-          items={RANKING_MODE_ITEMS}
-          onChange={changeMode}
-          renderItem={(item, selected) => <>
-            <Text style={[styles.segmentIcon, light && styles.textLight, selected && styles.segmentTextActive]}>{item.value === 'wanted' ? '♥︎' : '◆'}</Text>
-            <Text style={[styles.segmentText, light && styles.textLight, selected && styles.segmentTextActive]}>{item.label}</Text>
-          </>}
-          style={[styles.segment, compact && styles.segmentCompact, light && styles.panelLight]}
-          testID="native-rankings-mode-switcher"
-          value={selectedMode}
-        />
-      </View>
-
       <View style={[styles.search, light && styles.inputLight]}>
         <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="search" size={18} />
         <TextInput accessibilityLabel="Search rankings" autoCapitalize="none" onChangeText={setSearch} placeholder="Pokémon, number, or form" placeholderTextColor={light ? '#697c7c' : '#7f9395'} style={[styles.searchInput, light && styles.textLight]} value={query} />
@@ -413,10 +386,11 @@ export const NativeRankingsScreen = ({
   const footer = hasSnapshot ? <View>{visibleRows.length < rows.length ? <Pressable accessibilityLabel={`Show ${Math.min(RESULT_INCREMENT, rows.length - visibleRows.length)} more rankings`} accessibilityRole="button" onPress={() => { beginPerformance('rankings_more_result_painted'); setPagination({ key: paginationKey, limit: Math.min(rows.length, visibleLimit + RESULT_INCREMENT) }); }} style={[styles.showMore, light && styles.controlLight]}><Text style={[styles.showMoreText, light && styles.textLight]}>Show more</Text></Pressable> : null}<View style={styles.snapshotFooter}><Text style={[styles.snapshotText, light && styles.mutedLight]}>{snapshotLabel}</Text><Pressable accessibilityLabel="Refresh community rankings" accessibilityRole="button" disabled={isRefreshing} onPress={onRetry} style={[styles.refresh, light && styles.controlLight, isRefreshing && styles.disabled]}>{isRefreshing ? <ActivityIndicator color={light ? '#08766b' : '#42d7c4'} size="small" /> : <Text style={[styles.refreshText, light && styles.accentLight]}>↻</Text>}</Pressable></View><View style={[styles.method, light && styles.panelLight]}><Pressable accessibilityRole="button" accessibilityState={{ expanded: methodOpen }} onPress={() => { beginPerformance('rankings_method_result_painted'); setMethodOpen((value) => !value); }} style={styles.methodSummary}><Text style={[styles.methodInfo, light && styles.accentLight]}>ⓘ</Text><Text style={[styles.methodTitle, light && styles.textLight]}>How these rankings work</Text><Text style={[styles.methodChevron, light && styles.mutedLight]}>{methodOpen ? '⌃' : '⌄'}</Text></Pressable>{methodOpen ? <View style={[styles.methodBody, light && styles.methodBodyLight]}><Text style={[styles.methodCopy, light && styles.mutedLight]}><Text style={[styles.methodStrong, light && styles.textLight]}>Most wanted</Text> counts distinct trainer wishlists. Duplicate wanted copies do not add votes.</Text><Text style={[styles.methodCopy, light && styles.mutedLight]}><Text style={[styles.methodStrong, light && styles.textLight]}>Rarest owned</Text> counts trainers with a caught copy or Pokédex registration. Duplicate copies count once.</Text><Text style={[styles.methodCopy, light && styles.mutedLight]}>Ordinary evolution families are collapsed in rarity results, while collectible costumes remain separate. Small totals may be withheld to protect trainer privacy.</Text></View> : null}</View></View> : null;
 
   const selectedPickerKey = picker === 'mode' ? selectedMode : picker === 'category' ? selectedCategory : selectedCollectionFilter;
-  return <View style={[styles.root, light && styles.rootLight]} testID="native-rankings-screen">
-    <View style={styles.workspaceViewport} testID="native-rankings-workspace-motion">
+  return <View style={[styles.root, light && styles.rootLight]} testID={`native-rankings-panel-${selectedMode}`}>
+    <View style={styles.workspaceViewport} >
       <FlatList
-        contentContainerStyle={{ paddingBottom: 92 + insets.bottom, paddingHorizontal: 8, paddingTop: 6 + insets.top }}
+        removeClippedSubviews={false}
+        contentContainerStyle={{ paddingBottom: 92 + insets.bottom, paddingHorizontal: 8, paddingTop: 0 }}
         data={hasSnapshot ? visibleRows : []}
         initialNumToRender={30}
         keyboardShouldPersistTaps="always"
@@ -433,13 +407,73 @@ export const NativeRankingsScreen = ({
         windowSize={21}
       />
     </View>
-    {showQuickControls ? <View accessibilityLabel="Quick ranking controls" accessibilityRole="toolbar" style={[styles.quickControls, { top: insets.top + 4 }, light && styles.quickControlsLight]}>
+    {showQuickControls ? <View accessibilityLabel="Quick ranking controls" accessibilityRole="toolbar" style={[styles.quickControls, { top: 4 }, light && styles.quickControlsLight]}>
       <Pressable accessibilityLabel="Ranking view" accessibilityRole="button" onPress={() => setPicker('mode')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{selectedMode === 'wanted' ? 'Wanted' : 'Rarest'}</Text></Pressable>
       <Pressable accessibilityLabel="Pokémon category" accessibilityRole="button" onPress={() => setPicker('category')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{selectedCategory === 'all' ? 'All' : CATEGORY_LABELS[selectedCategory]}</Text></Pressable>
       {showCollectionFilters ? <Pressable accessibilityLabel="Compared with yours" accessibilityRole="button" onPress={() => setPicker('collection')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{COLLECTION_LABELS[selectedCollectionFilter]}</Text></Pressable> : null}
       <View style={[styles.quickSearch, light && styles.controlLight]}><NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="search" size={14} /><TextInput accessibilityLabel="Quick ranking search" autoCapitalize="none" onChangeText={setSearch} placeholder="Search" placeholderTextColor={light ? '#697c7c' : '#7f9395'} style={[styles.quickSearchInput, light && styles.textLight]} value={query} /></View>
     </View> : null}
     <NativeOptionPicker onClose={() => setPicker(null)} onSelect={(entry) => { if (picker === 'mode') changeMode(entry.key as NativeRankingMode); else if (picker === 'category') changeCategory(entry.key as NativeRankingCategory); else if (picker === 'collection') changeCollectionFilter(entry.key as NativeRankingCollectionFilter); setPicker(null); }} options={pickerOptions} selectedKey={selectedPickerKey} title={picker === 'mode' ? 'Ranking view' : picker === 'category' ? 'Pokémon category' : 'Compared with yours'} visible={picker != null} />
+  </View>;
+};
+
+export const NativeRankingsScreen = (props: Props) => {
+  const { assetBaseUrl, collectorCount, selectedMode } = props;
+  const light = useNativeColorScheme() === 'light';
+  const insets = useSafeAreaInsets();
+  const compact = useWindowDimensions().width <= 420;
+  const motion = useNativeWorkspaceMotion(selectedMode === 'rarest' ? 1 : 0);
+  const modeStartedAt = useRef<number | null>(null);
+  const changeMode = (mode: NativeRankingMode) => {
+    if (mode === selectedMode) return;
+    modeStartedAt.current = Date.now();
+    props.onChangeMode(mode);
+  };
+  useEffect(() => {
+    if (modeStartedAt.current === null) return;
+    markNativeUiPerformanceAfterPaint('rankings_mode_result_painted', modeStartedAt.current);
+    modeStartedAt.current = null;
+  }, [selectedMode]);
+  return <View style={[styles.root, light && styles.rootLight]} testID="native-rankings-screen">
+    <View style={{ paddingHorizontal: 8, paddingTop: 6 + insets.top, paddingBottom: 8 }} testID="native-rankings-stationary-header">
+      <View >
+        <View style={[styles.productHeader, compact && styles.productHeaderCompact]}>
+          <Image accessibilityElementsHidden fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, '/images/btn_rankings.png') }} style={[styles.productIcon, compact && styles.productIconCompact]} />
+          <View style={[styles.headerCopy, compact && styles.headerCopyCompact]}>
+            <Text style={[styles.eyebrow, light && styles.accentLight]}>TRAINER COLLECTIONS</Text>
+            <Text accessibilityRole="header" style={[styles.title, light && styles.textLight]}>Community Rankings</Text>
+          </View>
+          <View style={[styles.population, compact && styles.populationCompact, light && styles.populationLight]}>
+            <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="trainers" size={19} />
+            <View><Text style={[styles.populationValue, light && styles.textLight]}>{collectorCount.toLocaleString()}</Text><Text style={[styles.populationLabel, compact && styles.populationLabelCompact, light && styles.mutedLight]}>TRAINERS</Text></View>
+          </View>
+        </View>
+
+        <NativeSlidingSegmentedControl
+          accessibilityLabel="Community ranking"
+          buttonStyle={styles.segmentButton}
+          indicatorStyle={styles.segmentIndicator}
+          indicatorTestID="native-rankings-mode-indicator"
+          items={RANKING_MODE_ITEMS}
+          onChange={changeMode}
+          progress={motion.progress}
+          renderItem={(item, selected) => <>
+            <Text style={[styles.segmentIcon, light && styles.textLight, selected && styles.segmentTextActive]}>{item.value === 'wanted' ? '♥︎' : '◆'}</Text>
+            <Text style={[styles.segmentText, light && styles.textLight, selected && styles.segmentTextActive]}>{item.label}</Text>
+          </>}
+          style={[styles.segment, compact && styles.segmentCompact, light && styles.panelLight]}
+          testID="native-rankings-mode-switcher"
+          value={selectedMode}
+        />
+      </View>
+    </View>
+    <View onLayout={motion.onLayout} style={styles.workspaceViewport} testID="native-rankings-workspace-motion">
+      <NativeHorizontalPageSlider activeIndex={selectedMode === 'wanted' ? 0 : 1} onIndexChange={(index) => changeMode(index === 0 ? 'wanted' : 'rarest')} scrollX={motion.scrollX} swipeEnabled={false}>
+        {(['wanted', 'rarest'] as const).map((mode) => <NativeRetainedWorkspacePage active={selectedMode === mode} key={mode}>
+          <NativeRankingWorkspacePanel {...props} {...props.workspaces?.[mode]} selectedMode={mode} />
+        </NativeRetainedWorkspacePage>)}
+      </NativeHorizontalPageSlider>
+    </View>
   </View>;
 };
 
