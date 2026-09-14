@@ -68,7 +68,7 @@ export const collectionExperienceParityContract = {
       cx: '50%',
       cy: '56%',
       rx: '57%',
-      ry: '94%',
+      ry: '62%',
       stops: [
         ['0%', 1],
         ['52%', 0.98],

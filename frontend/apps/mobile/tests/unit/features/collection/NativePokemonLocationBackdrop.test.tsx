@@ -19,7 +19,6 @@ jest.mock('react-native-svg', () => {
     Defs: makeSvgElement('Defs'),
     G: makeSvgElement('G'),
     Image: makeSvgElement('SvgImage'),
-    LinearGradient: makeSvgElement('LinearGradient'),
     Mask: makeSvgElement('Mask'),
     RadialGradient: makeSvgElement('RadialGradient'),
     Rect: makeSvgElement('Rect'),
@@ -28,7 +27,7 @@ jest.mock('react-native-svg', () => {
 });
 
 describe('NativePokemonLocationBackdrop', () => {
-  it('uses the exact tall Vite instance mask and top-aligned cover crop', () => {
+  it('uses the shared rounded instance mask and top-aligned artwork', () => {
     render(
       <NativePokemonLocationBackdrop
         uri="https://pokegonexus.com/images/backgrounds/Location_Card_London.png"

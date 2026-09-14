@@ -85,7 +85,7 @@ test('native instance location backdrops stay pinned to Vite geometry and maskin
   assert.match(viteImageStageStyles, /width:\s*min\(86vw,\s*447px\);/, 'Vite backdrop width');
   assert.match(
     viteImageStageStyles,
-    /ellipse 57% 94% at 50% 56%,[\s\S]*?0\.98\) 52%,[\s\S]*?0\.9\) 64%,[\s\S]*?0\.6\) 76%,[\s\S]*?0\) 88%/,
+    /ellipse 57% 62% at 50% 56%,[\s\S]*?0\.98\) 52%,[\s\S]*?0\.9\) 64%,[\s\S]*?0\.6\) 76%,[\s\S]*?0\) 88%/,
     'Vite instance backdrop fade',
   );
   assert.match(viteImageStageStyles, /background-position:\s*center top;/, 'Vite top-aligned crop');
@@ -96,7 +96,7 @@ test('native instance location backdrops stay pinned to Vite geometry and maskin
 
   assert.match(sharedExperienceContract, /viewportWidthRatio:\s*0\.86/);
   assert.match(sharedExperienceContract, /maxWidth:\s*447/);
-  assert.match(sharedExperienceContract, /cy:\s*'56%'[\s\S]*?rx:\s*'57%'[\s\S]*?ry:\s*'94%'/);
+  assert.match(sharedExperienceContract, /cy:\s*'56%'[\s\S]*?rx:\s*'57%'[\s\S]*?ry:\s*'62%'/);
   assert.match(nativeLocationBackdrop, /variant === 'instance' \? contract\.instanceMask/);
   assert.match(nativeLocationBackdrop, /'xMidYMin slice'/);
   assert.match(nativeLocationBackdrop, /location-backdrop-brightness/);

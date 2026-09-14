@@ -4,7 +4,6 @@ import Svg, {
   Defs,
   G,
   Image as SvgImage,
-  LinearGradient,
   Mask,
   RadialGradient,
   Rect,
@@ -31,18 +30,6 @@ export const NativePokemonLocationBackdrop = memo(function NativePokemonLocation
     >
       <Svg height="100%" width="100%">
         <Defs>
-          {variant === 'instance' ? (
-            <>
-              <LinearGradient id="location-backdrop-top-fade" x1="0%" y1="0%" x2="0%" y2="100%">
-                <Stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-                <Stop offset="8%" stopColor="#ffffff" stopOpacity="0.35" />
-                <Stop offset="20%" stopColor="#ffffff" stopOpacity="1" />
-              </LinearGradient>
-              <Mask id="location-backdrop-top-mask">
-                <Rect fill="url(#location-backdrop-top-fade)" height="100%" width="100%" />
-              </Mask>
-            </>
-          ) : null}
           <RadialGradient
             cx={mask.cx}
             cy={mask.cy}
@@ -82,13 +69,13 @@ export const NativePokemonLocationBackdrop = memo(function NativePokemonLocation
             <Rect fill="url(#location-backdrop-mask)" height="100%" width="100%" />
           </Mask>
         </Defs>
-        {/* The tall radial mask is opaque at the viewport's top edge. Fade both
-            artwork and brightness there so the SVG cannot leave a straight cut. */}
-        <G mask={variant === 'instance' ? 'url(#location-backdrop-top-mask)' : undefined}>
+        {/* Fade the complete instance backdrop through one rounded silhouette,
+            including its brightness layer, before it reaches the top edge. */}
+        <G mask={variant === 'instance' ? 'url(#location-backdrop-fade)' : undefined}>
           <SvgImage
             height="100%"
             href={toNativeCollectionImageSource('', uri)}
-            mask="url(#location-backdrop-fade)"
+            mask={variant === 'card' ? 'url(#location-backdrop-fade)' : undefined}
             preserveAspectRatio={variant === 'instance' ? 'xMidYMin slice' : 'xMidYMid slice'}
             testID="native-location-backdrop-image"
             width="100%"
