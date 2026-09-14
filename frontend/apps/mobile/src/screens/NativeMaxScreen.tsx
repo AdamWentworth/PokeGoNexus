@@ -3,7 +3,6 @@ import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useSta
 import { Image as ExpoImage } from 'expo-image';
 import {
   ActivityIndicator,
-  Animated,
   FlatList,
   Pressable,
   StyleSheet,
@@ -20,7 +19,6 @@ import {
 } from '@pokemongonexus/app-core/max-battle-simulation';
 import { NativeCombatRankingCard } from '../components/NativeCombatRankingCard';
 import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
-import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import { NativeMaxBattleSimulator } from '../components/tools/NativeMaxBattleSimulator';
 import {
   buildNativeMaxRankings,
@@ -159,7 +157,7 @@ export const NativeMaxScreen = ({
   const [bossId, setBossId] = useState(initialBossId);
   const [bossQuery, setBossQuery] = useState('');
   const [methodOpen, setMethodOpen] = useState(false);
-  const workspaceMotion = useNativeSegmentedWorkspaceMotion(view === 'rankings' ? 0 : 1);
+
   const [pagination, setPagination] = useState({ key: '', limit: MAX_RESULTS_PAGE_SIZE });
   const performanceStartsRef = useRef(new Map<string, number>());
   const beginPerformance = useCallback((event: string) => {
@@ -550,10 +548,10 @@ export const NativeMaxScreen = ({
 
   const header = (
     <View style={styles.headerStack}>
-      <Animated.View style={[styles.stationaryHeader, workspaceMotion.stationaryStyle]}>
+      <View style={styles.stationaryHeader}>
         {productHeader}
         {viewTabs}
-      </Animated.View>
+      </View>
       {roster}
       {view === 'rankings'
         ? <View style={[styles.filterDeck, light && styles.panelLight]}>{roleTabs}{typeFilter}</View>
@@ -604,7 +602,7 @@ export const NativeMaxScreen = ({
 
   return (
     <View style={[styles.root, light && styles.rootLight]} testID="native-max-screen">
-      <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-max-workspace-motion">
+      <View style={styles.workspaceViewport} testID="native-max-workspace-motion">
         <FlatList
           contentContainerStyle={{ paddingHorizontal: 7, paddingTop: 3 + insets.top, paddingBottom: 96 + insets.bottom }}
           data={visibleRankings}
@@ -629,7 +627,7 @@ export const NativeMaxScreen = ({
           )}
           windowSize={1}
         />
-      </Animated.View>
+      </View>
     </View>
   );
 };

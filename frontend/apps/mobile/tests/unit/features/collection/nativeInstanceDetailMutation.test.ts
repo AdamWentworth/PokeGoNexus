@@ -389,4 +389,29 @@ describe('persistNativeInstanceDetailMutation', () => {
       fusion_form: null,
     }));
   });
+  it.each([
+    ['0_0_100', 'Male'], ['100_0_0', 'Female'], ['0_100_0', 'Male'], [null, 'Female'],
+  ])('rejects a new impossible gender for rate %s before queueing or sending', async (rate, gender) => {
+    const outbox = makeOutbox();
+    const receiverClient = { post: jest.fn() };
+    await expect(persistNativeInstanceDetailMutation({
+      userId: 'user-1', requestedInstanceId: 'instance-1', patch: { gender },
+      snapshot: { ...snapshot, catalog: [{ pokemon_id: 3, gender_rate: rate } as BasePokemon] },
+      outbox, receiverClient,
+    })).rejects.toThrow('This gender is not available');
+    expect(outbox.queue).not.toHaveBeenCalled();
+    expect(receiverClient.post).not.toHaveBeenCalled();
+  });
+
+  it('preserves historical gender data on unrelated edits', async () => {
+    const outbox = makeOutbox();
+    await expect(persistNativeInstanceDetailMutation({
+      userId: 'user-1', requestedInstanceId: 'instance-1', patch: { gender: 'Male', nickname: 'Updated' },
+      snapshot: { ...snapshot, catalog: [{ pokemon_id: 3, gender_rate: '0_0_100' } as BasePokemon],
+        instances: { 'instance-1': { ...snapshot.instances['instance-1'], gender: 'Male' } } },
+      outbox, receiverClient: { post: jest.fn() }, sendImmediately: false,
+    })).resolves.toBeDefined();
+    expect(outbox.queue).toHaveBeenCalledTimes(1);
+  });
+
 });

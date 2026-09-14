@@ -1,3 +1,4 @@
+import { useNativeHorizontalPageOffset } from '../../components/NativeHorizontalPageSlider';
 import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeUiIcon } from '../../components/NativeUiIcon';
@@ -9,6 +10,7 @@ type Props = {
   activeView: NativeSearchHubView;
   onViewChange: (view: NativeSearchHubView) => void;
   scrollX?: Animated.Value;
+  dragX?: Animated.Value;
 };
 
 const VIEW_ORDER: NativeSearchHubView[] = ['pokemon', 'trainers'];
@@ -17,6 +19,7 @@ export const NativeSearchHubHeader = ({
   activeView,
   onViewChange,
   scrollX,
+  dragX,
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
@@ -24,7 +27,8 @@ export const NativeSearchHubHeader = ({
   const tabsWidth = Math.min(Math.max(0, width - 12), 520);
   const tabWidth = Math.max(0, tabsWidth - 8) / VIEW_ORDER.length;
   const activeIndex = VIEW_ORDER.indexOf(activeView);
-  const translateX = scrollX?.interpolate({
+  const renderedOffset = useNativeHorizontalPageOffset(scrollX, dragX, width);
+  const translateX = renderedOffset?.interpolate({
     inputRange: [0, Math.max(1, width)],
     outputRange: [0, tabWidth],
     extrapolate: 'clamp',

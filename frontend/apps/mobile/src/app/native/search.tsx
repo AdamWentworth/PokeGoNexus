@@ -67,6 +67,7 @@ const NativeSignedInSearchRoute = ({ user }: { user: MobileSessionUser }) => {
   const [activeView, setActiveView] = useState<NativeSearchHubView>(
     requestedView ?? initialSession?.activeView ?? 'pokemon',
   );
+  const [pageDragX] = useState(() => new Animated.Value(0));
   const [pageScrollX] = useState(() => new Animated.Value(0));
   const sliderRef = useRef<NativeHorizontalPageSliderHandle>(null);
   const [draft, setDraft] = useState<NativePokemonSearchDraft>(() => (
@@ -270,6 +271,7 @@ const NativeSignedInSearchRoute = ({ user }: { user: MobileSessionUser }) => {
           activeView={activeView}
           onViewChange={changeView}
           scrollX={pageScrollX}
+        dragX={pageDragX}
         />
       ) : null}
       <NativeHorizontalPageSlider
@@ -277,6 +279,7 @@ const NativeSignedInSearchRoute = ({ user }: { user: MobileSessionUser }) => {
         onIndexChange={(index) => setActiveView(SEARCH_VIEWS[index] ?? 'pokemon')}
         ref={sliderRef}
         scrollX={pageScrollX}
+        dragX={pageDragX}
       >
         {pokemonPanel}
         <NativeTrainerSearchScreen

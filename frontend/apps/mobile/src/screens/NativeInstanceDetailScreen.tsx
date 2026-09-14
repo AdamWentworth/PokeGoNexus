@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   Animated,
+  Easing,
   Image,
   Modal,
   type LayoutChangeEvent,
@@ -18,6 +19,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import {
   type ReactNode,
+  createContext,
+  useContext,
+  useMemo,
   memo,
   useCallback,
   useEffect,
@@ -34,6 +38,8 @@ import type {
 import type {
   NativeInstanceDetailPatch,
 } from '../features/collection/nativeInstanceDetailMutation';
+import { getPokemonGenders, nextPokemonGender } from '@pokemongonexus/shared-domain/pokemon-gender';
+import { NativeHorizontalPageSlider } from '../components/NativeHorizontalPageSlider';
 import { NativeUiIcon } from '../components/NativeUiIcon';
 import type {
   PokemonSizeClass,
@@ -693,40 +699,98 @@ const DetailRows = ({
   </View>
 );
 
-const NativeMoveModeTabs = ({
-  mode,
-  onChange,
+const MOVE_PAGE_EASING = Easing.bezier(0.25, 0.1, 0.25, 1);
+const MOVE_MODES = ['raid', 'pvp'] as const;
+const MoveModeContext = createContext<{
+  mode: PokemonMoveDamageMode; changeMode: (value: PokemonMoveDamageMode) => void;
+}>({ mode: 'raid', changeMode: () => undefined });
+const NativeMoveModeProvider = ({ children }: { children: ReactNode }) => {
+  const [mode, changeMode] = useState<PokemonMoveDamageMode>('raid');
+  const value = useMemo(() => ({ mode, changeMode }), [mode]);
+  return <MoveModeContext.Provider value={value}>{children}</MoveModeContext.Provider>;
+};
+
+const NativeMovePages = ({
   palette,
+  children,
 }: {
-  mode: PokemonMoveDamageMode;
-  onChange: (mode: PokemonMoveDamageMode) => void;
   palette: typeof LIGHT;
-}) => (
-  <View accessibilityLabel="Move battle mode" accessibilityRole="tablist" style={styles.moveTabs}>
-    {([
-      ['raid', 'GYMS & RAIDS'],
-      ['pvp', 'TRAINER BATTLES'],
-    ] as const).map(([value, label]) => {
-      const selected = mode === value;
-      return (
-        <Pressable
+  children: (mode: PokemonMoveDamageMode) => ReactNode;
+}) => {
+  const reduceMotion = useNativeReducedMotion();
+  const { mode, changeMode } = useContext(MoveModeContext);
+  const { width: screenWidth } = useWindowDimensions();
+  const underlineWidth = Math.min(110, Math.max(72, screenWidth * 0.22));
+  const [tabCenters, setTabCenters] = useState<Record<string, number>>({});
+  const [underlineX] = useState(() => new Animated.Value(0));
+  const previousCenter = useRef<number | null>(null);
+  const center = tabCenters[mode];
+  useEffect(() => {
+    if (center == null) return;
+    underlineX.stopAnimation();
+    if (previousCenter.current == null || reduceMotion) underlineX.setValue(center);
+    else Animated.timing(underlineX, {
+      toValue: center, duration: 300, easing: MOVE_PAGE_EASING,
+      isInteraction: false, useNativeDriver: true,
+    }).start();
+    previousCenter.current = center;
+    return () => underlineX.stopAnimation();
+  }, [center, reduceMotion, underlineX]);
+
+  return <>
+    <View accessibilityLabel="Move battle mode" accessibilityRole="tablist" style={[styles.moveTabs, { gap: Math.min(30, Math.max(12, screenWidth * 0.035)) }]}>
+      {MOVE_MODES.map((value) => {
+        const selected = mode === value;
+        return <Pressable
           aria-selected={selected}
           accessibilityRole="tab"
           accessibilityState={{ selected }}
           key={value}
-          onPress={() => onChange(value)}
+          onLayout={({ nativeEvent: { layout } }) => {
+            const next = layout.x + layout.width / 2;
+            setTabCenters((current) => current[value] === next ? current : { ...current, [value]: next });
+          }}
+          onPress={() => changeMode(value)}
           style={styles.moveTabButton}
         >
-          <Text style={[selected ? styles.moveTabActive : styles.moveTab, {
-            color: selected ? palette.text : palette.secondary,
-            borderBottomColor: selected ? palette.text : 'transparent',
-          }]}
-          >
-            {label}
+          <Text style={[styles.moveTab, { color: selected ? palette.text : palette.secondary }]}>
+            {value === 'raid' ? 'GYMS & RAIDS' : 'TRAINER BATTLES'}
           </Text>
-        </Pressable>
-      );
-    })}
+        </Pressable>;
+      })}
+      <Animated.View
+        accessibilityElementsHidden
+        pointerEvents="none"
+        testID="native-move-mode-underline"
+        style={[styles.moveUnderline, {
+          backgroundColor: '#808080',
+          left: -underlineWidth / 2, width: underlineWidth,
+          opacity: center == null ? 0 : 1,
+          transform: [{ translateX: underlineX }],
+        }]}
+      />
+    </View>
+    <NativeHorizontalPageSlider
+      activeIndex={mode === 'raid' ? 0 : 1}
+      onIndexChange={(index) => changeMode(MOVE_MODES[index])}
+      sizing="content"
+      swipeEnabled={false}
+      transitionDuration={220}
+      transitionEasing={MOVE_PAGE_EASING}
+    >
+      {MOVE_MODES.map((value) => <View key={value} style={styles.movePage}>{children(value)}</View>)}
+    </NativeHorizontalPageSlider>
+  </>;
+};
+
+const NativeShadowMoveLabel = ({ assetBaseUrl }: { assetBaseUrl: string }) => (
+  <View accessibilityLabel="Shadow bonus" style={styles.nativeShadowBonusRow}>
+    <View style={styles.nativeShadowBonusIconBadge}>
+      <Image fadeDuration={0} accessibilityElementsHidden
+        source={{ uri: toAssetUrl(assetBaseUrl, '/media/images/shadow_icon.png') }}
+        style={styles.nativeShadowBonusIcon} />
+    </View>
+    <Text style={styles.nativeShadowBonusText}>SHADOW BONUS</Text>
   </View>
 );
 
@@ -741,29 +805,10 @@ const NativeMovesPanel = ({
   moves: NativeInstanceDetail['moves'];
   palette: typeof LIGHT;
 }) => {
-  const reduceMotion = useNativeReducedMotion();
-  const [mode, setMode] = useState<PokemonMoveDamageMode>('raid');
-  const [slide] = useState(() => new Animated.Value(0));
-  const changeMode = (nextMode: PokemonMoveDamageMode) => {
-    if (nextMode === mode) return;
-    slide.stopAnimation();
-    setMode(nextMode);
-    if (reduceMotion) {
-      slide.setValue(0);
-      return;
-    }
-    slide.setValue(nextMode === 'pvp' ? 18 : -18);
-    Animated.timing(slide, {
-      duration: 220,
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
-  };
-
   return (
     <View accessibilityLabel="Pokémon moves" style={styles.nativeMovesPanel}>
-      <NativeMoveModeTabs mode={mode} onChange={changeMode} palette={palette} />
-      <Animated.View style={{ transform: [{ translateX: slide }] }}>
+      <NativeMovePages palette={palette}>
+        {(mode) => <>
         {moves.map((move) => {
           const power = mode === 'raid' ? move.raidPower : move.pvpPower;
           const shadowBonus = isShadow && power != null
@@ -780,7 +825,7 @@ const NativeMovesPanel = ({
                       style={styles.nativeMoveTypeIcon}
                     />
                   ) : null}
-                  <Text numberOfLines={1} style={[styles.nativeMoveName, { color: palette.text }]}>
+                  <Text numberOfLines={1} style={[styles.nativeMoveName, move.legacy && styles.legacyMove, { color: palette.text }]}>
                     {move.value}{move.legacy ? '*' : ''}
                   </Text>
                 </View>
@@ -789,28 +834,20 @@ const NativeMovesPanel = ({
                   {shadowBonus != null ? <Text style={styles.nativeMovePowerBonus}>+{shadowBonus}</Text> : null}
                 </Text>
               </View>
-              {isShadow ? (
-                <View accessibilityLabel="Shadow bonus" style={styles.nativeShadowBonusRow}>
-                  <View style={styles.nativeShadowBonusIconBadge}>
-                    <Image fadeDuration={0}
-                      accessibilityElementsHidden
-                      source={{ uri: toAssetUrl(assetBaseUrl, '/media/images/shadow_icon.png') }}
-                      style={styles.nativeShadowBonusIcon}
-                    />
-                  </View>
-                  <Text style={styles.nativeShadowBonusText}>SHADOW BONUS</Text>
-                </View>
-              ) : null}
+              {isShadow ? <NativeShadowMoveLabel assetBaseUrl={assetBaseUrl} /> : null}
             </View>
           );
         })}
-      </Animated.View>
+        </>}
+      </NativeMovePages>
     </View>
   );
 };
 
 const NativeMoveSelector = ({
   damageMode,
+  assetBaseUrl,
+  isShadow,
   label,
   options,
   palette,
@@ -818,6 +855,8 @@ const NativeMoveSelector = ({
   onChange,
 }: {
   damageMode: PokemonMoveDamageMode;
+  assetBaseUrl: string;
+  isShadow: boolean;
   label: string;
   options: NonNullable<NativeInstanceDetail['moveOptions']>;
   palette: typeof LIGHT;
@@ -828,6 +867,8 @@ const NativeMoveSelector = ({
   const animationType = useNativeModalAnimation('slide');
   const selected = options.find((option) => option.id === value);
   const selectorTestId = `native-move-selector-${label.toLowerCase().replace(/\s+/g, '-')}`;
+  const power = selected ? (damageMode === 'raid' ? selected.raidPower : selected.pvpPower) : null;
+  const bonus = isShadow && power != null ? getPokemonShadowMoveBonus(power) : null;
   return (
     <>
       <View style={styles.choiceFieldRow}>
@@ -846,13 +887,15 @@ const NativeMoveSelector = ({
           testID={selectorTestId}
         >
           <Text numberOfLines={1} style={[styles.choiceFieldValue, { color: palette.text }]}>
-            {selected?.name ?? 'Unselected move'}
+            {selected?.name ?? 'Unselected move'}{selected?.legacy ? '*' : ''}
           </Text>
         </Pressable>
         <Text style={[styles.choiceFieldPower, { color: palette.text }]}>
-          {selected ? (damageMode === 'raid' ? selected.raidPower : selected.pvpPower) ?? '-' : '-'}
+          {power ?? '-'}
+          {bonus != null ? <Text style={styles.nativeMovePowerBonus}>+{bonus}</Text> : null}
         </Text>
       </View>
+      {isShadow ? <NativeShadowMoveLabel assetBaseUrl={assetBaseUrl} /> : null}
       <Modal
         animationType={animationType}
         onRequestClose={() => setOpen(false)}
@@ -1711,12 +1754,6 @@ const NativePowerControls = ({
   );
 };
 
-const nextEditableGender = (gender: string | null): string | null => {
-  const options: (string | null)[] = ['Male', 'Female', null];
-  const currentIndex = options.indexOf(gender);
-  return options[(currentIndex + 1) % options.length] ?? null;
-};
-
 const NativeInlineInstanceEditor = ({
   assetBaseUrl,
   detail,
@@ -1738,9 +1775,12 @@ const NativeInlineInstanceEditor = ({
 }) => {
   const isShadow = Boolean(draft.shadow && !draft.purified);
   const canToggleLucky = isCaught && !isShadow && detail.rarity !== 'Mythic';
-  const genderIcon = draft.gender === 'Male'
+  const allowedGenders = getPokemonGenders(detail.genderRate, isWanted);
+  const displayedGender = allowedGenders.length === 1 ? allowedGenders[0] : draft.gender;
+  const canToggleGender = allowedGenders.length > 1;
+  const genderIcon = displayedGender === 'Male'
     ? '/images/male-icon.png'
-    : draft.gender === 'Female'
+    : displayedGender === 'Female'
       ? '/images/female-icon.png'
       : '/images/neutral-icon.png';
   const measurementInputStyle = [
@@ -1862,9 +1902,10 @@ const NativeInlineInstanceEditor = ({
           </View>
         ) : null}
         <Pressable
-          accessibilityLabel={`Gender: ${draft.gender ?? (isWanted ? 'Any' : 'Unspecified')}`}
-          accessibilityRole="button"
-          onPress={() => onChange({ gender: nextEditableGender(draft.gender) })}
+          accessibilityLabel={`Gender: ${displayedGender ?? (isWanted ? 'Any' : 'Unspecified')}`}
+          accessibilityRole={canToggleGender ? 'button' : 'image'}
+          disabled={!canToggleGender}
+          onPress={() => onChange({ gender: nextPokemonGender(draft.gender, detail.genderRate, isWanted) })}
           style={styles.inlineGenderButton}
         >
           <Image
@@ -1872,7 +1913,7 @@ const NativeInlineInstanceEditor = ({
             accessibilityElementsHidden
             resizeMode="contain"
             source={{ uri: toAssetUrl(assetBaseUrl, genderIcon) }}
-            style={styles.inlineGenderIcon}
+            style={[styles.inlineGenderIcon, displayedGender === 'Genderless' && { opacity: 0 }]}
           />
         </Pressable>
       </View>
@@ -1961,7 +2002,6 @@ const NativeInstanceEditFields = ({
   onChange: (patch: Partial<NativeInstanceEditDraft>) => void;
   onRequestLocationVisibility: (target: number) => void;
 }) => {
-  const [moveDamageMode, setMoveDamageMode] = useState<PokemonMoveDamageMode>('raid');
   const selectedFusionMoves = draft.fused
     ? detail.fusionOptions?.find((option) => option.id === draft.fusionId)?.moveOptions
     : null;
@@ -1998,12 +2038,11 @@ const NativeInstanceEditFields = ({
         !hasPowerPanel && { borderTopColor: palette.divider, borderTopWidth: 2 },
         { borderBottomColor: palette.divider },
       ]}>
-        <NativeMoveModeTabs
-          mode={moveDamageMode}
-          onChange={setMoveDamageMode}
-          palette={palette}
-        />
+        <NativeMovePages palette={palette}>
+          {(moveDamageMode) => <>
         <NativeMoveSelector
+          assetBaseUrl={assetBaseUrl}
+          isShadow={Boolean(draft.shadow && !draft.purified)}
           damageMode={moveDamageMode}
           label="Fast move"
           onChange={(fastMove) => onChange({ fastMove })}
@@ -2012,6 +2051,8 @@ const NativeInstanceEditFields = ({
           value={draft.fastMove}
         />
         <NativeMoveSelector
+          assetBaseUrl={assetBaseUrl}
+          isShadow={Boolean(draft.shadow && !draft.purified)}
           damageMode={moveDamageMode}
           label="Charged move"
           onChange={(chargedMove1) => onChange({ chargedMove1 })}
@@ -2021,7 +2062,9 @@ const NativeInstanceEditFields = ({
         />
         {draft.chargedMove2 != null ? (
           <NativeMoveSelector
-            damageMode={moveDamageMode}
+            assetBaseUrl={assetBaseUrl}
+          isShadow={Boolean(draft.shadow && !draft.purified)}
+          damageMode={moveDamageMode}
             label="Second charged move"
             onChange={(chargedMove2) => onChange({ chargedMove2 })}
             options={editMoveOptions.filter((move) => move.kind === 'charged')}
@@ -2040,6 +2083,8 @@ const NativeInstanceEditFields = ({
             <Text style={[styles.addMoveText, { color: palette.text }]}>+</Text>
           </Pressable>
         )}
+          </>}
+        </NativeMovePages>
       </View>
 
       {!isWanted ? (
@@ -2140,7 +2185,7 @@ const NativeInstanceReadOnlyDetailSections = memo(function NativeInstanceReadOnl
           {detail.moves.length ? (
             <NativeMovesPanel
               assetBaseUrl={assetBaseUrl}
-              isShadow={Boolean(detail.instance?.shadow)}
+              isShadow={Boolean(detail.instance?.shadow && !detail.instance?.purified)}
               moves={detail.moves}
               palette={palette}
             />
@@ -2485,7 +2530,8 @@ export const NativeInstanceDetailScreen = ({
   const height = typeof instance?.height === 'number' && instance.height > 0
     ? instance.height
     : null;
-  const gender = instance?.gender;
+  const speciesGenders = getPokemonGenders(detail.genderRate, isWanted);
+  const gender = speciesGenders.length === 1 ? speciesGenders[0] : instance?.gender;
   const maxBadge = detail.row.maxKind
     ? toAssetUrl(assetBaseUrl, `/images/${detail.row.maxKind}.png`)
     : null;
@@ -2709,6 +2755,7 @@ export const NativeInstanceDetailScreen = ({
   };
 
   return (
+    <NativeMoveModeProvider>
     <View style={styles.overlay} testID="native-instance-overlay">
       <NativeInstanceSwipeFrame
         activeItemKey={detail.row.id}
@@ -3181,6 +3228,7 @@ export const NativeInstanceDetailScreen = ({
         />
       </Pressable>
     </View>
+    </NativeMoveModeProvider>
   );
 };
 
@@ -3758,14 +3806,16 @@ const styles = StyleSheet.create({
   section: { width: '94%', marginTop: 12, paddingTop: 12, borderTopWidth: 2 },
   moveTabs: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 8 },
   moveTabButton: { minHeight: 38, justifyContent: 'flex-end', paddingHorizontal: 4 },
-  moveTabActive: { paddingBottom: 4, borderBottomWidth: 2, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
-  moveTab: { paddingBottom: 6, borderBottomWidth: 2, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
+  moveUnderline: { position: 'absolute', left: -45, bottom: 0, height: 2, width: 90, borderRadius: 1 },
+  movePage: { paddingHorizontal: 2, paddingTop: 1 },
+  legacyMove: { fontWeight: '700' },
+  moveTab: { paddingBottom: 7, fontSize: 10, fontWeight: '600', letterSpacing: 0.8 },
   nativeMovesPanel: { width: '100%', overflow: 'hidden' },
   nativeMoveBlock: { width: '100%', marginBottom: 5 },
   nativeMoveRow: { minHeight: 34, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 5 },
   nativeMoveIdentity: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
   nativeMoveTypeIcon: { width: 22, height: 22, flexShrink: 0 },
-  nativeMoveName: { flex: 1, minWidth: 0, fontSize: 16, fontWeight: '600' },
+  nativeMoveName: { flex: 1, minWidth: 0, fontSize: 16, fontWeight: '400' },
   nativeMovePower: { minWidth: 48, fontSize: 16, fontVariant: ['tabular-nums'], textAlign: 'right' },
   nativeMovePowerBonus: { color: '#4ea5ff', fontWeight: '800' },
   nativeShadowBonusRow: { minHeight: 16, flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 35 },

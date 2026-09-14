@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import {
   NativeHorizontalPageSlider,
+  useNativeHorizontalPageOffset,
   type NativeHorizontalPageSliderHandle,
 } from '../components/NativeHorizontalPageSlider';
 import { NativeConfirmationDialog } from '../components/NativeConfirmationDialog';
@@ -237,8 +238,12 @@ export const NativeFriendsScreen = ({
   const feedbackPerformanceRef = useRef<number | null>(null);
   const searchPerformanceRef = useRef<number | null>(null);
   const activeIndex = VIEWS.indexOf(activeView);
+  const [dragX] = useState(() => new Animated.Value(0));
+  const [internalScrollX] = useState(() => new Animated.Value(activeIndex * width));
+  const pageScrollX = scrollX ?? internalScrollX;
+  const renderedOffset = useNativeHorizontalPageOffset(pageScrollX, dragX, width);
   const tabWidth = Math.max(0, width - 30) / VIEWS.length;
-  const translateX = scrollX?.interpolate({
+  const translateX = renderedOffset?.interpolate({
     inputRange: [0, Math.max(width, 1) * (VIEWS.length - 1)],
     outputRange: [0, tabWidth * (VIEWS.length - 1)],
     extrapolate: 'clamp',
@@ -253,7 +258,7 @@ export const NativeFriendsScreen = ({
   const changeView = (view: NativeFriendsView) => {
     const startedAt = captureNativeUiInteractionStart();
     onViewChange(view);
-    sliderRef.current?.setPage(VIEWS.indexOf(view), true, () => {
+    sliderRef.current?.setPage(VIEWS.indexOf(view), undefined, () => {
       markNativeUiPerformanceAfterPaint('friends_view_result_painted', startedAt);
     });
   };
@@ -379,7 +384,8 @@ export const NativeFriendsScreen = ({
         activeIndex={activeIndex}
         onIndexChange={(index) => onViewChange(VIEWS[index] ?? 'friends')}
         ref={sliderRef}
-        scrollX={scrollX}
+        scrollX={pageScrollX}
+        dragX={dragX}
       >
         <ScrollView contentContainerStyle={panelContentStyle} style={styles.panel}>
           {loadingState ?? errorState ?? (

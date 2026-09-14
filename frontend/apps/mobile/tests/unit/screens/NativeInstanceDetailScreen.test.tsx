@@ -1612,4 +1612,50 @@ describe('NativeInstanceDetailScreen', () => {
       },
     }));
   });
+  const renderGenderEditor = (rate: string | null, gender: string | null, wanted = false) => render(
+    <NativeInstanceDetailScreen detail={{ ...detail, genderRate: rate ?? undefined,
+      row: { ...detail.row, status: wanted ? 'wanted' : 'caught' },
+      instance: { gender, cp: 2499, level: 40, attack_iv: 15, defense_iv: 15, stamina_iv: 15 } as NonNullable<NativeInstanceDetail['instance']>,
+      moveOptions: [{ id: 1, name: 'Fire Spin', kind: 'fast', legacy: false, typeName: 'Fire', typeIconUri: undefined, raidPower: 14, pvpPower: 9 }],
+    }} isLoading={false} error={null} cachedAt={null} movesWarning={null}
+      saveNotice={null} saveError={null} isSaving={false} onRetry={jest.fn()}
+      onBack={jest.fn()} onToggleFavorite={jest.fn()} onSaveDetails={jest.fn()} />
+  );
+
+  it.each([
+    ['0_0_100', 'Genderless'], ['100_0_0', 'Male'], ['0_100_0', 'Female'], [null, 'Unspecified'],
+  ])('does not offer gender cycling for rate %s', async (rate, expected) => {
+    renderGenderEditor(rate, null);
+    await openCaughtEditor();
+    expect(screen.queryByRole('button', { name: /^Gender:/ })).toBeNull();
+    expect(screen.getByLabelText(`Gender: ${expected}`)).toBeDisabled();
+  });
+
+  it('cycles mixed-gender caught Pokémon between Male and Female without clearing the value', async () => {
+    renderGenderEditor('87.5_12.5_0', 'Male');
+    await openCaughtEditor();
+    fireEvent.press(screen.getByRole('button', { name: 'Gender: Male' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Gender: Female' }));
+    expect(screen.getByRole('button', { name: 'Gender: Male' })).toBeTruthy();
+  });
+
+  it('retains Any in the mixed-gender Wanted requirements cycle', async () => {
+    renderGenderEditor('50_50_0', null, true);
+    fireEvent.press(screen.getByRole('button', { name: 'Edit wanted listing' }));
+    await waitFor(() => expect(screen.getByLabelText('Pokémon inline identity editor')).toBeTruthy());
+    for (const value of ['Any', 'Male', 'Female']) fireEvent.press(screen.getByRole('button', { name: `Gender: ${value}` }));
+    expect(screen.getByRole('button', { name: 'Gender: Any' })).toBeTruthy();
+  });
+
+  it('keeps Trainer Battles selected when opening the editor and slides both editor pages', async () => {
+    renderGenderEditor('50_50_0', 'Male');
+    fireEvent.press(screen.getByRole('tab', { name: 'TRAINER BATTLES' }));
+    await openCaughtEditor();
+    expect(screen.getByRole('tab', { name: 'TRAINER BATTLES' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getAllByRole('button', { name: 'Choose fast move' })).toHaveLength(1);
+    expect(screen.getAllByTestId('native-move-selector-fast-move', { includeHiddenElements: true })).toHaveLength(2);
+    fireEvent.press(screen.getByRole('tab', { name: 'GYMS & RAIDS' }));
+    expect(screen.getByRole('tab', { name: 'GYMS & RAIDS' }).props.accessibilityState.selected).toBe(true);
+  });
+
 });

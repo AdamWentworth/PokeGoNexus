@@ -13,6 +13,7 @@
     "./pokemon-display": "./src/pokemon-display.ts",
     "./fusion-backgrounds": "./src/fusion-backgrounds.ts",
     "./pokemon-balls": "./src/pokemon-balls.ts",
+    "./pokemon-gender": "./src/pokemon-gender.ts",
     "./combat-power": "./src/combat-power.ts",
     "./moves": "./src/moves.ts",
     "./trade-proposal-candidates": "./src/trade-proposal-candidates.ts",

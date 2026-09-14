@@ -2,7 +2,6 @@ import { NativeRosterScopeControl } from '../components/tools/NativeRosterScopeC
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
   FlatList,
   Image,
   Pressable,
@@ -21,7 +20,6 @@ import { NativeRaidRankingCard } from '../components/tools/NativeRaidRankingCard
 import { NativeRaidSettingsPanel } from '../components/tools/NativeRaidSettingsPanel';
 import { NativeRaidTypeFilter } from '../components/tools/NativeRaidTypeFilter';
 import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
-import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import {
   buildNativeRaidAttackers,
   buildNativeRaidCounterAttackersAsync,
@@ -94,7 +92,7 @@ export const NativeRaidScreen = ({
   const [observedDodgeSuccessRate, setObservedDodgeSuccessRate] = useState<number | null>(null);
   const [bossCounterEntries, setBossCounterEntries] = useState<NativeCombatEntry[]>([]);
   const [bossCountersLoading, setBossCountersLoading] = useState(false);
-  const workspaceMotion = useNativeSegmentedWorkspaceMotion(view === 'rankings' ? 0 : 1);
+
   const bossCounterCacheRef = useRef(new Map<string, {
     catalog: BasePokemon[];
     entries: NativeCombatEntry[];
@@ -489,10 +487,10 @@ export const NativeRaidScreen = ({
 
   const header = (
     <View style={styles.headerStack}>
-      <Animated.View style={[styles.stationaryHeader, workspaceMotion.stationaryStyle]}>
+      <View style={styles.stationaryHeader}>
         {productHeader}
         {modeTabs}
-      </Animated.View>
+      </View>
       {roster}
       {view === 'rankings' ? <NativeRaidTypeFilter assetBaseUrl={assetBaseUrl} onChange={(type) => { beginPerformance('raid_type_result_painted'); setSelectedType(type); }} selectedType={selectedType} /> : bossPicker}
       <View style={styles.leaderboardHeading}>
@@ -550,7 +548,7 @@ export const NativeRaidScreen = ({
 
   return (
     <View style={[styles.root, light && styles.rootLight]} testID="native-raid-screen">
-      <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-raid-workspace-motion">
+      <View style={styles.workspaceViewport} testID="native-raid-workspace-motion">
         <FlatList
           contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 4 + insets.top, paddingBottom: 96 + insets.bottom }}
           data={rankings}
@@ -584,7 +582,7 @@ export const NativeRaidScreen = ({
             />
           )}
         />
-      </Animated.View>
+      </View>
     </View>
   );
 };

@@ -1,7 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Animated,
   FlatList,
   Image,
   Linking,
@@ -34,7 +33,6 @@ import { NativePvpBattleLab } from "../components/tools/NativePvpBattleLab";
 import { NativePvpIvRank } from "../components/tools/NativePvpIvRank";
 import { NativePvpTeamBuilder } from "../components/tools/NativePvpTeamBuilder";
 import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
-import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import {
   buildNativePvpFormats,
   buildNativePvpRankingRows,
@@ -331,10 +329,7 @@ export const NativePvpScreen = ({
   const deferredQuery = useDeferredValue(query);
   const deferredScope = useDeferredValue(scope);
   const deferredWorkspace = useDeferredValue(workspace);
-  const workspaceMotion = useNativeSegmentedWorkspaceMotion(Math.max(
-    0,
-    WORKSPACES.findIndex(([value]) => value === deferredWorkspace),
-  ));
+
   const evaluationPlan = useMemo(() => (
     deferredScope === 'owned' && deferredWorkspace !== 'iv-rank'
       ? buildNativePvpRosterEvaluationPlan({
@@ -536,7 +531,7 @@ export const NativePvpScreen = ({
       : (format?.entries.length ?? 0);
   const header = (
     <View>
-      <Animated.View style={workspaceMotion.stationaryStyle}>
+      <View >
         <View style={styles.topbar}>
           <Image fadeDuration={0}
             resizeMode="contain"
@@ -592,7 +587,7 @@ export const NativePvpScreen = ({
           testID="native-pvp-workspace-switcher"
           value={workspace}
         />
-      </Animated.View>
+      </View>
       <View style={[styles.leagueTabs, light && styles.sectionLight]}>
         {LEAGUES.map(([key, label, detail]) => (
           <Pressable
@@ -767,7 +762,7 @@ export const NativePvpScreen = ({
         style={[styles.root, light && styles.rootLight]}
         testID="native-pvp-screen"
       >
-        <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-pvp-workspace-motion">
+        <View style={styles.workspaceViewport} testID="native-pvp-workspace-motion">
           <FlatList
           contentContainerStyle={{
             paddingHorizontal: 12,
@@ -879,12 +874,12 @@ export const NativePvpScreen = ({
             {sourceFooter}
           </>}
           />
-        </Animated.View>
+        </View>
       </View>
     );
   return (
     <View style={[styles.root, light && styles.rootLight]} testID="native-pvp-screen">
-      <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-pvp-workspace-motion">
+      <View style={styles.workspaceViewport} testID="native-pvp-workspace-motion">
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -949,7 +944,7 @@ export const NativePvpScreen = ({
           )}
           {deferredWorkspace !== "iv-rank" ? sourceFooter : null}
         </ScrollView>
-      </Animated.View>
+      </View>
     </View>
   );
 };

@@ -176,6 +176,7 @@ export type NativeInstanceDetail = {
   specialMaxBaseEligible?: boolean;
   sizeThresholds?: BasePokemon['sizes'];
   rarity?: BasePokemon['rarity'];
+  genderRate?: BasePokemon['gender_rate'];
 };
 
 export const buildCanonicalCollectionInstancePath = (
@@ -1472,5 +1473,6 @@ export const buildNativeInstanceDetail = (
     specialMaxBaseEligible,
     sizeThresholds: pokemon.sizes,
     rarity: pokemon.rarity,
+    genderRate: pokemon.gender_rate,
   });
 };

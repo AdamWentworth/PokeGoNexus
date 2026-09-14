@@ -36,6 +36,10 @@ type Props = PropsWithChildren<{
   onIndexChange: (index: number) => void;
   scrollX?: Animated.Value;
   dragX?: Animated.Value;
+  sizing?: 'fill' | 'content';
+  swipeEnabled?: boolean;
+  transitionDuration?: number;
+  transitionEasing?: (value: number) => number;
 }>;
 
 export type NativeHorizontalPageSliderHandle = {
@@ -101,6 +105,19 @@ export const resolveNativeHorizontalDragHandoffOffset = ({
   Math.min(maxPeekDistance, translationX),
 );
 
+export const useNativeHorizontalPageOffset = (
+  scrollX: Animated.Value | undefined,
+  dragX: Animated.Value | undefined,
+  width: number,
+) => useMemo(() => {
+  if (!scrollX || !dragX || Platform.OS === 'web') return scrollX;
+  const peek = width * collectionExperienceParityContract.pageSwipeMaxPeekRatio;
+  const drag = dragX.interpolate({
+    inputRange: [-peek, peek], outputRange: [-peek, peek], extrapolate: 'clamp',
+  });
+  return Animated.subtract(scrollX, drag);
+}, [dragX, scrollX, width]);
+
 export const NativeHorizontalPageSlider = memo(forwardRef<
   NativeHorizontalPageSliderHandle,
   Props
@@ -110,10 +127,17 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
   onIndexChange,
   scrollX,
   dragX,
+  sizing = 'fill',
+  swipeEnabled = true,
+  transitionDuration = NATIVE_HORIZONTAL_PAGE_TRANSITION_MS,
+  transitionEasing = NATIVE_HORIZONTAL_PAGE_EASING,
 }, ref) {
   const panels = Children.toArray(children);
   const panelCount = panels.length;
-  const { width } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
+  const width = measuredWidth ?? windowWidth;
+  const [panelHeights, setPanelHeights] = useState<Record<number, number>>({});
   const safeIndex = clampPageIndex(activeIndex, panelCount);
   const safeIndexRef = useRef(safeIndex);
   const onIndexChangeRef = useRef(onIndexChange);
@@ -122,42 +146,29 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
   const previousWidthRef = useRef(width);
   const dragStartOffsetRef = useRef(safeIndex * width);
   const pageAnimationActiveRef = useRef(false);
+  const nativeDragActiveRef = useRef(false);
   const interactionGenerationRef = useRef(0);
   const interactionReleaseRef = useRef<(() => void) | null>(null);
   const [internalScrollX] = useState(() => new Animated.Value(safeIndex * width));
   const pageScrollX = scrollX ?? internalScrollX;
   const maxPeekDistance = width * collectionExperienceParityContract.pageSwipeMaxPeekRatio;
-  const nativeDrivenDrag = dragX && Platform.OS !== 'web' ? dragX : null;
-  const clampedNativeDrag = useMemo(
-    () => nativeDrivenDrag
-      // Clamp the absolute translation. diffClamp accumulates deltas, so a
-      // swipe beyond the peek limit leaves an opposite displacement when the
-      // gesture resets to zero; that displacement also survives later tab taps.
-      ? nativeDrivenDrag.interpolate({
-          inputRange: [-maxPeekDistance, maxPeekDistance],
-          outputRange: [-maxPeekDistance, maxPeekDistance],
-          extrapolate: 'clamp',
-        })
-      : null,
-    [maxPeekDistance, nativeDrivenDrag],
-  );
-  const renderedScrollX = useMemo(
-    () => clampedNativeDrag
-      ? Animated.add(pageScrollX, Animated.multiply(clampedNativeDrag, -1))
-      : pageScrollX,
-    [clampedNativeDrag, pageScrollX],
-  );
+  const [internalDragX] = useState(() => new Animated.Value(0));
+  // Every native hub must follow the finger on the UI thread, including callers
+  // that do not supply collection's shared drag clock.
+  const nativeDrivenDrag = Platform.OS !== 'web' ? dragX ?? internalDragX : null;
+  const renderedScrollX = useNativeHorizontalPageOffset(pageScrollX, nativeDrivenDrag ?? undefined, width) ?? pageScrollX;
   const trackTranslateX = useMemo(
     () => Animated.multiply(renderedScrollX, -1),
     [renderedScrollX],
   );
   const trackStyle = useMemo(() => [
     styles.track,
+    sizing === 'content' && styles.contentTrack,
     {
       transform: [{ translateX: trackTranslateX }],
       width: width * panelCount,
     },
-  ], [panelCount, trackTranslateX, width]);
+  ], [panelCount, sizing, trackTranslateX, width]);
   const panelStyle = useMemo(() => [styles.panel, { width }], [width]);
   const devicePreferences = useOptionalNativeDevicePreferences();
   const systemReduceMotionRef = useRef(false);
@@ -204,12 +215,14 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
     onComplete?: () => void,
   ) => {
     const nextIndex = clampPageIndex(index, panelCount);
+    nativeDragActiveRef.current = false;
     renderedIndexRef.current = nextIndex;
     // Vite moves one three-panel track. Drive the native track and every header
     // indicator from this same value so Android cannot make the body and
     // underline race each other with two different animation clocks.
     nativeDrivenDrag?.stopAnimation();
     nativeDrivenDrag?.setValue(0);
+    interactionGenerationRef.current += 1;
     pageScrollX.stopAnimation();
     if (animated) {
       pageAnimationActiveRef.current = true;
@@ -219,8 +232,8 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
       // snapshots: at Pixel 8 Pro smoke density those transient render targets
       // consumed roughly 56 MB and made the first transition frames slower.
       Animated.timing(pageScrollX, {
-        duration: NATIVE_HORIZONTAL_PAGE_TRANSITION_MS,
-        easing: NATIVE_HORIZONTAL_PAGE_EASING,
+        duration: transitionDuration,
+        easing: transitionEasing,
         // Animated's framework interaction handle makes VirtualizedList defer
         // cell batches until the full 300 ms transition ends. Vite keeps its
         // virtualized destination filling while CSS moves the page, and this
@@ -250,6 +263,8 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
     reduceMotion,
     releasePageInteraction,
     reservePageInteraction,
+    transitionDuration,
+    transitionEasing,
     width,
   ]);
 
@@ -290,6 +305,10 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
     setPage(safeIndex, false);
   }, [safeIndex, setPage, width]);
 
+  useEffect(() => {
+    if (reduceMotion && pageAnimationActiveRef.current) setPage(safeIndex, false);
+  }, [reduceMotion, safeIndex, setPage]);
+
   const settleDrag = useCallback((translationX: number, _velocityX: number) => {
     const currentIndex = renderedIndexRef.current;
     const nextIndex = resolveNativeHorizontalSwipeIndex({
@@ -313,7 +332,8 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
     if (!nativeDrivenDrag) return;
     const { oldState, state, translationX, velocityX } = event.nativeEvent;
     if (state === State.ACTIVE) {
-      reservePageInteraction();
+      nativeDragActiveRef.current = true;
+      const dragGeneration = reservePageInteraction();
       dragStartOffsetRef.current = renderedIndexRef.current * width;
       if (pageAnimationActiveRef.current) {
         // Only ask the UI thread for its current presentation offset when the
@@ -322,6 +342,9 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
         // the first native gesture events had already arrived, producing a
         // one-frame snap back to the current page before following the finger.
         pageScrollX.stopAnimation((currentOffset) => {
+          // The UI-thread reply may arrive after release or a new tab tap.
+          // A stale presentation offset must never reset the next slide.
+          if (!nativeDragActiveRef.current || dragGeneration !== interactionGenerationRef.current) return;
           pageAnimationActiveRef.current = false;
           dragStartOffsetRef.current = currentOffset;
           pageScrollX.setValue(currentOffset);
@@ -332,6 +355,7 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
       return;
     }
     if (oldState === State.ACTIVE) {
+      nativeDragActiveRef.current = false;
       // Transfer the native drag position into the settled page value before
       // releasing the gesture value. The track therefore continues from the
       // finger position instead of flashing back to the current page first.
@@ -355,41 +379,49 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
     width,
   ]);
 
+  const startWebDrag = useCallback(() => {
+    reservePageInteraction();
+    dragStartOffsetRef.current = renderedIndexRef.current * width;
+    pageScrollX.stopAnimation();
+  }, [pageScrollX, reservePageInteraction, width]);
+  const updateWebDrag = useCallback((event: { translationX: number }) => {
+    const maxOffset = Math.max(0, (panelCount - 1) * width);
+    pageScrollX.setValue(Math.max(0, Math.min(maxOffset, dragStartOffsetRef.current - event.translationX)));
+  }, [pageScrollX, panelCount, width]);
+  const endWebDrag = useCallback((event: { translationX: number; velocityX: number }) => {
+    settleDrag(event.translationX, event.velocityX);
+  }, [settleDrag]);
+  const finalizeWebDrag = useCallback((_event: unknown, success: boolean) => {
+    if (!success) setPage(renderedIndexRef.current);
+  }, [setPage]);
+  // Gesture builder methods register callbacks; they do not invoke them during render.
+  /* eslint-disable react-hooks/refs */
   const pageGesture = useMemo(() => Gesture.Pan()
-    .enabled(panelCount > 1)
-    // Do not let a page swipe enter BEGAN/ACTIVE during a vertical list drag.
-    // Android's nested ScrollView responder otherwise steals diagonal swipes
-    // from FlatList children before they can establish vertical direction.
+    .enabled(swipeEnabled && panelCount > 1)
     .activeOffsetX([-18, 18])
     .failOffsetY([-10, 10])
     .runOnJS(true)
-    .onStart(() => {
-      reservePageInteraction();
-      dragStartOffsetRef.current = renderedIndexRef.current * width;
-      pageScrollX.stopAnimation();
-    })
-    .onUpdate((event) => {
-      const maxOffset = Math.max(0, (panelCount - 1) * width);
-      const offset = Math.max(
-        0,
-        Math.min(maxOffset, dragStartOffsetRef.current - event.translationX),
-      );
-      pageScrollX.setValue(offset);
-    })
-    .onEnd((event) => settleDrag(event.translationX, event.velocityX))
-    .onFinalize((_event, success) => {
-      if (!success) setPage(renderedIndexRef.current);
-    }), [
-      pageScrollX,
-      panelCount,
-      reservePageInteraction,
-      setPage,
-      settleDrag,
-      width,
-    ]);
+    .onStart(startWebDrag)
+    .onUpdate(updateWebDrag)
+    .onEnd(endWebDrag)
+    .onFinalize(finalizeWebDrag), [
+    endWebDrag, finalizeWebDrag, panelCount, startWebDrag, swipeEnabled, updateWebDrag,
+  ]);
+
+  /* eslint-enable react-hooks/refs */
 
   const viewport = (
-    <Animated.View style={styles.viewport} testID="native-horizontal-page-slider">
+    <Animated.View
+      onLayout={(event) => {
+        const nextWidth = event.nativeEvent.layout.width;
+        if (nextWidth > 0) setMeasuredWidth(nextWidth);
+      }}
+      style={[
+        styles.viewport,
+        sizing === 'content' && { flex: 0, height: panelHeights[safeIndex] },
+      ]}
+      testID="native-horizontal-page-slider"
+    >
       <Animated.View
         style={trackStyle}
         testID="native-horizontal-page-track"
@@ -401,6 +433,10 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
             importantForAccessibility={index === safeIndex ? 'auto' : 'no-hide-descendants'}
             key={index}
             pointerEvents={index === safeIndex ? 'auto' : 'none'}
+            onLayout={sizing === 'content' ? (event) => {
+              const height = event.nativeEvent.layout.height;
+              setPanelHeights((current) => current[index] === height ? current : { ...current, [index]: height });
+            } : undefined}
             style={panelStyle}
             testID={`native-horizontal-page-${index}`}
           >
@@ -410,6 +446,8 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
       </Animated.View>
     </Animated.View>
   );
+
+  if (!swipeEnabled) return viewport;
 
   if (nativeDrivenDrag && nativePanEvent) {
     return (
@@ -421,7 +459,7 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
         onHandlerStateChange={handleNativePanStateChange}
         testID="native-horizontal-page-pan"
       >
-        {viewport}
+        <View collapsable={false} style={styles.gestureSurface}>{viewport}</View>
       </PanGestureHandler>
     );
   }
@@ -434,7 +472,9 @@ export const NativeHorizontalPageSlider = memo(forwardRef<
 }));
 
 const styles = StyleSheet.create({
+  gestureSurface: { flex: 1, minHeight: 0 },
   viewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
   track: { flex: 1, flexDirection: 'row', minHeight: 0 },
   panel: { minHeight: 0 },
+  contentTrack: { flex: 0, alignItems: 'flex-start' },
 });

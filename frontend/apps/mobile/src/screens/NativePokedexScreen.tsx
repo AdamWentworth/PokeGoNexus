@@ -1,10 +1,11 @@
 import { LinearGradient as NativeLinearGradient } from 'expo-linear-gradient';
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   BackHandler,
-  Easing,
   LayoutAnimation,
   Platform,
   FlatList,
@@ -31,6 +32,7 @@ import {
   filterNativePokedexEntries,
   nativePokedexEntryIsRegistered,
 } from '../features/tools/nativePokedexModel';
+import { NativeKeyedPageSlider, NativeSlidingPageHeader } from '../components/NativeKeyedPageSlider';
 import { NativeConfirmationDialog } from '../components/NativeConfirmationDialog';
 import Svg, {
   ClipPath,
@@ -290,8 +292,9 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
   const { width } = useWindowDimensions();
   const compactRegions = width <= 720;
   const columns = width <= 720 ? 4 : Math.max(4, Math.floor((width - 24) / 150));
-  const [categoryTranslation] = useState(() => new Animated.Value(0));
-  const categoryMotionStyle = { transform: [{ translateX: categoryTranslation }] };
+  const [scrollY] = useState(() => new Animated.Value(0));
+  const scrollOffsetRef = useRef(0);
+  const activeCategoryRef = useRef<NativePokedexCategory>('pokemon');
   const listRef = useRef<FlatList<PokedexListRow>>(null);
   const pendingScrollGenerationRef = useRef<number | null>(null);
   const performanceStartsRef = useRef(new Map<string, number>());
@@ -306,6 +309,8 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
   }, []);
   const [advanced, setAdvanced] = useState(false);
   const [category, setCategory] = useState<NativePokedexCategory>('pokemon');
+  useLayoutEffect(() => { activeCategoryRef.current = category; }, [category]);
+  const [categoryScrollOffset, setCategoryScrollOffset] = useState(0);
   const [facets, setFacets] = useState<NativePokedexFacet[]>([]);
   const [generation, setGeneration] = useState<number | null>(null);
   const [collapsedRegionKeys, setCollapsedRegionKeys] = useState<Set<string>>(() => new Set());
@@ -328,7 +333,15 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
     });
     return () => subscription.remove();
   }, [bulkConfirmation, generation, isFocused, onBack]);
-  useEffect(() => () => categoryTranslation.stopAnimation(), [categoryTranslation]);
+  const recordScrollOffset = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (activeCategoryRef.current === category) scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+  }, [category]);
+  // Animated.event registers the listener for native scroll events, without invoking it.
+  /* eslint-disable react-hooks/refs */
+  const onScroll = useMemo(() => Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+    useNativeDriver: true, listener: recordScrollOffset,
+  }), [recordScrollOffset, scrollY]);
+  /* eslint-enable react-hooks/refs */
   const categories = advanced ? [...BASE_CATEGORIES, ...COMBO_CATEGORIES] : BASE_CATEGORIES;
   const qualityFacets = advanced ? ADVANCED_FACETS : BASE_FACETS;
   const activeCategory = categories.find(({ value }) => value === category) ?? BASE_CATEGORIES[0];
@@ -520,17 +533,13 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
   const selectCategory = (value: NativePokedexCategory) => {
     if (value === category) return;
     beginPerformance('pokedex_category_result_painted');
-    categoryTranslation.stopAnimation();
-    categoryTranslation.setValue(reduceMotion ? 0 : (categories.findIndex(({ value: candidate }) => candidate === value) > categories.findIndex(({ value: candidate }) => candidate === category) ? width : -width));
+    setCategoryScrollOffset(scrollOffsetRef.current);
     setCategory(value);
-    if (!reduceMotion) Animated.timing(categoryTranslation, {
-      toValue: 0, duration: 300, easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
     if (value.includes('shadow')) setFacets((current) => current.filter((facet) => facet !== 'lucky' && facet !== 'purified'));
   };
   const toggleAdvanced = () => {
     beginPerformance('pokedex_advanced_result_painted');
+    setCategoryScrollOffset(scrollOffsetRef.current);
     setAdvanced((current) => {
       if (current && !BASE_CATEGORIES.some(({ value }) => value === category)) setCategory('pokemon');
       if (current) setFacets((selected) => selected.filter((facet) => BASE_FACETS.some(({ value }) => value === facet)));
@@ -628,17 +637,8 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
       </View>
     </View>;
   };
-  return (
-    <View style={[styles.root, light && styles.rootLight]} testID="native-pokedex-screen">
-      <FlatList
-        contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 8 + insets.top, paddingBottom: 100 + insets.bottom }}
-        data={listRows}
-        ref={listRef}
-        key={columns}
-        keyboardShouldPersistTaps="always"
-        nestedScrollEnabled
-        keyExtractor={(row) => row.key}
-        ListHeaderComponent={<View>
+  const categoryHeader = <View>
+
           <View style={styles.topbar}>
             <Image fadeDuration={0} source={{ uri: absoluteUri(assetBaseUrl, '/images/pokedex-icon.png') ?? undefined }} style={styles.headerIcon} />
             <View style={styles.headerCopy}><Text style={[styles.eyebrow, light && styles.eyebrowLight]}>TRAINER REFERENCE</Text><Text accessibilityRole="header" style={[styles.title, light && styles.textLight]}>Pokédex</Text><Text style={[styles.headerDetail, light && styles.mutedLight]}>Explore every released species, form, and collectible variant.</Text></View>
@@ -656,7 +656,31 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
           {registrationError ? <View accessibilityRole="alert" style={styles.error}><Text style={styles.errorTitle}>Registration not saved</Text><Text style={styles.errorText}>{registrationError}</Text><Pressable accessibilityRole="button" onPress={onDismissRegistrationError} style={styles.retry}><Text style={styles.retryText}>Dismiss</Text></Pressable></View> : null}
           {error ? <View accessibilityRole="alert" style={styles.error}><Text style={styles.errorTitle}>Pokédex unavailable</Text><Text style={styles.errorText}>{error}</Text><Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}><Text style={styles.retryText}>Retry</Text></Pressable></View> : null}
           {isLoading ? <View style={styles.loading}><ActivityIndicator color="#299cf5" /><Text style={[styles.loadingText, light && styles.mutedLight]}>Opening Pokédex…</Text></View> : null}
-          {!isLoading && !error && generation == null ? <Animated.View accessibilityLabel={`${activeCategory.label} regions`} style={[styles.regions, categoryMotionStyle]}>
+          {generation != null ? <View style={styles.detailToolbar}><View style={styles.detailHeading}><Pressable accessibilityRole="button" onPress={showRegions} style={[styles.regionsBack, { borderColor: `${activeCategory.accent}88` }, light && styles.chipLight]}><Text style={[styles.regionsBackText, light && styles.textLight]}>‹ All regions</Text></Pressable><Text style={[styles.resultsTitle, light && styles.textLight]}>All regions · {activeCategory.label}</Text><Text style={[styles.resultsDetail, light && styles.mutedLight]}>{detailRegions.reduce((total, region) => total + region.entries.filter((entry) => nativePokedexEntryIsRegistered(entry, category, facets)).length, 0)} / {detailRegions.reduce((total, region) => total + region.entries.length, 0)} registered</Text></View><TextInput accessibilityLabel="Search Pokédex" autoCapitalize="none" onChangeText={(value) => { beginPerformance('pokedex_search_result_painted'); setQuery(value); }} placeholder="Pokémon or number" placeholderTextColor="#75838c" style={[styles.search, !light && { borderColor: `${activeCategory.accent}88` }, light && styles.searchLight]} value={query} /><View accessibilityLabel="Visible registration actions" style={[styles.registrationTray, !light && { borderColor: `${activeCategory.accent}88`, backgroundColor: `${activeCategory.accent}14` }, light && styles.registrationTrayLight]}><View style={styles.registrationCopy}><Text style={[styles.registrationLabel, light && styles.mutedLight]}>VISIBLE</Text><Text style={[styles.registrationCount, light && styles.textLight]}>{visibleRegistrations.length}</Text></View><View style={styles.registrationActions}><Pressable accessibilityRole="button" disabled={isSaving || visibleRegistrations.length === 0} onPress={() => { beginPerformance('pokedex_bulk_dialog_painted'); setBulkConfirmation({ registered: true, registrations: visibleRegistrations }); }} style={[styles.bulkButton, { borderColor: activeCategory.accent, backgroundColor: activeCategory.accent }, (isSaving || visibleRegistrations.length === 0) && styles.savingDisabled]}><Text style={styles.bulkRegisterTextThemed}>Register all</Text></Pressable><Pressable accessibilityRole="button" disabled={isSaving || visibleRegistrations.length === 0} onPress={() => { beginPerformance('pokedex_bulk_dialog_painted'); setBulkConfirmation({ registered: false, registrations: visibleRegistrations }); }} style={[styles.bulkButton, styles.bulkClear, (isSaving || visibleRegistrations.length === 0) && styles.savingDisabled]}><Text style={styles.bulkClearText}>Unregister all</Text></Pressable></View></View></View> : null}
+  </View>;
+  return (
+    <View style={[styles.root, light && styles.rootLight]} testID="native-pokedex-screen">
+      <NativeKeyedPageSlider activeKey={category} activeIndex={categories.findIndex((item) => item.value === category)}
+        overlay={<Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0,
+          paddingHorizontal: 12, paddingTop: 8 + insets.top,
+          backgroundColor: light ? '#f8fff9' : '#090d12',
+          transform: [{ translateY: Animated.multiply(scrollY, -1) }],
+        }}>{categoryHeader}</Animated.View>}
+      >
+      <Animated.FlatList
+        contentOffset={{ x: 0, y: categoryScrollOffset }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 8 + insets.top, paddingBottom: 100 + insets.bottom }}
+        data={listRows}
+        ref={(node) => { if (node) listRef.current = node as FlatList<PokedexListRow>; }}
+        key={columns}
+        keyboardShouldPersistTaps="always"
+        nestedScrollEnabled
+        keyExtractor={(row) => row.key}
+        ListHeaderComponent={<View>
+          <NativeSlidingPageHeader>{categoryHeader}</NativeSlidingPageHeader>
+          {!isLoading && !error && generation == null ? <Animated.View accessibilityLabel={`${activeCategory.label} regions`} style={styles.regions}>
             {regionCards.map((region) => {
               const complete = region.entries.length > 0 && region.registered >= region.entries.length;
               return <Pressable
@@ -691,17 +715,16 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
             })}
             {regionCards.length === 0 ? <View style={styles.empty}><Text style={[styles.emptyTitle, light && styles.textLight]}>No regions match</Text><Text style={[styles.emptyText, light && styles.mutedLight]}>Try another category or clear a quality filter.</Text></View> : null}
           </Animated.View> : null}
-          {generation != null ? <View style={styles.detailToolbar}><View style={styles.detailHeading}><Pressable accessibilityRole="button" onPress={showRegions} style={[styles.regionsBack, { borderColor: `${activeCategory.accent}88` }, light && styles.chipLight]}><Text style={[styles.regionsBackText, light && styles.textLight]}>‹ All regions</Text></Pressable><Text style={[styles.resultsTitle, light && styles.textLight]}>All regions · {activeCategory.label}</Text><Text style={[styles.resultsDetail, light && styles.mutedLight]}>{detailRegions.reduce((total, region) => total + region.entries.filter((entry) => nativePokedexEntryIsRegistered(entry, category, facets)).length, 0)} / {detailRegions.reduce((total, region) => total + region.entries.length, 0)} registered</Text></View><TextInput accessibilityLabel="Search Pokédex" autoCapitalize="none" onChangeText={(value) => { beginPerformance('pokedex_search_result_painted'); setQuery(value); }} placeholder="Pokémon or number" placeholderTextColor="#75838c" style={[styles.search, !light && { borderColor: `${activeCategory.accent}88` }, light && styles.searchLight]} value={query} /><View accessibilityLabel="Visible registration actions" style={[styles.registrationTray, !light && { borderColor: `${activeCategory.accent}88`, backgroundColor: `${activeCategory.accent}14` }, light && styles.registrationTrayLight]}><View style={styles.registrationCopy}><Text style={[styles.registrationLabel, light && styles.mutedLight]}>VISIBLE</Text><Text style={[styles.registrationCount, light && styles.textLight]}>{visibleRegistrations.length}</Text></View><View style={styles.registrationActions}><Pressable accessibilityRole="button" disabled={isSaving || visibleRegistrations.length === 0} onPress={() => { beginPerformance('pokedex_bulk_dialog_painted'); setBulkConfirmation({ registered: true, registrations: visibleRegistrations }); }} style={[styles.bulkButton, { borderColor: activeCategory.accent, backgroundColor: activeCategory.accent }, (isSaving || visibleRegistrations.length === 0) && styles.savingDisabled]}><Text style={styles.bulkRegisterTextThemed}>Register all</Text></Pressable><Pressable accessibilityRole="button" disabled={isSaving || visibleRegistrations.length === 0} onPress={() => { beginPerformance('pokedex_bulk_dialog_painted'); setBulkConfirmation({ registered: false, registrations: visibleRegistrations }); }} style={[styles.bulkButton, styles.bulkClear, (isSaving || visibleRegistrations.length === 0) && styles.savingDisabled]}><Text style={styles.bulkClearText}>Unregister all</Text></Pressable></View></View></View> : null}
         </View>}
         ListEmptyComponent={generation != null && !isLoading && !error ? <View style={styles.empty}><Text style={[styles.emptyTitle, light && styles.textLight]}>No Pokémon match</Text><Text style={[styles.emptyText, light && styles.mutedLight]}>Try another region, category, quality, or search term.</Text></View> : null}
         onScrollToIndexFailed={({ index }) => {
           listRef.current?.scrollToOffset({ animated: animateRegionNavigation, offset: Math.max(0, index * 180) });
         }}
         renderItem={({ item }) => item.kind === 'entries'
-          ? <Animated.View style={[styles.cardRow, categoryMotionStyle]}>{item.entries.map(renderEntryCard)}</Animated.View>
+          ? <Animated.View style={styles.cardRow}>{item.entries.map(renderEntryCard)}</Animated.View>
           : <Animated.View
               accessibilityLabel={`${item.region.label} region section`}
-              style={[styles.regionSection, light && styles.cardLight, categoryMotionStyle]}
+              style={[styles.regionSection, light && styles.cardLight]}
             >
               <View style={styles.regionSectionHeading}>
                 <View><Text style={[styles.regionSectionEyebrow, { color: activeCategory.accent }]}>{activeCategory.label}</Text><Text style={[styles.regionSectionTitle, { color: item.region.text }]}>{item.region.label}</Text></View>
@@ -719,6 +742,7 @@ export const NativePokedexScreen = ({ assetBaseUrl, entries, error = null, regis
               </View> : null}
             </Animated.View>}
       />
+      </NativeKeyedPageSlider>
       <NativeConfirmationDialog
         body={bulkConfirmation?.registered
           ? `This will mark all ${bulkConfirmation.registrations.length} currently visible entries as registered in your Pokédex.`

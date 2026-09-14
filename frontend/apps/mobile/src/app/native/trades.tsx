@@ -84,6 +84,7 @@ export default function NativeTradesRoute() {
     initialTradeView(firstParam(params.section))
   ));
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [pageDragX] = useState(() => new Animated.Value(0));
   const [pageScrollX] = useState(() => new Animated.Value(0));
   const sliderRef = useRef<NativeHorizontalPageSliderHandle>(null);
   const activeIndex = TRADE_VIEWS.indexOf(activeView);
@@ -162,12 +163,14 @@ export default function NativeTradesRoute() {
         onOpenTradeBoard={() => router.push('/native/trade-board')}
         onViewChange={changeView}
         scrollX={pageScrollX}
+        dragX={pageDragX}
       />
       <NativeHorizontalPageSlider
         activeIndex={activeIndex}
         onIndexChange={(index) => setActiveView(TRADE_VIEWS[index] ?? 'preferences')}
         ref={sliderRef}
         scrollX={pageScrollX}
+        dragX={pageDragX}
       >
         <NativeTradePreferencesScreen
           key={`${preferenceMode}:${preferenceEntryId ?? 'default'}:${preferenceSelectionState}`}

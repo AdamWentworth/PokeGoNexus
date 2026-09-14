@@ -1,3 +1,4 @@
+import { getPokemonGenders } from '@pokemongonexus/shared-domain/pokemon-gender';
 import * as Crypto from 'expo-crypto';
 import type {
   PokemonInstance,
@@ -265,6 +266,18 @@ export const persistNativeInstanceDetailMutation = async ({
     syncBatchId,
     now,
   });
+  // Leave historical records alone on unrelated edits, but reject a new
+  // impossible value before anything reaches the outbox or Receiver.
+  if (normalizedPatch.gender !== undefined && normalizedPatch.gender !== mutation.previous.gender) {
+    const species = snapshot.catalog.find((pokemon) => pokemon.pokemon_id === mutation.previous.pokemon_id);
+    const allowed = getPokemonGenders(species?.gender_rate, Boolean(mutation.previous.is_wanted));
+    if (normalizedPatch.gender != null && !allowed.some((gender) => gender === normalizedPatch.gender)) {
+      throw new Error('This gender is not available for this Pokémon.');
+    }
+    if (normalizedPatch.gender == null && allowed.length === 1) {
+      throw new Error('This Pokémon has a fixed gender.');
+    }
+  }
   const companionPatches = new Map<string, Partial<PokemonInstance>>();
   const mainRef = mutation.updated.instance_id;
   const mainToken = normalizeInstanceToken(mainRef);

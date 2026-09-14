@@ -2,7 +2,6 @@ import { Image as ExpoImage } from 'expo-image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
   FlatList,
   Image,
   type LayoutChangeEvent,
@@ -24,7 +23,6 @@ import type {
 } from '../features/tools/nativeRankingsModel';
 import { getNativeRankingDisplayName } from '../features/tools/nativeRankingsModel';
 import { NativeSlidingSegmentedControl } from '../components/NativeSlidingSegmentedControl';
-import { useNativeSegmentedWorkspaceMotion } from '../components/useNativeSegmentedWorkspaceMotion';
 import { NativeUiIcon } from '../components/NativeUiIcon';
 import { NativeOptionPicker, type NativeOptionPickerEntry } from '../components/NativeOptionPicker';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
@@ -255,7 +253,7 @@ export const NativeRankingsScreen = ({
   const [picker, setPicker] = useState<'category' | 'collection' | 'mode' | null>(null);
   const [pagination, setPagination] = useState({ key: '', limit: INITIAL_RESULT_COUNT });
   const [showQuickControls, setShowQuickControls] = useState(false);
-  const workspaceMotion = useNativeSegmentedWorkspaceMotion(selectedMode === 'wanted' ? 0 : 1);
+
   const summaryBottomRef = useRef(Number.POSITIVE_INFINITY);
   const performanceStartsRef = useRef(new Map<string, number>());
   const beginPerformance = useCallback((event: string) => {
@@ -346,7 +344,7 @@ export const NativeRankingsScreen = ({
   }, [availableCategories, collectionFilterCounts, picker]);
   const header = (
     <View>
-      <Animated.View style={workspaceMotion.stationaryStyle}>
+      <View >
         <View style={[styles.productHeader, compact && styles.productHeaderCompact]}>
           <Image accessibilityElementsHidden fadeDuration={0} resizeMode="contain" source={{ uri: absoluteUri(assetBaseUrl, '/images/btn_rankings.png') }} style={[styles.productIcon, compact && styles.productIconCompact]} />
           <View style={[styles.headerCopy, compact && styles.headerCopyCompact]}>
@@ -374,7 +372,7 @@ export const NativeRankingsScreen = ({
           testID="native-rankings-mode-switcher"
           value={selectedMode}
         />
-      </Animated.View>
+      </View>
 
       <View style={[styles.search, light && styles.inputLight]}>
         <NativeUiIcon color={light ? '#08766b' : '#42d7c4'} name="search" size={18} />
@@ -416,7 +414,7 @@ export const NativeRankingsScreen = ({
 
   const selectedPickerKey = picker === 'mode' ? selectedMode : picker === 'category' ? selectedCategory : selectedCollectionFilter;
   return <View style={[styles.root, light && styles.rootLight]} testID="native-rankings-screen">
-    <Animated.View style={[styles.workspaceViewport, workspaceMotion.contentStyle]} testID="native-rankings-workspace-motion">
+    <View style={styles.workspaceViewport} testID="native-rankings-workspace-motion">
       <FlatList
         contentContainerStyle={{ paddingBottom: 92 + insets.bottom, paddingHorizontal: 8, paddingTop: 6 + insets.top }}
         data={hasSnapshot ? visibleRows : []}
@@ -434,7 +432,7 @@ export const NativeRankingsScreen = ({
         updateCellsBatchingPeriod={16}
         windowSize={21}
       />
-    </Animated.View>
+    </View>
     {showQuickControls ? <View accessibilityLabel="Quick ranking controls" accessibilityRole="toolbar" style={[styles.quickControls, { top: insets.top + 4 }, light && styles.quickControlsLight]}>
       <Pressable accessibilityLabel="Ranking view" accessibilityRole="button" onPress={() => setPicker('mode')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{selectedMode === 'wanted' ? 'Wanted' : 'Rarest'}</Text></Pressable>
       <Pressable accessibilityLabel="Pokémon category" accessibilityRole="button" onPress={() => setPicker('category')} style={[styles.quickButton, light && styles.controlLight]}><Text numberOfLines={1} style={[styles.quickText, light && styles.textLight]}>{selectedCategory === 'all' ? 'All' : CATEGORY_LABELS[selectedCategory]}</Text></Pressable>

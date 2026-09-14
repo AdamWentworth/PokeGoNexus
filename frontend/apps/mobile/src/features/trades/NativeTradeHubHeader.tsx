@@ -1,3 +1,4 @@
+import { useNativeHorizontalPageOffset } from '../../components/NativeHorizontalPageSlider';
 import {
   Animated,
   Image,
@@ -19,6 +20,7 @@ type Props = {
   onOpenTradeBoard?: () => void;
   onViewChange: (view: NativeTradeHubView) => void;
   scrollX?: Animated.Value;
+  dragX?: Animated.Value;
 };
 
 const VIEW_ORDER: NativeTradeHubView[] = ['preferences', 'activity'];
@@ -29,13 +31,15 @@ export const NativeTradeHubHeader = ({
   onOpenTradeBoard,
   onViewChange,
   scrollX,
+  dragX,
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const tabWidth = Math.max(0, width - 28) / 2;
   const activeIndex = VIEW_ORDER.indexOf(activeView);
-  const translateX = scrollX?.interpolate({
+  const renderedOffset = useNativeHorizontalPageOffset(scrollX, dragX, width);
+  const translateX = renderedOffset?.interpolate({
     inputRange: [0, Math.max(1, width)],
     outputRange: [0, tabWidth],
     extrapolate: 'clamp',

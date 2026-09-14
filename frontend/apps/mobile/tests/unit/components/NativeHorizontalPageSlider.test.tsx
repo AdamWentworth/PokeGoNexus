@@ -1,6 +1,7 @@
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { AccessibilityInfo, Animated, StyleSheet, Text } from 'react-native';
 import { createRef } from 'react';
-import { act, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import {
   NATIVE_HORIZONTAL_PAGE_TRANSITION_MS,
   NativeHorizontalPageSlider,
@@ -149,6 +150,7 @@ describe('NativeHorizontalPageSlider', () => {
   it('uses one shared animated value without forcing full-page bitmap snapshots', async () => {
     const scrollX = new Animated.Value(412);
     const multiply = jest.spyOn(Animated, 'multiply');
+    const subtract = jest.spyOn(Animated, 'subtract');
     const { getByTestId } = render(
       <NativeHorizontalPageSlider
         activeIndex={1}
@@ -173,7 +175,8 @@ describe('NativeHorizontalPageSlider', () => {
     expect(getByTestId('native-horizontal-page-1')
       .props.renderToHardwareTextureAndroid).not.toBe(true);
     expect(trackStyle.transform[0].translateX).toBeDefined();
-    expect(multiply).toHaveBeenCalledWith(scrollX, -1);
+    expect(subtract).toHaveBeenCalledWith(scrollX, expect.anything());
+    expect(multiply).toHaveBeenCalledWith(expect.anything(), -1);
   });
 
   it('keeps inactive pages out of touch and accessibility navigation', async () => {
@@ -295,4 +298,54 @@ describe('NativeHorizontalPageSlider', () => {
     act(() => ref.current?.setPage(2, false));
     expect(translation.__getValue()).toBe(-824);
   });
+  it('measures an embedded viewport and slides the whole page, retaining outgoing content', async () => {
+    const scrollX = new Animated.Value(0);
+    const timing = jest.spyOn(Animated, 'timing');
+    const pages = <><Text>Raid power 14</Text><Text>Trainer power 9</Text></>;
+    const view = render(<NativeHorizontalPageSlider activeIndex={0} onIndexChange={jest.fn()}
+      scrollX={scrollX} sizing="content" swipeEnabled={false} transitionDuration={220}>
+      {pages.props.children}
+    </NativeHorizontalPageSlider>);
+    await act(async () => Promise.resolve());
+    fireEvent(view.getByTestId('native-horizontal-page-slider'), 'layout', { nativeEvent: { layout: { width: 320 } } });
+    view.rerender(<NativeHorizontalPageSlider activeIndex={1} onIndexChange={jest.fn()}
+      scrollX={scrollX} sizing="content" swipeEnabled={false} transitionDuration={220}>
+      {pages.props.children}
+    </NativeHorizontalPageSlider>);
+    expect(timing).toHaveBeenLastCalledWith(scrollX, expect.objectContaining({ toValue: 320, duration: 220, useNativeDriver: true }));
+    expect(view.getByText('Raid power 14', { includeHiddenElements: true })).toBeTruthy();
+    expect(view.queryByText('Raid power 14')).toBeNull();
+    expect(view.getByText('Trainer power 9')).toBeTruthy();
+  });
+
+  it('uses native gesture events even when a hub does not provide a drag clock', async () => {
+    const event = jest.spyOn(Animated, 'event');
+    const view = render(<NativeHorizontalPageSlider activeIndex={0} onIndexChange={jest.fn()}>
+      <Text>Friends</Text><Text>Requests</Text>
+    </NativeHorizontalPageSlider>);
+    await act(async () => Promise.resolve());
+    expect(view.getByTestId('native-horizontal-page-pan')).toBeTruthy();
+    expect(event).toHaveBeenCalledWith([{ nativeEvent: { translationX: expect.any(Animated.Value) } }], { useNativeDriver: true });
+  });
+
+  it('does not let a delayed interrupted-animation reply reset a later tab selection', async () => {
+    const scrollX = new Animated.Value(0);
+    const ref = createRef<NativeHorizontalPageSliderHandle>();
+    jest.spyOn(Animated, 'timing').mockReturnValue({ start: jest.fn(), stop: jest.fn(), reset: jest.fn() });
+    const view = render(<NativeHorizontalPageSlider activeIndex={0} onIndexChange={jest.fn()} ref={ref} scrollX={scrollX}>
+      <Text>Tags</Text><Text>Pokémon</Text><Text>Wishlist</Text>
+    </NativeHorizontalPageSlider>);
+    await act(async () => undefined);
+    let delayedReply: ((value: number) => void) | undefined;
+    jest.spyOn(scrollX, 'stopAnimation').mockImplementation((callback) => { if (callback) delayedReply = callback; });
+    act(() => ref.current?.setPage(1));
+    act(() => view.UNSAFE_getByType(PanGestureHandler).props.onHandlerStateChange({
+      nativeEvent: { state: State.ACTIVE, oldState: State.BEGAN, translationX: 0, velocityX: 0 },
+    }));
+    expect(delayedReply).toBeDefined();
+    act(() => ref.current?.setPage(2, false));
+    act(() => delayedReply?.(125));
+    expect((scrollX as unknown as { __getValue: () => number }).__getValue()).toBe(824);
+  });
+
 });
