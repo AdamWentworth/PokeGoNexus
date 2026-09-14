@@ -1,0 +1,44 @@
+appId: com.pokegonexus.app
+name: Signed-in Profile and Friends navigation survives repeated visits
+tags:
+  - android
+  - native-navigation
+---
+# Run on an already signed-in normal APK. This flow never clears app data,
+# opens device fixtures, saves profile edits, or changes trainer relationships.
+- stopApp
+- openLink: pokegonexus://native/profile
+- extendedWaitUntil:
+    visible:
+      id: native-trainer-profile
+    timeout: 45000
+- repeat:
+    times: 5
+    commands:
+      - tapOn:
+          text: "^Friends$"
+          index: 0
+      - extendedWaitUntil:
+          visible: Friends view
+          timeout: 10000
+      - tapOn: Requests view
+      - assertVisible: Incoming requests
+      - tapOn: Find view
+      - assertVisible: Find trainers
+      - tapOn: Blocked view
+      - assertVisible: Blocked trainers
+      - tapOn: Friends view
+      - assertVisible: Your friends
+      - tapOn:
+          text: "^Profile$"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            id: native-trainer-profile
+          timeout: 10000
+- back
+- assertVisible: Friends view
+- back
+- assertVisible:
+    id: native-trainer-profile
+- takeScreenshot: profile-friends-after-repeated-visits

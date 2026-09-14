@@ -25,6 +25,8 @@ export default function NativeLayout() {
         <NativeCollectionSyncProvider>
           <NativeRealtimeProvider>
             <View style={styles.screenSurface}>
+            {/* Keep native screen identities in stack order. Moving an existing
+                singular screen to the top can corrupt Android view ownership. */}
             <Stack
               screenLayout={({ children, route }) => (
                 <View
@@ -43,30 +45,30 @@ export default function NativeLayout() {
                 statusBarTranslucent: true,
               })}
             >
-              <Stack.Screen dangerouslySingular name="index" options={{ animation: 'none' }} />
+              <Stack.Screen name="index" options={{ animation: 'none' }} />
               <Stack.Screen name="login" options={{ animation: nativeRouteAnimation('slide_from_bottom', shouldReduceMotion) }} />
               <Stack.Screen name="register" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
               <Stack.Screen name="reset-password" options={{ animation: nativeRouteAnimation('slide_from_bottom', shouldReduceMotion) }} />
               <Stack.Screen name="verify-email-change" options={{ animation: nativeRouteAnimation('slide_from_bottom', shouldReduceMotion) }} />
               <Stack.Screen name="not-found" options={{ animation: nativeRouteAnimation('fade', shouldReduceMotion) }} />
               <Stack.Screen name="info/[slug]" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
-              <Stack.Screen dangerouslySingular name="pokedex/index" options={{ animation: 'none' }} />
+              <Stack.Screen name="pokedex/index" options={{ animation: 'none' }} />
               <Stack.Screen name="pokedex/[variantId]" options={{ animation: nativeRouteAnimation('slide_from_bottom', shouldReduceMotion), gestureDirection: 'vertical' }} />
-              <Stack.Screen dangerouslySingular name="rankings" options={{ animation: 'none' }} />
-              <Stack.Screen dangerouslySingular name="raid" options={{ animation: 'none' }} />
+              <Stack.Screen name="rankings" options={{ animation: 'none' }} />
+              <Stack.Screen name="raid" options={{ animation: 'none' }} />
               <Stack.Screen name="raid-methodology" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
-              <Stack.Screen dangerouslySingular name="max" options={{ animation: 'none' }} />
-              <Stack.Screen dangerouslySingular name="pvp" options={{ animation: 'none' }} />
+              <Stack.Screen name="max" options={{ animation: 'none' }} />
+              <Stack.Screen name="pvp" options={{ animation: 'none' }} />
               <Stack.Screen name="pvp-methodology" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
-              <Stack.Screen dangerouslySingular name="collection" options={{ animation: 'none' }} />
-              <Stack.Screen dangerouslySingular name="search" options={{ animation: 'none' }} />
-              <Stack.Screen dangerouslySingular name="trades" options={{ animation: 'none' }} />
-              <Stack.Screen dangerouslySingular name="trade-board" options={{ animation: 'none' }} />
+              <Stack.Screen name="collection" options={{ animation: 'none' }} />
+              <Stack.Screen name="search" options={{ animation: 'none' }} />
+              <Stack.Screen name="trades" options={{ animation: 'none' }} />
+              <Stack.Screen name="trade-board" options={{ animation: 'none' }} />
               <Stack.Screen name="trade-board/[username]" options={{ animation: 'none' }} />
-              <Stack.Screen dangerouslySingular name="settings" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
-              <Stack.Screen dangerouslySingular name="account" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
-              <Stack.Screen dangerouslySingular name="friends" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
-              <Stack.Screen dangerouslySingular name="profile/index" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
+              <Stack.Screen name="settings" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
+              <Stack.Screen name="account" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
+              <Stack.Screen name="friends" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
+              <Stack.Screen name="profile/index" options={{ animation: nativeRouteAnimation('slide_from_right', shouldReduceMotion) }} />
               <Stack.Screen name="profile/[username]" options={{ animation: 'none' }} />
               <Stack.Screen
                 name="collection/[instanceId]"
