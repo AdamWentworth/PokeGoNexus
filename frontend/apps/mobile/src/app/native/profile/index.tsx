@@ -1,5 +1,5 @@
-import { NativeTrainerProfileRoute } from '../../../features/social/NativeTrainerProfileRoute';
+import { NativeTrainerWorkspaceRoute } from '../../../features/social/NativeTrainerWorkspaceRoute';
 
 export default function NativeOwnTrainerProfileRoute() {
-  return <NativeTrainerProfileRoute />;
+  return <NativeTrainerWorkspaceRoute />;
 }

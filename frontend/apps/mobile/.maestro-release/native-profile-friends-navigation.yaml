@@ -1,5 +1,5 @@
 appId: com.pokegonexus.app
-name: Signed-in Profile and Friends navigation survives repeated visits
+name: Signed-in Profile and Friends share retained sliding panels
 tags:
   - android
   - native-navigation
@@ -36,9 +36,34 @@ tags:
           visible:
             id: native-trainer-profile
           timeout: 10000
-- back
+# Switching panels must not build route history. Back closes Friends locally;
+# a second Back leaves this workspace, rather than revealing an earlier tab visit.
+- tapOn:
+    text: "^Friends$"
+    index: 0
 - assertVisible: Friends view
 - back
 - assertVisible:
     id: native-trainer-profile
 - takeScreenshot: profile-friends-after-repeated-visits
+- back
+- assertNotVisible:
+    id: native-trainer-workspace
+# Old Friends links (including notification sub-tabs) enter the same screen.
+- openLink: pokegonexus://native/friends?tab=requests
+- extendedWaitUntil:
+    visible: Incoming requests
+    timeout: 30000
+- tapOn:
+    text: "^Profile$"
+    index: 0
+- assertVisible:
+    id: native-trainer-profile
+- tapOn:
+    text: "^Friends$"
+    index: 0
+- assertVisible: Incoming requests
+- tapOn: Friends view
+- tapOn:
+    text: "^Profile$"
+    index: 0

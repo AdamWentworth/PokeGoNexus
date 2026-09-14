@@ -27,7 +27,7 @@ import {
   type NativeProfileRelationshipCommand,
 } from './socialQueries';
 
-type Props = { username?: string | null };
+type Props = { username?: string | null; embedded?: boolean };
 
 const errorMessage = (error: unknown): string | null => (
   error instanceof Error ? error.message : error ? 'The request could not be completed.' : null
@@ -49,7 +49,7 @@ export const nativeProfileRelationshipCommand = (
   }
 };
 
-export const NativeTrainerProfileRoute = ({ username }: Props) => {
+export const NativeTrainerProfileRoute = ({ username, embedded = false }: Props) => {
   const router = useRouter();
   const session = useNativeSession();
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
@@ -196,6 +196,7 @@ export const NativeTrainerProfileRoute = ({ username }: Props) => {
   return (
     <View style={styles.screen}>
       <NativeTrainerProfileScreen
+        embedded={embedded}
         assetBaseUrl={runtimeConfig.api.frontendAppUrl}
         error={error}
         highlights={highlights}
@@ -236,11 +237,11 @@ export const NativeTrainerProfileRoute = ({ username }: Props) => {
           if (isOwner) void collectionQuery.refetch();
         }}
       />
-      <NativeActionMenuAnchor
+      {!embedded ? <NativeActionMenuAnchor
         assetBaseUrl={runtimeConfig.api.frontendAppUrl}
         onPress={() => setActionMenuOpen(true)}
-      />
-      {actionMenuOpen ? (
+      /> : null}
+      {!embedded && actionMenuOpen ? (
         <NativeActionMenu
           assetBaseUrl={runtimeConfig.api.frontendAppUrl}
           onClose={() => setActionMenuOpen(false)}

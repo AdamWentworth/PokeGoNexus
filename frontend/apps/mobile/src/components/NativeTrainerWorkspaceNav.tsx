@@ -1,28 +1,52 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
 
-type NativeTrainerWorkspace = 'profile' | 'friends';
+export type NativeTrainerWorkspace = 'profile' | 'friends';
 
 type Props = {
   active: NativeTrainerWorkspace;
+  progress?: Animated.AnimatedDivision<number>;
   onOpenFriends: () => void;
   onOpenProfile: () => void;
 };
 
 export const NativeTrainerWorkspaceNav = ({
   active,
+  progress,
   onOpenFriends,
   onOpenProfile,
 }: Props) => {
   const light = useNativeColorScheme() === 'light';
+  const [width, setWidth] = useState(0);
+  const buttonWidth = Math.max(0, width - 8) / 2;
+  const translateX = useMemo(() => progress
+    ? Animated.multiply(progress, buttonWidth)
+    : active === 'friends' ? buttonWidth : 0, [active, buttonWidth, progress]);
   return (
     <View
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       accessibilityLabel="Profile pages"
       accessibilityRole="tablist"
       style={[styles.nav, light && styles.navLight]}
       testID="native-trainer-workspace-nav"
     >
+      <Animated.View
+        pointerEvents="none"
+        testID="native-trainer-workspace-indicator"
+        style={[styles.indicator, { width: buttonWidth, transform: [{ translateX }] }]}
+      >
+        <Svg height="100%" width="100%">
+          <Defs>
+            <LinearGradient id="trainer-workspace" x1="0" x2="1" y1="0" y2="0">
+              <Stop offset="0" stopColor="#14b9c8" />
+              <Stop offset="1" stopColor="#63e2b4" />
+            </LinearGradient>
+          </Defs>
+          <Rect fill="url(#trainer-workspace)" height="100%" rx={7} width="100%" />
+        </Svg>
+      </Animated.View>
       {([
         ['profile', 'Profile', onOpenProfile],
         ['friends', 'Friends', onOpenFriends],
@@ -41,24 +65,13 @@ export const NativeTrainerWorkspaceNav = ({
               pressed && styles.pressed,
             ]}
           >
-            {selected ? (
-              <Svg height="100%" pointerEvents="none" style={StyleSheet.absoluteFill} width="100%">
-                <Defs>
-                  <LinearGradient id={`trainer-workspace-${workspace}`} x1="0" x2="1" y1="0" y2="0">
-                    <Stop offset="0" stopColor="#14b9c8" />
-                    <Stop offset="1" stopColor="#63e2b4" />
-                  </LinearGradient>
-                </Defs>
-                <Rect fill={`url(#trainer-workspace-${workspace})`} height="100%" rx={7} width="100%" />
-              </Svg>
-            ) : null}
             <View style={styles.labelRow}>
               <WorkspaceIcon friends={workspace === 'friends'} selected={selected} />
-            <Text style={[
-              styles.label,
-              light && styles.labelLight,
-              selected && styles.labelActive,
-            ]}>{label}</Text>
+              <Text style={[
+                styles.label,
+                light && styles.labelLight,
+                selected && styles.labelActive,
+              ]}>{label}</Text>
             </View>
           </Pressable>
         );
@@ -93,6 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#0e1517',
   },
+  indicator: { position: 'absolute', left: 3, top: 3, bottom: 3 },
   navLight: { borderColor: '#9bb8b1', backgroundColor: '#e7f3eb' },
   button: {
     flex: 1,

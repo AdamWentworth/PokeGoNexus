@@ -51,6 +51,7 @@ export type NativeTrainerProfileAction =
 
 type Props = {
   assetBaseUrl: string;
+  embedded?: boolean;
   error?: string | null;
   highlights?: NativeCollectionRow[];
   highlightCandidates?: NativeCollectionRow[];
@@ -411,6 +412,7 @@ const NativeProfileShowcaseDragSlot = ({
 
 export const NativeTrainerProfileScreen = ({
   assetBaseUrl,
+  embedded = false,
   error = null,
   highlights = [],
   highlightCandidates = [],
@@ -613,15 +615,65 @@ export const NativeTrainerProfileScreen = ({
     && model.titles.length === 0
     && highlights.length === 0;
 
+  const headerActions = (
+    <View style={[styles.headerActions, !embedded && compactHeader && styles.headerActionsCompact]}>
+      {isOwner && onBeginEdit && !editorDraft ? (
+        <Pressable
+          accessibilityLabel="Edit"
+          accessibilityRole="button"
+          disabled={isProfileSaving}
+          onPress={() => {
+            const startedAt = Date.now();
+            clearTextInputFocus();
+            onBeginEdit();
+            markNativeUiPerformanceAfterPaint('profile_edit_result_painted', startedAt);
+          }}
+          style={[
+            styles.headerAction,
+            styles.headerActionSecondary,
+            light && styles.backButtonLight,
+          ]}
+        >
+          <Image fadeDuration={0}
+            accessibilityElementsHidden
+            resizeMode="contain"
+            source={{ uri: `${assetBaseUrl.replace(/\/$/, '')}/images/edit-icon.png` }}
+            style={[styles.headerActionIcon, { tintColor: light ? '#172124' : '#f7fbfa' }]}
+          />
+          <Text style={[styles.headerActionText, light && styles.textLight]}>
+            Edit
+          </Text>
+        </Pressable>
+      ) : null}
+      {!isOwner && relationshipAction && onRelationshipAction ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={isRelationshipPending}
+          onPress={() => requestAction(relationshipAction.action)}
+          testID="native-profile-relationship-action"
+          style={[
+            styles.headerAction,
+            relationshipAction.tone === 'primary' ? styles.headerActionPrimary : styles.headerActionSecondary,
+            light && relationshipAction.tone === 'secondary' && styles.backButtonLight,
+          ]}
+        >
+          <Text style={relationshipAction.tone === 'primary' ? styles.primaryButtonText : [styles.headerActionText, light && styles.textLight]}>
+            {isRelationshipPending ? 'Working…' : relationshipAction.label}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+
   return (
     <View style={[styles.screenRoot, light && styles.screenLight]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: 24 + insets.top, paddingBottom: 116 + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingTop: embedded ? 14 : 24 + insets.top, paddingBottom: 116 + insets.bottom }]}
         ref={scrollRef}
         style={styles.screen}
         testID="native-trainer-profile"
       >
-      <View style={styles.productHeader}>
+      {!embedded ? <View style={styles.productHeader}>
         {onBack ? (
           <Pressable accessibilityLabel="Back" accessibilityRole="button" onPress={onBack} style={[styles.backButton, light && styles.backButtonLight]}>
             <NativeBackIcon color={light ? '#172124' : '#f7fbfa'} size={20} />
@@ -636,55 +688,9 @@ export const NativeTrainerProfileScreen = ({
             </Text>
           ) : null}
         </View>
-        <View style={[styles.headerActions, compactHeader && styles.headerActionsCompact]}>
-          {isOwner && onBeginEdit && !editorDraft ? (
-            <Pressable
-              accessibilityLabel="Edit"
-              accessibilityRole="button"
-              disabled={isProfileSaving}
-              onPress={() => {
-                const startedAt = Date.now();
-                clearTextInputFocus();
-                onBeginEdit();
-                markNativeUiPerformanceAfterPaint('profile_edit_result_painted', startedAt);
-              }}
-              style={[
-                styles.headerAction,
-                styles.headerActionSecondary,
-                light && styles.backButtonLight,
-              ]}
-            >
-              <Image fadeDuration={0}
-                accessibilityElementsHidden
-                resizeMode="contain"
-                source={{ uri: `${assetBaseUrl.replace(/\/$/, '')}/images/edit-icon.png` }}
-                style={[styles.headerActionIcon, { tintColor: light ? '#172124' : '#f7fbfa' }]}
-              />
-              <Text style={[styles.headerActionText, light && styles.textLight]}>
-                Edit
-              </Text>
-            </Pressable>
-          ) : null}
-          {!isOwner && relationshipAction && onRelationshipAction ? (
-            <Pressable
-              accessibilityRole="button"
-              disabled={isRelationshipPending}
-              onPress={() => requestAction(relationshipAction.action)}
-              testID="native-profile-relationship-action"
-              style={[
-                styles.headerAction,
-                relationshipAction.tone === 'primary' ? styles.headerActionPrimary : styles.headerActionSecondary,
-                light && relationshipAction.tone === 'secondary' && styles.backButtonLight,
-              ]}
-            >
-              <Text style={relationshipAction.tone === 'primary' ? styles.primaryButtonText : [styles.headerActionText, light && styles.textLight]}>
-                {isRelationshipPending ? 'Working…' : relationshipAction.label}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
-      {onOpenFriends ? (
+        {headerActions}
+      </View> : null}
+      {!embedded && onOpenFriends ? (
         <NativeTrainerWorkspaceNav
           active="profile"
           onOpenFriends={onOpenFriends}
@@ -708,7 +714,10 @@ export const NativeTrainerProfileScreen = ({
         testID={editorDraft ? 'native-profile-editor' : undefined}
       >
         <View style={[styles.identity, { backgroundColor: light ? `${team.accent}18` : team.soft, borderColor: `${team.accent}88` }]}>
-          <Text style={[styles.cardLabel, { color: team.accent }]}>TRAINER CARD</Text>
+          <View style={styles.identityHeading}>
+            <Text style={[styles.cardLabel, { color: team.accent }]}>TRAINER CARD</Text>
+            {embedded ? headerActions : null}
+          </View>
           <View style={styles.identityMain}>
             <View style={styles.portraitWrap}>
               <View style={[styles.portrait, { borderColor: team.accent }]}>
@@ -1123,7 +1132,8 @@ const styles = StyleSheet.create({
   card: { overflow: 'hidden', borderWidth: 1, borderRadius: 10, backgroundColor: '#171c1d' },
   cardLight: { backgroundColor: '#f3faf5' },
   identity: { padding: 14, borderBottomWidth: 1 },
-  cardLabel: { alignSelf: 'flex-start', fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
+  identityHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  cardLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
   identityMain: { flexDirection: 'row', alignItems: 'center', gap: 13, marginTop: 10 },
   identityCopy: { flex: 1, minWidth: 0, alignItems: 'flex-start' },
   portraitWrap: { width: 80, height: 80, flexShrink: 0 },

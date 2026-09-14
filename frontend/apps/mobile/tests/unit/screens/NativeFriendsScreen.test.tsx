@@ -50,6 +50,17 @@ const renderScreen = (
 );
 
 describe('NativeFriendsScreen', () => {
+  it('embeds all Friends tabs below the shared workspace bar without another page header', () => {
+    const view = renderScreen('friends', { embedded: true });
+    expect(view.queryByText('TRAINER NETWORK')).toBeNull();
+    expect(view.queryByRole('button', { name: 'Back' })).toBeNull();
+    expect(view.queryByTestId('native-trainer-workspace-nav')).toBeNull();
+    expect(view.getByRole('tab', { name: 'Friends view' })).toBeTruthy();
+    expect(view.getByRole('tab', { name: 'Requests view' })).toBeTruthy();
+    expect(view.getByRole('tab', { name: 'Find view' })).toBeTruthy();
+    expect(view.getByRole('tab', { name: 'Blocked view' })).toBeTruthy();
+    expect(view.getByText('Your friends')).toBeTruthy();
+  });
   beforeEach(() => jest.clearAllMocks());
 
   it('renders the canonical four views and opens a trainer profile', () => {

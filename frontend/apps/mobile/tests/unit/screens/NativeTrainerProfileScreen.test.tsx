@@ -74,6 +74,16 @@ const renderScreen = (props: Partial<React.ComponentProps<typeof NativeTrainerPr
 );
 
 describe('NativeTrainerProfileScreen', () => {
+  it('embeds the trainer card and Edit control without a second page header or workspace bar', () => {
+    const onBeginEdit = jest.fn();
+    const view = renderScreen({ embedded: true, onBeginEdit, onBack: jest.fn(), onOpenFriends: jest.fn() });
+    expect(view.queryByText('YOUR TRAINER CARD')).toBeNull();
+    expect(view.queryByRole('button', { name: 'Back' })).toBeNull();
+    expect(view.queryByTestId('native-trainer-workspace-nav')).toBeNull();
+    expect(view.getByText('TRAINER CARD')).toBeTruthy();
+    fireEvent.press(view.getByRole('button', { name: 'Edit' }));
+    expect(onBeginEdit).toHaveBeenCalledTimes(1);
+  });
   it('maps direct showcase drags to the same compact slot order as Vite', () => {
     expect(resolveNativeProfileShowcaseDragTarget({
       columns: 3,

@@ -41,6 +41,7 @@ export type NativeFriendsScreenCommand =
   | { action: 'unblock'; userId: string };
 
 type Props = {
+  embedded?: boolean;
   activeView: NativeFriendsView;
   error?: string | null;
   feedback?: { tone: 'success' | 'error' | 'info'; text: string } | null;
@@ -209,6 +210,7 @@ const SectionHeading = ({ eyebrow, light, title }: { eyebrow: string; light: boo
 );
 
 export const NativeFriendsScreen = ({
+  embedded = false,
   activeView,
   error = null,
   feedback = null,
@@ -309,8 +311,8 @@ export const NativeFriendsScreen = ({
 
   return (
     <View style={[styles.screen, light && styles.screenLight]} testID="native-friends-screen">
-      <View style={[styles.header, light && styles.headerLight, { paddingTop: 14 + insets.top }]}>
-        <View style={styles.productHeader}>
+      <View style={[styles.header, light && styles.headerLight, { paddingTop: embedded ? 7 : 14 + insets.top }]}>
+        {!embedded ? <View style={styles.productHeader}>
           <Pressable
             accessibilityLabel="Back"
             accessibilityRole="button"
@@ -323,19 +325,19 @@ export const NativeFriendsScreen = ({
             <Text style={[styles.eyebrow, light && styles.eyebrowLight]}>TRAINER NETWORK</Text>
             <Text accessibilityRole="header" style={[styles.title, light && styles.textLight]}>Friends</Text>
           </View>
-        </View>
+        </View> : null}
         {overview.incoming.length ? (
           <Text accessibilityLabel={`${overview.incoming.length} incoming requests`} style={[styles.requestCount, light && styles.textLight]}>
             {overview.incoming.length} request{overview.incoming.length === 1 ? '' : 's'}
           </Text>
         ) : null}
-        <View style={styles.workspaceNav}>
+        {!embedded ? <View style={styles.workspaceNav}>
           <NativeTrainerWorkspaceNav
             active="friends"
             onOpenFriends={() => undefined}
             onOpenProfile={onOpenProfileHome}
           />
-        </View>
+        </View> : null}
         <View accessibilityRole="tablist" style={[styles.tabs, light && styles.tabsLight]}>
           <Animated.View
             pointerEvents="none"
