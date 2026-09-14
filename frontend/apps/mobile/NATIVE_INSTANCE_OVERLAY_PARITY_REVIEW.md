@@ -1,6 +1,13 @@
 # Native instance overlay parity — 2026-09-13
 
-Code candidate: `f7625693` on `mobile/native-migration`.
+Initial four-gap candidate: `f7625693` on `mobile/native-migration`.
+
+Follow-up `e518c7f4` applies the requested white caught-date text and divider in
+both native and Vite, and restores full-screen backgrounds behind the camera by
+removing the root's opaque status-bar cover. Existing content insets remain.
+The latest APK identity is in `STRONG_MACHINE_ANDROID_HANDOFF.md`; follow-up
+phone evidence is private under `.artifacts/ribbon-fullscreen-2026-09-13/`.
+The detailed four-gap validation below refers to the preceding `f7625693` APK.
 
 ## Repairs
 

@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (instance overlay arc, caught metadata, Shadow Mega eligibility)
+Last targeted revalidation: 2026-09-13 (white caught dates and full-screen backgrounds)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,33 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## White caught dates and full-screen backgrounds — 2026-09-13
+
+The current code candidate is `e518c7f4`. Caught-ribbon text and its date divider
+are white in both native and Vite. The root no longer paints an opaque layer over
+the camera/status-bar region: route backgrounds fill the screen again, while
+screens retain their existing content insets. Instance overlays use light status
+icons in both themes to match their image/type backgrounds and white header
+controls. Other pages continue to use theme-appropriate status icons.
+
+The normal APK is installed with SHA-256
+`592043cbbf902c814252862e9e5e77fda990fbef56c68a5847ab9a929f340a15`.
+The existing package, signer, session and collection were preserved. Thirty-five
+navigation/action-menu tests, mobile typecheck and targeted lint pass; the bounded
+local build completed in 80.3 seconds. Private evidence is under
+`.artifacts/ribbon-fullscreen-2026-09-13/`.
+
+Final Pixel checks confirm white caught-date text and uninterrupted gold/purple
+backgrounds behind the camera in both themes. Home, collection and profile also
+load without observed route errors, with theme-appropriate status icons. The
+account check retains 2249 caught, 167 Favorites and Favorite descending with
+CP 4713/4689/4688 first. No collection edits were submitted; the phone is left
+in dark theme on Favorites. This supersedes the opaque status-bar cover described
+in the historical September 12 audit below.
+
 ## Instance overlay parity — 2026-09-13
 
-The current code candidate is `f7625693`. Native now uses the responsive Vite
+The preceding code candidate was `f7625693`. Native now uses the responsive Vite
 CP arc with white progress, grey remainder, a circular 10px dot, and measured
 header/panel placement. Android gets a padded SVG viewport so the dot is not
 clipped at maximum level. Vite and native share the same CPM interpolation.

@@ -2,7 +2,26 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — instance overlay parity
+## Current phone candidate — white ribbon and full-screen backgrounds
+
+Code candidate: `e518c7f430b3b1307ecdc0056cbd641ece1b3604`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e518c7f4-arm64-v8a.apk`.
+SHA-256: `592043cbbf902c814252862e9e5e77fda990fbef56c68a5847ab9a929f340a15`.
+
+Installed using `adb install -r` with the original signing certificate and account
+data retained. Device fixtures and UI timing probes are disabled. This candidate
+makes caught-date text/divider white in native and Vite, removes the opaque root
+status-bar strip, and retains the screens' content safe areas. Instance-overlay
+status icons remain light even when the rest of the app uses the light theme.
+
+The local build took 80.3 seconds under the existing two-core/8GB limits. No
+stronger machine or native prebuild was required. Installation identity, rollback
+APK and focused checks are private under `.artifacts/ribbon-fullscreen-2026-09-13/`.
+The final phone checks pass both themes, white ribbon text, camera-area backgrounds,
+Home/collection/profile navigation and preserved 2249 caught/167 Favorites with
+the expected Favorite ordering. The phone is left in dark theme on Favorites.
+
+## Previous phone candidate — instance overlay parity
 
 Code candidate: `f762569358d1da3d80bcb086b81d0966b4624a78`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-f7625693-arm64-v8a.apk`.
