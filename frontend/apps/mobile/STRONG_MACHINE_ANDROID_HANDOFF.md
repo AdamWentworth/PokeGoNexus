@@ -1,27 +1,24 @@
 # Strong-machine Android performance handoff
 
-Last updated: 2026-09-13
+Last updated: 2026-09-14
 
 ## Current phone candidate — instance location backgrounds
 
-Code candidate: `f71a31a087a4fd152c8a83409dc7bfd14629c698`.
-Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-f71a31a0-arm64-v8a.apk`.
-SHA-256: `fb36fb0a202b4a2e6e9bd7e73dbe85719b5890b26bf0acf7661c478fbc501c02`.
+Code candidate: `0e430c51967150e2c2ee632b3de88a0ff045defb`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-0e430c51-arm64-v8a.apk`.
+SHA-256: `61e8d8eb85b1b23e3f628d495bc94c03d33041f208ca3740824b9813489ed100`.
 
-Location artwork uses a single rounder oval fade and sits below the details frame;
-the Pokémon sprite still overlaps the frame. Header, arc and panel positions
-are preserved. Vite CSS and the shared contract use the revised mask. 55 existing
-focused tests, three cross-host contract checks, mobile typecheck and source lint
-pass. The cached build took 81.9 seconds under the two-core/8GB limits; no stronger
-machine was needed. Installed signature/checksum match and fixtures/probes are
-disabled. Normal-view screenshots confirm the rounded background on Shiny Dawn
-Wings and preserved Dusk Mane layout. The phone changed to Shiny Black Kyurem
-during the edit step, so the final physical edit check is unverified; this run
-must not be counted as a passing complete flow. No runtime failures or account
-writes were recorded. Edit/scroll/picker/cancel checks passed on `567f5dd4` before
-this mask refinement. Private evidence and the prepared follow-up flow are under
-`.artifacts/rounded-background-2026-09-13/`; the public APK is unchanged. See the
-current-status document for the validation boundary.
+The rounded location background now extends 24 layout pixels higher, keeping its
+bottom beneath the details frame. Header, sprite, arc and panel positions remain.
+Vite CSS and the shared contract use the revised offset. 50 existing native tests
+and three cross-host contract checks pass. The cached build took 80.6 seconds
+under the two-core/8GB limits; no stronger machine was needed. Installed signature
+and checksum match; fixtures/probes are disabled. The final read-only phone flow
+and screenshot review pass on the 4030 CP Shiny Dawn Wings Necrozma. No runtime
+failures, account writes or resets were recorded. The phone returns to Favorite
+descending with 2249 caught and 167 Favorites. Private evidence is under
+`.artifacts/raised-background-2026-09-13/`; the public APK is unchanged. See the
+current-status document for the validation boundary and prior edit-view coverage.
 
 ## Previous phone candidate — caught-instance fusion
 

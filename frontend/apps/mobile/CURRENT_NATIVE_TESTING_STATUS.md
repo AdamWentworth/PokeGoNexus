@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (instance location backgrounds)
+Last targeted revalidation: 2026-09-14 (instance location backgrounds)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,45 +11,36 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
-## Instance location backgrounds — 2026-09-13
+## Instance location backgrounds — 2026-09-14
 
-Code candidate: `f71a31a0`. Location artwork now has a separate layer beneath the
-CP arc and opaque details frame. The Pokémon sprite and its badges remain above
-the frame, while the background cannot paint over the name, types, caught ribbon
-or lower content. A single rounded oval mask replaces the tall mask and horizontal
-top fade from `567f5dd4`, following the requested rounder appearance. The oval fades
-out before the top edge and includes the brightness layer; artwork remains aligned
-to its top. Vite's CSS and the shared mask contract use the same revised radii.
-This applies to caught, trade and wanted instance overlays. Collection cards
-retain their existing mask.
+Code candidate: `0e430c51`. Location artwork uses a single rounded oval fade
+beneath the CP arc and opaque details frame. The background's top now extends
+24 layout pixels higher (`-44` instead of `-20`), while its bottom stays anchored
+behind the panel. The Pokémon, header and content frame retain their positions.
+Vite CSS and the shared native geometry contract use the same offset and mask.
+Collection cards retain their existing geometry.
 
-The stage anchor preserves the existing header/image/panel geometry without
-waiting for a layout measurement. Existing backdrop, instance and fusion suites
-pass all 55 tests; three cross-host contract checks, mobile typecheck and source
-lint pass.
+This builds on `567f5dd4`'s separate backdrop layer and `f71a31a0`'s rounded mask.
+The mask includes the brightness layer and fades out before its top edge; location
+artwork cannot paint over the name, types, caught ribbon or lower content.
 
-The normal cached APK built in 81.9 seconds under the two-core/8GB limits:
-`.artifacts/manual-standalone/PokeGoNexus-manual-f71a31a0-arm64-v8a.apk`.
-SHA-256: `fb36fb0a202b4a2e6e9bd7e73dbe85719b5890b26bf0acf7661c478fbc501c02`.
-Private evidence: `.artifacts/rounded-background-2026-09-13/`.
-Installed in place on the Pixel 8 Pro with matching signature/checksum and
-fixtures/probes disabled. The public APK is unchanged.
+Validation: 50 existing native backdrop/instance tests and three cross-host
+contract checks pass. The normal cached APK built in 80.6 seconds under the
+existing two-core/8GB limits:
+`.artifacts/manual-standalone/PokeGoNexus-manual-0e430c51-arm64-v8a.apk`.
+SHA-256: `61e8d8eb85b1b23e3f628d495bc94c03d33041f208ca3740824b9813489ed100`.
+Installed on the Pixel 8 Pro with matching signature/checksum and fixtures/probes
+disabled. The public APK is unchanged. Private evidence is under
+`.artifacts/raised-background-2026-09-13/` (the task started before midnight).
 
-The installed `f71a31a0` screenshots confirm the 4030 CP Shiny Dawn Wings Necrozma
-has a rounded top/side fade, with the arc visible and the artwork behind the
-details frame. The 4090 CP Dusk Mane without a location card retains its layout.
-The automated flow reached both normal views, then the phone switched to Shiny
-Black Kyurem during the edit step. That run did not pass the edit-view assertion;
-it recorded zero fatal, Fabric, view ownership/removal or ANR failures. The Kyurem
-capture also shows the rounded background beneath the frame. No account edits
-were submitted and no app data was cleared.
-
-Edit/scroll/picker/cancel checks passed on the preceding `567f5dd4` APK, with
-2249 caught and 167 Favorites preserved. The revised mask's edit rendering is
-covered by the focused unit suites; a final physical edit-view recheck remains
-unverified. The interrupted run is retained in `screen-change-interrupted-device/`
-and a short follow-up flow is prepared as `finish-device.yaml` in the private
-artifact directory. This targeted change does not certify the full migration.
+The final read-only phone flow passes on the 4030 CP Shiny Dawn Wings Necrozma.
+The screenshot confirms the higher rounded background, visible CP arc and artwork
+beneath the details panel. The phone returns to Favorite descending with 2249
+caught and 167 Favorites. No fatal, Fabric, view ownership/removal or ANR failures,
+account writes or data resets were recorded. Earlier edit/scroll/picker/cancel
+checks passed on `567f5dd4`; `f71a31a0`'s physical edit check was interrupted by
+navigation. This run checks the new placement in normal viewing; it does not
+repeat physical edit coverage or certify the full migration.
 
 ## Caught-instance fusion — 2026-09-13
 
