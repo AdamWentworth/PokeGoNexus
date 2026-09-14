@@ -1,6 +1,6 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-13 (page slides, instance moves and species gender)
+Last targeted revalidation: 2026-09-13 (Profile/Friends native navigation recovery)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
@@ -11,9 +11,59 @@ The current standalone Android build, artifact identity, and historical
 public-information performance result are documented in
 `STRONG_MACHINE_ANDROID_HANDOFF.md`.
 
+## Profile/Friends native navigation recovery — 2026-09-13
+
+The current code candidate is `82f3070b`. The preceding `fdf94ecb` APK could leave
+the entire app blank when returning from Friends to Profile. The user report
+and a normal-account Maestro reproduction confirm native view-ownership and
+removal errors. Android logged these as soft exceptions while the process stayed
+alive. Earlier checks limited to fatal exceptions and individual hub slides
+missed this route-navigation failure; they were not sufficient release evidence.
+
+The native stack no longer marks main routes `dangerouslySingular`. That option
+reorders an already-mounted screen to the top during a repeated push. Expo
+Router's installed implementation explicitly warns that this path can freeze
+React Native Screens. Ordinary pushes now keep existing screen identities in
+their original stack order and create a fresh visit, with normal Back history.
+The change covers all 14 routes that used the option, including Settings/Account.
+Native route animations and the previous within-page slide repairs are retained.
+
+The normal APK is installed with SHA-256
+`185756b1f8801cdc5ff3f6c73bb52775b48f5cfcfc35f7f8ae684907ea39744e`.
+Its original package, signer, session and collection data are retained; fixtures
+and timing probes are disabled. The bounded local build took 81.3 seconds.
+The 88 focused navigation/profile/friends tests, mobile typecheck and layout lint
+pass. The new real-account regression failed on the preceding APK and passes
+five full Profile/Friends round trips, all Friends tabs and Android Back on this
+APK, with zero fatal, view-ownership, view-removal or Fabric mounting errors.
+
+Additional phone recordings cover Profile/Friends and Settings/Account route
+motion, followed by successful Back navigation and visits through all 14 affected
+main routes. The final log window has no view-ownership, removal, fatal or ANR
+markers. The faster fixed-coordinate stress attempt stayed responsive but also
+hit Friends sub-tabs while route controls were moving; it is not counted as
+completed round trips. The five-cycle Maestro test asserts every destination.
+
+The final account workflow passes 2249 caught, 167 Favorites, Favorite descending,
+and CP 4713/4689/4688 first, without a sync warning. Re-entering Caught from Profile
+also passes the filter assertion that failed in the preceding review. The phone
+is left in dark theme on Profile, with the Friends subview restored to Friends.
+No account edits were submitted.
+
+Run the normal-account regression with
+`python3 scripts/check-android-navigation.py --serial DEVICE_SERIAL`, with adb,
+Maestro and its Java runtime on PATH. It runs
+`.maestro-release/native-profile-friends-navigation.yaml` and checks both UI
+assertions and nonfatal native rendering failures. It does not clear data or
+submit profile, relationship or collection edits. Evidence from this repair is
+private under `.artifacts/profile-friends-slide-2026-09-13/`.
+
+Ordinary navigation visits remain in Back history until popped. This repair
+does not qualify long-session memory use or close the existing performance gates.
+
 ## Page slides, instance moves and species gender — 2026-09-13
 
-The current code candidate is `fdf94ecb`. Collection, Search, Trades and Friends
+The preceding code candidate was `fdf94ecb`. Collection, Search, Trades and Friends
 share native-driven gesture motion and synchronized indicators. Move modes in
 both the instance view and editor now slide full-width pages with Vite timing;
 mode selection persists when opening the editor. Shadow bonuses and legacy

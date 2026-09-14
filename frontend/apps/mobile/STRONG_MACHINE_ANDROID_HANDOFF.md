@@ -2,7 +2,40 @@
 
 Last updated: 2026-09-13
 
-## Current phone candidate — slides, moves and species gender
+## Current phone candidate — native navigation recovery
+
+Code candidate: `82f3070b6f6a35fa4cc7bcc3cd27961ef2870b3c`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-82f3070b-arm64-v8a.apk`.
+SHA-256: `185756b1f8801cdc5ff3f6c73bb52775b48f5cfcfc35f7f8ae684907ea39744e`.
+
+Installed with `adb install -r` on the Pixel 8 Pro; the installed checksum and
+original certificate match. Session and account data are retained. This remains
+native-preview with fixtures and timing probes disabled. The local cached build
+took 81.3 seconds under the existing two-core/8GB limits; no stronger machine
+or dependency/prebuild change was needed.
+
+This removes `dangerouslySingular` from the native stack's main routes. Reusing
+and reordering mounted native screens could break view ownership and blank the
+app without a fatal exception. The Profile/Friends normal-account regression
+fails on the preceding APK and passes five complete round trips, all Friends
+tabs and Android Back on this candidate. The runtime checks include Fabric soft
+errors; a surviving PID alone is insufficient. Source tests pass 88 assertions,
+mobile typecheck and targeted lint. Route animations remain enabled.
+
+Further recordings verify Profile/Friends and Settings/Account motion and Back;
+subsequent visits through all 14 affected main routes remain usable. The final
+account check passes 2249 caught, 167 Favorites, automatic Favorite descending,
+CP 4713/4689/4688 first and no sync warning. Final native logs have no ownership,
+removal, fatal or ANR markers. The phone is left in dark theme on Profile.
+
+Build/install identity, the rejected APK for reproduction, and before/after
+evidence are private under `.artifacts/profile-friends-slide-2026-09-13/`.
+Run `python3 scripts/check-android-navigation.py --serial DEVICE_SERIAL` with
+adb, Maestro and Java configured to repeat the normal-account check. It never
+clears app data, opens fixture routes or submits account edits. Details and
+remaining long-session/performance limits are in `CURRENT_NATIVE_TESTING_STATUS.md`.
+
+## Previous phone candidate — slides, moves and species gender
 
 Code candidate: `fdf94ecbd7f4fe738c01ee15bc8eaab6909fd92d`.
 Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-fdf94ecb-arm64-v8a.apk`.

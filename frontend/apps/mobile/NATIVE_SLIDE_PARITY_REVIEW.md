@@ -5,6 +5,13 @@ page slides, the instance move-mode switch, and species gender eligibility.
 It does not certify every animation or close the existing whole-app performance
 and lifecycle gates.
 
+Follow-up: the `fdf94ecb` APK was not safe for repeated Profile/Friends route
+navigation. The user reported an app-wide blank screen after this review. The
+phone logs and a normal-account regression reproduce native screen reordering
+errors without a fatal exception. `82f3070b` removes the stack's singular screen
+reuse; the new navigation checker includes Fabric soft errors and actual return
+navigation. See the current status and handoff documents for that correction.
+
 ## Implementation
 
 - Pokémon/Tags/Wishlist, Search, Trades, and Friends use the shared 300ms page
