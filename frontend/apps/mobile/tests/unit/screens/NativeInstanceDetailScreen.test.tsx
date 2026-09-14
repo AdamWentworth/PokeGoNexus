@@ -86,6 +86,34 @@ describe('NativeInstanceDetailScreen', () => {
     mockGetNativeLocationSuggestions.mockReset();
   });
 
+  it.each([false, true])('hides stale trade conditions on caught Pokémon (lucky: %s)', (lucky) => {
+    const caughtDetail: NativeInstanceDetail = {
+      ...detail,
+      row: { ...detail.row, status: 'caught', name: 'Shiny Groudon', cp: 4059, lucky },
+      instance: {
+        is_caught: true, is_for_trade: false, is_wanted: false,
+        lucky, is_traded: lucky, friendship_level: 5,
+      } as NonNullable<NativeInstanceDetail['instance']>,
+      // Also guard an older cached projection carrying these summaries.
+      preferences: [{ label: 'Friendship', value: '5/5 hearts' }],
+    };
+    const props = {
+      cachedAt: null, error: null, isLoading: false, isSaving: false,
+      movesWarning: null, saveNotice: null, saveError: null,
+      onRetry: jest.fn(), onBack: jest.fn(), onToggleFavorite: jest.fn(),
+    };
+    const { rerender } = render(<NativeInstanceDetailScreen {...props} detail={caughtDetail} />);
+    expect(screen.getByText('CP4059')).toBeTruthy();
+    expect(screen.queryByText('TRADE CONDITIONS')).toBeNull();
+    expect(screen.queryByText('Friendship')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit preferences' })).toBeNull();
+    expect(screen.queryByText('Wanted Pokémon')).toBeNull();
+
+    rerender(<NativeInstanceDetailScreen {...props} detail={detail} />);
+    expect(screen.getByText('TRADE CONDITIONS')).toBeTruthy();
+    expect(screen.getByText('5/5 hearts')).toBeTruthy();
+  });
+
   it('matches Vite location-card geometry for every instance overlay width and status', () => {
     expect(resolveNativeInstanceLocationBackdropLayout(412, 'caught')).toEqual({
       backdropHeight: 316,

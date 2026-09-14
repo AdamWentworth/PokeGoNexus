@@ -104,6 +104,39 @@ const pokemon = {
 } as unknown as BasePokemon;
 
 describe('native collection model', () => {
+  it.each([
+    ['default friendship', { friendship_level: 0 }],
+    ['saved preferences', { friendship_level: 5, pref_lucky: true, mirror: true }],
+    ['lucky and previously traded', { lucky: true, is_traded: true, friendship_level: 4 }],
+  ])('does not project %s as trade conditions on a caught instance', (_label, patch) => {
+    const caught = instance({ ...patch, cp: 4059, is_for_trade: false });
+    const detail = buildNativeInstanceDetail(
+      { caught }, [pokemon], [], 'instance-1', 'https://pokegonexus.com',
+    );
+    expect(detail?.row.status).toBe('caught');
+    expect(detail?.preferences).toEqual([]);
+    expect(detail?.targetRows).toEqual([]);
+    expect(detail?.instance).toEqual(caught);
+    expect(caught.is_for_trade).toBe(false);
+    expect(caught.friendship_level).toBe(patch.friendship_level);
+  });
+
+  it.each(['trade', 'wanted'] as const)('preserves conditions on an actual %s listing', (status) => {
+    const listing = instance({
+      is_caught: false, is_for_trade: status === 'trade', is_wanted: status === 'wanted',
+      friendship_level: 5, pref_lucky: true, mirror: true,
+    });
+    const detail = buildNativeInstanceDetail(
+      { listing }, [pokemon], [], 'instance-1', 'https://pokegonexus.com',
+    );
+    expect(detail?.row.status).toBe(status);
+    expect(detail?.preferences).toEqual([
+      { label: 'Friendship', value: '5/5 hearts' },
+      { label: 'Lucky trade', value: 'Requested' },
+      { label: 'Mirror trade', value: 'Required' },
+    ]);
+  });
+
   it('builds an exact canonical instance handoff with its status filter', () => {
     expect(buildCanonicalCollectionInstancePath('instance 1', 'trade')).toBe(
       '/pokemon?filter=trade&instanceId=instance+1',
@@ -772,10 +805,7 @@ describe('native collection model', () => {
         raidPower: 14,
         pvpPower: 9,
       }],
-      preferences: expect.arrayContaining([
-        { label: 'Friendship', value: '5/5 hearts' },
-        { label: 'Lucky trade', value: 'Requested' },
-      ]),
+      preferences: [],
       moveOptions: [{
         id: 101,
         name: 'Fire Spin',

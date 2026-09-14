@@ -2197,10 +2197,10 @@ const NativeInstanceReadOnlyDetailSections = memo(function NativeInstanceReadOnl
         </View>
       ) : null}
 
-      {!isWanted && detail.preferences.length ? (
+      {detail.row.status === 'trade' && detail.preferences.length ? (
         <View style={[styles.preferencePanel, { borderColor: statusAccent }]}>
           <Text style={[styles.preferenceTitle, { color: statusAccent }]}>
-            {detail.row.status === 'wanted' ? 'WANTED CONDITIONS' : 'TRADE CONDITIONS'}
+            TRADE CONDITIONS
           </Text>
           <DetailRows
             rows={detail.preferences}

@@ -1186,7 +1186,9 @@ export const buildNativeInstanceDetail = (
     } : null,
   ]);
 
-  const preferences = compactRows([
+  // Defaults and preferences can survive on a caught instance without making
+  // it a listing. Vite exposes these only in its Trade/Wanted workspaces.
+  const preferences = row.status === 'caught' ? [] : compactRows([
     instance.friendship_level == null ? null : {
       label: 'Friendship',
       value: `${instance.friendship_level}/5 hearts`,
