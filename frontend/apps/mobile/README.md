@@ -47,6 +47,13 @@ npm --workspace apps/mobile run device:smoke:android
 npm --workspace apps/mobile run device:smoke:android:release-lifecycle
 ```
 
+Keep Reanimated and Worklets aligned with the installed Expo SDK. They are
+declared in the mobile package and pinned in the root workspace so optional
+router dependencies cannot install another native copy. The root
+`expo-modules-core` dependency also lets the hoisted Jest preset resolve Expo's
+runtime. Update these constraints together during SDK upgrades, then run
+`npx expo-doctor` from this directory and the mobile test suite.
+
 `device:smoke:android` boots or reuses the dedicated Pixel emulator, starts an
 isolated fixture API and Metro server with the full checked-in Pokémon catalog,
 builds and installs the `com.pokegonexus.app` development client, then drives
