@@ -62,11 +62,15 @@ export function getDisplayName(pokemon: PokemonVariant): string {
 }
 
 export function getVariantFamilyKey(pokemon: PokemonVariant): string {
-  const variantType = normalizeVariantType(pokemon)
+  let variantType = normalizeVariantType(pokemon)
     .replace(/^shiny_/, '')
     .replace(/_shiny$/, '')
-    .replace(/^shiny\s+/, '')
-    .replace(/\s+shiny$/, '');
+    .replace(/^shiny\s+/, '');
+  // Check the fixed suffix first, then trim once. An unanchored whitespace
+  // repetition retries every position in long runs when the suffix is absent.
+  if (variantType.endsWith('shiny') && /\s/.test(variantType.at(-6) ?? '')) {
+    variantType = variantType.slice(0, -5).trimEnd();
+  }
 
   if (variantType === 'shiny') return 'default';
   return variantType || 'default';

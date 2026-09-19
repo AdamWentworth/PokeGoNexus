@@ -12,6 +12,7 @@ import {
 } from '@/pages/Pokedex/pokedexPokemonDetailModel';
 
 import type { PokemonVariant } from '@/types/pokemonVariants';
+import { getGenderOptions } from '@/pages/Pokedex/pokedexRegistrationModel';
 
 vi.mock('@/utils/imageHelpers', () => ({
   getTypeIconPath: (type: string) => `/types/${type.toLowerCase()}.png`,
@@ -41,6 +42,23 @@ function makeVariant(overrides: Partial<PokemonVariant> = {}): PokemonVariant {
 }
 
 describe('pokedexPokemonDetailModel', () => {
+  it('handles long malformed catalog fields without retrying every suffix', () => {
+    const spaces = ' '.repeat(100_000);
+    expect(getVariantFamilyKey(makeVariant({ variantType: `shadow${spaces}x` as PokemonVariant['variantType'] }))).toBe(`shadow${spaces}x`);
+    expect(getVariantFamilyKey(makeVariant({ variantType: `shadow${spaces}shiny` as PokemonVariant['variantType'] }))).toBe('shadow');
+    expect(getGenderOptions(makeVariant({ gender_rate: '0'.repeat(100_000) }))).toEqual([]);
+    expect(getGenderOptions(makeVariant({ gender_rate: '50M50F' }))).toEqual(['Male', 'Female']);
+    expect(getGenderOptions(makeVariant({ gender_rate: '0M100F' }))).toEqual(['Female']);
+    expect(getGenderOptions(makeVariant({ gender_rate: '100M0F' }))).toEqual(['Male']);
+    expect(getDisplayName(makeVariant({ variantType: `shadow_costume_${'costume_a'.repeat(20_000)}\n!` }))).toBe('Bulbasaur');
+  });
+
+  it('keeps shadow costume names and shiny prefixes intact', () => {
+    const costumes = [{ costume_id: 7, name: 'party_hat' }] as PokemonVariant['costumes'];
+    expect(getDisplayName(makeVariant({ variantType: 'shadow_costume_7', costumes }))).toBe('Shadow Party Hat Bulbasaur');
+    expect(getDisplayName(makeVariant({ variantType: 'shiny_shadow_costume_7', costumes }))).toBe('Shiny Shadow Party Hat Bulbasaur');
+  });
+
   it('formats National Dex numbers and falls back for invalid data', () => {
     expect(formatDexNumber(makeVariant({ pokedex_number: 25 }))).toBe('0025');
     expect(formatDexNumber(makeVariant({ pokedex_number: '150' as unknown as number }))).toBe('0150');

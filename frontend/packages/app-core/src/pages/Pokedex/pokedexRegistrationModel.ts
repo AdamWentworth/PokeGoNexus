@@ -438,8 +438,10 @@ export function getGenderOptions(pokemon: PokemonVariant): PokedexGenderValue[] 
   if (genderRate === 'F/F') return ['Female'];
   if (genderRate === 'M/F' || genderRate === 'F/M') return ['Male', 'Female'];
 
-  const maleRate = genderRate.match(/(\d+)M/)?.[1];
-  const femaleRate = genderRate.match(/(\d+)F/)?.[1];
+  // Consume each digit run once, even if its gender suffix is missing.
+  const rates = genderRate.match(/\d+[MF]?/g) ?? [];
+  const maleRate = rates.find((rate) => rate.endsWith('M'))?.slice(0, -1);
+  const femaleRate = rates.find((rate) => rate.endsWith('F'))?.slice(0, -1);
   const options: PokedexGenderValue[] = [];
   if (Number(maleRate ?? 0) > 0) options.push('Male');
   if (Number(femaleRate ?? 0) > 0) options.push('Female');
