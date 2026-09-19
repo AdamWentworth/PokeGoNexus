@@ -30,6 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     new Set([
       ...(config.plugins ?? []),
       'expo-router',
+      'expo-image',
       'expo-secure-store',
       'expo-sharing',
       'expo-sqlite',
