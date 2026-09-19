@@ -70,7 +70,7 @@ export function NativeFusionControls({
       ))}
       <Modal animationType={animationType} onRequestClose={close} statusBarTranslucent transparent visible={pending != null && editing}>
         <View accessibilityViewIsModal style={styles.backdrop}>
-          <Pressable accessibilityLabel="Dismiss fusion partner selector" onPress={close} style={StyleSheet.absoluteFill} />
+          <Pressable accessibilityRole="button" accessibilityLabel="Dismiss fusion partner selector" onPress={close} style={StyleSheet.absoluteFill} />
           <View style={[styles.sheet, { backgroundColor: palette.panel, borderColor: palette.border }]}>
             <Text accessibilityRole="header" style={[styles.title, { color: palette.text }]}>Select Fusion Partner</Text>
             <ScrollView contentContainerStyle={styles.candidates}>
