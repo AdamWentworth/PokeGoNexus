@@ -6,6 +6,9 @@ node_modules
 .yarn/
 .env
 .env.*
+*.jks
+*.keystore
+credentials.json
 !.env.example
 !.env.*.example
 *.log

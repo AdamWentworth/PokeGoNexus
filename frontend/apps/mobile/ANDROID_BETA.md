@@ -42,6 +42,18 @@ for website distribution.
    services. Testers use their real accounts; edits are real. Do not substitute a
    development client, performance build, or default WebView production profile.
 
+   When cloud quota is unavailable, build with the same managed signing key on
+   a Linux/macOS machine with Java and the Android SDK configured:
+
+   ```sh
+   node scripts/android-beta/build-local.mjs
+   ```
+
+   This requires Expo authentication but does not use EAS cloud build quota.
+   It records the source commit and APK checksum in a local receipt. Keep the
+   working tree unchanged while it runs. On Windows, use the Linux environment
+   that already supports this project's Android builds.
+
 3. Write release notes with changes, known limitations, and the device checks
    performed. Use a local file outside tracked source for draft notes.
 4. Prepare the exact EAS artifact as a GitHub **draft prerelease**:
@@ -56,6 +68,15 @@ for website distribution.
    ARM64 support, and non-debug signing certificate. It rejects changes to the
    signer or non-increasing versions once a beta is active. It attaches the APK,
    SHA-256 checksum, and candidate manifest to the draft without changing the web.
+
+   For a local build, use the receipt printed by the build script instead:
+
+   ```sh
+   node scripts/android-beta/prepare.mjs prepare-local /path/to/receipt.json /path/to/notes.md
+   ```
+
+   The same APK checks apply. Release notes identify the build as local EAS;
+   they do not claim a cloud build ID.
 
 ## Verify and publish
 
