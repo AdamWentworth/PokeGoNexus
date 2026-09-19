@@ -85,6 +85,7 @@ export function useMaxBattleData() {
   const [localInstancesLoading, setLocalInstancesLoading] = useState(true);
 
   const usesSharedCatalog = sharedVariants.length > 0;
+  const usesSharedInstances = !sharedInstancesLoading;
   const variants = usesSharedCatalog ? sharedVariants : localVariants;
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export function useMaxBattleData() {
   }, [isLoggedIn, usesSharedCatalog]);
 
   useEffect(() => {
-    if (usesSharedCatalog) {
+    if (usesSharedInstances) {
       setLocalInstancesLoading(false);
       return;
     }
@@ -122,14 +123,17 @@ export function useMaxBattleData() {
       setLocalInstancesLoading(false);
       return;
     }
-    if (localVariantsLoading) return;
-    if (localVariants.length === 0) {
+    if (usesSharedCatalog ? sharedVariantsLoading : localVariantsLoading) return;
+    if (variants.length === 0) {
       setLocalInstancesLoading(false);
       return;
     }
 
+    // Catalog hydration can finish after navigation disables AppBootstrap on
+    // /max. Reusing that catalog does not mean the shared collection is ready.
     let active = true;
-    void loadInstances(localVariants, true)
+    setLocalInstancesLoading(true);
+    void loadInstances(variants, true)
       .then((loaded) => {
         if (!active) return;
         setLocalInstances(loaded);
@@ -144,7 +148,7 @@ export function useMaxBattleData() {
     return () => {
       active = false;
     };
-  }, [isLoggedIn, localVariants, localVariantsLoading, usesSharedCatalog]);
+  }, [isLoggedIn, localVariantsLoading, sharedVariantsLoading, usesSharedCatalog, usesSharedInstances, variants]);
 
   return useMemo(
     () => ({
@@ -153,8 +157,8 @@ export function useMaxBattleData() {
         ? sharedVariantsLoading
         : localVariantsLoading,
       movesLoading: usesSharedCatalog ? sharedMovesLoading : false,
-      instances: usesSharedCatalog ? sharedInstances : localInstances,
-      instancesLoading: usesSharedCatalog
+      instances: usesSharedInstances ? sharedInstances : localInstances,
+      instancesLoading: usesSharedInstances
         ? sharedInstancesLoading
         : localInstancesLoading,
     }),
@@ -167,6 +171,7 @@ export function useMaxBattleData() {
       sharedMovesLoading,
       sharedVariantsLoading,
       usesSharedCatalog,
+      usesSharedInstances,
       variants,
     ],
   );

@@ -121,6 +121,31 @@ describe('useMaxBattleData', () => {
     await waitFor(() => expect(result.current.variantsLoading).toBe(false));
   });
 
+  it('loads owned instances when the shared catalog finishes before collection hydration', async () => {
+    authState.isLoggedIn = true;
+    variantsState.variants = [maxVariant];
+    variantsState.variantsLoading = false;
+    loadInstances.mockResolvedValue({
+      caught: { variant_id: '0001-dynamax', is_caught: true },
+    });
+
+    const { result, rerender } = renderHook(() => useMaxBattleData());
+
+    await waitFor(() => expect(result.current.instancesLoading).toBe(false));
+    expect(result.current.instances).toHaveProperty('caught');
+    expect(loadInstances).toHaveBeenCalledWith([maxVariant], true);
+    expect(serviceMocks.manifest).not.toHaveBeenCalled();
+
+    // Once global hydration catches up, keep following the shared collection.
+    instancesState.instances = {
+      synced: { variant_id: '0001-dynamax', is_caught: true } as Instances[string],
+    };
+    instancesState.instancesLoading = false;
+    rerender();
+    expect(result.current.instances).toHaveProperty('synced');
+    expect(result.current.instances).not.toHaveProperty('caught');
+  });
+
   it('reuses an already-hydrated shared catalog instead of fetching again', () => {
     variantsState.variants = [maxVariant];
     variantsState.variantsLoading = false;
