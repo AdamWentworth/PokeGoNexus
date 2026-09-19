@@ -147,6 +147,10 @@ jobs:
           --workers 1
 
       - name: Cross-Browser Smoke
+        env:
+          # Cover each parity route and interaction once in smoke CI. Dedicated
+          # performance comparisons retain their repeated-sample defaults.
+          POKEGONEXUS_PERFORMANCE_SAMPLES: "1"
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then

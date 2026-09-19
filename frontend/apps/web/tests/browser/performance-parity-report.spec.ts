@@ -150,7 +150,8 @@ const performanceInstances = Object.fromEntries(
     };
     if (index === 0) return [instanceId, {
       ...normalized,
-      favorite: true,
+      // The trade fixture must also pass the instance editor's save rules.
+      favorite: false,
       is_caught: true,
       is_for_trade: true,
       is_wanted: false,
@@ -575,7 +576,14 @@ const waitUntilVisuallyReady = async (page: Page) => {
       ),
     );
     return !overlay && !pendingStatus && content.length >= 12;
-  }, null, { timeout: 30_000 });
+  }, null, { timeout: 30_000 }).catch(async (cause: unknown) => {
+    const statuses = await page.locator('[role="status"]').allTextContents();
+    await test.info().attach('route-not-ready', {
+      body: await page.screenshot(),
+      contentType: 'image/png',
+    });
+    throw new Error(`Route did not become ready: ${page.url()}; statuses: ${JSON.stringify(statuses)}`, { cause });
+  });
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   }));
@@ -1303,7 +1311,14 @@ const collectSharedInteractions = async (
     await collectHomeInteractions(context, sampleIndex);
   }
 
-  const collection = await createMeasuredPage(context, 'signed-in', 'dark');
+  const createCollectionPage = async () => {
+    // Each collection scenario must start with the canonical roster. Previous
+    // scenarios close pages while their cache reconciliation may still be
+    // writing, and their queued preferences otherwise leak into the next one.
+    await seedPerformanceInstances(context);
+    return createMeasuredPage(context, 'signed-in', 'dark');
+  };
+  const collection = await createCollectionPage();
   try {
     await openCaughtPokemonList(collection, performanceRouteOptions);
 
@@ -1321,7 +1336,7 @@ const collectSharedInteractions = async (
     await closeMeasuredPage(collection);
   }
 
-  const queryCollection = await createMeasuredPage(context, 'signed-in', 'dark');
+  const queryCollection = await createCollectionPage();
   try {
     await openPokemonPage(queryCollection, performanceRouteOptions);
     const querySearch = queryCollection.getByLabel('Search Pokémon', { exact: true });
@@ -1337,7 +1352,7 @@ const collectSharedInteractions = async (
     await closeMeasuredPage(queryCollection);
   }
 
-  const sortCollection = await createMeasuredPage(context, 'signed-in', 'dark');
+  const sortCollection = await createCollectionPage();
   try {
     await openPokemonPage(sortCollection, performanceRouteOptions);
     await sortCollection.locator('.sort-button').first().click();
@@ -1352,7 +1367,7 @@ const collectSharedInteractions = async (
     await closeMeasuredPage(sortCollection);
   }
 
-  const tagCollection = await createMeasuredPage(context, 'signed-in', 'dark');
+  const tagCollection = await createCollectionPage();
   try {
     await openCaughtPokemonList(tagCollection, performanceRouteOptions);
     await tagCollection.getByText('TAGS', { exact: true }).click();
@@ -1376,7 +1391,7 @@ const collectSharedInteractions = async (
     await closeMeasuredPage(tagCollection);
   }
 
-  const organizer = await createMeasuredPage(context, 'signed-in', 'dark');
+  const organizer = await createCollectionPage();
   try {
     await openPokemonPage(organizer, performanceRouteOptions);
     await organizer.locator('.pokemon-card').first().click();
@@ -1389,7 +1404,7 @@ const collectSharedInteractions = async (
     await closeMeasuredPage(organizer);
   }
 
-  const instance = await createMeasuredPage(context, 'signed-in', 'dark');
+  const instance = await createCollectionPage();
   try {
     const { firstCaughtCard } = await openCaughtPokemonList(instance, performanceRouteOptions);
     await firstCaughtCard.click();
