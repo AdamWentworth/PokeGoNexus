@@ -1,6 +1,7 @@
 {
   "cli": {
-    "appVersionSource": "local"
+    "appVersionSource": "local",
+    "requireCommit": true
   },
   "build": {
     "development": {
@@ -22,6 +23,17 @@
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview",
         "EXPO_PUBLIC_MOBILE_EXPERIENCE": "native-preview"
+      }
+    },
+    "android-beta": {
+      "extends": "device-preview",
+      "environment": "preview",
+      "credentialsSource": "remote",
+      "developmentClient": false,
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "beta",
+        "EXPO_PUBLIC_MOBILE_EXPERIENCE": "native-preview",
+        "EXPO_PUBLIC_DEVICE_SMOKE_MODE": "false"
       }
     },
     "performance-android": {

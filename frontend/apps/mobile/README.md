@@ -2,6 +2,9 @@
 
 Expo mobile application for Pokémon Go Nexus.
 
+Android website beta builds and the master integration/release process are
+documented in [Android beta distribution](./ANDROID_BETA.md).
+
 Native workflow replacements are governed by the
 [Native Collection Parity Contract](./COLLECTION_PARITY_CONTRACT.md). The
 canonical web application remains the default until a complete workflow passes

@@ -43,6 +43,7 @@ const HomeFooter = () => (
         <nav className="homeFooter__links" aria-label="Pokémon Go Nexus footer">
           <section>
             <h3>Get started</h3>
+            <Link to="/download">Android beta</Link>
             <Link to="/help">Help &amp; information</Link>
             <Link to="/faq">Frequently asked questions</Link>
             <Link to="/about">About Pokémon Go Nexus</Link>

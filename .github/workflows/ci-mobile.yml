@@ -52,6 +52,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Verify Android Beta Release Gates
+        run: node --test scripts/android-beta/release.test.mjs
+
       - name: Verify Expo Dependency Health
         run: npx expo-doctor
 
