@@ -17,7 +17,7 @@ import type { BasePokemon } from '@pokemongonexus/shared-contracts/pokemon';
 
 import { installE2eRoutes, pvpDataFixture } from './support/e2eRoutes';
 import type { E2eRouteOptions } from './support/e2eRoutes';
-import { openCaughtPokemonList, openPokemonPage } from './support/pokemonApp';
+import { expectActivePokemonView, openPokemonPage } from './support/pokemonApp';
 
 type ContractRoute = {
   id: string;
@@ -1240,6 +1240,25 @@ const collectInformationInteractions = async (
   }
 };
 
+const openPerformanceCaughtList = async (page: Page) => {
+  // This workload already has a canonical caught roster. Open it through the
+  // UI without rewriting IndexedDB or reloading during reconciliation, as the
+  // general synthetic-card helper does. Preserve the same builds native uses.
+  await openPokemonPage(page, performanceRouteOptions);
+  await page.getByText('TAGS', { exact: true }).click();
+  await expectActivePokemonView(page, 'TAGS');
+  const caughtTag = page.locator('.tag-item[data-tag="Caught"]');
+  await expect(caughtTag.locator('.tag-subtitle')).toContainText(
+    /[1-9]\d* Pokémon have this tag\./,
+  );
+  await caughtTag.click();
+  await expectActivePokemonView(page, 'Pokémon');
+  const firstCaughtCard = page.locator('.pokemon-card[role="button"]').first();
+  await expect(firstCaughtCard).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.app-loading-overlay')).toHaveCount(0);
+  return { firstCaughtCard };
+};
+
 const collectSharedInteractions = async (
   context: BrowserContext,
   sampleIndex: number,
@@ -1320,7 +1339,7 @@ const collectSharedInteractions = async (
   };
   const collection = await createCollectionPage();
   try {
-    await openCaughtPokemonList(collection, performanceRouteOptions);
+    await openPerformanceCaughtList(collection);
 
     const search = collection.getByLabel('Search Pokémon', { exact: true });
     await search.click();
@@ -1369,7 +1388,7 @@ const collectSharedInteractions = async (
 
   const tagCollection = await createCollectionPage();
   try {
-    await openCaughtPokemonList(tagCollection, performanceRouteOptions);
+    await openPerformanceCaughtList(tagCollection);
     await tagCollection.getByText('TAGS', { exact: true }).click();
     await tagCollection.locator('.tag-item[data-tag="Caught"]').waitFor({ state: 'visible' });
     await tagCollection.locator('.tag-item[data-tag="Caught"]').click();
@@ -1406,7 +1425,7 @@ const collectSharedInteractions = async (
 
   const instance = await createCollectionPage();
   try {
-    const { firstCaughtCard } = await openCaughtPokemonList(instance, performanceRouteOptions);
+    const { firstCaughtCard } = await openPerformanceCaughtList(instance);
     await firstCaughtCard.click();
     const overlay = instance.locator('.instance-overlay.caught-mode');
     await overlay.waitFor({ state: 'visible' });
