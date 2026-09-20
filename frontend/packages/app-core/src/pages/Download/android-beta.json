@@ -1,3 +1,16 @@
 {
-  "release": null
+  "release": {
+    "version": "1.0.4",
+    "versionCode": 26092001,
+    "publishedAt": "2026-09-20",
+    "downloadUrl": "https://github.com/AdamWentworth/PokeGoNexus/releases/download/android-beta-26092001/PokeGoNexus-Android-26092001.apk",
+    "releaseNotesUrl": "https://github.com/AdamWentworth/PokeGoNexus/releases/tag/android-beta-26092001",
+    "sha256": "214beaab2b11d505b8c08cd58ba1411664a1e8bdbd6232991c9c9cfe30011ee4",
+    "sizeBytes": 167125738
+  },
+  "sourceCommit": "3d7585a4ebf6ca0ba21d5899ad9f3c094dfcc4c6",
+  "highestVersionCode": 26092001,
+  "buildProvider": "local-eas",
+  "easBuildId": null,
+  "signingCertificateSha256": "e5245da959e09aea5ddb2fbf5ba807ef2993efd605c0a251ed12deb67c96005f"
 }
