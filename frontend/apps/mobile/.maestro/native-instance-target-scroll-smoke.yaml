@@ -1,0 +1,46 @@
+appId: ${APP_ID}
+name: Native instance target-list nested scrolling smoke
+tags:
+  - android
+  - native-instance
+  - native-trades
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=0025-party_hat_default_demo-trade&targetScroll=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Wanted Pokémon
+    timeout: 45000
+- scrollUntilVisible:
+    element:
+      text: Shiny Zacian
+    direction: DOWN
+    speed: 40
+    timeout: 20000
+- takeScreenshot: native-instance-trade-target-list-scrolled
+- tapOn: Close
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=0094-default_demo-wanted&targetScroll=1
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: For Trade Pokémon
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: Shiny Zacian
+    direction: DOWN
+    speed: 40
+    timeout: 20000
+- takeScreenshot: native-instance-wanted-target-list-scrolled

@@ -1,0 +1,52 @@
+appId: ${APP_ID}
+name: Native Home performance contract
+tags:
+  - android
+  - performance
+  - native-home
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/home?guest=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: THE ULTIMATE TRAINER HUB
+    timeout: 60000
+
+# The canonical landing-page interactions are removing its education surface
+# and moving from the hero to the real feature directory.
+- tapOn:
+    text: Dismiss action menu tip
+    waitToSettleTimeoutMs: 750
+- assertNotVisible: QUICK NAVIGATION
+- tapOn:
+    text: Explore the app ↓
+    waitToSettleTimeoutMs: 1500
+- extendedWaitUntil:
+    visible: Explore Pokémon Go Nexus
+    timeout: 10000
+- takeScreenshot: home-guest-feature-directory
+
+# A new trainer sees onboarding in place of dashboard zeroes. Dismissal must
+# reveal the useful dashboard without a route transition or a loading pause.
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/home?onboarding=1
+- extendedWaitUntil:
+    visible: Let’s make your account useful.
+    timeout: 30000
+- tapOn:
+    text: Open trainer dashboard
+    waitToSettleTimeoutMs: 750
+- assertVisible: TRAINER DASHBOARD
+- assertVisible: Find Pokémon
+- takeScreenshot: home-signed-in-dashboard

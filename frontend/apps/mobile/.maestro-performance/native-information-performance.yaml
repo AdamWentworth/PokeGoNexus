@@ -1,0 +1,48 @@
+appId: ${APP_ID}
+name: Native public information performance contract
+tags:
+  - android
+  - performance
+  - native-information
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=faq
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Frequently asked questions
+    timeout: 60000
+
+- tapOn: Browse Trading questions
+- assertVisible: 7 questions
+- tapOn: Expand answers
+- assertVisible: Collapse answers
+- tapOn: Search questions and answers
+- inputText: Forever Friends
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: 1 question matching “Forever Friends”
+    direction: DOWN
+- assertVisible: 1 question matching “Forever Friends”
+- scrollUntilVisible:
+    element:
+      text: Clear FAQ search
+    direction: UP
+- tapOn: Clear FAQ search
+- scrollUntilVisible:
+    element:
+      text: Common questions
+    direction: DOWN
+- assertVisible: Common questions
+- takeScreenshot: native-information-faq-performance

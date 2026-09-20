@@ -1,0 +1,39 @@
+appId: ${APP_ID}
+name: Native collection sync resilience smoke
+tags:
+  - android
+  - native-sync
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/sync
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Collection resilience
+    timeout: 45000
+- assertVisible: You are offline
+- assertVisible: Your saved collection copy remains available on this device.
+- tapOn: Retain two changes
+- assertVisible: 2 changes are safely retained on this device.
+- tapOn: Retry
+- assertVisible: Accepted by Receiver
+- assertVisible: 2 changes are waiting for server confirmation.
+- tapOn: Confirm on server
+- assertVisible: Up to date
+- tapOn: Simulate sync error
+- assertVisible: Sync needs attention
+- assertVisible: Receiver is temporarily unavailable.
+- tapOn: Retry
+- assertVisible: Accepted by Receiver
+- takeScreenshot: native-sync-resilience

@@ -14,7 +14,7 @@ import type {
   InstanceStatusResultPatch,
 } from '@/types/instances';
 import { PokemonVariant } from '@/types/pokemonVariants';
-import { enforceFavoriteTradeInvariant } from '../utils/favoriteTradeRules';
+import { enforceFavoriteTradeInvariant } from '@pokemongonexus/shared-domain/instances';
 
 type AppState = {
   variants: PokemonVariant[];

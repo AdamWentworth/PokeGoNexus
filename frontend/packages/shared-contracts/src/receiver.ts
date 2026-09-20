@@ -18,3 +18,7 @@ export interface ReceiverBatchedUpdatesPayload<
   location: unknown | null;
   pokemonUpdates: TPokemonUpdate[];
 }
+
+export interface ReceiverBatchedUpdatesResponse {
+  message: string;
+}

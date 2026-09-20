@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { DevSettings } from 'react-native';
 import { MobileErrorBoundary } from '../../../src/components/MobileErrorBoundary';
 import { reportCrash } from '../../../src/observability/crashReporter';
 
@@ -35,7 +36,7 @@ describe('MobileErrorBoundary', () => {
       </MobileErrorBoundary>,
     );
 
-    expect(screen.getByText('Something went wrong.')).toBeTruthy();
+    expect(screen.getByText('Something went wrong')).toBeTruthy();
     expect(mockedReportCrash).toHaveBeenCalledWith(
       'react_error_boundary',
       expect.any(Error),
@@ -51,6 +52,19 @@ describe('MobileErrorBoundary', () => {
     );
 
     fireEvent.press(screen.getByText('Try Again'));
-    expect(screen.getByText('Something went wrong.')).toBeTruthy();
+    expect(screen.getByText('Something went wrong')).toBeTruthy();
+  });
+
+  it('offers the canonical full reload recovery action', () => {
+    const reload = jest.spyOn(DevSettings, 'reload').mockImplementation(() => undefined);
+    render(
+      <MobileErrorBoundary>
+        <ExplodingComponent />
+      </MobileErrorBoundary>,
+    );
+
+    fireEvent.press(screen.getByText('Reload'));
+    expect(reload).toHaveBeenCalledTimes(1);
+    reload.mockRestore();
   });
 });

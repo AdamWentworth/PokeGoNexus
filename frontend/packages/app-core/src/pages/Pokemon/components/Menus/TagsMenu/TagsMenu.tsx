@@ -131,9 +131,11 @@ const TagsMenu: React.FC<TagsMenuProps> = ({
   }, [activeTags]);
 
   /* ----- tag summaries -------------------------------------------- */
-  const sortedFavorites = useFavoriteList(
-    Object.values(derivedChildren.caught.favorite || {})
+  const favoriteItems = useMemo(
+    () => Object.values(derivedChildren.caught.favorite),
+    [derivedChildren],
   );
+  const sortedFavorites = useFavoriteList(favoriteItems);
 
   const customTagEntries = useMemo(() => {
     if (!isEditable) return { caught: [], wanted: [] } as Record<CustomTagParent, Array<[string, typeof customTags.caught[string]]>>;

@@ -1,5 +1,5 @@
 .wanted-instance {
-  --wanted-accent: #ef5b71;
+  --wanted-accent: #ff7189;
   --wanted-accent-soft: color-mix(in srgb, var(--wanted-accent) 10%, transparent);
   --wanted-border: color-mix(in srgb, var(--wanted-accent) 35%, #48605d);
   --caught-divider-color: color-mix(in srgb, var(--wanted-accent) 45%, #65716f);
@@ -267,6 +267,7 @@
 }
 
 :root[data-theme='light'] .wanted-instance {
+  --wanted-accent: #b0003b;
   --wanted-border: color-mix(in srgb, var(--wanted-accent) 35%, var(--light-caught-card-border, #b9c8c4));
   color: var(--light-text-primary);
 }

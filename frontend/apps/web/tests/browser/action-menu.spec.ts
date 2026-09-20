@@ -4,6 +4,7 @@ import { expect, test, type Route } from '@playwright/test';
 import { attachBrowserDiagnostics } from './support/diagnostics';
 import { openActionMenu } from './support/actionMenu';
 import { installE2eRoutes } from './support/e2eRoutes';
+import { actionMenuExperienceParityContract } from '../../../../packages/shared-ui-tokens/src/index';
 
 test.describe('Action Menu', () => {
   test.beforeEach(({}, testInfo) => {
@@ -27,32 +28,16 @@ test.describe('Action Menu', () => {
       await expect(page.getByRole('button', { name: 'Close' })).toBeEnabled();
       await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
 
-      for (const destination of [
-        'Raid',
-        'Search',
-        'Pokémon',
-        'Pokedex',
-        'Home',
-        'PvP',
-        'Trades',
-        'Rankings',
-        'Max Battles',
-      ]) {
-        await expect(page.getByRole('button', { name: destination, exact: true })).toBeVisible();
+      for (const { label } of actionMenuExperienceParityContract.primaryDestinations) {
+        await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
       }
       const supportButton = page.getByRole('button', { name: 'Learn & support' });
       await expect(supportButton).toBeVisible();
       await supportButton.click();
       const supportDirectory = page.getByRole('navigation', { name: 'Learn and support' });
       await expect(supportDirectory).toBeVisible();
-      for (const destination of [
-        'Getting Started',
-        'FAQ',
-        'About',
-        'Trade Safety',
-        'Help directory',
-      ]) {
-        await expect(supportDirectory.getByRole('button', { name: destination })).toBeVisible();
+      for (const { label } of actionMenuExperienceParityContract.supportDestinations) {
+        await expect(supportDirectory.getByRole('button', { name: label })).toBeVisible();
       }
       await page.keyboard.press('Escape');
       await expect(supportDirectory).toHaveCount(0);

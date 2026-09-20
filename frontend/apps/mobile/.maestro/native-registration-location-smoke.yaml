@@ -1,0 +1,78 @@
+appId: ${APP_ID}
+name: Native registration location parity
+tags:
+  - android
+  - native-auth
+  - location
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=register
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Create your account
+    timeout: 45000
+- tapOn: ".*Continue with email.*"
+- tapOn: Username
+- inputText: LocationTrainer
+- pressKey: ENTER
+- inputText: location@example.invalid
+- pressKey: ENTER
+- tapOn: Password
+- inputText: Strong_password_42!
+- tapOn: Confirm password
+- inputText: Strong_password_42!
+- hideKeyboard
+- tapOn: "Continue ›"
+- assertVisible: POKÉMON GO IDENTITY
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: YOUR AREA
+- scrollUntilVisible:
+    element:
+      text: Use this device’s location
+    direction: DOWN
+    timeout: 10000
+- tapOn: Use this device’s location
+- runFlow:
+    when:
+      visible: While using the app
+    commands:
+      - tapOn: While using the app
+- extendedWaitUntil:
+    visible: "Select a location:"
+    timeout: 30000
+- assertVisible: Your exact coordinates are kept private.
+- takeScreenshot: native-registration-device-location-options
+- tapOn: Dismiss options
+- scrollUntilVisible:
+    element:
+      text: Coordinates selected
+    direction: DOWN
+    timeout: 10000
+- tapOn: Use this device’s location
+- scrollUntilVisible:
+    element:
+      text: Choose on map
+    direction: DOWN
+    timeout: 10000
+- tapOn: Choose on map
+- assertVisible: Tap the map, then choose the broad place name to show.
+- assertVisible: Tap on the map to set coordinates.
+- takeScreenshot: native-registration-location-map
+- tapOn: Close location map

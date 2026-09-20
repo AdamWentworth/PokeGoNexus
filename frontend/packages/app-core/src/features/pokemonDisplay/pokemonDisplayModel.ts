@@ -7,7 +7,7 @@ import type {
 } from '@/types/pokemonSubTypes';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import { getCrownFormLabel, resolveActiveCrownForm } from '@/utils/crownHelpers';
-import { parseBackgroundId } from '@/features/instances/utils/instanceIdentity';
+import { parseBackgroundId } from '@pokemongonexus/shared-domain/instances';
 import {
   buildTypeIcon,
   normalizeTypeName,
@@ -25,7 +25,7 @@ export {
   findInstanceByRefs,
   normalizeInstanceToken,
   parseBackgroundId,
-} from '@/features/instances/utils/instanceIdentity';
+} from '@pokemongonexus/shared-domain/instances';
 
 export {
   resolvePokemonDisplayFusionBackgroundPool,

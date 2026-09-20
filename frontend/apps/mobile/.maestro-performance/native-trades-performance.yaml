@@ -1,0 +1,197 @@
+appId: ${APP_ID}
+name: Native Trades performance contract
+tags:
+  - android
+  - performance
+  - native-trades
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/trade-preferences?coverage=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Trade Preferences
+    timeout: 60000
+
+# Both canonical preference modes use the same immediate projection path.
+- tapOn: '^Wanted \([0-9]+\)$'
+- assertVisible: FOR TRADE POKÉMON
+- tapOn: '^For Trade \([0-9]+\)$'
+- assertVisible: WANTED POKÉMON
+
+# Full-screen listing picker and a changed listing projection.
+- tapOn:
+    id: preference-entry-trade-bulbasaur
+- extendedWaitUntil:
+    visible: SELECT A LISTING
+    timeout: 10000
+- tapOn:
+    id: preference-entry-trade-charizard
+- assertVisible: Shiny Gigantamax Charizard
+
+# Edit, advanced rules, candidate inclusion, and deferred local query.
+- tapOn: Edit preferences
+- assertVisible: Allowed only
+- tapOn: No additional rules
+- assertVisible: Must match
+- scrollUntilVisible:
+    element:
+      id: trade-preference-rule-shinyIconFilter
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 20000
+- tapOn:
+    id: trade-preference-rule-shinyIconFilter
+- scrollUntilVisible:
+    element:
+      id: preference-candidate-wanted-mewtwo
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: preference-candidate-wanted-mewtwo
+- scrollUntilVisible:
+    element:
+      text: Search Pokémon
+    direction: UP
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn: Search Pokémon
+- inputText: Mew
+- hideKeyboard
+- assertVisible: Shiny Mewtwo
+- scrollUntilVisible:
+    element:
+      id: trade-preferences-save
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-preferences-save
+- extendedWaitUntil:
+    visible: Preferences saved.
+    timeout: 15000
+
+# Dirty-draft guard plus the coordinated page slide.
+- scrollUntilVisible:
+    element:
+      text: Edit preferences
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn: Edit preferences
+- scrollUntilVisible:
+    element:
+      text: Clear all
+    direction: UP
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn: Clear all
+- scrollUntilVisible:
+    element:
+      text: '^Wanted \([0-9]+\)$'
+    direction: UP
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn: '^Wanted \([0-9]+\)$'
+- assertVisible: Discard your changes\?
+- tapOn: Keep editing
+- scrollUntilVisible:
+    element:
+      text: Trade Activity
+    direction: UP
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn: Trade Activity
+- extendedWaitUntil:
+    visible: Your trades
+    timeout: 15000
+
+# Activity details, status projection, external coordination, and command result.
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/trade-activity
+- extendedWaitUntil:
+    visible: Your trades
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: trade-pokemon-details-mine-incoming
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-pokemon-details-mine-incoming
+- assertVisible: Fire Spin
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Pending
+    direction: UP
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Pending
+- extendedWaitUntil:
+    visible: Ready to confirm
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-action-coordinate-active
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-coordinate-active
+- extendedWaitUntil:
+    visible: Coordinate the exchange
+    timeout: 10000
+- tapOn:
+    id: trade-partner-close
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Accepting
+    direction: UP
+    speed: 60
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Accepting
+- scrollUntilVisible:
+    element:
+      id: trade-action-accept-incoming
+    direction: DOWN
+    speed: 60
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-accept-incoming
+- assertVisible: Accept this offer\?
+- tapOn: Accept offer
+- extendedWaitUntil:
+    visible: Trade updated from the server response.
+    timeout: 10000

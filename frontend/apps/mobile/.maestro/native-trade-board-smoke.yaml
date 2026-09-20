@@ -1,0 +1,67 @@
+appId: ${APP_ID}
+name: Native Trade Board smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=trade-board"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "Trade Board"
+- assertVisible: "Open action menu"
+- takeScreenshot: "native-trade-board-initial"
+- scrollUntilVisible:
+    element:
+      text: "Shiny Gigantamax Charizard"
+    direction: DOWN
+    timeout: 15000
+- assertVisible: "Shiny Gigantamax Charizard"
+- scrollUntilVisible:
+    element:
+      text: "Gigantamax Blastoise"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "Gigantamax Blastoise"
+- scrollUntilVisible:
+    element:
+      text: "Nexus Light"
+    direction: UP
+    centerElement: true
+    timeout: 10000
+- tapOn: "Nexus Light"
+- scrollUntilVisible:
+    element:
+      text: "Include Looking For Pokémon"
+    direction: UP
+    centerElement: true
+    timeout: 10000
+- tapOn: "Include Looking For Pokémon"
+- assertNotVisible: "Gigantamax Blastoise"
+- scrollUntilVisible:
+    element:
+      text: "Copy live link"
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- assertVisible: "Copy live link"
+- assertVisible: "Share board image"
+- tapOn: "Copy live link"
+- assertVisible: "Live Trade Board link copied."
+- tapOn: "Dismiss Trade Board message"
+- takeScreenshot: "native-trade-board"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=public-trade-board"
+- assertVisible: "LIVE COMMUNITY LISTING"
+- assertVisible: "@VisualTrainer’s Trade Board"
+- assertVisible: "Community Trade Board"
+- assertNotVisible: "Open action menu"
+- assertNotVisible: "Share your Trade Board"
+- assertNotVisible: "Include For Trade Pokémon"
+- takeScreenshot: "native-public-trade-board"

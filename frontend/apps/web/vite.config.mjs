@@ -210,6 +210,14 @@ export default defineConfig(({ mode }) => {
                 changeOrigin: true,
                 secure: false,
                 rewrite: (path) => path.replace(/^\/api\/search/, '/api'),
+                configure(proxy) {
+                  proxy.on('proxyReq', (proxyReq) => {
+                    // Native React Native Web parity checks run on a sibling localhost port.
+                    // Do not forward that browser Origin to services that correctly only trust
+                    // the canonical frontend origin.
+                    proxyReq.removeHeader('origin');
+                  });
+                },
               },
             }
           : {}),
@@ -219,6 +227,11 @@ export default defineConfig(({ mode }) => {
           secure: devProxySecure,
           ...(devProxyHost ? { headers: { host: devProxyHost } } : {}),
           configure(proxy) {
+            proxy.on('proxyReq', (proxyReq) => {
+              // Allow the local native-web renderer to reuse the canonical Vite API proxy.
+              // This is development-only and never changes production service CORS policy.
+              proxyReq.removeHeader('origin');
+            });
             proxy.on('proxyRes', (proxyRes) => {
               const cookies = proxyRes.headers['set-cookie'];
               if (!Array.isArray(cookies)) {

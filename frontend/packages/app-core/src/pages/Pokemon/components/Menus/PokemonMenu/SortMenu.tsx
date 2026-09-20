@@ -1,5 +1,6 @@
 // src/pages/Pokemon/components/Menus/PokemonMenu/SortMenu.tsx
 import React, { useState, useEffect, CSSProperties } from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import OverlayPortal from '@/components/OverlayPortal';
 import WindowOverlay from '@/components/WindowOverlay';
 import CloseButton from '@/components/CloseButton';
@@ -82,7 +83,10 @@ const SortMenu: React.FC<SortMenuProps> = ({
 
   useEffect(() => {
     if (!isAnimating && isMenuVisible) {
-      const timer = setTimeout(() => setIsMenuVisible(false), 250);
+      const timer = setTimeout(
+        () => setIsMenuVisible(false),
+        collectionExperienceParityContract.sortMenuMotion.overlayTransitionMs,
+      );
       return () => clearTimeout(timer);
     }
   }, [isAnimating, isMenuVisible]);

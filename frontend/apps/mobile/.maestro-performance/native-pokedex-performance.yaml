@@ -1,0 +1,136 @@
+appId: ${APP_ID}
+name: Native Pokédex performance contract
+tags:
+  - android
+  - performance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/tools?tool=pokedex
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Pokédex
+    timeout: 60000
+
+# Root category, quality, all-region index, search, folder, and registration classes.
+- tapOn: Advanced
+- assertVisible: XS
+- tapOn: Shiny
+- tapOn: Lucky
+- tapOn: Kanto
+- extendedWaitUntil:
+    visible: Kanto region section
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: Search Pokédex
+    direction: UP
+    timeout: 30000
+- tapOn: Search Pokédex
+- inputText: bulba
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 15000
+- takeScreenshot: pokedex-region-index
+- tapOn: Collapse Kanto Shiny
+- assertNotVisible: Shiny Bulbasaur
+- tapOn: Expand Kanto Shiny
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 15000
+- tapOn: Register all
+- assertVisible: Register every visible entry?
+- tapOn: Cancel
+- tapOn: Register Shiny Bulbasaur
+- extendedWaitUntil:
+    visible: Clear Shiny Bulbasaur
+    timeout: 15000
+- tapOn: Open Shiny Bulbasaur
+- extendedWaitUntil:
+    visible: Pokédex entry
+    timeout: 30000
+
+# Detail hero/slot, gender, registration, tabs, combination folder/index, and dialog classes.
+- tapOn: View Shiny
+- tapOn: Show Female Bulbasaur
+- takeScreenshot: pokedex-detail-registered
+- tapOn: Register Shiny
+- extendedWaitUntil:
+    visible: Clear Shiny
+    timeout: 15000
+- tapOn: Register all
+- assertVisible: Register all entries?
+- tapOn: Cancel
+- tapOn: Info
+- scrollUntilVisible:
+    element:
+      text: Size ranges
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: pokedex-detail-info
+- scrollUntilVisible:
+    element:
+      text: Battle
+    direction: UP
+    timeout: 30000
+- tapOn: Battle
+- scrollUntilVisible:
+    element:
+      text: Type effectiveness
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: pokedex-detail-battle
+- scrollUntilVisible:
+    element:
+      text: More
+    direction: UP
+    timeout: 30000
+- tapOn: More
+- scrollUntilVisible:
+    element:
+      text: SEARCH COMBINATIONS
+    direction: DOWN
+    timeout: 30000
+- tapOn: Open combination group Shiny Bulbasaur
+- assertNotVisible: SEARCH COMBINATIONS
+- tapOn: Open combination group Shiny Bulbasaur
+- scrollUntilVisible:
+    element:
+      text: SEARCH COMBINATIONS
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: Combination filters
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- tapOn: Filter Female
+- extendedWaitUntil:
+    visible: Showing 20 of 60
+    timeout: 15000
+- tapOn: Search combinations
+- inputText: lucky
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Showing 10 of 60
+    timeout: 15000
+- tapOn: Clear
+- extendedWaitUntil:
+    visible: Showing 60 of 60
+    timeout: 15000
+- takeScreenshot: pokedex-detail-more
+- tapOn: Register all
+- assertVisible: Register all entries?
+- tapOn: Cancel

@@ -1,0 +1,110 @@
+appId: ${APP_ID}
+name: Native trainer settings parity smoke
+tags:
+  - android
+  - native-settings
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/settings
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: WHO CAN SEE YOU
+    timeout: 45000
+- assertVisible: Privacy
+- takeScreenshot: native-trainer-settings-privacy
+- tapOn: "Profile visibility, Everyone"
+- assertVisible: Profile visibility
+- tapOn: Friends only
+- assertVisible: "Profile visibility, Friends only"
+- scrollUntilVisible:
+    element:
+      text: Show profile location
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Show profile location
+- tapOn: Save privacy
+- assertVisible: Privacy settings saved.
+- tapOn: Dismiss message
+- scrollUntilVisible:
+    element:
+      text: Trade coordination
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Do not share coordination details
+- tapOn:
+    text: "Preferred coordination method, Do not share coordination details"
+    point: "20%,25%"
+    retryTapIfNoChange: true
+- assertVisible: Preferred coordination method
+- tapOn: Discord
+- assertVisible: "Preferred coordination method, Discord"
+- tapOn:
+    text: "Preferred coordination method, Discord"
+    point: "20%,25%"
+    retryTapIfNoChange: true
+- assertVisible: Preferred coordination method
+- tapOn: Campfire
+- assertVisible: "Preferred coordination method, Campfire"
+- scrollUntilVisible:
+    element:
+      text: Coordination handle
+    direction: DOWN
+    timeout: 10000
+- tapOn: Coordination handle
+- eraseText: 40
+- inputText: MistyCampfire
+- hideKeyboard
+- swipe:
+    start: "20%,78%"
+    end: "20%,42%"
+    duration: 500
+- assertVisible: Save coordination
+- tapOn: Save coordination
+- assertVisible: Trade coordination settings saved.
+- tapOn: Dismiss message
+- swipe:
+    start: "20%,78%"
+    end: "20%,42%"
+    duration: 500
+- assertVisible: Color theme
+- runFlow:
+    when:
+      visible: "Use light theme"
+    commands:
+      - tapOn: "Use light theme"
+      - assertVisible: "Use dark theme"
+      - tapOn: "Use dark theme"
+      - assertVisible: "Use light theme"
+- runFlow:
+    when:
+      visible: "Use dark theme"
+    commands:
+      - tapOn: "Use dark theme"
+      - assertVisible: "Use light theme"
+      - tapOn: "Use light theme"
+      - assertVisible: "Use dark theme"
+- assertVisible: Reduce motion
+- tapOn: Reduce motion
+- swipe:
+    start: "20%,78%"
+    end: "20%,42%"
+    duration: 500
+- assertVisible: Up to date
+- assertVisible: Pokémon synchronization
+- assertVisible: Up to date
+- tapOn: Retry now
+- takeScreenshot: native-trainer-settings

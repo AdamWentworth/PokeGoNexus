@@ -1,0 +1,38 @@
+appId: ${APP_ID}
+name: Native sort menu system-window smoke
+tags:
+  - android
+  - native-collection
+  - system-window
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?interaction=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 45000
+- tapOn: Sort by NUMBER ascending
+- extendedWaitUntil:
+    visible: COMBAT POWER
+    timeout: 10000
+- assertVisible: RECENT
+- assertVisible: FAVORITE
+- assertVisible: HP
+- takeScreenshot: sort-menu-system-window
+- tapOn: Close sort menu
+- assertNotVisible: COMBAT POWER

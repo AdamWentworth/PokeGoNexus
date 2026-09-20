@@ -68,10 +68,11 @@ function currentScrollPosition(): RouteScrollPosition {
   };
 }
 
-function historyEntryKey(state: unknown): string | null {
-  if (!state || typeof state !== 'object') return null;
+function historyEntryKey(state: unknown): string {
+  if (!state || typeof state !== 'object') return 'default';
   const key = (state as { key?: unknown }).key;
-  return typeof key === 'string' ? key : null;
+  // React Router calls the initial entry "default" without storing its key.
+  return typeof key === 'string' ? key : 'default';
 }
 
 function persistPosition(
@@ -83,7 +84,7 @@ function persistPosition(
 
   // A navigation can update window.history before React publishes the next
   // location. Never write the previous page's coordinates into the new entry.
-  if (stateKey && stateKey !== expectedLocationKey) return;
+  if (stateKey !== expectedLocationKey) return;
 
   window.history.replaceState(
     withRouteScrollPosition(state, position),
@@ -197,6 +198,7 @@ const RouteScrollRestoration = () => {
     const savePosition = () => {
       const position = currentScrollPosition();
       const locationKey = currentLocationKeyRef.current;
+      if (historyEntryKey(window.history.state) !== locationKey) return;
       knownPositionsRef.current.set(locationKey, position);
       pendingKey = locationKey;
       pendingPosition = position;
@@ -216,8 +218,17 @@ const RouteScrollRestoration = () => {
       }
       const position = currentScrollPosition();
       const locationKey = currentLocationKeyRef.current;
+      if (historyEntryKey(window.history.state) !== locationKey) return;
       knownPositionsRef.current.set(locationKey, position);
       persistPosition(locationKey, position);
+    };
+
+    const handleLinkClick = (event: MouseEvent) => {
+      // Scroll events can arrive after a link has already replaced the page.
+      // Accessibility and programmatic clicks need not emit pointerdown first.
+      if (event.target instanceof Element && event.target.closest('a[href]')) {
+        flushPosition();
+      }
     };
 
     const handleVisibilityChange = () => {
@@ -235,6 +246,7 @@ const RouteScrollRestoration = () => {
       passive: true,
     });
     window.addEventListener('keydown', flushPosition, { capture: true });
+    window.addEventListener('click', handleLinkClick, { capture: true });
     window.addEventListener('pagehide', flushPosition);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -247,6 +259,7 @@ const RouteScrollRestoration = () => {
         capture: true,
       });
       window.removeEventListener('keydown', flushPosition, { capture: true });
+      window.removeEventListener('click', handleLinkClick, { capture: true });
       window.removeEventListener('pagehide', flushPosition);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.history.scrollRestoration = previousRestoration;

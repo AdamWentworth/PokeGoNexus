@@ -1,8 +1,13 @@
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { Move } from '@/types/pokemonSubTypes';
+import {
+  getPokemonMovePower,
+  getPokemonShadowMoveBonus,
+  type PokemonMoveDamageMode,
+} from '@pokemongonexus/shared-domain/moves';
 
 export type FusionMoveSource = 'base' | 'fusion' | 'fusion_missing';
-export type DamageMode = 'raid' | 'pvp';
+export type DamageMode = PokemonMoveDamageMode;
 export type MoveSlot = 'fast' | 'charged1' | 'charged2';
 
 export type MovesSelection = {
@@ -177,13 +182,9 @@ export const getMoveById = (
       null
     : null;
 
-export const getPowerValue = (move: Move, mode: DamageMode): number | null => {
-  const power = mode === 'raid' ? move.raid_power : move.pvp_power;
-  return typeof power === 'number' && Number.isFinite(power) ? power : null;
-};
+export const getPowerValue = getPokemonMovePower;
 
-export const getShadowBonusValue = (power: number): number =>
-  Math.max(1, Math.round(power * 0.2));
+export const getShadowBonusValue = getPokemonShadowMoveBonus;
 
 export const reconcileShadowPurifiedMoves = ({
   selection,

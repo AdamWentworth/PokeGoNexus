@@ -1,5 +1,5 @@
 // src/features/variants/utils/createPokemonVariants.ts
-import { determineVariantId } from '../../../utils/PokemonIDUtils';
+import { determineVariantId } from '../../../utils/determineVariantId';
 import { matchFormsAndVariantType } from '../../../utils/formMatcher';
 import { getDisplayName } from '../../../utils/displayName';
 

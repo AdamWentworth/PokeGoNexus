@@ -8,20 +8,29 @@ test.describe('public information pages', () => {
     const diagnostics = attachBrowserDiagnostics(page, testInfo);
     await installE2eRoutes(page);
 
+    const openSettledRoute = async (path: string) => {
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      // These assertions intentionally visit several full documents in one
+      // test. Let the shared catalog bootstrap settle before replacing the
+      // document so Firefox/WebKit do not report the expected unload abort as
+      // an application error under a loaded cross-browser run.
+      await page.waitForLoadState('networkidle');
+    };
+
     try {
-      await page.goto('/about', { waitUntil: 'domcontentloaded' });
+      await openSettledRoute('/about');
       await expect(page.getByRole('heading', { name: 'About Pokémon Go Nexus' })).toBeVisible();
       await expect(page).toHaveTitle('About | Pokémon Go Nexus');
       await expect(page.getByRole('link', { name: /Getting Started/i })).toBeVisible();
 
-      await page.goto('/safety', { waitUntil: 'domcontentloaded' });
+      await openSettledRoute('/safety');
       await expect(
         page.getByRole('heading', { name: 'Trade Safety & Community Guidelines' }),
       ).toBeVisible();
       await expect(page).toHaveTitle(/Trade Safety & Community Guidelines/);
       await expect(page.getByText(/Pokémon Go Nexus plans the exchange/i)).toBeVisible();
 
-      await page.goto('/old-or-mistyped-route', { waitUntil: 'domcontentloaded' });
+      await openSettledRoute('/old-or-mistyped-route');
       await expect(page.getByRole('heading', { name: 'That route wandered off.' })).toBeVisible();
       await expect(page.getByText('/old-or-mistyped-route')).toBeVisible();
       await expect(page).toHaveTitle('Page Not Found | Pokémon Go Nexus');

@@ -42,7 +42,11 @@
     "test:instances": "cd ../../packages/app-core && cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --config ../../apps/web/vite.config.mjs tests/unit/features/instances tests/integration/features/instances",
     "test:tags": "cd ../../packages/app-core && cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --config ../../apps/web/vite.config.mjs tests/unit/features/tags tests/integration/features/tags",
     "test:file": "cd ../../packages/app-core && cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --config ../../apps/web/vite.config.mjs",
-    "test:browsers": "node scripts/run-playwright-clean-env.mjs test",
+    "test:browsers": "npm run test:browsers:functional && npm run test:browsers:performance",
+    "test:browsers:functional": "node scripts/run-playwright-clean-env.mjs test --grep-invert @performance --workers 2",
+    "test:browsers:performance": "node scripts/run-playwright-clean-env.mjs test --grep @performance --project chromium-desktop --workers 1",
+    "performance:parity:report": "node scripts/run-playwright-clean-env.mjs test tests/browser/performance-parity-report.spec.ts --project mobile-chrome --workers 1 --reporter=list",
+    "performance:parity:report:android": "cross-env POKEGONEXUS_PERFORMANCE_PROFILE=physical-android node scripts/run-playwright-clean-env.mjs test tests/browser/performance-parity-report.spec.ts --project mobile-chrome --workers 1 --reporter=list",
     "test:browsers:ci": "node scripts/run-playwright-clean-env.mjs test --reporter=list",
     "test:browsers:safari": "node scripts/run-playwright-clean-env.mjs test --project=webkit-desktop --project=mobile-safari --workers=2",
     "test:browsers:headed": "node scripts/run-playwright-clean-env.mjs test --headed",
@@ -61,7 +65,10 @@
     "lint": "cd ../../packages/app-core && eslint src --ext .ts,.tsx --config eslint.config.mjs",
     "lint:styles": "cd ../../packages/app-core && stylelint \"src/**/*.css\" --config ../../apps/web/.stylelintrc.json --ignore-path ../../apps/web/.stylelintignore",
     "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
-    "lint:fix": "cd ../../packages/app-core && eslint src --ext .ts,.tsx --fix --config eslint.config.mjs"
+    "lint:fix": "cd ../../packages/app-core && eslint src --ext .ts,.tsx --fix --config eslint.config.mjs",
+    "capture:demo:branch": "tsc --project tsconfig.capture.json && node scripts/run-branch-media-capture.mjs",
+    "capture:demo:account:login": "node scripts/sign-in-account-media.mjs",
+    "capture:demo:account": "node scripts/run-account-media-capture.mjs"
   },
   "browserslist": {
     "production": [

@@ -145,6 +145,34 @@ export const TRAINER_TITLE_OPTIONS = [
 export type TrainerTitle =
   (typeof TRAINER_TITLE_OPTIONS)[number]['id'];
 
+/**
+ * Canonical play-style artwork shared by the Vite and native trainer cards.
+ *
+ * Keeping the asset contract beside the title IDs prevents either frontend
+ * from silently substituting a generic badge or drifting to different art.
+ */
+export const TRAINER_TITLE_VISUALS = {
+  'raid-regular': { masks: ['/images/raid_face.png'] },
+  'shadow-raider': { masks: ['/images/shadow_search.png'] },
+  'super-mega-raider': { masks: ['/images/pokemon_details_cp_mega.png'] },
+  'max-battler': { masks: ['/images/gigantamax_title_mask.png'] },
+  'battle-league-trainer': { masks: ['/images/pvp_title_mask.png'] },
+  'rocket-hunter': { masks: ['/images/teamrocket_r_full.png'] },
+  'shiny-hunter': { masks: ['/images/shiny_search.png'] },
+  'pokedex-collector': { masks: ['/images/kanto_search.png'] },
+  'costume-collector': { masks: ['/images/costume_search.png'] },
+  'hundo-hunter': { masks: ['/images/appraisal_04.png'] },
+  'size-collector': { icon: 'ruler' },
+  'lucky-trader': { masks: ['/images/lucky-icon.png'] },
+  'egg-hatcher': { masks: ['/images/ic_egg_inv.png'] },
+  'route-explorer': { masks: ['/images/route_icon.png'] },
+  'showcase-star': { icon: 'medal' },
+  'party-player': { icon: 'users' },
+} as const satisfies Record<
+  TrainerTitle,
+  { readonly masks: readonly string[] } | { readonly icon: 'ruler' | 'medal' | 'users' }
+>;
+
 export interface TrainerPreferences {
   user_id: string;
   bio?: string | null;
@@ -323,6 +351,8 @@ export const usersContract = {
       `/autocomplete-trainers?q=${encodeURIComponent(query)}`,
     updateUser: (userId: string) =>
       `/update-user/${encodeURIComponent(userId)}`,
+    deleteUser: (userId: string) =>
+      `/${encodeURIComponent(userId)}`,
     userOverview: (userId: string) =>
       `/users/${encodeURIComponent(userId)}/overview`,
     instanceSync: '/instances/sync',

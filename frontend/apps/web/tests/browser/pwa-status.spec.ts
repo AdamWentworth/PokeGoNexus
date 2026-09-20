@@ -13,7 +13,7 @@ test.describe('PWA connectivity status', () => {
 
   test('explains offline behavior and clears after reconnecting', async ({ context, page }, testInfo) => {
     const diagnostics = attachBrowserDiagnostics(page, testInfo);
-    await installE2eRoutes(page);
+    await installE2eRoutes(page, { preserveBrowserConnectivity: true });
 
     try {
       await page.goto('/', { waitUntil: 'networkidle' });

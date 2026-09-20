@@ -10,11 +10,50 @@ const readBool = (name: string, fallback: boolean): boolean => {
   return fallback;
 };
 
+const readMobileExperience = (): 'webview' | 'native-preview' =>
+  process.env.EXPO_PUBLIC_MOBILE_EXPERIENCE?.trim() === 'native-preview'
+    ? 'native-preview'
+    : 'webview';
+
+const readDeviceSmokeColorScheme = (): 'light' | 'dark' | null => {
+  const value = process.env.EXPO_PUBLIC_DEVICE_SMOKE_COLOR_SCHEME?.trim().toLowerCase();
+  return value === 'light' || value === 'dark' ? value : null;
+};
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: config.name ?? 'mobile',
-  slug: config.slug ?? 'mobile',
+  name: config.name === 'mobile' || !config.name ? 'Pokémon Go Nexus' : config.name,
+  slug: config.slug === 'mobile' || !config.slug ? 'pokegonexus' : config.slug,
   version: config.version ?? '1.0.0',
+  scheme: config.scheme ?? 'pokegonexus',
+  plugins: Array.from(
+    new Set([
+      ...(config.plugins ?? []),
+      'expo-router',
+      'expo-image',
+      'expo-secure-store',
+      'expo-sharing',
+      'expo-sqlite',
+      'expo-status-bar',
+      'expo-web-browser',
+      '@maplibre/maplibre-react-native',
+      './plugins/with-device-smoke-cleartext',
+      './plugins/with-transparent-navigation-bar',
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: '#06162f',
+          image: './assets/splash-icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+        },
+      ],
+    ]),
+  ),
+  experiments: {
+    ...config.experiments,
+    typedRoutes: true,
+  },
   extra: {
     ...config.extra,
     api: {
@@ -35,6 +74,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     realtime: {
       allowAccessTokenQueryFallback: readBool('EXPO_PUBLIC_REALTIME_ALLOW_QUERY_TOKEN', false),
+    },
+    mobile: {
+      experienceMode: readMobileExperience(),
+      deviceSmokeMode: readBool('EXPO_PUBLIC_DEVICE_SMOKE_MODE', false),
+      deviceSmokeColorScheme: readDeviceSmokeColorScheme(),
+      deviceSmokeHost: readEnv('EXPO_PUBLIC_DEVICE_SMOKE_HOST', '10.0.2.2'),
     },
   },
 });

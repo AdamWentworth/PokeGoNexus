@@ -1,0 +1,81 @@
+appId: ${APP_ID}
+name: Native action menu system-window smoke
+tags:
+  - android
+  - native-action-menu
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/home
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- runFlow:
+    when:
+      visible: ".*version:.*"
+    commands:
+      - tapOn:
+          point: "90%,46%"
+      - waitForAnimationToEnd
+      - assertNotVisible: ".*version:.*"
+- extendedWaitUntil:
+    visible: TRAINER DASHBOARD
+    timeout: 45000
+- runFlow:
+    when:
+      visible: Dismiss quick navigation hint
+    commands:
+      - tapOn: Dismiss quick navigation hint
+- tapOn:
+    id: native-action-menu-anchor
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- assertVisible: Share Trade Board
+- assertVisible: Learn & support
+- assertVisible: Use (dark|light) theme
+- takeScreenshot: action-menu-system-window
+- tapOn: Learn & support
+- assertVisible: Getting Started
+- assertVisible: Trade Safety
+- takeScreenshot: action-menu-support-system-window
+- tapOn: Learn & support
+- tapOn: Use (dark|light) theme
+- assertVisible: Use (dark|light) theme
+- takeScreenshot: action-menu-toggled-system-window
+- tapOn: Learn & support
+- assertVisible: Help directory
+- takeScreenshot: action-menu-toggled-support-system-window
+- tapOn: Learn & support
+- tapOn: Close
+- assertNotVisible: Quick navigation
+- tapOn:
+    id: native-action-menu-anchor
+- assertVisible: Use (dark|light) theme
+- tapOn: Use (dark|light) theme
+- assertVisible: Use (dark|light) theme
+- tapOn: Close
+- tapOn:
+    id: native-action-menu-anchor
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- tapOn:
+    text: Pokémon
+    waitToSettleTimeoutMs: 100
+- assertVisible: Loading
+- takeScreenshot: navigation-loading
+- extendedWaitUntil:
+    notVisible: Loading
+    timeout: 12000
+- assertVisible: WISHLIST
+- assertVisible: TAGS

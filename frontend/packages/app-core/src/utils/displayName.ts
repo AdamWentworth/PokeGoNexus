@@ -47,7 +47,8 @@ export function getDisplayName(pokemon: PokemonVariant): string {
     pokemon.variantType.startsWith('shiny_shadow_costume_')
   ) {
     const isShiny = pokemon.variantType.startsWith('shiny_');
-    const costumeId = pokemon.variantType.match(/costume_(.+)$/)?.[1];
+    const prefix = isShiny ? 'shiny_shadow_costume_' : 'shadow_costume_';
+    const costumeId = pokemon.variantType.slice(prefix.length);
     const costume = pokemon.costumes?.find(c => c.costume_id.toString() === costumeId);
     if (costume) {
       const formatted = formatCostumeName(costume.name);

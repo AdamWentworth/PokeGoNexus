@@ -1,0 +1,43 @@
+appId: ${APP_ID}
+name: Native global route chrome smoke
+tags:
+  - android
+  - native-route-chrome
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/home
+- waitForAnimationToEnd
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/friends
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/profile
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/search
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/settings
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/account
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/tools?tool=pvp
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/trade-preferences
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=help
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=trade-board
+- assertVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=privacy
+- assertNotVisible: Open action menu
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=public-trade-board
+- assertNotVisible: Open action menu

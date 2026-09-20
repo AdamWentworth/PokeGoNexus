@@ -1,9 +1,10 @@
 import type { InstanceStatus } from '@/types/instances';
 import type { PokemonVariant } from '@/types/pokemonVariants';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 export type ActiveView = 'inventory' | 'pokemon' | 'wishlist';
 
-const ACTIVE_VIEW_SEQUENCE: ActiveView[] = ['inventory', 'pokemon', 'wishlist'];
+const ACTIVE_VIEW_SEQUENCE: readonly ActiveView[] = collectionExperienceParityContract.viewOrder;
 const HAVE_TAG_FILTERS = new Set(['Favorites', 'Trade', 'Caught']);
 const WISHLIST_TAG_FILTERS = new Set(['Most Wanted', 'Wanted']);
 

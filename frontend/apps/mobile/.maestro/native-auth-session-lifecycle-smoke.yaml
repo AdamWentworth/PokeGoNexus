@@ -1,0 +1,62 @@
+appId: ${APP_ID}
+name: Native secure session process lifecycle
+tags:
+  - android
+  - native-auth
+  - session-lifecycle
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/auth-session?reset=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Username or Email
+    timeout: 45000
+- tapOn: Username or Email
+- inputText: LifecycleTrainer
+- tapOn: Password
+- inputText: Strong_password_42
+- hideKeyboard
+- tapOn: Login
+- extendedWaitUntil:
+    visible: Signed in as @LifecycleTrainer
+    timeout: 15000
+- assertVisible: Secure session saved.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: Build your collection.
+    timeout: 45000
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/auth-session
+- extendedWaitUntil:
+    visible: Signed in as @LifecycleTrainer
+    timeout: 45000
+- assertVisible: Secure session restored and refresh token rotated.
+- tapOn: Sign out
+- extendedWaitUntil:
+    visible: Username or Email
+    timeout: 15000
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: Build your collection.
+    timeout: 45000
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/auth-session
+- extendedWaitUntil:
+    visible: Username or Email
+    timeout: 45000
+- assertNotVisible: Signed in as @LifecycleTrainer
+- takeScreenshot: native-auth-session-signed-out-after-relaunch

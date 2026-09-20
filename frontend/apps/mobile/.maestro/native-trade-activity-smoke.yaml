@@ -1,0 +1,235 @@
+appId: ${APP_ID}
+name: Native authoritative trade-activity smoke
+tags:
+  - android
+  - native-trades
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/trade-activity
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Your trades
+    timeout: 45000
+- assertVisible: Offers
+- assertVisible: Sent
+- assertVisible: Active
+- assertVisible: Done
+- assertVisible: Closed
+- assertVisible: Needs your response
+- assertVisible: FOR TRADE
+- assertVisible: OFFERED
+- assertVisible: AdamZilla
+- assertVisible: OtherTrainer
+- assertVisible: Gigantamax Charizard
+- assertVisible: Shiny Mewtwo
+- tapOn:
+    id: trade-pokemon-details-mine-incoming
+- assertVisible: Hide Details
+- assertVisible: Fire Spin
+- assertVisible: Blast Burn
+- assertVisible: STAMINA
+- scrollUntilVisible:
+    element:
+      text: ".*Vancouver, BC.*"
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    timeout: 30000
+- assertVisible: ".*Vancouver, BC.*"
+- takeScreenshot: 01-incoming-remote-offer
+- tapOn:
+    id: trade-filter-Proposed
+- assertVisible: Waiting for trainer
+- assertVisible: Shiny Dialga
+- assertVisible: Shiny Remoraid
+- takeScreenshot: 02-sent-lucky-trade
+- scrollUntilVisible:
+    element:
+      id: trade-action-cancel-sent
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-cancel-sent
+- assertVisible: Cancel this trade?
+- tapOn: Cancel trade
+- extendedWaitUntil:
+    visible: Trade updated from the server response.
+    timeout: 10000
+- assertVisible: No trades here
+- takeScreenshot: 03-server-confirmed-cancel
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Pending
+    direction: UP
+    speed: 70
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Pending
+- assertVisible: Ready to confirm
+- scrollUntilVisible:
+    element:
+      id: trade-action-coordinate-active
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-coordinate-active
+- extendedWaitUntil:
+    visible: Coordinate the exchange
+    timeout: 10000
+- assertVisible: Add trainer
+- assertVisible: Message externally
+- assertVisible: Trade in Pokémon GO
+- assertVisible: OtherPogoName
+- assertVisible: 1234 5678 9012
+- assertVisible: Open Campfire
+- takeScreenshot: 04-external-coordination
+- tapOn:
+    id: trade-copy-trainer-code
+- assertVisible: Copied
+- tapOn:
+    id: trade-partner-close
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Accepting
+    direction: UP
+    speed: 70
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Accepting
+- extendedWaitUntil:
+    visible: Shiny Mewtwo
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-action-accept-incoming
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-accept-incoming
+- assertVisible: Accept this offer?
+- tapOn: Accept offer
+- extendedWaitUntil:
+    visible: Trade updated from the server response.
+    timeout: 10000
+- assertNotVisible: Shiny Mewtwo
+- scrollUntilVisible:
+    element:
+      id: trade-action-deny-incoming-deny
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-deny-incoming-deny
+- assertVisible: Deny this offer?
+- tapOn: Deny offer
+- extendedWaitUntil:
+    visible: No trades here
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Pending
+    direction: UP
+    speed: 70
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Pending
+- extendedWaitUntil:
+    visible: Shiny Mewtwo
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-action-complete-active-completable
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-complete-active-completable
+- assertVisible: Confirm the exchange happened?
+- tapOn: Confirm complete
+- extendedWaitUntil:
+    notVisible: Shiny Rayquaza
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Completed
+    direction: UP
+    speed: 70
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Completed
+- extendedWaitUntil:
+    visible: Shiny Ho-Oh
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-action-satisfy-completed
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-satisfy-completed
+- extendedWaitUntil:
+    visible: Feedback saved
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-filter-Cancelled
+    direction: UP
+    speed: 70
+    visibilityPercentage: 100
+    timeout: 30000
+- tapOn:
+    id: trade-filter-Cancelled
+- extendedWaitUntil:
+    visible: Shiny Dialga
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: trade-action-repropose-sent
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: trade-action-repropose-sent
+- assertVisible: Re-propose this trade?
+- tapOn: Re-propose
+- extendedWaitUntil:
+    notVisible: Shiny Dialga
+    timeout: 10000
+- assertVisible: Shiny Lucario
+- assertNotVisible:
+    id: trade-action-delete-closed-delete
+- takeScreenshot: 05-complete-authoritative-lifecycle

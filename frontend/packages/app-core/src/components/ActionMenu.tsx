@@ -22,9 +22,11 @@ import { useAppLoading } from '../contexts/AppLoadingContext';
 import { fetchFriendsOverview } from '../services/socialService';
 import ThemeSwitch from './ThemeSwitch';
 import { ACTION_MENU_DID_OPEN, ACTION_MENU_OPEN_REQUEST } from './actionMenuEvents';
+import { actionMenuExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import './ActionMenu.css';
 
-const MENU_TRANSITION_MS = 300;
+const MENU_OPEN_TRANSITION_MS = actionMenuExperienceParityContract.motion.openMs;
+const MENU_CLOSE_TRANSITION_MS = actionMenuExperienceParityContract.motion.closeMs;
 const MENU_OPEN_DELAY_MS = 75;
 const ACTION_MENU_NAVIGATION_SOURCE = 'action-menu-navigation';
 const FOCUSABLE_MENU_CONTROL = [
@@ -36,13 +38,19 @@ const FOCUSABLE_MENU_CONTROL = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-const SUPPORT_DESTINATIONS = [
-  { icon: FaCompass, label: 'Getting Started', path: '/getting-started' },
-  { icon: FaQuestionCircle, label: 'FAQ', path: '/faq' },
-  { icon: FaInfoCircle, label: 'About', path: '/about' },
-  { icon: FaShieldAlt, label: 'Trade Safety', path: '/safety' },
-  { icon: FaBookOpen, label: 'Help directory', path: '/help' },
+const SUPPORT_DESTINATION_ICONS = [
+  FaCompass,
+  FaQuestionCircle,
+  FaInfoCircle,
+  FaShieldAlt,
+  FaBookOpen,
 ] as const;
+const SUPPORT_DESTINATIONS = actionMenuExperienceParityContract.supportDestinations.map(
+  (destination, index) => ({
+    ...destination,
+    icon: SUPPORT_DESTINATION_ICONS[index] ?? FaBookOpen,
+  }),
+);
 
 const ActionMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -206,7 +214,7 @@ const ActionMenu: React.FC = () => {
       closeEnableTimeoutRef.current = window.setTimeout(() => {
         closeEnableTimeoutRef.current = null;
         setIsCloseEnabled(true);
-      }, MENU_TRANSITION_MS);
+      }, MENU_OPEN_TRANSITION_MS);
     }, MENU_OPEN_DELAY_MS);
   }, [
     cancelPendingCloseAnimation,
@@ -225,7 +233,7 @@ const ActionMenu: React.FC = () => {
     closingAnimationTimeoutRef.current = window.setTimeout(() => {
       closingAnimationTimeoutRef.current = null;
       setIsVisible(false);
-    }, MENU_TRANSITION_MS);
+    }, MENU_CLOSE_TRANSITION_MS);
   }, [
     cancelPendingCloseAnimation,
     cancelPendingCloseEnable,

@@ -12,6 +12,7 @@ import type {
 import type { Instances } from '@/types/instances';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import { getStoredUsername } from '@/utils/storage';
+import { tradeMatchesActivityFilter } from '@pokemongonexus/shared-domain/trade-activity';
 
 import './TradeList.css';
 
@@ -43,7 +44,7 @@ function TradeList({
 }: TradeListProps) {
   const resolvedInstances = (instances ?? {}) as Instances;
 
-  const currentUsername = useMemo(() => getStoredUsername(), []);
+  const currentUsername = useMemo(() => getStoredUsername() ?? '', []);
 
   const sortedTrades = useMemo<EnrichedTrade[]>(
     () =>
@@ -57,33 +58,11 @@ function TradeList({
   );
 
   const filteredTrades = useMemo(() => {
-    const normalizedSelectedStatus = selectedStatus.toLowerCase();
-
-    if (normalizedSelectedStatus === 'proposed') {
-      return sortedTrades.filter(
-        (trade) =>
-          normalizeStatus(trade.trade_status) === 'proposed' &&
-          trade.username_proposed === currentUsername,
-      );
-    }
-
-    if (normalizedSelectedStatus === 'accepting') {
-      return sortedTrades.filter(
-        (trade) =>
-          normalizeStatus(trade.trade_status) === 'proposed' &&
-          trade.username_accepting === currentUsername,
-      );
-    }
-
-    if (normalizedSelectedStatus === 'cancelled') {
-      return sortedTrades.filter((trade) =>
-        ['cancelled', 'denied'].includes(normalizeStatus(trade.trade_status)),
-      );
-    }
-
-    return sortedTrades.filter(
-      (trade) => normalizeStatus(trade.trade_status) === normalizedSelectedStatus,
-    );
+    return sortedTrades.filter((trade) => tradeMatchesActivityFilter(
+      trade,
+      selectedStatus,
+      currentUsername,
+    ));
   }, [currentUsername, selectedStatus, sortedTrades]);
 
   return (

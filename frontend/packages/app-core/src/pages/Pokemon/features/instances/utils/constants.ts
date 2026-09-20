@@ -1,3 +1,8 @@
+import {
+  TRADE_PREFERENCE_ENCOUNTER_RULE_KEYS,
+  TRADE_PREFERENCE_QUALITY_RULE_KEYS,
+} from '@pokemongonexus/shared-domain/trade-preferences';
+
 export const EXCLUDE_IMAGES_wanted = [
   '/images/community_day.png',
   '/images/field_research.png',
@@ -33,30 +38,11 @@ export const INCLUDE_IMAGES_trade = [
 ] as const;
 
 export const FILTER_NAMES = [
-  'communityDayFilter',
-  'researchDayFilter',
-  'raidDayFilter',
-  'legendaryMythicalUltraBeastRaidFilter',
-  'megaRaidFilter',
-  'permaboostedFilter',
-  'shinyIconFilter',
-  'costumeIconFilter',
-  'legendaryIconFilter',
-  'regionalIconFilter',
-  'locationIconFilter',
+  ...TRADE_PREFERENCE_ENCOUNTER_RULE_KEYS,
+  ...TRADE_PREFERENCE_QUALITY_RULE_KEYS,
 ] as const;
 
 export const FILTER_NAMES_TRADE = [
-  'shinyIconFilter',
-  'costumeIconFilter',
-  'legendaryIconFilter',
-  'regionalIconFilter',
-  'locationIconFilter',
-  'communityDayFilter',
-  'researchDayFilter',
-  'raidDayFilter',
-  'legendaryMythicalUltraBeastRaidFilter',
-  'megaRaidFilter',
-  'permaboostedFilter',
+  ...TRADE_PREFERENCE_QUALITY_RULE_KEYS,
+  ...TRADE_PREFERENCE_ENCOUNTER_RULE_KEYS,
 ] as const;
-

@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["tests/browser/branch-media-capture.spec.ts", "tests/browser/demo-capture.spec.ts"]
+}

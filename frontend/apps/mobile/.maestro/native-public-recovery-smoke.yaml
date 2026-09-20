@@ -1,0 +1,35 @@
+appId: ${APP_ID}
+name: Native password recovery smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=reset"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "Reset your password"
+- tapOn: "Recovery username or email"
+- inputText: "visual@example.invalid"
+- hideKeyboard
+- tapOn: "Email reset link"
+- assertVisible: "If that account exists, reset instructions are on the way."
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=reset-confirm"
+- assertVisible: "Choose a new password"
+- tapOn: "New password"
+- inputText: "Strong_password_42!"
+- tapOn: "Confirm new password"
+- inputText: "Strong_password_42!"
+- hideKeyboard
+- tapOn: "Update password"
+- assertVisible: "Password updated"
+- assertVisible: "Your other sessions have been signed out. Taking you back to login…"
+- assertVisible: "Continue to login"
+- takeScreenshot: "native-password-recovery"

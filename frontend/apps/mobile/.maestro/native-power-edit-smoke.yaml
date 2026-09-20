@@ -1,0 +1,60 @@
+appId: ${APP_ID}
+name: Native caught transformation and Max Move smoke
+tags:
+  - android
+  - native-instance
+  - power-editing
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-shadow-venusaur
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Shiny Shadow Venusaur
+    timeout: 45000
+- tapOn: Edit Pokémon
+- scrollUntilVisible:
+    element:
+      text: FORM & POWER
+    direction: DOWN
+- assertVisible: Shadow state
+- tapOn: "Shadow state: Purified"
+- assertVisible: Purified
+- tapOn: "Shadow state: Shadow"
+- takeScreenshot: power-01-shadow-state
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-metagross
+- extendedWaitUntil:
+    visible: Shiny Metagross
+    timeout: 45000
+- tapOn: Edit Pokémon
+- swipe:
+    start: 50%, 82%
+    end: 50%, 52%
+    duration: 450
+- assertVisible: Max Attack
+- assertVisible: Max Guard
+- assertVisible: Max Spirit
+- tapOn: "Max Attack: 3"
+- tapOn: "Max Guard: 2"
+- tapOn: "Max Spirit: 1"
+- takeScreenshot: power-02-max-moves
+- swipe:
+    start: 50%, 52%
+    end: 50%, 82%
+    duration: 450
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor

@@ -1,6 +1,7 @@
 import type { IconType } from 'react-icons';
 import {
   FaArrowRight,
+  FaAndroid,
   FaBookOpen,
   FaCompass,
   FaFileContract,
@@ -37,6 +38,12 @@ const HELP_SECTIONS: HelpSection[] = [
     title: 'Start using Pokémon Go Nexus',
     description: 'Learn the collection-to-trade workflow in the same order you will use it.',
     links: [
+      {
+        description: 'Try the native Android beta, install updates, and share feedback. iPhone testing opens later.',
+        icon: FaAndroid,
+        label: 'Android beta',
+        to: '/download',
+      },
       {
         description: 'Quick answers about accounts, collections, tags, trades, Search, privacy, and sharing.',
         icon: FaQuestionCircle,

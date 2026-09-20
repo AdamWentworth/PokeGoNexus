@@ -1,5 +1,7 @@
 // utils/calculateCP.ts
 
+import { calculatePokemonCombatPower } from '@pokemongonexus/shared-domain/combat-power';
+
 export const calculateCP = (
   baseAttack: number,
   baseDefense: number,
@@ -9,13 +11,10 @@ export const calculateCP = (
   ivStamina: number,
   cpMultiplier: number
 ): number => {
-  const attack = baseAttack + ivAttack;
-  const defense = baseDefense + ivDefense;
-  const stamina = baseStamina + ivStamina;
-
-  const cp = Math.floor(
-    (attack * Math.sqrt(defense) * Math.sqrt(stamina) * Math.pow(cpMultiplier, 2)) / 10
-  );
-
-  return cp;
+  return calculatePokemonCombatPower(
+    { attack: baseAttack, defense: baseDefense, stamina: baseStamina },
+    { attack: ivAttack, defense: ivDefense, stamina: ivStamina },
+    cpMultiplier,
+    'multiplier',
+  ) ?? 10;
 };

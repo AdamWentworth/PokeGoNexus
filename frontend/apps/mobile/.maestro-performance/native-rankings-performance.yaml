@@ -1,0 +1,81 @@
+appId: ${APP_ID}
+name: Native community rankings performance contract
+tags:
+  - android
+  - performance
+  - native-rankings
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/tools?tool=rankings
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Community Rankings
+    timeout: 60000
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 30000
+
+# Ranking projection controls use the production-size catalog fixture.
+- tapOn:
+    text: Rarest owned
+    waitToSettleTimeoutMs: 750
+- assertVisible: RAREST OWNED
+- tapOn:
+    text: Shiny
+    waitToSettleTimeoutMs: 750
+- assertVisible: ".*results.*Shiny.*"
+- tapOn:
+    text: For trade
+    waitToSettleTimeoutMs: 750
+- assertVisible: ".*results.*For trade.*"
+- tapOn:
+    text: Clear
+    waitToSettleTimeoutMs: 750
+- assertVisible: ".*results.*All Pokémon.*All.*"
+- tapOn:
+    text: Search rankings
+    waitToSettleTimeoutMs: 750
+- inputText: bulba
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Dynamax Bulbasaur
+    timeout: 10000
+- tapOn:
+    text: Clear ranking search
+    waitToSettleTimeoutMs: 750
+- tapOn:
+    text: Most wanted
+    waitToSettleTimeoutMs: 750
+- assertVisible: MOST WANTED
+
+# Pagination, scrolled quick controls, and methodology all carry paint marks.
+- scrollUntilVisible:
+    element:
+      text: Show .* more rankings
+    direction: DOWN
+    timeout: 45000
+- assertVisible: Quick ranking controls
+- tapOn:
+    text: Show .* more rankings
+    waitToSettleTimeoutMs: 750
+- scrollUntilVisible:
+    element:
+      text: How these rankings work
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    text: How these rankings work
+    waitToSettleTimeoutMs: 750
+- assertVisible: ".*Duplicate wanted copies do not add votes.*"
+- takeScreenshot: community-rankings

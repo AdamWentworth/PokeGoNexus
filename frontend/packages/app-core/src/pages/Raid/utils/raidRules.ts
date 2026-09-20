@@ -1,199 +1,56 @@
-import type {
-  FriendshipKey,
-  MegaAllyBonusKey,
-  PartyPowerKey,
-  RaidNeutralBenchmark,
-  RaidOverallTargetProfile,
-  RaidTierKey,
-  RaidTierPreset,
-} from "./raidTypes";
+import type { RaidNeutralBenchmark, RaidOverallTargetProfile } from "./raidTypes";
+import {
+  TYPE_DPS_INCOMING_CHARGED_DAMAGE_NUMERATOR,
+  TYPE_DPS_INCOMING_DAMAGE_NUMERATOR,
+  TYPE_DPS_TARGET_DEFENSE,
+} from "@pokemongonexus/shared-domain/raid-rules";
 
-export const RAID_TIER_PRESETS: Record<RaidTierKey, RaidTierPreset> = {
-  tier1: {
-    key: "tier1",
-    label: "One-star Raid",
-    shortLabel: "1-star",
-    bossHp: 600,
-    bossStatMultiplier: 0.5974,
-    timeLimitSeconds: 180,
-    note: "Low HP Gym raid, usually soloable.",
-  },
-  tier3: {
-    key: "tier3",
-    label: "Three-star Raid",
-    shortLabel: "3-star",
-    bossHp: 3600,
-    bossStatMultiplier: 0.73,
-    timeLimitSeconds: 180,
-    note: "Mid-tier Gym raid with the post-2020 reward tier.",
-  },
-  "community-day": {
-    key: "community-day",
-    label: "Community Day Raid",
-    shortLabel: "4-star",
-    bossHp: 9000,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 180,
-    note: "Local-only post-Community-Day style raid.",
-  },
-  mega: {
-    key: "mega",
-    label: "Mega Raid",
-    shortLabel: "Mega",
-    bossHp: 9000,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Standard Mega raid awarding Mega Energy by speed.",
-  },
-  legendary: {
-    key: "legendary",
-    label: "Legendary Raid",
-    shortLabel: "5-star",
-    bossHp: 15000,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Normal five-star Legendary, Ultra Beast, or Fusion raid baseline.",
-  },
-  elite: {
-    key: "elite",
-    label: "Elite Raid",
-    shortLabel: "Elite",
-    bossHp: 20000,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Local-only Elite raid durability.",
-  },
-  primal: {
-    key: "primal",
-    label: "Primal Raid",
-    shortLabel: "Primal",
-    bossHp: 22500,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Primal Groudon and Primal Kyogre durability.",
-  },
-  "legendary-mega": {
-    key: "legendary-mega",
-    label: "Mega Legendary Raid",
-    shortLabel: "Mega Legendary",
-    bossHp: 22500,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Legendary or Mythical Mega raid durability.",
-  },
-  "super-mega": {
-    key: "super-mega",
-    label: "Super Mega Raid",
-    shortLabel: "Super Mega",
-    bossHp: 25000,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Enrages mid-battle; each Trainer needs a Mega charged attack to break one shield.",
-  },
-  "shadow-tier1": {
-    key: "shadow-tier1",
-    label: "Shadow One-star Raid",
-    shortLabel: "Shadow 1-star",
-    bossHp: 600,
-    bossStatMultiplier: 0.5974,
-    timeLimitSeconds: 180,
-    note: "Team GO Rocket one-star Shadow raid with enrage and Purified Gem mechanics.",
-  },
-  "shadow-tier3": {
-    key: "shadow-tier3",
-    label: "Shadow Three-star Raid",
-    shortLabel: "Shadow 3-star",
-    bossHp: 3600,
-    bossStatMultiplier: 0.73,
-    timeLimitSeconds: 180,
-    note: "Team GO Rocket three-star Shadow raid with enrage and Purified Gem mechanics.",
-  },
-  "shadow-legendary": {
-    key: "shadow-legendary",
-    label: "Shadow Legendary Raid",
-    shortLabel: "Shadow 5-star",
-    bossHp: 15000,
-    bossStatMultiplier: 0.79,
-    timeLimitSeconds: 300,
-    note: "Five-star Shadow Legendary raid with enrage and Purified Gem mechanics.",
-  },
-};
+export {
+  COMFORTABLE_SAFETY_FACTOR,
+  DEFAULT_RAID_RELOBBY_SECONDS,
+  FRIENDSHIP_DAMAGE_BONUS,
+  MEGA_ALLY_DAMAGE_BONUS,
+  PARTY_POWER_ACTIVATION_DELAY_SECONDS,
+  PARTY_POWER_ACTIVE_CHARGED_MULTIPLIER,
+  PARTY_POWER_CHARGED_DAMAGE_BONUS,
+  PARTY_POWER_GROUP_SIZE,
+  PARTY_POWER_METER_MAX,
+  PARTY_POWER_POINTS_PER_MOVE,
+  RAID_ATTACKER_TEAM_SIZE,
+  RAID_BOSS_ACTION_DELAY_SECONDS,
+  RAID_COUNTER_SIMULATION_VARIANT_LIMIT,
+  RAID_DODGE_DAMAGE_MULTIPLIER,
+  RAID_MONTE_CARLO_MAX_SAMPLES,
+  RAID_MONTE_CARLO_MIN_SAMPLES,
+  RAID_PARTY_MAX_TRAINERS,
+  RAID_PARTY_OPTIMIZER_MAX_BEAM_WIDTH,
+  RAID_PARTY_OPTIMIZER_MAX_EVALUATIONS,
+  RAID_PARTY_OPTIMIZER_MAX_TEAM_OPTIONS,
+  RAID_SAFETY_FACTOR,
+  RAID_SIMULATION_ATTACKER_SWAP_SECONDS,
+  RAID_SIMULATION_BOSS_ACTION_DELAY_SECONDS,
+  RAID_SIMULATION_BOSS_DELAY_OPTIONS_SECONDS,
+  RAID_SIMULATION_DODGE_SECONDS,
+  RAID_SIMULATION_ENERGY_CAP,
+  RAID_SIMULATION_MODEL_VERSION,
+  RAID_TIER_PRESETS,
+  SHADOW_ATTACKER_DAMAGE_BONUS,
+  SHADOW_ATTACKER_DEFENSE_MULTIPLIER,
+  SHADOW_BOSS_ENRAGED_ATTACK_MULTIPLIER,
+  SHADOW_BOSS_ENRAGED_DEFENSE_MULTIPLIER,
+  STAB_DAMAGE_BONUS,
+  TYPE_DPS_ER_TDO_EXPONENT,
+  TYPE_DPS_INCOMING_CHARGED_DAMAGE_NUMERATOR,
+  TYPE_DPS_INCOMING_DAMAGE_NUMERATOR,
+  TYPE_DPS_TARGET_DEFENSE,
+  WEATHER_DAMAGE_BONUS,
+} from "@pokemongonexus/shared-domain/raid-rules";
 
-export const FRIENDSHIP_DAMAGE_BONUS: Record<FriendshipKey, number> = {
-  none: 1,
-  good: 1.03,
-  great: 1.05,
-  ultra: 1.07,
-  best: 1.1,
-};
-
-export const MEGA_ALLY_DAMAGE_BONUS: Record<MegaAllyBonusKey, number> = {
-  none: 1,
-  general: 1.1,
-  matching: 1.3,
-};
-
-export const PARTY_POWER_CHARGED_DAMAGE_BONUS: Record<PartyPowerKey, number> = {
-  none: 1,
-  party2: 1.18,
-  party3: 1.35,
-  party4: 1.5,
-};
-
-export const PARTY_POWER_GROUP_SIZE: Record<PartyPowerKey, number> = {
-  none: 1,
-  party2: 2,
-  party3: 3,
-  party4: 4,
-};
-
-export const PARTY_POWER_POINTS_PER_MOVE: Record<PartyPowerKey, number> = {
-  none: 0,
-  party2: 1,
-  party3: 2,
-  party4: 3,
-};
-
-export const PARTY_POWER_METER_MAX = 18;
-export const PARTY_POWER_ACTIVATION_DELAY_SECONDS = 1;
-export const PARTY_POWER_ACTIVE_CHARGED_MULTIPLIER = 2;
-
-export const SHADOW_ATTACKER_DAMAGE_BONUS = 1.2;
-export const SHADOW_ATTACKER_DEFENSE_MULTIPLIER = 0.8333333;
-export const WEATHER_DAMAGE_BONUS = 1.2;
-export const STAB_DAMAGE_BONUS = 1.2;
-export const SHADOW_BOSS_ENRAGED_ATTACK_MULTIPLIER = 1.81;
-export const SHADOW_BOSS_ENRAGED_DEFENSE_MULTIPLIER = 3;
-export const RAID_SAFETY_FACTOR = 0.82;
-export const COMFORTABLE_SAFETY_FACTOR = 0.68;
-export const TYPE_DPS_TARGET_DEFENSE = 180;
-export const TYPE_DPS_INCOMING_DAMAGE_NUMERATOR = 1340;
-export const TYPE_DPS_INCOMING_CHARGED_DAMAGE_NUMERATOR = 11670;
-export const TYPE_DPS_ER_TDO_EXPONENT = 0.25;
 export const DEFAULT_RAID_NEUTRAL_BENCHMARK: RaidNeutralBenchmark = {
   targetDefense: TYPE_DPS_TARGET_DEFENSE,
   incomingDamageNumerator: TYPE_DPS_INCOMING_DAMAGE_NUMERATOR,
   incomingChargedDamageNumerator: TYPE_DPS_INCOMING_CHARGED_DAMAGE_NUMERATOR,
 };
-export const RAID_ATTACKER_TEAM_SIZE = 6;
-export const RAID_PARTY_MAX_TRAINERS = 20;
-export const RAID_PARTY_OPTIMIZER_MAX_EVALUATIONS = 160;
-export const RAID_PARTY_OPTIMIZER_MAX_TEAM_OPTIONS = 12;
-export const RAID_PARTY_OPTIMIZER_MAX_BEAM_WIDTH = 6;
-export const DEFAULT_RAID_RELOBBY_SECONDS = 10;
-export const RAID_BOSS_ACTION_DELAY_SECONDS = 1.75;
-export const RAID_SIMULATION_BOSS_ACTION_DELAY_SECONDS = 2;
-export const RAID_SIMULATION_ATTACKER_SWAP_SECONDS = 1;
-export const RAID_SIMULATION_DODGE_SECONDS = 0.5;
-export const RAID_DODGE_DAMAGE_MULTIPLIER = 0.25;
-export const RAID_SIMULATION_ENERGY_CAP = 100;
-export const RAID_SIMULATION_BOSS_DELAY_OPTIONS_SECONDS = [
-  1.5, 2, 2.5,
-] as const;
-export const RAID_SIMULATION_MODEL_VERSION = 13;
-export const RAID_MONTE_CARLO_MIN_SAMPLES = 32;
-export const RAID_MONTE_CARLO_MAX_SAMPLES = 64;
-export const RAID_COUNTER_SIMULATION_VARIANT_LIMIT = 384;
 export const RAID_ROUTE_READY_MEASURE = "pokegonexus:raid-route-ready";
 export const RAID_COLD_ROUTE_READY_BUDGET_MS = 8000;
 export const RAID_WARM_ROUTE_READY_BUDGET_MS = 3000;

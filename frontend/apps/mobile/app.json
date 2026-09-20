@@ -2,19 +2,18 @@
   "expo": {
     "name": "mobile",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.3",
+    "scheme": "pokegonexus",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#06162f"
-    },
+    "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.pokegonexus.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.pokegonexus.app",
+      "versionCode": 26091901,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#06162f"
@@ -23,6 +22,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2cfa50a9-11e0-454b-8147-45963ff70432"
+      }
+    },
+    "owner": "adamwentworth"
   }
 }

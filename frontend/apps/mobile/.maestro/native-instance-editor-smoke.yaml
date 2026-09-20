@@ -1,0 +1,83 @@
+appId: ${APP_ID}
+name: Native instance editor scrolling smoke
+tags:
+  - android
+  - native-collection
+  - native-instance-editor
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?interaction=1
+- runFlow:
+    when:
+      visible: "Something went wrong.*"
+    commands:
+      - tapOn:
+          id: ${APP_ID}:id/reload_button
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 45000
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Open Favorites, 3 Pokémon"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Open Favorites, 3 Pokémon"
+- tapOn: "View Shiny Metagross"
+- assertVisible: Shiny Metagross
+- tapOn: Edit Pokémon
+- assertVisible: Combat Power
+- tapOn: Choose location background
+- assertVisible: Choose a background
+- assertVisible: Vancouver City Safari
+- tapOn: Close background selector
+- assertVisible: Save Pokémon
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 78%
+          end: 92%, 25%
+          duration: 500
+- assertVisible:
+    id: native-move-selector-fast-move
+- tapOn:
+    id: native-move-selector-fast-move
+- assertVisible: MOVE SELECTOR
+- assertVisible: Bullet Punch
+- takeScreenshot: instance-editor-move-selector
+- tapOn: Close fast move selector
+- repeat:
+    times: 5
+    commands:
+      - swipe:
+          start: 92%, 78%
+          end: 92%, 25%
+          duration: 500
+- assertVisible: CAUGHT DETAILS
+- scrollUntilVisible:
+    element:
+      text: BALL CAUGHT
+    direction: DOWN
+    timeout: 20000
+- assertVisible: BALL CAUGHT
+- takeScreenshot: instance-editor-bottom

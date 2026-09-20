@@ -1,0 +1,120 @@
+appId: ${APP_ID}
+name: Native custom-tag mutation smoke
+tags:
+  - android
+  - native-collection
+  - native-tags
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?interaction=1
+- runFlow:
+    when:
+      visible: "Something went wrong.*"
+    commands:
+      - tapOn:
+          id: ${APP_ID}:id/reload_button
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 45000
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "+ New inventory tag"
+    direction: DOWN
+- tapOn: "+ New inventory tag"
+- extendedWaitUntil:
+    visible: New Inventory tag
+    timeout: 10000
+- tapOn: Tag name
+- inputText: "Raid Day"
+- tapOn: "Use #EA580C"
+- tapOn: Create tag
+- extendedWaitUntil:
+    visible: "Open Raid Day, 0 Pokémon"
+    timeout: 10000
+- takeScreenshot: 01-tag-created
+- tapOn: Edit Raid Day
+- extendedWaitUntil:
+    visible: Edit tag
+    timeout: 10000
+- tapOn: Tag name
+- eraseText: 8
+- inputText: "Lucky Projects"
+- hideKeyboard
+- tapOn: Save changes
+- extendedWaitUntil:
+    visible: "Open Lucky Projects, 0 Pokémon"
+    timeout: 10000
+- assertNotVisible: "Open Raid Day, 0 Pokémon"
+- takeScreenshot: 02-tag-renamed
+- tapOn: Edit Lucky Projects
+- extendedWaitUntil:
+    visible: Edit tag
+    timeout: 10000
+- tapOn: Delete
+- assertVisible: "Delete Lucky Projects?"
+- tapOn:
+    text: ^Delete$
+- extendedWaitUntil:
+    notVisible: "Open Lucky Projects, 0 Pokémon"
+    timeout: 10000
+- takeScreenshot: 03-tag-deleted
+- scrollUntilVisible:
+    element:
+      text: ↕ Arrange
+    direction: UP
+- tapOn: ↕ Arrange
+- assertVisible: "Reorder Favorites, position 1 of 4"
+- scrollUntilVisible:
+    element:
+      text: "Reorder Shadow Shinies, position 4 of 4"
+    direction: DOWN
+    timeout: 20000
+- assertVisible: "Reorder Shadow Shinies, position 4 of 4"
+- swipe:
+    from:
+      id: native-tag-drag-custom:shadow-shinies
+    direction: UP
+    duration: 900
+- extendedWaitUntil:
+    visible: "Reorder Shadow Shinies, position [123] of 4"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: ✓ Save order
+    direction: UP
+    timeout: 20000
+- tapOn: ✓ Save order
+- extendedWaitUntil:
+    visible: ↕ Arrange
+    timeout: 10000
+- tapOn: ↕ Arrange
+- extendedWaitUntil:
+    visible: "Reorder Shadow Shinies, position [123] of 4"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: × Cancel
+    direction: UP
+    timeout: 20000
+- tapOn: × Cancel
+- takeScreenshot: 04-order-saved

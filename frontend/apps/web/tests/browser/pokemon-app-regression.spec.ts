@@ -171,6 +171,12 @@ test.describe('pokemon app browser regressions', () => {
             video.muted = true;
             video.playsInline = true;
             video.preload = 'auto';
+            // WebKit can report HAVE_ENOUGH_DATA for a detached video without
+            // advancing or painting a frame. Exercise playback in the document,
+            // just as the application's spinner does.
+            video.width = 100;
+            video.height = 100;
+            document.body.append(video);
 
             let isDone = false;
             let timeoutId: number | undefined;
@@ -184,6 +190,7 @@ test.describe('pokemon app browser regressions', () => {
                 window.clearTimeout(timeoutId);
               }
               video.pause();
+              video.remove();
               resolve(result);
             };
 
@@ -196,6 +203,7 @@ test.describe('pokemon app browser regressions', () => {
                 window.clearTimeout(timeoutId);
               }
               video.pause();
+              video.remove();
               reject(error);
             };
 

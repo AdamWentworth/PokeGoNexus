@@ -15,6 +15,7 @@
     "./location": "./src/location.ts",
     "./events": "./src/events.ts",
     "./pokemon": "./src/pokemon.ts",
-    "./receiver": "./src/receiver.ts"
+    "./receiver": "./src/receiver.ts",
+    "./variants": "./src/variants.ts"
   }
 }

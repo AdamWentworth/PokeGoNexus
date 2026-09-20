@@ -11,6 +11,7 @@ import type { Instances } from '@/types/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { SortMode, SortType } from '@/types/sort';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import { createScopedLogger } from '@/utils/logger';
 import { useViewportBelow, VIEWPORT_BREAKPOINTS } from '@/hooks/useViewport';
 import { getBackgroundImageSrc, getCaughtBgColor } from './overlay/overlayBackground';
@@ -408,7 +409,14 @@ const InstanceOverlay: React.FC<InstanceOverlayProps> = ({
   );
 
   const caughtBackgroundStyle = useMemo(
-    () => ({ '--io-bg': bgColor } as React.CSSProperties),
+    () => ({
+      '--io-bg': bgColor,
+      '--io-bg-base-scale': collectionExperienceParityContract.instanceOverlaySwipe.backgroundBaseScale,
+      '--io-bg-opacity-transition-ms': `${collectionExperienceParityContract.instanceOverlaySwipe.backgroundOpacityTransitionMs}ms`,
+      '--io-bg-scale-transition-ms': `${collectionExperienceParityContract.instanceOverlaySwipe.backgroundScaleTransitionMs}ms`,
+      '--io-bg-transition-opacity': collectionExperienceParityContract.instanceOverlaySwipe.backgroundTransitionOpacity,
+      '--io-bg-transition-scale': collectionExperienceParityContract.instanceOverlaySwipe.backgroundTransitionScale,
+    } as React.CSSProperties),
     [bgColor],
   );
 

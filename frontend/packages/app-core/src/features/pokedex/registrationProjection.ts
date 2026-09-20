@@ -1,6 +1,6 @@
-import type { PokemonInstance } from '@/types/pokemonInstance';
-import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { Instances } from '@/types/instances';
+import type { PokemonInstance } from '../../types/pokemonInstance';
+import type { PokemonVariant } from '../../types/pokemonVariants';
+import type { Instances } from '../../types/instances';
 
 export type PokedexRegistrationFacetValue = string | number | boolean | null;
 export type PokedexRegistrationFacets = Record<string, PokedexRegistrationFacetValue>;
@@ -209,6 +209,36 @@ function isMegaVariantType(variantType: string): boolean {
   );
 }
 
+interface RegistrationVariantIndex {
+  byId: Map<string, PokemonVariant>;
+  byPokemon: Map<number, PokemonVariant[]>;
+  byPokemonAndType: Map<number, Map<string, PokemonVariant[]>>;
+}
+
+function buildRegistrationVariantIndex(
+  variants: PokemonVariant[],
+): RegistrationVariantIndex {
+  const byId = new Map<string, PokemonVariant>();
+  const byPokemon = new Map<number, PokemonVariant[]>();
+  const byPokemonAndType = new Map<number, Map<string, PokemonVariant[]>>();
+
+  for (const variant of variants) {
+    byId.set(variant.variant_id, variant);
+    const pokemonVariants = byPokemon.get(variant.pokemon_id) ?? [];
+    pokemonVariants.push(variant);
+    byPokemon.set(variant.pokemon_id, pokemonVariants);
+
+    const variantsByType = byPokemonAndType.get(variant.pokemon_id) ?? new Map();
+    const normalizedType = variant.variantType.toLowerCase();
+    const matchingType = variantsByType.get(normalizedType) ?? [];
+    matchingType.push(variant);
+    variantsByType.set(normalizedType, matchingType);
+    byPokemonAndType.set(variant.pokemon_id, variantsByType);
+  }
+
+  return { byId, byPokemon, byPokemonAndType };
+}
+
 function resolveFusionIdForInstance(
   variant: PokemonVariant,
   instance: PokemonInstance,
@@ -236,7 +266,7 @@ function resolveFusionIdForInstance(
 }
 
 function resolveFusionRegistrationVariant(
-  variants: PokemonVariant[],
+  variantIndex: RegistrationVariantIndex,
   variant: PokemonVariant,
   instance: PokemonInstance,
 ): PokemonVariant | null {
@@ -251,32 +281,22 @@ function resolveFusionRegistrationVariant(
   const fallbackVariantType = `${wantsShiny ? '' : 'shiny_'}fusion_${fusionId}`;
 
   return (
-    variants.find(
-      (candidate) =>
-        candidate.pokemon_id === variant.pokemon_id &&
-        candidate.variantType.toLowerCase() === preferredVariantType,
-    ) ??
-    variants.find(
-      (candidate) =>
-        candidate.pokemon_id === variant.pokemon_id &&
-        candidate.variantType.toLowerCase() === fallbackVariantType,
-    ) ??
+    variantIndex.byPokemonAndType.get(variant.pokemon_id)?.get(preferredVariantType)?.[0] ??
+    variantIndex.byPokemonAndType.get(variant.pokemon_id)?.get(fallbackVariantType)?.[0] ??
     null
   );
 }
 
 function resolveMegaRegistrationVariant(
-  variants: PokemonVariant[],
+  variantIndex: RegistrationVariantIndex,
   variant: PokemonVariant,
   instance: PokemonInstance,
 ): PokemonVariant | null {
   if (!instance.is_mega && !instance.mega) return null;
   if (isMegaVariantType(variant.variantType)) return variant;
 
-  const candidates = variants.filter(
-    (candidate) =>
-      candidate.pokemon_id === variant.pokemon_id && isMegaVariantType(candidate.variantType),
-  );
+  const candidates = (variantIndex.byPokemon.get(variant.pokemon_id) ?? [])
+    .filter((candidate) => isMegaVariantType(candidate.variantType));
   if (candidates.length === 0) return null;
 
   const requestedForm = normalizeToken(instance.mega_form);
@@ -418,15 +438,13 @@ function getParentVariantTypes(variantType: string): string[] {
 }
 
 function findRelatedVariantByType(
-  variants: PokemonVariant[],
+  variantIndex: RegistrationVariantIndex,
   variant: PokemonVariant,
   variantType: string,
 ): PokemonVariant | null {
-  const candidates = variants.filter(
-    (candidate) =>
-      candidate.pokemon_id === variant.pokemon_id &&
-      candidate.variantType.toLowerCase() === variantType,
-  );
+  const candidates = variantIndex.byPokemonAndType
+    .get(variant.pokemon_id)
+    ?.get(variantType) ?? [];
 
   if (candidates.length === 0) return null;
 
@@ -442,11 +460,11 @@ function findRelatedVariantByType(
 }
 
 function collectParentRegistrationVariants(
-  variants: PokemonVariant[],
+  variantIndex: RegistrationVariantIndex,
   variant: PokemonVariant,
 ): ResolvedRegistrationVariant[] {
   return getParentVariantTypes(variant.variantType)
-    .map((variantType) => findRelatedVariantByType(variants, variant, variantType))
+    .map((variantType) => findRelatedVariantByType(variantIndex, variant, variantType))
     .filter((parent): parent is PokemonVariant => parent !== null)
     .map((parent) => ({ variant: parent, derived: true }));
 }
@@ -470,20 +488,19 @@ function createDerivedManualRegistration(
 }
 
 function projectManualRegistrationParents(
-  variants: PokemonVariant[],
+  variantIndex: RegistrationVariantIndex,
   entry: PokedexRegistrationEntry,
 ): PokedexRegistrationEntry[] {
   const variant =
-    variants.find((candidate) => candidate.variant_id === entry.base_variant_id) ??
-    variants.find(
+    variantIndex.byId.get(entry.base_variant_id) ??
+    (variantIndex.byPokemon.get(entry.pokemon_id) ?? []).find(
       (candidate) =>
-        candidate.pokemon_id === entry.pokemon_id &&
         candidate.variantType.toLowerCase() === entry.variant_type.toLowerCase(),
     );
 
   if (!variant) return [];
 
-  return collectParentRegistrationVariants(variants, variant).map((parentVariant) =>
+  return collectParentRegistrationVariants(variantIndex, variant).map((parentVariant) =>
     createDerivedManualRegistration(parentVariant.variant, entry),
   );
 }
@@ -500,7 +517,7 @@ function addResolvedVariant(
 }
 
 function resolveRegistrationVariantsForInstance(
-  variants: PokemonVariant[],
+  variantIndex: RegistrationVariantIndex,
   variant: PokemonVariant,
   instance: PokemonInstance,
 ): ResolvedRegistrationVariant[] {
@@ -508,8 +525,8 @@ function resolveRegistrationVariantsForInstance(
   addResolvedVariant(resolved, variant, false);
 
   const specialVariant =
-    resolveFusionRegistrationVariant(variants, variant, instance) ??
-    resolveMegaRegistrationVariant(variants, variant, instance);
+    resolveFusionRegistrationVariant(variantIndex, variant, instance) ??
+    resolveMegaRegistrationVariant(variantIndex, variant, instance);
 
   if (specialVariant) {
     addResolvedVariant(resolved, specialVariant, false);
@@ -517,7 +534,7 @@ function resolveRegistrationVariantsForInstance(
 
   for (const directVariant of Array.from(resolved.values())) {
     for (const parentVariant of collectParentRegistrationVariants(
-      variants,
+      variantIndex,
       directVariant.variant,
     )) {
       addResolvedVariant(resolved, parentVariant.variant, true);
@@ -638,6 +655,7 @@ function buildFacetSubsets(facets: PokedexRegistrationFacets): PokedexRegistrati
 export function projectInstanceRegistrations(
   variant: PokemonVariant,
   instance: PokemonInstance,
+  options: { includeFacetSubsets?: boolean } = {},
 ): PokedexRegistrationEntry[] {
   if (!isRegistrationSource(instance)) return [];
 
@@ -656,6 +674,21 @@ export function projectInstanceRegistrations(
       level: qualityFacetCount === 0 ? 'exact' : 'base',
     }),
   ];
+
+  if (qualityFacetCount > 0 && options.includeFacetSubsets === false) {
+    entries.push(
+      createRegistrationEntry({
+        variant,
+        facets: { variant: variant.variantType, ...qualityFacets },
+        isRegistered: true,
+        registeredAt,
+        source: 'instance',
+        sourceInstanceId,
+        level: 'exact',
+      }),
+    );
+    return entries;
+  }
 
   for (const subset of buildFacetSubsets(qualityFacets)) {
     const subsetCount = Object.keys(subset).length;
@@ -710,19 +743,25 @@ export function projectPokedexRegistrations(
   variants: PokemonVariant[],
   instances: Instances = {},
   manualRegistrations: PokedexRegistrationEntry[] = [],
+  options: {
+    includeCatalogRegistrations?: boolean;
+    includeFacetSubsets?: boolean;
+  } = {},
 ): PokedexRegistrationEntry[] {
   const byId = new Map<string, PokedexRegistrationEntry>();
-  const variantById = new Map(variants.map((variant) => [variant.variant_id, variant]));
+  const variantIndex = buildRegistrationVariantIndex(variants);
 
-  for (const variant of variants) {
-    const entry = projectCatalogRegistration(variant);
-    byId.set(entry.registration_id, entry);
+  if (options.includeCatalogRegistrations !== false) {
+    for (const variant of variants) {
+      const entry = projectCatalogRegistration(variant);
+      byId.set(entry.registration_id, entry);
+    }
   }
 
   for (const entry of manualRegistrations) {
     for (const projectedEntry of [
       entry,
-      ...projectManualRegistrationParents(variants, entry),
+      ...projectManualRegistrationParents(variantIndex, entry),
     ]) {
       const current = byId.get(projectedEntry.registration_id);
       byId.set(
@@ -734,15 +773,19 @@ export function projectPokedexRegistrations(
 
   for (const instance of Object.values(instances)) {
     if (!instance) continue;
-    const variant = variantById.get(instance.variant_id);
+    const variant = variantIndex.byId.get(instance.variant_id);
     if (!variant) continue;
 
     for (const registrationVariant of resolveRegistrationVariantsForInstance(
-      variants,
+      variantIndex,
       variant,
       instance,
     )) {
-      for (const entry of projectInstanceRegistrations(registrationVariant.variant, instance)) {
+      for (const entry of projectInstanceRegistrations(
+        registrationVariant.variant,
+        instance,
+        { includeFacetSubsets: options.includeFacetSubsets },
+      )) {
         const projectedEntry = registrationVariant.derived
           ? ({ ...entry, level: 'derived' } satisfies PokedexRegistrationEntry)
           : entry;

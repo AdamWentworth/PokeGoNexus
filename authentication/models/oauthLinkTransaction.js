@@ -4,8 +4,14 @@ const oauthLinkTransactionSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
     index: true
+  },
+  intent: {
+    type: String,
+    enum: ['link', 'login', 'register'],
+    default: 'link',
+    required: true
   },
   provider: {
     type: String,
@@ -24,10 +30,27 @@ const oauthLinkTransactionSchema = new mongoose.Schema({
   resultHash: { type: String, default: undefined },
   resultStatus: {
     type: String,
-    enum: ['linked', 'link-conflict', 'failed'],
+    enum: [
+      'linked',
+      'link-conflict',
+      'authenticated',
+      'registration-required',
+      'account-exists',
+      'account-not-found',
+      'failed'
+    ],
     default: null
   },
+  resultUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  identitySubject: { type: String, default: null, maxlength: 512 },
+  identityEmail: { type: String, default: null, maxlength: 320 },
+  identityEmailVerified: { type: Boolean, default: false },
   expiresAt: { type: Date, required: true },
+  exchangedAt: { type: Date, default: null },
   consumedAt: { type: Date, default: null }
 }, {
   timestamps: true

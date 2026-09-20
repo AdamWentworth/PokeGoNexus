@@ -1,7 +1,7 @@
 import type {
   PokemonPvPBattleMechanics,
   PokemonPvPFormat,
-} from '@shared-contracts/pokemon';
+} from '@pokemongonexus/shared-contracts/pokemon';
 
 const LEGACY_FORMAT_PATTERN = /\bcompetitors?\b/i;
 

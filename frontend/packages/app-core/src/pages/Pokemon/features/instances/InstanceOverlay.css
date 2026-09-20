@@ -89,7 +89,7 @@
   --bg-blur: 2.5px;      /* how out-of-focus */
   --bg-dim: 1;          /* keep at 1 = no dimming */
   --bg-saturate: 0.95;  /* optional pop control */
-  --bg-scale: 1.06;     /* counteract blur edge-crop */
+  --bg-scale: var(--io-bg-base-scale, 1.06); /* counteract blur edge-crop */
 }
 
 /* full-bleed background image, now filtered */
@@ -108,14 +108,14 @@
   transform-origin: center;
   will-change: transform, filter;
   transition:
-    opacity 220ms ease,
-    transform 280ms ease,
-    filter 280ms ease;
+    opacity var(--io-bg-opacity-transition-ms, 220ms) ease,
+    transform var(--io-bg-scale-transition-ms, 280ms) ease,
+    filter var(--io-bg-scale-transition-ms, 280ms) ease;
 }
 
 .io-bg-img.is-transitioning {
-  opacity: 0.58;
-  transform: scale(calc(var(--bg-scale) + 0.03));
+  opacity: var(--io-bg-transition-opacity, 0.58);
+  transform: scale(var(--io-bg-transition-scale, 1.09));
 }
 
 /* ensure all other overlay content sits above the background */

@@ -1,0 +1,124 @@
+appId: ${APP_ID}
+name: Native search workflow smoke
+tags:
+  - android
+  - native-search
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/search
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Search
+    timeout: 45000
+- assertVisible: ".*Pokémon.*"
+- assertVisible: ".*Trainers.*"
+- assertVisible: Shiny Pikachu
+- assertVisible: Open listing.*
+- takeScreenshot: search-01-results
+- scrollUntilVisible:
+    element:
+      id: native-search-map-view
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: native-search-map-view
+- assertVisible:
+    id: native-search-map
+- extendedWaitUntil:
+    visible:
+      id: native-search-maplibre
+    timeout: 30000
+- assertVisible: "3 on map"
+- scrollUntilVisible:
+    element:
+      text: "HarbourMew"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "HarbourMew"
+- takeScreenshot: search-01b-map
+- scrollUntilVisible:
+    element:
+      id: native-search-list-view
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: native-search-list-view
+- assertNotVisible:
+    id: native-search-map
+- scrollUntilVisible:
+    element:
+      text: Modify search
+    direction: UP
+    timeout: 10000
+- tapOn: Modify search
+- assertVisible: LOOKING FOR
+- assertVisible: Pikachu
+- tapOn: Choose Pokémon
+- extendedWaitUntil:
+    visible: Choose a Pokémon
+    timeout: 10000
+- tapOn: Search Choose a Pokémon
+- inputText: Char
+- tapOn: Select Charizard
+- assertNotVisible: Choose a Pokémon
+- assertVisible: Charizard
+- takeScreenshot: search-01d-pokemon-selection
+- takeScreenshot: search-01c-primary-controls
+- tapOn: Filters
+- extendedWaitUntil:
+    visible: Refine your search
+    timeout: 10000
+- assertVisible: ".*Pokémon.*"
+- assertVisible: ".*Location.*"
+- assertVisible: ".*Matching.*"
+- assertVisible: Shiny
+- takeScreenshot: search-02-filters
+- tapOn: Location
+- assertVisible: Where should we look\?
+- assertVisible: City or place
+- assertVisible: Distance and results
+- takeScreenshot: search-02b-location-filters
+- tapOn: Matching
+- assertVisible: Mutual matches only
+- tapOn: Apply & search.*
+- scrollUntilVisible:
+    element:
+      text: ".*SEARCH COMPLETE.*"
+    direction: UP
+    timeout: 10000
+- assertVisible: ".*SEARCH COMPLETE.*"
+- tapOn: Trainer search
+- extendedWaitUntil:
+    visible: Find a trainer
+    timeout: 10000
+- tapOn: Username or Pokémon GO name
+- inputText: O
+- assertVisible: Enter one more character to search.
+- assertNotVisible: No trainers found
+- inputText: ther
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: Nexus · @OtherTrainer
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Nexus · @OtherTrainer
+- assertVisible: Pokémon GO · OtherPogoName
+- tapOn: Search trainers
+- assertVisible: Nexus · @OtherTrainer
+- takeScreenshot: search-03-trainers
+- tapOn: Clear trainer search
+- assertVisible: Find people you know
+- takeScreenshot: search-04-trainers-cleared

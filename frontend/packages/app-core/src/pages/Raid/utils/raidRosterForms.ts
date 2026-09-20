@@ -1,13 +1,13 @@
-import { resolveFusionMovePool } from "@/features/pokemonDisplay/fusionMovePool";
+import { resolveFusionMovePool } from "../../../features/pokemonDisplay/fusionMovePool";
 import {
   normalizeFormToken,
   resolvePokemonDisplayActiveMegaEvolution,
-} from "@/features/pokemonDisplay/displayHelpers";
-import { resolveCrownMovePool } from "@/features/pokemonDisplay/crownMovePool";
-import type { PokemonInstance } from "@/types/pokemonInstance";
-import type { CrownForm } from "@/types/pokemonSubTypes";
-import type { PokemonVariant } from "@/types/pokemonVariants";
-import { getCrownFormLabel, resolveActiveCrownForm } from "@/utils/crownHelpers";
+} from "../../../features/pokemonDisplay/displayHelpers";
+import { resolveCrownMovePool } from "../../../features/pokemonDisplay/crownMovePool";
+import type { PokemonInstance } from "../../../types/pokemonInstance";
+import type { CrownForm } from "../../../types/pokemonSubTypes";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
+import { getCrownFormLabel, resolveActiveCrownForm } from "../../../utils/crownHelpers";
 
 export type RaidRosterFormSource = "base" | "fusion" | "crown" | "mega";
 

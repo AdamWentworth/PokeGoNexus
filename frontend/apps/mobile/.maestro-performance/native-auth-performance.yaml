@@ -1,0 +1,66 @@
+appId: ${APP_ID}
+name: Native authentication performance contract
+tags:
+  - android
+  - performance
+  - native-auth
+---
+- openLink:
+    link: "${APP_LINK_BASE}/device-smoke/login?performance=1"
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: "Username or email"
+    timeout: 60000
+- tapOn: "Show password"
+- assertVisible: "Hide password"
+- tapOn: "Reset Password"
+- assertVisible: "Reset your password"
+- tapOn: "Email reset link"
+- assertVisible: "If that account exists, reset instructions are on the way."
+
+- openLink:
+    link: "${APP_LINK_BASE}/device-smoke/public?page=register&performance=1"
+- extendedWaitUntil:
+    visible: "Create your account"
+    timeout: 30000
+- tapOn: ".*Continue with email.*"
+- assertVisible: "YOUR ACCOUNT"
+- tapOn: "Continue ›"
+- assertVisible: "PROTECT YOUR ACCOUNT"
+- tapOn: "Continue ›"
+- assertVisible: "POKÉMON GO IDENTITY"
+- tapOn: "Use PerfAuth as my Pokémon GO name"
+- assertVisible: "PerfAuth"
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: "YOUR AREA"
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: "READY TO JOIN"
+
+- openLink:
+    link: "${APP_LINK_BASE}/device-smoke/public?page=reset-confirm&performance=1"
+- extendedWaitUntil:
+    visible: "Choose a new password"
+    timeout: 30000
+- tapOn: "Update password"
+- assertVisible: "Password updated"

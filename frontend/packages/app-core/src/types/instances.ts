@@ -1,7 +1,7 @@
 // src/types/instances.ts
 
 import type { PokemonInstance } from './pokemonInstance';
-import type { InstancesMap } from '@shared-contracts/instances';
+import type { InstancesMap } from '@pokemongonexus/shared-contracts/instances';
 
 /* -------------------------------------------------------------------------- */
 /*  Instance-centric helpers                                                 */

@@ -1,0 +1,10 @@
+name: Build Android beta candidate
+
+# Manual only: eas workflow:run .eas/workflows/android-beta.yml
+# Building never publishes a store release or changes the website download.
+jobs:
+  android_beta:
+    type: build
+    params:
+      platform: android
+      profile: android-beta

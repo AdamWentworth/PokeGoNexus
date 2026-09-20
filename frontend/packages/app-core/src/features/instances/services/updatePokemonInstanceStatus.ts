@@ -6,7 +6,7 @@ import { updateRegistrationStatus } from '../utils/updateRegistrationStatus';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { InstanceStatus, Instances } from '@/types/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
-import { FAVORITE_TO_TRADE_ERROR } from '../utils/favoriteTradeRules';
+import { FAVORITE_TO_TRADE_ERROR } from '@pokemongonexus/shared-domain/instances';
 
 const log = createScopedLogger('updatePokemonInstanceStatus');
 

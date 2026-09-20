@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pokegonexus.com/schemas/performance-parity-report-v1.json",
+  "title": "PokeGoNexus performance parity report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "implementation", "profile", "createdAt", "environment", "samples"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "implementation": {
+      "enum": ["vite", "native-web", "native-android"]
+    },
+    "profile": {
+      "enum": ["browser-proxy", "physical-android", "android-diagnostic"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "commit": { "type": ["string", "null"] },
+    "environment": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "number", "boolean", "null"] }
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenarioId", "metric", "unit", "direction", "value", "sampleIndex"],
+        "properties": {
+          "scenarioId": { "type": "string", "minLength": 1 },
+          "metric": { "type": "string", "minLength": 1 },
+          "unit": { "enum": ["ms", "bytes", "count", "fps", "percent"] },
+          "direction": { "enum": ["lower", "higher"] },
+          "value": { "type": "number", "minimum": 0 },
+          "sampleIndex": { "type": "integer", "minimum": 0 },
+          "phase": { "type": "string" },
+          "diagnostic": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

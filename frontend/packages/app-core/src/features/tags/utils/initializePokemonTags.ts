@@ -1,6 +1,7 @@
 // src/features/tags/utils/initializePokemonTags.ts
 import { determineImageUrl } from '@/utils/imageHelpers';
 import { buildTagItem } from '@/features/tags/utils/tagHelpers';
+import { getInstanceVariantResolver } from '@pokemongonexus/shared-domain/instance-variant';
 
 import type { Instances } from '@/types/instances';
 import type { TagBuckets } from '@/types/tags';
@@ -14,39 +15,17 @@ function freshBuckets(): TagBuckets {
   return { caught: {}, wanted: {} };
 }
 
-function pad4(n: number): string {
-  return String(n).padStart(4, '0');
-}
-
 export function initializePokemonTags(
   instances: Instances,
   variants: PokemonVariant[],
 ): TagBuckets {
   const tags = freshBuckets();
 
-  // lookups
-  const byKey = new Map<string, PokemonVariant>();
-  const byPidShiny = new Map<string, PokemonVariant>();
-  for (const v of variants) {
-    byKey.set(v.variant_id, v);
-    const shinyFlag = v.variantType?.toLowerCase().includes('shiny') ? 1 : 0;
-    const pid = String(v.pokemon_id);
-    const k = `${pid}|${shinyFlag}`;
-    if (!byPidShiny.has(k)) byPidShiny.set(k, v);
-  }
+  const resolveVariant = getInstanceVariantResolver(variants);
 
   Object.entries(instances).forEach(([instanceId, inst]) => {
-    let variantKey = inst.variant_id ?? '';
-    if (!variantKey) {
-      const guess = `${pad4(inst.pokemon_id)}-${inst.shiny ? 'shiny' : 'default'}`;
-      if (byKey.has(guess)) variantKey = guess;
-      else {
-        const alt = byPidShiny.get(`${inst.pokemon_id}|${inst.shiny ? 1 : 0}`);
-        if (alt) variantKey = alt.variant_id;
-      }
-    }
-
-    const variant = variantKey ? byKey.get(variantKey) : undefined;
+    if (inst.disabled) return;
+    const variant = resolveVariant(inst);
     if (!variant) return; // silently ignore; no public "missing" bucket anymore
 
     let img: string | undefined = variant.currentImage;

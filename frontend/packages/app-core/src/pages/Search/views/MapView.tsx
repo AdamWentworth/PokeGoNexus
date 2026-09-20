@@ -7,7 +7,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
-import XYZ from 'ol/source/XYZ';
+import { createMapTileSource } from '@/utils/createMapTileSource';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
@@ -192,11 +192,7 @@ const MapView: React.FC<MapViewProps> = ({
     );
 
     const baseTileLayer = new TileLayer({
-      source: new XYZ({
-        url: isLightMode
-          ? 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-          : 'https://{1-4}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      }),
+      source: createMapTileSource(isLightMode),
     });
 
     const map = new Map({

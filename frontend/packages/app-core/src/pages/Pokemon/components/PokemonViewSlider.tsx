@@ -1,4 +1,5 @@
 import React from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 import HorizontalPageSlider from '@/components/motion/HorizontalPageSlider';
 import PokemonMenu from './Menus/PokemonMenu/PokemonMenu';
@@ -76,7 +77,7 @@ const PokemonViewSlider: React.FC<PokemonViewSliderProps> = ({
   activeView,
   onTagSelect,
 }) => {
-  const activeIndex = activeView === 'inventory' ? 0 : activeView === 'wishlist' ? 2 : 1;
+  const activeIndex = collectionExperienceParityContract.viewOrder.indexOf(activeView);
 
   return (
   <HorizontalPageSlider

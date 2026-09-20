@@ -1,7 +1,7 @@
 import type {
   PokemonPvPBattleFighter,
   PokemonPvPRankingMove,
-} from '@shared-contracts/pokemon';
+} from '@pokemongonexus/shared-contracts/pokemon';
 
 import type { PvPTeamCandidate } from './pvpTeamBuilder';
 

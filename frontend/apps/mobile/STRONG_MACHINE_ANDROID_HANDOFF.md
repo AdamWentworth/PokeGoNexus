@@ -1,0 +1,629 @@
+# Strong-machine Android performance handoff
+
+Last updated: 2026-09-14
+
+## Current phone candidate — instance location backgrounds
+
+Code candidate: `0e430c51967150e2c2ee632b3de88a0ff045defb`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-0e430c51-arm64-v8a.apk`.
+SHA-256: `61e8d8eb85b1b23e3f628d495bc94c03d33041f208ca3740824b9813489ed100`.
+
+The rounded location background now extends 24 layout pixels higher, keeping its
+bottom beneath the details frame. Header, sprite, arc and panel positions remain.
+Vite CSS and the shared contract use the revised offset. 50 existing native tests
+and three cross-host contract checks pass. The cached build took 80.6 seconds
+under the two-core/8GB limits; no stronger machine was needed. Installed signature
+and checksum match; fixtures/probes are disabled. The final read-only phone flow
+and screenshot review pass on the 4030 CP Shiny Dawn Wings Necrozma. No runtime
+failures, account writes or resets were recorded. The phone returns to Favorite
+descending with 2249 caught and 167 Favorites. Private evidence is under
+`.artifacts/raised-background-2026-09-13/`; the public APK is unchanged. See the
+current-status document for the validation boundary and prior edit-view coverage.
+
+## Previous phone candidate — caught-instance fusion
+
+Code candidate: `d5ed02e4ae39898d28755b7236b7eee5d96a053a`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-d5ed02e4-arm64-v8a.apk`.
+SHA-256: `36abe2fee04cdf625a0a2e33a0e8f021ec5d72e8a3d0f0c7ef1eb9a69bf58c7f`.
+
+Vite-style Fuse/Separate controls, explicit partner selection with CP/level and
+background previews, correct base-form restoration, canonical fusion learnsets,
+legacy form identity and preserved fusion history. Linked instances continue to
+save atomically. See `CURRENT_NATIVE_TESTING_STATUS.md` for scope and validation.
+
+107 native and 20 shared/Vite assertions, mobile typecheck and source lint pass.
+The normal cached build took 80.3 seconds under the two-core/8GB limits. Installed
+checksum and certificate match; fixtures/probes are disabled and app data retained.
+No stronger machine was needed. Evidence is private under
+`.artifacts/caught-fusion-2026-09-13/`; the public APK is unchanged.
+
+The final APK passed the complete no-save phone flow for the user's 4090 CP Dusk
+Mane and 4030 CP Shiny Dawn Wings Necrozma: Separate restores the base preview and
+learnset, the picker identifies Solgaleo/Lunala and their backgrounds, unavailable
+partners are handled, and Fuse previews the selected form. Close discards drafts;
+reopening preserves saved CP, moves and fusion. Counts remain 2249 caught and 167
+Favorites with Favorite descending restored. No runtime failures, account edits
+or data resets were recorded. See `final-device/result.json` under the private
+evidence directory and the current-status document for the validation boundary.
+
+## Previous phone candidate — caught-instance trade conditions
+
+Code candidate: `9ae69388585e04d5f192df21a571beeb2fccfc52`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-9ae69388-arm64-v8a.apk`.
+SHA-256: `b4a35d11a47591e23dccf68e5ef778ab336f8adff59c22f12d949fa16b747686`.
+
+Caught overlays no longer display trade conditions from populated preference fields.
+The reported Lucky Shiny Groudon (4059 CP) had a mirror flag that triggered the old
+incorrect panel; listing status and saved account data are unaffected. Real listing
+preferences and the existing Lucky Pokémon listing rejection remain covered.
+
+83 focused assertions, typecheck and source lint pass. The normal cached build took
+82.5 seconds under the two-core/8GB limits; no stronger machine was needed. Fixtures
+and timing probes are disabled. See `CURRENT_NATIVE_TESTING_STATUS.md` and private
+`.artifacts/instance-trade-conditions-2026-09-13/` evidence for device validation.
+The exact Groudon case passes on the phone in top and scrolled views; Close returns
+to the unchanged Favorites order. No runtime failures, account edits or data resets
+were recorded. The installed checksum and signing certificate match. The public
+APK is unchanged.
+
+## Previous phone candidate — instance swipe loading
+
+Code candidate: `e1e060ab93c57f2169f2a310bb70096f1e2d2768`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e1e060ab-arm64-v8a.apk`.
+SHA-256: `cf83900b413dc1be3a8941f9d598468059625e0086b5b08adac8ba039dabbd25`.
+
+Installed in place on the Pixel 8 Pro; signing certificate and installed checksum
+match. Native-preview is enabled, fixtures and timing probes are disabled, and
+account data is retained. The cached build took 82.0 seconds under the existing
+two-core/8GB limits. No stronger machine is needed for this change.
+
+Swiping commits all instance detail sections together, prepares adjacent artwork
+in the rendered image cache, and lets native layout size the move pages without
+retaining the previous instance's height. Both own and public-trainer overlays
+use the shared neighbor preparation. Canonical motion and route identity remain.
+
+The source status, measured limits, phone evidence and reusable normal-account
+flow are documented in `CURRENT_NATIVE_TESTING_STATUS.md`. Private artifacts:
+`.artifacts/instance-swipe-loading-2026-09-13/`. The public APK is unchanged.
+
+## Previous phone candidate — tool workspace slides
+
+Code candidate: `c9b67d45d01584565bbe2e448b18147da9371c8f`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-c9b67d45-arm64-v8a.apk`.
+SHA-256: `fb4e17fcd90765b5ac53c571035ef564e4517fd87d3d28985e0ecfdf86dc102e`.
+
+Installed on the Pixel 8 Pro in place with the same signing certificate and a
+matching installed checksum. Native-preview is enabled; fixtures and timing
+probes are disabled. Account data is retained. The final cached build took 81.6
+seconds under the existing two-core/8GB limits, so this change did not require a
+stronger machine.
+
+Raid, PvP, Community Rankings and Max now keep their tool panels mounted beneath
+stationary navigation, and the selected button follows the content's animation.
+Pokédex entry sections slide below the hero/tab bar using Vite's document scroll
+behavior. Pressing a collection tag does not replace the Pokémon grid before the
+press is confirmed, so dragging into Pokémon preserves its current list. Public
+PvP tools now load move mechanics without relying on a previous Raid/Max visit.
+Search and Trades remain unchanged.
+
+See `CURRENT_NATIVE_TESTING_STATUS.md` for focused tests, device checks, the
+Favorites drag evidence and remaining migration gates. The reusable normal-account
+flow is `.maestro-release/native-tool-workspace-navigation.yaml`; run it with:
+
+```bash
+python3 scripts/check-android-navigation.py --serial DEVICE_SERIAL \
+  --flow .maestro-release/native-tool-workspace-navigation.yaml
+```
+
+Private artifacts are in `.artifacts/tool-workspace-slides-2026-09-13/`. The public
+APK path has not been replaced by these private local candidates.
+
+## Previous phone candidate — retained Profile/Friends workspace
+
+Code candidate: `e24708c63a7605288df4e6f026bf4888f1399e1a`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e24708c6-arm64-v8a.apk`.
+SHA-256: `9a625c90ab78c19fab49df6453e5b4aa515e6d5ef66bfe3d929f76b0bf9f3032`.
+
+Installed on the Pixel 8 Pro with the same package and signing certificate using
+`adb install -r`; the installed checksum matches. Native-preview is enabled,
+fixtures and timing probes are disabled, and account data is retained. The cached
+local build took 83.2 seconds under the existing two-core/8GB limits. A stronger
+machine was not needed for this change.
+
+Profile and Friends are retained panels below a stationary header/navigation
+bar. One animation drives both the gradient selected button and full content
+track. Workspace switches update parameters instead of pushing native screens;
+Back selects Profile from Friends, then leaves the workspace from Profile.
+Both panels retain local state. Friends links and notification tabs enter this
+shared screen; public trainer cards keep their own routes.
+
+The normal-account regression passes five round trips, all Friends tabs, local
+Back/exit behavior and legacy Friends notification links, with no fatal or Fabric
+rendering errors. Direct PNG captures verify intermediate button/body positions;
+screenrecord video composites are not accepted as presentation-ready footage.
+An unsaved profile-name draft and Friends search text survive workspace switches;
+the draft was discarded without saving. Focused source tests pass 46 assertions,
+plus mobile typecheck and targeted lint.
+Light/dark captures pass visual review. Account checks retain 2249 caught,
+167 Favorites and Favorite-descending order (CP 4713/4689/4688 first).
+
+Private build/install and visual evidence:
+`.artifacts/trainer-workspace-2026-09-13/`.
+
+## Previous phone candidate — native navigation recovery
+
+Code candidate: `82f3070b6f6a35fa4cc7bcc3cd27961ef2870b3c`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-82f3070b-arm64-v8a.apk`.
+SHA-256: `185756b1f8801cdc5ff3f6c73bb52775b48f5cfcfc35f7f8ae684907ea39744e`.
+
+Installed with `adb install -r` on the Pixel 8 Pro; the installed checksum and
+original certificate match. Session and account data are retained. This remains
+native-preview with fixtures and timing probes disabled. The local cached build
+took 81.3 seconds under the existing two-core/8GB limits; no stronger machine
+or dependency/prebuild change was needed.
+
+This removes `dangerouslySingular` from the native stack's main routes. Reusing
+and reordering mounted native screens could break view ownership and blank the
+app without a fatal exception. The Profile/Friends normal-account regression
+fails on the preceding APK and passes five complete round trips, all Friends
+tabs and Android Back on this candidate. The runtime checks include Fabric soft
+errors; a surviving PID alone is insufficient. Source tests pass 88 assertions,
+mobile typecheck and targeted lint. Route animations remain enabled.
+
+Further recordings verify Profile/Friends and Settings/Account motion and Back;
+subsequent visits through all 14 affected main routes remain usable. The final
+account check passes 2249 caught, 167 Favorites, automatic Favorite descending,
+CP 4713/4689/4688 first and no sync warning. Final native logs have no ownership,
+removal, fatal or ANR markers. The phone is left in dark theme on Profile.
+
+Build/install identity, the rejected APK for reproduction, and before/after
+evidence are private under `.artifacts/profile-friends-slide-2026-09-13/`.
+Run `python3 scripts/check-android-navigation.py --serial DEVICE_SERIAL` with
+adb, Maestro and Java configured to repeat the normal-account check. It never
+clears app data, opens fixture routes or submits account edits. Details and
+remaining long-session/performance limits are in `CURRENT_NATIVE_TESTING_STATUS.md`.
+
+## Previous phone candidate — slides, moves and species gender
+
+Code candidate: `fdf94ecbd7f4fe738c01ee15bc8eaab6909fd92d`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-fdf94ecb-arm64-v8a.apk`.
+SHA-256: `9845e5eb335fee7ae3af4aa31bb640a8bc017e29cd9a5dd22a2cc474de2efc92`.
+
+Installed on the Pixel 8 Pro with `adb install -r`. The installed checksum and
+original signing certificate match; session and account data are retained.
+This is normal native-preview, with device fixtures and UI timing probes disabled.
+It includes native-driven hub gestures, full-width instance move pages, shared
+species gender eligibility, retained outgoing Pokédex pages and Max roster motion.
+`NATIVE_SLIDE_PARITY_REVIEW.md` records implementation and validation boundaries.
+
+The cached native build completed locally in 80.9 seconds with two CPU cores,
+CPUQuota 200%, MemoryHigh 6G, MemoryMax 8G, MemorySwapMax 512M, Java heap 2G and
+two Gradle workers. A stronger machine was not required. Build/install identity
+and final device evidence are private under
+`.artifacts/slides-gender-release-2026-09-13/`.
+
+The initial `7cbac5b8` candidate was rejected on-device; build the final source
+above. A pre-task rollback APK is retained at
+`.artifacts/slides-gender-2026-09-13/previous-before-final.apk` (`e518c7f4`).
+Do not use the rejected candidate as a rollback recommendation.
+
+The repair has 152 passing targeted native tests and 11 Vite tests, plus both
+app typechecks. All four hub gesture paths and five species/requirement gender
+cases passed on `6adf1126`; subsequent changes affect only Pokédex rendering and
+Max roster spacing. Final-source recordings show Pokédex region/index slides,
+rapid reversals, Max All/My, collection drag and instance navigation with no app
+restart. The sampled final log contains no fatal exceptions. Both-theme captures
+retain the white ribbon and full-screen fixes. Account checks and the retained
+filter encountered by the repeat deep-link check are documented in
+`CURRENT_NATIVE_TESTING_STATUS.md`. Existing performance/lifecycle gates remain.
+
+## Previous phone candidate — white ribbon and full-screen backgrounds
+
+Code candidate: `e518c7f430b3b1307ecdc0056cbd641ece1b3604`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-e518c7f4-arm64-v8a.apk`.
+SHA-256: `592043cbbf902c814252862e9e5e77fda990fbef56c68a5847ab9a929f340a15`.
+
+Installed using `adb install -r` with the original signing certificate and account
+data retained. Device fixtures and UI timing probes are disabled. This candidate
+makes caught-date text/divider white in native and Vite, removes the opaque root
+status-bar strip, and retains the screens' content safe areas. Instance-overlay
+status icons remain light even when the rest of the app uses the light theme.
+
+The local build took 80.3 seconds under the existing two-core/8GB limits. No
+stronger machine or native prebuild was required. Installation identity, rollback
+APK and focused checks are private under `.artifacts/ribbon-fullscreen-2026-09-13/`.
+The final phone checks pass both themes, white ribbon text, camera-area backgrounds,
+Home/collection/profile navigation and preserved 2249 caught/167 Favorites with
+the expected Favorite ordering. The phone is left in dark theme on Favorites.
+
+## Previous phone candidate — instance overlay parity
+
+Code candidate: `f762569358d1da3d80bcb086b81d0966b4624a78`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-f7625693-arm64-v8a.apk`.
+SHA-256: `dd69c79d8c345f3cf55041d0ae268f0d05bb21884d42d4c68deb578ddf2acc97`.
+
+Installed on the Pixel 8 Pro using `adb install -r`; the installed checksum
+and original signing certificate match. Session and account data are retained.
+Device-smoke mode and UI performance probes are disabled. This candidate adds
+the Vite CP arc, correct caught ribbon, recorded ball in the lower frame, and
+the Shadow Mega eligibility guard. It also preserves centered Wanted headers.
+See `NATIVE_INSTANCE_OVERLAY_PARITY_REVIEW.md` for the targeted validation.
+
+The build completed locally in 80.2 seconds, reusing the existing native tree,
+with two cores, CPUQuota 200%, MemoryHigh 6G, MemoryMax 8G, MemorySwapMax 512M,
+Java heap 2G, and two Gradle workers. A stronger machine was not required.
+Evidence and the rollback APK are private under
+`.artifacts/instance-overlay-final-2026-09-13/`. The earlier clipped-dot candidate
+and before/after references are in `.artifacts/instance-overlay-parity-2026-09-13/`.
+The performance and lifecycle gates recorded below remain separate work.
+
+## Previous phone candidate — roster/count parity follow-up
+
+Code candidate: `a6155531961a51dd09adade33edc89c503dea6dd`.
+Normal APK: `.artifacts/manual-standalone/PokeGoNexus-manual-a6155531-arm64-v8a.apk`.
+SHA-256: `963fa4ebe129a012f0e92609df971592fd540ef5f306c148de5c5d60e45a27e3`.
+
+The installed checksum matches the normal APK above. Device-smoke mode and
+the UI timing probe are disabled; account data and signing identity are retained.
+
+This build includes shared active collection counts, crown/fusion move hydration,
+correct direct owned-Max loading on Vite, compact native Raid/Max scope controls,
+role colours/medals, bounded SQLite connection recovery, and reduced FAQ renders.
+See `NATIVE_ROUTE_PARITY_REVIEW.md` for root causes and regression evidence.
+The `90fb42fe` normal APK already passed physical Raid All/My (192), Max All/My
+(15), and all Max roles in dark mode; `a6155531` changes only FAQ rendering.
+
+The final normal build took 79.7 seconds using the existing native tree and the
+same resource limits: two cores, CPUQuota 200%, MemoryHigh 6G, MemoryMax 8G,
+MemorySwapMax 512M, Java heap 2G, and two Gradle workers. A stronger machine was
+not required. All APKs retain `com.pokegonexus.app` and the existing signing
+certificate. Installation must use `adb install -r` and retain account data.
+
+The separate `a6155531-probe` APK has UI timing enabled but fixture mode disabled.
+Its SHA is `53e68e93da788ba46720122c64946760521222677123e63d4ded1a555e144d88`.
+It is diagnostic, not the final delivery artifact. Changing the compiled
+`EXPO_PUBLIC_NATIVE_UI_PERFORMANCE` flag requires rebundling with Metro's cache
+reset enabled: Expo suppresses that reset under CI. The normal APK's Hermes
+bytecode was inspected and returns before tracing when device-smoke mode is
+false. Do not infer probe state solely from an APK filename or build metadata.
+
+Final light-mode Home/Raid/Max/FAQ checks pass, including 192 owned Raid and
+15 owned/ranked Max entries. FAQ search, clear, and direct answer navigation
+pass. Three cold-start/background-resume cycles retain 2249 caught without
+observed fatal, sync, or released-database markers; the normal build emits no
+UI timing traces. The final account check passes 167 Favorites, Favorite
+descending, and CP 4713/4689/4688 first. The phone is left in light mode on
+Favorites. These short checks do not close the documented pacing/soak gates.
+
+Final installation and account/lifecycle evidence are recorded under
+`.artifacts/parity-followup-final-2026-09-13/`; earlier follow-up model/route/scroll
+checks are in `.artifacts/parity-followup-2026-09-13/`. These are private artifacts.
+
+## Previous phone candidate — main-route audit
+
+The Pixel 8 Pro now has `PokeGoNexus-manual-a501f03c-arm64-v8a.apk`, built from
+`a501f03c7f4fb59bed95c23ec00ab7b7b5ff782b`. Its installed SHA-256 matches:
+`536c35ae0a95cb98c8e67ccde8257e3aaaddd8049f3a3cc113c38e05b94b82d2`.
+This is the normal native preview with device-smoke mode disabled, installed
+over the existing `com.pokegonexus.app` using `adb install -r`. The signing
+certificate is unchanged and app data was retained.
+
+This candidate repairs the status-bar overlap, legacy authentication recovery,
+light-mode PvP/Max contrast, trainer showcase column widths, and the start-date
+time-zone shift. The 27-route physical account audit and actual All/My tool
+checks are described in `NATIVE_ROUTE_PARITY_REVIEW.md` with their source commits.
+
+On this exact final APK, light-mode captures confirm the readable PvP scope
+buttons and Max values, a regular three-by-two trainer showcase, and the
+correct Jul 6, 2016 start date. Settings loads the real privacy controls without
+an authentication error. Dark-mode checks also pass Pokédex detail, Raid, Max,
+PvP, and profile, including
+scrolled status-bar coverage. The broader 27-route pass used the intermediate
+`0aff1ad5` build; final verification targets the changed screens and both themes.
+
+The final account check passes 2249 caught, 167 Favorites, and automatic
+Favorite descending with CP 4713/4689/4688 first and no collection-sync warning.
+The original light theme was restored, and the phone was left on Favorites.
+Sampled current-process logs contain no fatal, JS-error, ANR, or released-database
+markers; this short sample does not close the intermittent SQLite investigation.
+
+The first bounded native compilation in this review took 13m 8s. The final
+JavaScript-only update reused that native build tree and completed in 55.8s
+(24 tasks executed, 960 up to date), without another prebuild. Both used two CPU
+cores, a 200% CPU quota, 6 GiB memory-high, 8 GiB memory-max, 512 MiB swap-max,
+2 GB Gradle heap, and two Gradle workers. The stronger workstation was not
+required. Reuse the existing native tree only when native dependencies and
+configuration have not changed; otherwise use the normal manual builder.
+
+Evidence is under `.artifacts/route-parity-2026-09-12/`. The initial `033b1f63`
+rollback APK remains `previous-installed.apk`; the intermediate `0aff1ad5`
+rollback is `previous-before-final.apk`. The final APK is under
+`.artifacts/manual-standalone/`.
+
+## Previous phone candidate — Pokédex parity
+
+The physical Pixel 8 Pro previously received
+`PokeGoNexus-manual-033b1f63-arm64-v8a.apk`, including the Pokédex detail and
+region-index parity repairs. Its checksum matched the APK installed at that time:
+`9db948be0ae307b90c40fd2e401590fe83832d3ac472d0d6b5b67802d973ffd0`.
+The package remains `com.pokegonexus.app`, with the existing signing certificate,
+normal native preview, and device-smoke mode disabled. Installation used
+`adb install -r` without clearing app data. The previous `d1e06fc2` APK is retained
+under `.artifacts/pokedex-parity/android-033b1f63/previous-installed.apk`.
+
+This build completed on the original workstation in 10m 15s. In addition to the
+manual builder's single ARM64 ABI, 2 GB Gradle heap, and two Gradle workers, the
+process ran on two CPU cores inside a user systemd scope with a 6 GiB memory-high
+threshold, 8 GiB hard memory limit, and 512 MiB swap limit. The stronger machine
+was not needed for this build. Unrestricted local builds remain inappropriate.
+Installation evidence and focused phone checks are under
+`.artifacts/pokedex-parity/android-033b1f63/`.
+
+Targeted checks on this APK passed Android Back from the region index, the
+four-column grid, selected Mega Charizard X stats/CP/typing, retained hundo
+combination search, initially collapsed More, and all 120 Purified combinations.
+The account still has 2249 caught and 167 Favorites; selecting Favorites uses
+Favorite descending with CP 4713/4689/4688 first. Current-process logs have no
+fatal/JS/ANR or released-database markers. Scrolled content overlapping the
+transparent status bar remains a visual follow-up. These checks do not replace
+the outstanding whole-app and comparative performance gates.
+
+`bb2888cc` restores existing/new Mega and Primal selection, both fusion
+component choices, and app-wide offline/sync/reconnection notices. `d1e06fc2`
+keeps bulk cache application linear and preserves new-copy creation order.
+All 104 focused tests, TypeScript, and lint pass (lint excludes generated
+`.artifacts/` diagnostics). Physical UI, cancellation, connectivity, and account
+verification evidence is recorded under `.artifacts/catalog-forms/` and in
+`CURRENT_NATIVE_TESTING_STATUS.md`.
+
+The earlier `b600f024` candidate established the draggable-scrollbar and page
+alignment checks, including Favorites ordering. Those repairs are retained.
+This functional update does not close the controlled performance comparison
+or the separate SQLite lifecycle investigation recorded in the status document.
+
+The 2026-09-09 phone investigation also corrected a FrameTimeline percentile
+query bug. Older FrameTimeline p95 reports used the 0.95th percentile and must
+be recomputed from their raw traces before reuse. JS interaction-latency
+measurements are separate and unaffected by that query correction.
+
+## Previous manual candidate request (superseded)
+
+The installed `PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk` is now the prior
+baseline. It includes the location-card correction, fixed Trades transition
+hierarchy, reusable Rankings/Max segmented indicator, corrected Pokémon sort
+overlay, and smooth explicit Pokédex region navigation. It does not include the
+next correction: Raid and PvP still have static workspace controls, while
+Rankings and Max move only their indicator and replace the workspace instantly.
+The next build puts all four routes on the shared 200 ms native-thread control
+and directional content motion. It also removes the eager quadratic Trades
+preference projection that can freeze the route for large collections by
+sharing preparation and lazily caching only opened listings.
+
+On the stronger machine, pull the latest clean `mobile/native-migration` HEAD
+and run the existing normal manual command:
+
+```bash
+npm --workspace apps/mobile run build:android:manual
+```
+
+Upload exactly its one generated
+`PokeGoNexus-manual-<commit>-arm64-v8a.apk` plus checksum to the `public` share.
+Do not substitute a device-smoke build and do not put multiple APKs into a new
+download/QR bundle. The receiving workstation should verify the embedded
+`deviceSmokeMode: false` setting and checksum, then install it in place over
+the one existing `com.pokegonexus.app` package so the signed-in session and
+single-app identity remain intact.
+
+## Result on the original workstation
+
+The strong-machine build was completed for commit
+`5c7f025bec6b8f70e520e550d7b0c9d5eef256f9` and retrieved from the mounted
+`public` SMB share as `PokeGoNexus-information-5c7f025b-arm64.apk`. Its SHA-256
+is `2dc4b68743319113f30ad3615a72b544394035f3c4975e12c78ea337ea317882`.
+The APK is ARM64-only, contains the bundled JavaScript for this commit, has a
+non-debuggable manifest, and is locally debug-signed. It is therefore valid as
+a standalone performance candidate, not as a production-distribution or
+ordinary manual-testing binary. It was compiled with device-smoke mode enabled.
+
+The APK installed on the physical 120 Hz Pixel 8 Pro and completed both the
+required five-run workflow and a ten-run repeatability workflow without a
+functional failure, retry, or app crash. The strict ten-sample same-phone
+comparison did **not** fully pass:
+
+| FAQ action | Vite median / p95 | Native median / p95 | Result |
+| --- | ---: | ---: | --- |
+| Topic selection | 111.8 / 149.2 ms | 114.0 / 124.0 ms | Median miss by 2.2 ms |
+| Expand all answers | 47.25 / 137.1 ms | 60.5 / 76.0 ms | Median miss by 13.25 ms |
+| Search | 125.1 / 160.9 ms | 24.0 / 36.0 ms | Pass |
+| Clear | 90.85 / 118.5 ms | 61.0 / 75.0 ms | Pass |
+
+Native was more consistent and had a faster p95 for all four actions, but the
+project's acceptance rule requires both median and p95. The next implementation
+pass should focus only on FAQ topic selection and expand-all median latency,
+then produce a new standalone APK and repeat this gate. Do not rebuild or
+retest this exact candidate expecting it to qualify unchanged.
+
+The first ordinary logged-in check exposed why a smoke APK must not be handed
+to a person as the manual candidate: the test-only 8,000 ms screenshot hold was
+also applied to `/native/raid` and `/native/search`. Phone logs showed each
+destination commit in under 90 ms followed by the overlay remaining visible for
+another 8.16-8.17 seconds. Source after `5c7f025b` scopes that hold to
+`/device-smoke/*`, but a normal manual APK must still be built with smoke mode
+disabled using the command in “Build the manual candidate” below.
+
+## Objective
+
+Build the current `mobile/native-migration` branch as a standalone,
+release-mode, ARM64 Android APK and complete the physical Pixel performance
+gate for the public information/FAQ work. The functional, visual, content, and
+browser-proxy parity checkpoint is commit `278718da`.
+
+Read `CURRENT_NATIVE_TESTING_STATUS.md` before changing application code. The
+canonical Vite application remains the specification, and Native must be no
+slower at both median and p95 for every bounded interaction.
+
+## Why this moved to another machine
+
+- Expo rejected the new `performance-android` build because the account's free
+  Android quota is exhausted until October 1, 2026.
+- No new EAS build was queued. The newest EAS APK is from commit `e77b3c39` and
+  is too old to qualify the current source.
+- The original workstation has 16 GB RAM and 2 GB swap. It has completed recent
+  one-ABI release builds in about five minutes, but previous resource pressure
+  crashed VS Code. Do not run another unrestricted local build there.
+
+## Recommended builder
+
+- 32 GB RAM, or 16 GB RAM with at least 8 GB swap;
+- 8 or more CPU cores;
+- SSD with at least 30 GB free;
+- Node 24, npm, JDK 17, Android SDK/platform tools, and Maestro;
+- an unlocked, USB-authorized physical ARM64 Android phone.
+
+The checked-in runner uses a 2 GB Gradle heap, at most two Gradle workers, no
+persistent Gradle daemon, and automatically selects the connected phone's
+`arm64-v8a` ABI. Do not broaden the build to all four Android ABIs for this
+test. The focused APK should be roughly 64 MB; old multi-ABI EAS artifacts are
+roughly 167 MB.
+
+## Obtain the exact source
+
+From the repository root:
+
+```bash
+git fetch origin
+git switch mobile/native-migration
+git pull --ff-only origin mobile/native-migration
+git status --short --branch
+git rev-parse HEAD
+```
+
+The worktree must be clean. Record the reported commit with the APK and test
+reports. Then install dependencies from `frontend/`:
+
+```bash
+nvm use
+npm ci
+```
+
+## Build and collect Native phone evidence
+
+Connect and unlock the phone, then obtain its ID with the Android SDK's
+`platform-tools/adb devices`. From `frontend/apps/mobile/`, substitute that ID
+for `PGN_ANDROID_DEVICE` and run:
+
+```bash
+PGN_ANDROID_DEVICE=<device-id>
+POKEGONEXUS_ANDROID_DEVICE_ID="$PGN_ANDROID_DEVICE" \
+POKEGONEXUS_ANDROID_REQUIRE_PHYSICAL=true \
+POKEGONEXUS_SMOKE_RUNTIME=standalone \
+POKEGONEXUS_SMOKE_PERFORMANCE=true \
+POKEGONEXUS_PERFORMANCE_SAMPLES=5 \
+POKEGONEXUS_SMOKE_COLOR_SCHEME=dark \
+POKEGONEXUS_SMOKE_FLOW=.maestro-performance/native-information-performance.yaml \
+POKEGONEXUS_SMOKE_ARTIFACT_DIR=.artifacts/performance-parity/native-information-standalone \
+bash scripts/run-android-device-smoke.sh
+```
+
+This command prebuilds Android, compiles one release ABI, installs the APK, and
+runs five isolated FAQ samples. It must not use Metro, Expo Go, a development
+client, or `POKEGONEXUS_SMOKE_SKIP_APK_INSTALL=true`.
+
+Expected outputs:
+
+- APK: `frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk`
+- Native report:
+  `frontend/apps/mobile/.artifacts/performance-parity/native-information-standalone/native-android-performance.json`
+
+If a retained copy is useful, name only one canonical file with the short Git
+commit, for example
+`PokeGoNexus-information-<commit>-arm64.apk`, under the ignored
+`.artifacts/performance-parity/candidates/` directory. Never commit APKs or put
+several obsolete downloads behind one QR.
+
+## Build the manual candidate
+
+The performance APK above deliberately enables deterministic fixture routes and
+instrumentation. Do not install it as the user-facing manual-test build. After
+performance evidence is collected, build one normal Native preview APK from
+`frontend/`:
+
+```bash
+npm --workspace apps/mobile run build:android:manual
+```
+
+The checked-in builder explicitly sets `EXPO_PUBLIC_DEVICE_SMOKE_MODE=false`,
+uses a production/minified bundled JavaScript runtime, builds only ARM64 by
+default, limits Gradle to two workers and a non-persistent daemon, and writes
+one ignored artifact named
+`frontend/apps/mobile/.artifacts/manual-standalone/PokeGoNexus-manual-<commit>-arm64-v8a.apk`.
+Put only that APK in the handback location for manual testing. The receiving
+workstation should verify its checksum, replace the smoke APK on the phone, and
+confirm from logs that ordinary navigation has no 8,000 ms hold.
+
+Completed on 2026-09-06: the strong machine produced
+`PokeGoNexus-manual-0dad5332-arm64-v8a.apk` with SHA-256
+`01456399139065e1dd28c961a415cdd0a22fc264f46cc0137abdd11db57b0c1c`.
+The receiving workstation verified the embedded `deviceSmokeMode: false`
+configuration, installed it in place while preserving the signed-in session,
+and matched the installed package checksum to the source APK. A signed-in
+Home → Raid → Search sanity flow passed with a two-second visibility guard per
+destination and no eight-second loading overlay. This artifact has since been
+superseded on the phone.
+
+Completed on 2026-09-07: the strong machine produced
+`PokeGoNexus-manual-8fa33311-arm64-v8a.apk` with SHA-256
+`aac5842c107d04b3c2627194c60d4ca2ed389684cbc47a84ffb37000786ff758`.
+The receiving workstation matched the shared file to Android's installed
+`base.apk` exactly and verified `deviceSmokeMode: false`. This is the currently
+installed baseline, but it was superseded by the location-card and motion
+candidate below.
+
+Completed on 2026-09-07: the strong machine produced
+`PokeGoNexus-manual-2d87ff8e-arm64-v8a.apk` with SHA-256
+`81d59d5fb7c0860703feb7d43dfcbfb41869fd16a15f21e2e58327ade69fda5a`.
+The receiving workstation verified the public-share checksum, package identity,
+ARM64 ABI, and Android-installed `base.apk` checksum, then installed it in place
+while preserving the app-data lineage. The app launched successfully. This is
+the currently installed baseline, but a newer build is required for the four-
+route content motion and Trades route-stability correction described at the top
+of this handoff.
+
+## Collect the matching Vite phone reference
+
+With the same phone still connected, run from `frontend/`:
+
+```bash
+PGN_ANDROID_DEVICE=<device-id>
+POKEGONEXUS_ANDROID_DEVICE_ID="$PGN_ANDROID_DEVICE" \
+POKEGONEXUS_PERFORMANCE_WORKFLOWS_ONLY=true \
+POKEGONEXUS_PERFORMANCE_WORKFLOW_FILTER=information \
+POKEGONEXUS_PERFORMANCE_SAMPLES=5 \
+POKEGONEXUS_PERFORMANCE_REPORT=.artifacts/performance-parity/vite-information-physical-android.json \
+npm --workspace apps/web run performance:parity:report:android
+```
+
+Compare only the four public-information interactions:
+
+```bash
+node scripts/performance-parity/compare.mjs \
+  --reference .artifacts/performance-parity/vite-information-physical-android.json \
+  --candidate apps/mobile/.artifacts/performance-parity/native-information-standalone/native-android-performance.json \
+  --profile physical-android \
+  --scenario-prefix interaction.information. \
+  --output .artifacts/performance-parity/information-physical-android-result.json
+```
+
+## Acceptance and handback
+
+The gate passes only when all five Native flows complete on the physical phone
+and Native is no slower than Vite at both median and p95 for FAQ topic
+selection, expand-all, search, and clear. A Maestro Android text-injection
+device-server death is harness instability; preserve its logs and retry, but do
+not report it as an app crash without matching logcat evidence.
+
+After a valid pass, update `CURRENT_NATIVE_TESTING_STATUS.md` with the APK
+commit/hash, phone model and refresh rate, exact median/p95 values, report
+paths, and any genuine failures. Commit and push that evidence on
+`mobile/native-migration`. Do not promote the native experience to production
+as part of this task.

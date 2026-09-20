@@ -1,5 +1,5 @@
-import type { PokemonVariant } from '@/types/pokemonVariants';
-import { getCrownFormLabel } from '@/utils/crownHelpers';
+import type { PokemonVariant } from '../../../types/pokemonVariants';
+import { getCrownFormLabel } from '../../../utils/crownHelpers';
 
 export type PvPIvPokemonOption = {
   id: string;

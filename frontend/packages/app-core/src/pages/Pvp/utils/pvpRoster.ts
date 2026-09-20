@@ -1,12 +1,12 @@
-import { resolveRaidRosterFormProjections } from '@/pages/Raid/utils/raidRosterForms';
-import type { InstancesMap, PokemonInstance } from '@/types/pokemonInstance';
-import type { Move } from '@/types/pokemonSubTypes';
-import type { PokemonVariant } from '@/types/pokemonVariants';
-import { cpMultipliers } from '@/utils/constants';
+import { resolveRaidRosterFormProjections } from '../../Raid/utils/raidRosterForms';
+import type { InstancesMap, PokemonInstance } from '../../../types/pokemonInstance';
+import type { Move } from '../../../types/pokemonSubTypes';
+import type { PokemonVariant } from '../../../types/pokemonVariants';
+import { cpMultipliers } from '../../../utils/constants';
 import type {
   PokemonPvPRankingEntry,
   PokemonPvPRankingMove,
-} from '@shared-contracts/pokemon';
+} from '@pokemongonexus/shared-contracts/pokemon';
 
 export type PvPRosterScope = 'catalog' | 'owned';
 

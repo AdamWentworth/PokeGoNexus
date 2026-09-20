@@ -1,0 +1,167 @@
+appId: ${APP_ID}
+name: Native Max Battles performance contract
+tags:
+  - android
+  - performance
+  - native-max
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/tools?tool=max&owned=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Max Battles
+    timeout: 60000
+- extendedWaitUntil:
+    visible: Leafy
+    timeout: 30000
+
+# Rankings workspace: roster, role, type, query, pagination, and disclosure.
+- tapOn:
+    text: ALL POKÉMON
+    waitToSettleTimeoutMs: 750
+- assertVisible: Top damage dealers
+- tapOn:
+    text: Tank
+    waitToSettleTimeoutMs: 750
+- assertVisible: Top tanks
+- tapOn:
+    text: water
+    waitToSettleTimeoutMs: 750
+- assertVisible: Top tanks vs Water
+- tapOn:
+    text: All types
+    waitToSettleTimeoutMs: 750
+- tapOn:
+    text: Search Max rankings
+    waitToSettleTimeoutMs: 750
+- inputText: z
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Gigantamax Lapras
+    timeout: 10000
+- tapOn:
+    text: Search Max rankings
+    waitToSettleTimeoutMs: 750
+- eraseText: 1
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Show .* more Max rankings"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: "Show .* more Max rankings"
+    waitToSettleTimeoutMs: 750
+- scrollUntilVisible:
+    element:
+      text: ".*How Max roles are ranked"
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    text: ".*How Max roles are ranked"
+    waitToSettleTimeoutMs: 750
+- assertVisible: "Damage uses Attack.*"
+
+# Boss workspace: simulation, direct party replacement, and advanced controls.
+- scrollUntilVisible:
+    element:
+      text: Boss teams
+    direction: UP
+    speed: 80
+    timeout: 60000
+- tapOn:
+    text: Boss teams
+    waitToSettleTimeoutMs: 750
+- extendedWaitUntil:
+    visible: "Can this group beat Dynamax Bulbasaur.*"
+    timeout: 15000
+- tapOn:
+    text: Add one Trainer
+    waitToSettleTimeoutMs: 750
+- assertVisible: 2 Trainers
+- scrollUntilVisible:
+    element:
+      text: "Damage team member.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: "Damage team member.*"
+    waitToSettleTimeoutMs: 750
+- extendedWaitUntil:
+    visible: Choose Damage team member
+    timeout: 10000
+- tapOn:
+    text: Select Dynamax Charizard for Damage
+    waitToSettleTimeoutMs: 750
+- scrollUntilVisible:
+    element:
+      text: Advanced setup
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: Advanced setup
+    waitToSettleTimeoutMs: 750
+- assertVisible: Boss HP and model details
+- scrollUntilVisible:
+    element:
+      text: Stress test
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: Stress test
+    waitToSettleTimeoutMs: 750
+- assertVisible: "Miss orbs and targeted dodges.*"
+- scrollUntilVisible:
+    element:
+      text: "Two-star Max.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: "Two-star Max.*"
+    waitToSettleTimeoutMs: 750
+- scrollUntilVisible:
+    element:
+      text: Boss HP estimate
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: Boss HP estimate
+    waitToSettleTimeoutMs: 750
+- inputText: "9"
+- hideKeyboard
+- tapOn:
+    text: Reset recommendations
+    waitToSettleTimeoutMs: 750
+- assertVisible: Collect scheduled meter orbs and dodge targeted warnings.
+
+# Search the complete boss catalog and commit a different simulator target.
+- scrollUntilVisible:
+    element:
+      text: Search Max Battle bosses
+    direction: UP
+    speed: 80
+    timeout: 60000
+- tapOn:
+    text: Search Max Battle bosses
+    waitToSettleTimeoutMs: 750
+- inputText: z
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Select Gigantamax Charizard Max boss
+    timeout: 10000
+- tapOn:
+    text: Select Gigantamax Charizard Max boss
+    waitToSettleTimeoutMs: 750
+- assertVisible: "Can this group beat Gigantamax Charizard.*"
+- takeScreenshot: max-battle-simulator

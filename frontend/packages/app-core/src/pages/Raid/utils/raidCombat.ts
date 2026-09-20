@@ -1,5 +1,5 @@
-import type { PokemonVariant } from "@/types/pokemonVariants";
-import type { Move } from "@/types/pokemonSubTypes";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
+import type { Move } from "../../../types/pokemonSubTypes";
 import { cpMultipliers } from "./constants";
 import {
   getLegalRaidChargedMoves,

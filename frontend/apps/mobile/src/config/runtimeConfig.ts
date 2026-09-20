@@ -1,4 +1,9 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import {
+  resolveMobileExperienceMode,
+  type MobileExperienceMode,
+} from './mobileExperience';
 
 type RuntimeApiConfig = {
   authApiUrl: string;
@@ -22,10 +27,23 @@ type RuntimeRealtimeConfig = {
   allowAccessTokenQueryFallback: boolean;
 };
 
+type RuntimeMobileConfig = {
+  experienceMode: MobileExperienceMode;
+  deviceSmokeMode: boolean;
+  deviceSmokeColorScheme: 'light' | 'dark' | null;
+  deviceSmokeHost: string;
+};
+
 type ExpoExtra = {
   api?: Partial<RuntimeApiConfig>;
   observability?: Partial<RuntimeObservabilityConfig>;
   realtime?: Partial<RuntimeRealtimeConfig>;
+  mobile?: {
+    experienceMode?: unknown;
+    deviceSmokeMode?: unknown;
+    deviceSmokeColorScheme?: unknown;
+    deviceSmokeHost?: unknown;
+  };
 };
 
 const DEFAULT_API_CONFIG: RuntimeApiConfig = {
@@ -65,6 +83,24 @@ const deriveDevFrontendAppUrl = (): string | null => {
 
 const DEFAULT_FRONTEND_APP_URL =
   deriveDevFrontendAppUrl() ?? DEFAULT_API_CONFIG.frontendAppUrl;
+
+const DEV_WEB_FRONTEND_APP_URL = __DEV__ && Platform.OS === 'web'
+  ? deriveDevFrontendAppUrl() ?? 'http://localhost:3000'
+  : null;
+
+const developmentWebApiUrl = (service: keyof Omit<RuntimeApiConfig, 'frontendAppUrl'>): string | null => {
+  if (!DEV_WEB_FRONTEND_APP_URL) return null;
+  const servicePath: Record<keyof Omit<RuntimeApiConfig, 'frontendAppUrl'>, string> = {
+    authApiUrl: 'auth',
+    usersApiUrl: 'users',
+    searchApiUrl: 'search',
+    pokemonApiUrl: 'pokemon',
+    locationApiUrl: 'location',
+    eventsApiUrl: 'events',
+    receiverApiUrl: 'receiver',
+  };
+  return `${DEV_WEB_FRONTEND_APP_URL.replace(/\/$/, '')}/api/${servicePath[service]}`;
+};
 
 const DEFAULT_OBSERVABILITY_CONFIG: RuntimeObservabilityConfig = {
   crashReportUrl: null,
@@ -110,6 +146,9 @@ const sanitizeBoolean = (value: unknown, fallback: boolean): boolean => {
   return fallback;
 };
 
+const sanitizeColorScheme = (value: unknown): 'light' | 'dark' | null =>
+  value === 'light' || value === 'dark' ? value : null;
+
 const readExtra = (): ExpoExtra => {
   const fromExpoConfig = (Constants.expoConfig?.extra ?? {}) as ExpoExtra;
   return fromExpoConfig;
@@ -119,21 +158,23 @@ const extra = readExtra();
 const apiOverrides = extra.api ?? {};
 const observabilityOverrides = extra.observability ?? {};
 const realtimeOverrides = extra.realtime ?? {};
+const mobileOverrides = extra.mobile ?? {};
 
 export const runtimeConfig: {
   api: RuntimeApiConfig;
   observability: RuntimeObservabilityConfig;
   realtime: RuntimeRealtimeConfig;
+  mobile: RuntimeMobileConfig;
 } = {
   api: {
-    authApiUrl: sanitizeUrl(apiOverrides.authApiUrl, DEFAULT_API_CONFIG.authApiUrl),
-    usersApiUrl: sanitizeUrl(apiOverrides.usersApiUrl, DEFAULT_API_CONFIG.usersApiUrl),
-    searchApiUrl: sanitizeUrl(apiOverrides.searchApiUrl, DEFAULT_API_CONFIG.searchApiUrl),
-    pokemonApiUrl: sanitizeUrl(apiOverrides.pokemonApiUrl, DEFAULT_API_CONFIG.pokemonApiUrl),
-    locationApiUrl: sanitizeUrl(apiOverrides.locationApiUrl, DEFAULT_API_CONFIG.locationApiUrl),
-    eventsApiUrl: sanitizeUrl(apiOverrides.eventsApiUrl, DEFAULT_API_CONFIG.eventsApiUrl),
-    receiverApiUrl: sanitizeUrl(apiOverrides.receiverApiUrl, DEFAULT_API_CONFIG.receiverApiUrl),
-    frontendAppUrl: sanitizeUrl(apiOverrides.frontendAppUrl, DEFAULT_FRONTEND_APP_URL),
+    authApiUrl: developmentWebApiUrl('authApiUrl') ?? sanitizeUrl(apiOverrides.authApiUrl, DEFAULT_API_CONFIG.authApiUrl),
+    usersApiUrl: developmentWebApiUrl('usersApiUrl') ?? sanitizeUrl(apiOverrides.usersApiUrl, DEFAULT_API_CONFIG.usersApiUrl),
+    searchApiUrl: developmentWebApiUrl('searchApiUrl') ?? sanitizeUrl(apiOverrides.searchApiUrl, DEFAULT_API_CONFIG.searchApiUrl),
+    pokemonApiUrl: developmentWebApiUrl('pokemonApiUrl') ?? sanitizeUrl(apiOverrides.pokemonApiUrl, DEFAULT_API_CONFIG.pokemonApiUrl),
+    locationApiUrl: developmentWebApiUrl('locationApiUrl') ?? sanitizeUrl(apiOverrides.locationApiUrl, DEFAULT_API_CONFIG.locationApiUrl),
+    eventsApiUrl: developmentWebApiUrl('eventsApiUrl') ?? sanitizeUrl(apiOverrides.eventsApiUrl, DEFAULT_API_CONFIG.eventsApiUrl),
+    receiverApiUrl: developmentWebApiUrl('receiverApiUrl') ?? sanitizeUrl(apiOverrides.receiverApiUrl, DEFAULT_API_CONFIG.receiverApiUrl),
+    frontendAppUrl: DEV_WEB_FRONTEND_APP_URL ?? sanitizeUrl(apiOverrides.frontendAppUrl, DEFAULT_FRONTEND_APP_URL),
   },
   observability: {
     crashReportUrl:
@@ -153,5 +194,19 @@ export const runtimeConfig: {
       realtimeOverrides.allowAccessTokenQueryFallback,
       DEFAULT_REALTIME_CONFIG.allowAccessTokenQueryFallback,
     ),
+  },
+  mobile: {
+    experienceMode: resolveMobileExperienceMode(
+      mobileOverrides.experienceMode,
+    ),
+    // Release smoke builds explicitly opt in through app.config. Ordinary
+    // production builds keep the default false value, while the standalone
+    // lifecycle gate can exercise the same binary shape users receive.
+    deviceSmokeMode: sanitizeBoolean(
+      mobileOverrides.deviceSmokeMode,
+      false,
+    ),
+    deviceSmokeColorScheme: sanitizeColorScheme(mobileOverrides.deviceSmokeColorScheme),
+    deviceSmokeHost: sanitizeString(mobileOverrides.deviceSmokeHost, '10.0.2.2'),
   },
 };

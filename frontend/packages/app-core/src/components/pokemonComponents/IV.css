@@ -160,7 +160,7 @@
   .iv-stat-full .iv-display-label,
   .iv-stat-full .iv-display-value,
   .iv-stat-full .iv-input {
-    color: #c45856;
+    color: #ef8582;
   }
   
   /* Gauge markers (pseudo-elements) */
@@ -221,6 +221,14 @@
   :root[data-theme='light'] :is(.instance-overlay.caught-mode, .trade-instance--caught-layout) .iv-input,
   :root[data-theme='light'] :is(.instance-overlay.caught-mode, .trade-instance--caught-layout) .iv-display-value {
     color: var(--light-text-primary);
+  }
+
+  :root[data-theme='light'] :is(.instance-overlay.caught-mode, .trade-instance--caught-layout) .iv-stat-base :is(.iv-label, .iv-display-label, .iv-display-value, .iv-input) {
+    color: #8a4b00;
+  }
+
+  :root[data-theme='light'] :is(.instance-overlay.caught-mode, .trade-instance--caught-layout) .iv-stat-full :is(.iv-label, .iv-display-label, .iv-display-value, .iv-input) {
+    color: #9b2e2e;
   }
 
   :root[data-theme='light'] :is(.instance-overlay.caught-mode, .trade-instance--caught-layout) .iv-input {

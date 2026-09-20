@@ -6,7 +6,7 @@ import { useInstancesStore } from '@/features/instances/store/useInstancesStore'
 import {
   collectInstanceRefCandidates,
   findInstanceByRefs,
-} from '@/features/instances/utils/instanceIdentity';
+} from '@pokemongonexus/shared-domain/instances';
 
 import type { Fusion } from '@/types/pokemonSubTypes';
 import type { PokemonVariant } from '@/types/pokemonVariants';

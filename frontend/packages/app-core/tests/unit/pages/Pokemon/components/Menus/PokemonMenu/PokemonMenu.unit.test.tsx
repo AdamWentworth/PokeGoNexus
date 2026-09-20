@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildClearActiveTagMessage } from '@pokemongonexus/shared-ui-tokens';
 
 import { AppLoadingProvider } from '@/contexts/AppLoadingContext';
 import { useTagsStore } from '@/features/tags/store/useTagsStore';
@@ -129,9 +130,7 @@ describe('PokemonMenu', () => {
     );
 
     await waitFor(() => {
-      expect(confirmMock).toHaveBeenCalledWith(
-        expect.stringContaining('Clear the Caught tag?'),
-      );
+      expect(confirmMock).toHaveBeenCalledWith(buildClearActiveTagMessage('Caught'));
       expect(onClearTagFilter).toHaveBeenCalledTimes(1);
     });
   });

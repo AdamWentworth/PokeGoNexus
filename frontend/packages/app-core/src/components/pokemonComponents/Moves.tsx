@@ -5,6 +5,7 @@ import './Moves.css';
 import type { Move } from '@/types/pokemonSubTypes';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import { resolveAssetUrl } from '@/utils/assetUrl';
+import { buildPokemonMoveTypeIconPath } from '@pokemongonexus/shared-domain/moves';
 import {
   buildMovePools,
   filterMoveOptions,
@@ -258,7 +259,7 @@ const Moves: React.FC<MovesProps> = ({
       <div className="move-option-container">
         {move ? (
           <img
-            src={`/images/types/${move.type.toLowerCase()}.png`}
+            src={buildPokemonMoveTypeIconPath(move.type)}
             alt={move.type}
             className="type-icon"
           />
@@ -298,7 +299,7 @@ const Moves: React.FC<MovesProps> = ({
       <div className="move-info">
         <div className="move-left">
           <img
-            src={`/images/types/${move.type.toLowerCase()}.png`}
+            src={buildPokemonMoveTypeIconPath(move.type)}
             alt={move.type}
             className="type-icon"
           />

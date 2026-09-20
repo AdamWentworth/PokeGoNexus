@@ -3,9 +3,8 @@ import type {
   MouseEvent as ReactMouseEvent,
   TouchEvent as ReactTouchEvent,
 } from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
-const SWIPE_THRESHOLD = 100;
-const MAX_PEEK_DISTANCE = 0.3;
 const DIRECTION_LOCK_ANGLE = 30;
 const SYSTEM_BACK_GESTURE_EDGE_PX = 24;
 
@@ -81,7 +80,8 @@ export default function useHorizontalSwipe({
 
       if (directionLock.current !== 'horizontal') return;
       const distance = x - startX.current;
-      const maxDistance = window.innerWidth * MAX_PEEK_DISTANCE;
+      const maxDistance = window.innerWidth
+        * collectionExperienceParityContract.pageSwipeMaxPeekRatio;
       onDrag?.(Math.max(-maxDistance, Math.min(maxDistance, distance)));
       lastX.current = x;
     },
@@ -93,7 +93,8 @@ export default function useHorizontalSwipe({
 
     const distance = lastX.current - startX.current;
     onSwipe?.(
-      !disabled && Math.abs(distance) > SWIPE_THRESHOLD
+      !disabled
+        && Math.abs(distance) > collectionExperienceParityContract.pageSwipeThresholdPx
         ? distance > 0
           ? 'right'
           : 'left'

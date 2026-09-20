@@ -1,0 +1,93 @@
+appId: ${APP_ID}
+name: Native information and legal routes smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=getting-started"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "Your first useful trade, step by step."
+- assertVisible: "Start your collection"
+- takeScreenshot: "01-native-getting-started"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=faq"
+- assertVisible: "Frequently asked questions"
+- takeScreenshot: "02-native-faq-initial"
+- tapOn: "Browse Trading questions"
+- scrollUntilVisible:
+    element:
+      text: "How do I propose a trade?"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "How do I propose a trade?"
+- tapOn: "How do I propose a trade?"
+- scrollUntilVisible:
+    element:
+      text: ".*Open another trainer’s For Trade.*"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: ".*Open another trainer’s For Trade.*"
+- takeScreenshot: "02b-native-faq-trading"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=faq&question=remote-trades"
+- assertVisible: "What does the fifth friendship heart mean?"
+- assertVisible: ".*Five hearts represents Forever Friends.*"
+- scrollUntilVisible:
+    element:
+      text: ".*Link to this answer.*"
+    direction: DOWN
+    timeout: 10000
+- tapOn: ".*Link to this answer.*"
+- assertVisible: "Navigate /faq#remote-trades"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=privacy"
+- assertVisible: "Privacy Policy"
+- assertVisible: "Last updated: July 28, 2026"
+- assertNotVisible: "Open action menu"
+- takeScreenshot: "03-native-privacy"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=help"
+- assertVisible: "Help & information"
+- takeScreenshot: "04-native-help"
+- scrollUntilVisible:
+    element:
+      text: "Data deletion"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "Data deletion"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=about"
+- assertVisible: "About Pokémon Go Nexus"
+- takeScreenshot: "05-native-about"
+- scrollUntilVisible:
+    element:
+      text: "One connected model, not a pile of unrelated tools."
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "One connected model, not a pile of unrelated tools."
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=safety"
+- assertVisible: "Trade Safety & Community Guidelines"
+- assertVisible: "Pokémon Go Nexus plans the exchange; Pokémon GO performs it."
+- takeScreenshot: "06-native-safety"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=terms"
+- assertVisible: "Terms of Service"
+- assertVisible: "Last updated: July 28, 2026"
+- assertNotVisible: "Open action menu"
+- takeScreenshot: "07-native-terms"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=data-deletion"
+- assertVisible: "User Data Deletion"
+- assertVisible: "Delete your account in Pokémon Go Nexus"
+- assertNotVisible: "Open action menu"
+- takeScreenshot: "08-native-data-deletion"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=raid-methodology"
+- assertVisible: "How raid rankings work"
+- assertVisible: "Choose the ranking that matches the decision"
+- takeScreenshot: "09-native-raid-methodology"
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=pvp-methodology"
+- assertVisible: "How PvP rankings work"
+- assertVisible: "One workspace, four different jobs"
+- takeScreenshot: "10-native-pvp-methodology"

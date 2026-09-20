@@ -11,6 +11,7 @@ import { useUserSearchStore } from '@/stores/useUserSearchStore';
 import { getEntityKeyFrom } from '@/utils/PokemonIDUtils';
 
 import type { PokemonVariant  } from '@/types/pokemonVariants';
+import type { Instances } from '@/types/instances';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -38,6 +39,9 @@ export interface UseInstanceIdProcessorProps {
   /** List already filtered/search‑sorted by the parent */
   filteredVariants: PokemonVariant[];
 
+  /** Canonical instance map for the catalog currently being viewed. */
+  instances: Instances;
+
   /* router bits */
   location: AppLocation;
   navigate: NavigateFunction;
@@ -58,6 +62,7 @@ export interface UseInstanceIdProcessorProps {
 export default function useInstanceIdProcessor({
   variantsLoading,
   filteredVariants,
+  instances,
   location,
   navigate,
   selectedPokemon,
@@ -73,19 +78,23 @@ export default function useInstanceIdProcessor({
   const { foreignInstancesLoading, viewedInstances } = useUserSearchStore.getState();
   const searchInstances = viewedInstances;
 
+  const queryInstanceId = new URLSearchParams(location.search ?? '').get('instanceId');
+  const requestedInstanceId = location.state?.instanceId ?? queryInstanceId;
+
   useEffect(() => {
-    if (!pendingSelection || location.state?.instanceId || selectedPokemon) return;
+    if (!pendingSelection || requestedInstanceId || selectedPokemon) return;
     setSelectedPokemon({ pokemon: pendingSelection, overlayType: 'instance' });
     setPendingSelection(null);
-  }, [location.state?.instanceId, pendingSelection, selectedPokemon, setSelectedPokemon]);
+  }, [pendingSelection, requestedInstanceId, selectedPokemon, setSelectedPokemon]);
 
   useEffect(() => {
-    if (variantsLoading || foreignInstancesLoading) return;
-    if (!searchInstances || filteredVariants.length === 0) return;
-    if (isOwnCollection || hasProcessedInstanceId) return;
+    if (variantsLoading || (!isOwnCollection && foreignInstancesLoading)) return;
+    if (filteredVariants.length === 0 || hasProcessedInstanceId) return;
 
-    const instanceId = location.state?.instanceId;
+    const instanceId = requestedInstanceId;
     if (!instanceId || selectedPokemon) return;
+    const availableInstances = isOwnCollection ? instances : searchInstances;
+    if (!availableInstances) return;
 
     /* -------------------------------------------------------------- */
     /* 1) Try to find it in the already‑filtered list                 */
@@ -99,7 +108,7 @@ export default function useInstanceIdProcessor({
     /* 2) Fallback: enrich base variant with raw instance data        */
     /* -------------------------------------------------------------- */
     if (!combined) {
-      const raw = searchInstances[instanceId];
+      const raw = availableInstances[instanceId];
       if (raw) {
         const variant = filteredVariants.find(
           (p) => p.pokemon_id === raw.pokemon_id,
@@ -124,7 +133,10 @@ export default function useInstanceIdProcessor({
       // Commit the one-shot deep-link cleanup before mounting the overlay.
       // Otherwise the replace can erase the overlay's browser-Back guard and
       // leave a duplicate catalog entry behind in history.
-      void navigate(`${location.pathname}${location.search ?? ''}`, {
+      const cleanQuery = new URLSearchParams(location.search ?? '');
+      cleanQuery.delete('instanceId');
+      const cleanSearch = cleanQuery.toString();
+      void navigate(`${location.pathname}${cleanSearch ? `?${cleanSearch}` : ''}`, {
         replace: true,
         state: { ...location.state, instanceId: null },
       });
@@ -135,9 +147,11 @@ export default function useInstanceIdProcessor({
   }, [
     variantsLoading,
     foreignInstancesLoading,
+    instances,
     searchInstances,
     filteredVariants,
     location,
+    requestedInstanceId,
     selectedPokemon,
     isOwnCollection,
     hasProcessedInstanceId,

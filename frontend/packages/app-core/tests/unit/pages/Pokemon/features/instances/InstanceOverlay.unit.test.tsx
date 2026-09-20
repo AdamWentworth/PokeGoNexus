@@ -290,8 +290,14 @@ describe('InstanceOverlay', () => {
     });
 
     const background = document.querySelector('.io-bg-img') as HTMLImageElement | null;
+    const backgroundLayer = document.querySelector('.io-bg') as HTMLDivElement | null;
+    const motionShell = document.querySelector('.instance-motion-shell');
     expect(background).not.toBeNull();
     expect(background?.getAttribute('src')).toContain('bg_fire.png');
+    expect(motionShell?.contains(background)).toBe(false);
+    expect(backgroundLayer?.style.getPropertyValue('--io-bg-base-scale')).toBe('1.06');
+    expect(backgroundLayer?.style.getPropertyValue('--io-bg-transition-opacity')).toBe('0.58');
+    expect(backgroundLayer?.style.getPropertyValue('--io-bg-transition-scale')).toBe('1.09');
   });
 
   it('renders type and wanted-lucky backgrounds behind wanted overlays', () => {

@@ -363,6 +363,163 @@ describe('authentication service integration', () => {
     );
   });
 
+  for (const provider of ['google', 'discord', 'facebook']) {
+    test(`native ${provider} OAuth registration creates a bearer mobile session`, async () => {
+      const deviceId = `${validDeviceId}-${provider}-register`;
+      const start = await request(app).post('/auth/mobile/oauth/start').send({
+        provider,
+        intent: 'register',
+        device_id: deviceId
+      });
+      expect(start.status).toBe(201);
+      expect(start.headers['set-cookie']).toBeUndefined();
+      const state = new URL(start.body.authorizationUrl).searchParams.get('state');
+      const callback = await request(app)
+        .get(`/auth/${provider}/callback`)
+        .query({ code: `${provider}-native-register`, state });
+      const code = new URL(callback.headers.location).searchParams.get('oauth_code');
+
+      const exchange = await request(app).post('/auth/mobile/oauth/exchange').send({
+        code,
+        device_id: deviceId
+      });
+      expect(exchange.status).toBe(200);
+      expect(exchange.body).toMatchObject({
+        provider,
+        status: 'registration-required',
+        email: `${provider}.user@example.com`
+      });
+
+      const completed = await request(app)
+        .post('/auth/mobile/oauth/complete-registration')
+        .send({
+          code,
+          device_id: deviceId,
+          username: `native_${provider}`,
+          pokemonGoName: `pogo_${provider}`
+        });
+      expect(completed.status).toBe(201);
+      expect(completed.headers['set-cookie']).toBeUndefined();
+      expect(completed.headers['cache-control']).toContain('no-store');
+      expect(completed.body).toMatchObject({
+        provider,
+        status: 'authenticated',
+        session: {
+          user: { username: `native_${provider}` },
+          accessToken: expect.any(String),
+          refreshToken: expect.any(String)
+        }
+      });
+      const user = await User.findOne({ username: `native_${provider}` }).lean();
+      expect(user.identities).toEqual(expect.arrayContaining([
+        expect.objectContaining({ provider })
+      ]));
+
+      const replay = await request(app)
+        .post('/auth/mobile/oauth/complete-registration')
+        .send({ code, device_id: deviceId, username: `again_${provider}` });
+      expect(replay.status).toBe(409);
+    });
+  }
+
+  test('native OAuth login links a verified matching email and returns a bearer session', async () => {
+    await registerUser({ email: 'google.user@example.com' });
+    const deviceId = `${validDeviceId}-google-login`;
+    const start = await request(app).post('/auth/mobile/oauth/start').send({
+      provider: 'google',
+      intent: 'login',
+      device_id: deviceId
+    });
+    const state = new URL(start.body.authorizationUrl).searchParams.get('state');
+    const callback = await request(app).get('/auth/google/callback')
+      .query({ code: 'native-google-login', state });
+    const code = new URL(callback.headers.location).searchParams.get('oauth_code');
+    const exchange = await request(app).post('/auth/mobile/oauth/exchange').send({
+      code,
+      device_id: deviceId
+    });
+
+    expect(exchange.status).toBe(200);
+    expect(exchange.body).toMatchObject({
+      provider: 'google',
+      status: 'authenticated',
+      session: {
+        user: { username: validLoginId, email: 'google.user@example.com' },
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String)
+      }
+    });
+    expect((await User.findOne({ username: validLoginId }).lean()).identities).toEqual(
+      expect.arrayContaining([expect.objectContaining({ provider: 'google' })])
+    );
+    expect((await request(app).post('/auth/mobile/oauth/exchange').send({
+      code,
+      device_id: deviceId
+    })).status).toBe(409);
+  });
+
+  test('native OAuth preserves login versus registration intent and device binding', async () => {
+    const loginDevice = `${validDeviceId}-unknown-login`;
+    const loginStart = await request(app).post('/auth/mobile/oauth/start').send({
+      provider: 'discord', intent: 'login', device_id: loginDevice
+    });
+    const loginState = new URL(loginStart.body.authorizationUrl).searchParams.get('state');
+    const loginCallback = await request(app).get('/auth/discord/callback')
+      .query({ code: 'unknown-login', state: loginState });
+    const loginCode = new URL(loginCallback.headers.location).searchParams.get('oauth_code');
+    const wrongDevice = await request(app).post('/auth/mobile/oauth/exchange').send({
+      code: loginCode, device_id: `${loginDevice}-wrong`
+    });
+    expect(wrongDevice.status).toBe(409);
+    const unknown = await request(app).post('/auth/mobile/oauth/exchange').send({
+      code: loginCode, device_id: loginDevice
+    });
+    expect(unknown.body).toEqual({ provider: 'discord', status: 'account-not-found' });
+
+    await registerUser({ email: 'facebook.user@example.com' });
+    const registerDevice = `${validDeviceId}-existing-register`;
+    const registerStart = await request(app).post('/auth/mobile/oauth/start').send({
+      provider: 'facebook', intent: 'register', device_id: registerDevice
+    });
+    const registerState = new URL(registerStart.body.authorizationUrl).searchParams.get('state');
+    const registerCallback = await request(app).get('/auth/facebook/callback')
+      .query({ code: 'existing-register', state: registerState });
+    const registerCode = new URL(registerCallback.headers.location).searchParams.get('oauth_code');
+    const existing = await request(app).post('/auth/mobile/oauth/exchange').send({
+      code: registerCode, device_id: registerDevice
+    });
+    expect(existing.body).toEqual({ provider: 'facebook', status: 'account-exists' });
+    expect((await User.findOne({ username: validLoginId }).lean()).identities).toHaveLength(0);
+  });
+
+  test('native OAuth rejects malformed starts and registration conflicts without consuming retry state', async () => {
+    expect((await request(app).post('/auth/mobile/oauth/start').send({
+      provider: 'twitter', intent: 'login', device_id: validDeviceId
+    })).status).toBe(400);
+    expect((await request(app).post('/auth/mobile/oauth/start').send({
+      provider: 'google', intent: 'link', device_id: validDeviceId
+    })).status).toBe(400);
+
+    const deviceId = `${validDeviceId}-retry-register`;
+    const start = await request(app).post('/auth/mobile/oauth/start').send({
+      provider: 'google', intent: 'register', device_id: deviceId
+    });
+    const state = new URL(start.body.authorizationUrl).searchParams.get('state');
+    const callback = await request(app).get('/auth/google/callback')
+      .query({ code: 'retry-register', state });
+    const code = new URL(callback.headers.location).searchParams.get('oauth_code');
+    await request(app).post('/auth/mobile/oauth/exchange').send({ code, device_id: deviceId });
+    await registerUser({ username: 'taken_native' });
+    const conflict = await request(app).post('/auth/mobile/oauth/complete-registration').send({
+      code, device_id: deviceId, username: 'taken_native'
+    });
+    expect(conflict.status).toBe(409);
+    const retried = await request(app).post('/auth/mobile/oauth/complete-registration').send({
+      code, device_id: deviceId, username: 'retry_native'
+    });
+    expect(retried.status).toBe(201);
+  });
+
   test('refresh succeeds with valid refresh token cookie', async () => {
     await registerUser();
 

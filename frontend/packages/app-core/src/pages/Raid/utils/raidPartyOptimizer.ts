@@ -17,7 +17,7 @@ import type {
   RaidSimulationTeamMember,
   RaidTierPreset,
 } from "./raidTypes";
-import type { PokemonVariant } from "@/types/pokemonVariants";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
 
 type RaidPartyEvaluator = (request: {
   trainers: RaidPartyTrainer[];

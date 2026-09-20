@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { attachBrowserDiagnostics } from './support/diagnostics';
 import { installE2eRoutes } from './support/e2eRoutes';
+import { homeExperienceParityContract } from '../../../../packages/shared-ui-tokens/src/index';
 
 const dashboardInstance = (
   instanceId: string,
@@ -102,6 +103,24 @@ test.describe('Home page', () => {
       await expect(featureDirectory.getByRole('link', { name: /^Trades/i })).toBeVisible();
       await expect(page.getByRole('link', { name: /complete illustrated guide/i })).toBeAttached();
       await expect(page.getByRole('link', { name: 'Help & information' })).toBeAttached();
+      const sectionOrder = await page.evaluate(() => {
+        const story = document.querySelector('#trade-matching');
+        const directory = document.querySelector('#feature-directory');
+        return Boolean(story && directory && (
+          story.compareDocumentPosition(directory) & Node.DOCUMENT_POSITION_FOLLOWING
+        ));
+      });
+      expect(sectionOrder).toBe(true);
+      const guestDestinations = new Set(await page.locator('a[href]').evaluateAll((links) => (
+        links.map((link) => link.getAttribute('href')).filter(Boolean)
+      )));
+      for (const destination of [
+        '/', '/about', '/data-deletion', '/faq', '/friends', '/getting-started', '/help',
+        '/login', '/max', '/pokedex', '/pokemon', '/privacy', '/pvp', '/raid', '/rankings',
+        '/register', '/safety', '/search', '/terms', '/trade-board', '/trades',
+      ]) {
+        expect(guestDestinations.has(destination), `missing guest Home link ${destination}`).toBe(true);
+      }
 
       const widths = await page.evaluate(() => ({
         body: document.body.scrollWidth,
@@ -295,7 +314,40 @@ test.describe('Home page', () => {
       await expect(page.getByRole('link', { name: /1 For Trade/ })).toBeVisible();
       await expect(page.getByRole('link', { name: /1 Wanted/ })).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Your latest Pokémon' })).toBeVisible();
+      await expect(page.locator('.home-stat--caught')).toHaveAttribute(
+        'href',
+        homeExperienceParityContract.collectionSummaryPaths.caught,
+      );
+      await expect(page.locator('.home-stat--favorite')).toHaveAttribute(
+        'href',
+        homeExperienceParityContract.collectionSummaryPaths.favorites,
+      );
+      await expect(page.locator('.home-stat--trade')).toHaveAttribute(
+        'href',
+        homeExperienceParityContract.collectionSummaryPaths.trade,
+      );
+      await expect(page.locator('.home-stat--wanted')).toHaveAttribute(
+        'href',
+        homeExperienceParityContract.collectionSummaryPaths.wanted,
+      );
+      for (const recentLink of await page.locator('.home-recent-pokemon a').all()) {
+        await expect(recentLink).toHaveAttribute(
+          'href',
+          homeExperienceParityContract.recentPokemonPath,
+        );
+      }
       await expect(page.getByRole('link', { name: /Help & guides/i })).toBeVisible();
+      const signedInDestinations = new Set(await page.locator('a[href]').evaluateAll((links) => (
+        links.map((link) => link.getAttribute('href')).filter(Boolean)
+      )));
+      for (const destination of [
+        '/', '/help', '/max', '/pokedex', '/pokemon', '/pokemon?filter=caught',
+        '/pokemon?filter=favorites', '/pokemon?filter=trade', '/pokemon?filter=wanted',
+        '/profile', '/profile/friends', '/pvp', '/raid', '/search', '/trade-board',
+        '/trades?section=activity', '/trades?section=preferences',
+      ]) {
+        expect(signedInDestinations.has(destination), `missing signed-in Home link ${destination}`).toBe(true);
+      }
 
       const widths = await page.evaluate(() => ({
         body: document.body.scrollWidth,

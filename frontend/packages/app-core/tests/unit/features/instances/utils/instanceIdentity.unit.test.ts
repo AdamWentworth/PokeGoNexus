@@ -6,7 +6,7 @@ import {
   normalizeInstanceToken,
   parseBackgroundId,
   resolveInstanceCollectionKey,
-} from '@/features/instances/utils/instanceIdentity';
+} from '@pokemongonexus/shared-domain/instances';
 
 describe('instanceIdentity', () => {
   it('normalizes UUID suffixes and legacy variant-prefixed instance ids', () => {

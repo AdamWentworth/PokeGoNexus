@@ -5,7 +5,7 @@ import { initVariantsDB, VARIANTS_STORE } from '@/db/indexedDB';
 import type { PokemonInstance }      from '@/types/pokemonInstance';
 import { parseVariantId }            from '@/utils/PokemonIDUtils';
 import type { PokemonVariant }       from '@/types/pokemonVariants';
-import { normalizeInstanceToken }     from '@/features/instances/utils/instanceIdentity';
+import { normalizeInstanceToken } from '@pokemongonexus/shared-domain/instances';
 
 const parseBasePokemonId = (value: string): number | null => {
   const parsed = Number.parseInt(value, 10);

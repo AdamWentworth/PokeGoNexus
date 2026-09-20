@@ -9,3 +9,4 @@ export * from './location';
 export * from './events';
 export * from './pokemon';
 export * from './receiver';
+export * from './variants';

@@ -1,0 +1,54 @@
+appId: ${APP_ID}
+name: Native collection and action-menu density smoke
+---
+- openLink: ${APP_LINK_BASE}/device-smoke/collection
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: "React Native dev menu"
+    commands:
+      - tapOn: "Close"
+- runFlow:
+    when:
+      visible: ".*version:.*"
+    commands:
+      - tapOn:
+          point: "90%,46%"
+      - waitForAnimationToEnd
+      - assertNotVisible: ".*version:.*"
+- assertVisible: "POKÉMON"
+- assertVisible: "Bulbasaur"
+- assertVisible: "Shiny Bulbasaur"
+- takeScreenshot: density-01-catalog
+- tapOn: "TAGS"
+- assertVisible: "Inventory tags"
+- assertVisible: "Open Favorites, 3 Pokémon"
+- takeScreenshot: density-02-tags
+# The development client's test-only floating Tools button can overlap the right edge of this
+# tab at the narrowest density. Tap the label's clear left-side hit area while
+# retaining a selector that remains valid at tablet and desktop widths.
+- tapOn:
+    text: "WISHLIST"
+    point: "20%,50%"
+- assertVisible: "Wanted tags"
+- assertVisible: "Open Most Wanted, [12] Pokémon"
+- takeScreenshot: density-03-wishlist
+- tapOn: "Open action menu"
+- assertVisible: "Quick navigation"
+- assertVisible: "Raid"
+- assertVisible: "Pokedex"
+- assertVisible: "PvP"
+- assertVisible: "Search"
+- assertVisible: "Home"
+- assertVisible: "Trades"
+- assertVisible: "Pokémon"
+- assertVisible: "Max Battles"
+- assertVisible: "Rankings"
+- takeScreenshot: density-04-action-menu

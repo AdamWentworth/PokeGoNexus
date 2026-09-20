@@ -1,6 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
+    ".": {
+      "entry": ["scripts/performance-parity/capture-android-frame-timeline.mjs"]
+    },
     "apps/web": {
       "entry": ["scripts/**/*.mjs", "tests/browser/**/*.spec.ts"],
       "project": ["**/*.{js,mjs,ts}"]

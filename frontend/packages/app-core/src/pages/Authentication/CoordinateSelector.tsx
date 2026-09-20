@@ -6,7 +6,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
-import XYZ from 'ol/source/XYZ';
+import { createMapTileSource } from '@/utils/createMapTileSource';
 import { Style, Circle, Fill } from 'ol/style';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
@@ -68,11 +68,7 @@ const CoordinateSelector: FC<CoordinateSelectorProps> = ({
   useEffect(() => {
     // Base layer based on the current theme.
     const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: isLightMode
-          ? 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-          : 'https://{1-4}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      }),
+      source: createMapTileSource(isLightMode),
     });
 
     // Layer to display the marker.

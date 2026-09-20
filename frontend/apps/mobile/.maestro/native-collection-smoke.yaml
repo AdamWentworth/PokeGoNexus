@@ -1,0 +1,377 @@
+appId: ${APP_ID}
+name: Native collection runtime and interaction smoke
+tags:
+  - android
+  - native-collection
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?interaction=1
+- runFlow:
+    when:
+      visible: "Something went wrong.*"
+    commands:
+      - tapOn:
+          id: ${APP_ID}:id/reload_button
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 45000
+- assertVisible: Shiny Bulbasaur
+- assertVisible: Shadow Bulbasaur
+- assertNotVisible: For Trade
+- takeScreenshot: 01-pokemon-grid
+- tapOn:
+    text: ^Bulbasaur$
+- assertVisible: "+ Add (1)"
+- tapOn: "+ Add (1)"
+- extendedWaitUntil:
+    visible: Add Pokémon
+    timeout: 10000
+- assertVisible: Caught
+- assertVisible: For Trade
+- assertVisible: Wanted
+- takeScreenshot: 01a-catalog-organizer
+- tapOn: Close Pokémon organizer
+- tapOn:
+    text: ^X$
+- tapOn: Search Pokémon
+- runFlow:
+    when:
+      visible: Try out your stylus
+    commands:
+      - tapOn: Cancel
+- extendedWaitUntil:
+    visible: Variants
+    timeout: 10000
+- assertNotVisible: View Bulbasaur
+- takeScreenshot: 01b-search-filters
+- tapOn:
+    id: native-collection-filter-shiny
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 10000
+- assertNotVisible: View Bulbasaur
+- tapOn: Clear Pokémon search
+- extendedWaitUntil:
+    visible: Variants
+    timeout: 10000
+- tapOn: Close Pokémon search
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 10000
+- tapOn: Sort by NUMBER ascending
+- extendedWaitUntil:
+    visible: COMBAT POWER
+    timeout: 10000
+- assertVisible: RECENT
+- assertVisible: FAVORITE
+- assertVisible: HP
+- takeScreenshot: 01c-sort-menu
+- tapOn:
+    text: ^NAME$
+- assertVisible: Sort by NAME ascending
+- tapOn: Sort by NAME ascending
+- extendedWaitUntil:
+    visible: NUMBER
+    timeout: 10000
+- tapOn:
+    text: ^NUMBER$
+- assertVisible: Sort by NUMBER ascending
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- assertVisible: "Open For Trade, 3 Pokémon"
+- scrollUntilVisible:
+    element:
+      text: "Open Shadow Shinies, 2 Pokémon"
+    direction: DOWN
+- assertVisible: "Open Shadow Shinies, 2 Pokémon"
+- takeScreenshot: 02-inventory-tags
+- assertVisible: ↕ Arrange
+- scrollUntilVisible:
+    element:
+      text: "+ New inventory tag"
+    direction: DOWN
+- assertVisible: "+ New inventory tag"
+- tapOn: Edit Shadow Shinies
+- extendedWaitUntil:
+    visible: Edit tag
+    timeout: 10000
+- assertVisible: Organize your collection without changing a Pokémon’s built-in status.
+- takeScreenshot: 02b-edit-custom-tag
+- tapOn: Close tag editor
+- extendedWaitUntil:
+    notVisible: Edit tag
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Open For Trade, 3 Pokémon"
+    direction: UP
+- tapOn: "Open For Trade, 3 Pokémon"
+- extendedWaitUntil:
+    visible: "(TRADE)"
+    timeout: 10000
+- assertVisible: Shiny Gigantamax Charizard
+- assertVisible: Shiny Suicune
+- takeScreenshot: 03-for-trade-glows
+- longPressOn: "View Shiny Gigantamax Charizard"
+- assertVisible: "Organize (1)"
+- tapOn: "Organize (1)"
+- extendedWaitUntil:
+    visible: Organize Pokémon
+    timeout: 10000
+- assertVisible: For Trade
+- assertVisible: Create Wanted copy
+- assertVisible: Transfer selected
+- takeScreenshot: 03b-existing-organizer
+- tapOn: "New inventory tag"
+- extendedWaitUntil:
+    visible: "New Inventory tag"
+    timeout: 10000
+- assertVisible: Tag name
+- takeScreenshot: 03c-organizer-new-tag
+- tapOn: Close tag editor
+- extendedWaitUntil:
+    visible: Organize Pokémon
+    timeout: 10000
+- tapOn: Close Pokémon organizer
+- tapOn:
+    text: ^X$
+- tapOn: Clear Trade tag filter
+- assertVisible: Confirm action
+- tapOn:
+    text: ^OK$
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 10000
+- assertVisible: Shiny Bulbasaur
+- assertNotVisible: Shiny Suicune
+- takeScreenshot: 04-catalog-restored
+- tapOn: TAGS
+- tapOn: "Open For Trade, 3 Pokémon"
+- swipe:
+    start: 90%, 50%
+    end: 10%, 50%
+    duration: 500
+- extendedWaitUntil:
+    visible: Wanted tags
+    timeout: 10000
+- assertVisible: Most Wanted
+- takeScreenshot: 05-wishlist-tags
+- tapOn: "Open Most Wanted, 2 Pokémon"
+- extendedWaitUntil:
+    visible: "(MOST WANTED)"
+    timeout: 10000
+- assertVisible: Gigantamax Blastoise
+- tapOn: "View Gigantamax Blastoise"
+- extendedWaitUntil:
+    visible: WANTED CONDITIONS
+    timeout: 10000
+- assertVisible: Gigantamax Blastoise
+- assertVisible: ★ Most Wanted
+- assertNotVisible: Previous Pokémon
+- assertNotVisible: Next Pokémon
+- takeScreenshot: 06-wanted-instance
+- tapOn: Close
+- assertNotVisible: WANTED CONDITIONS
+- tapOn: TAGS
+- tapOn: "Open For Trade, 3 Pokémon"
+- tapOn: "View Shiny Gigantamax Charizard"
+- assertVisible: FOR TRADE
+- assertVisible: Wanted Pokémon
+- assertNotVisible: Previous Pokémon
+- assertVisible: Next Pokémon
+- takeScreenshot: 06b-for-trade-instance
+- swipe:
+    start: 85%, 38%
+    end: 15%, 38%
+    duration: 450
+- extendedWaitUntil:
+    visible: Shiny Suicune
+    timeout: 10000
+- swipe:
+    start: 15%, 38%
+    end: 85%, 38%
+    duration: 450
+- extendedWaitUntil:
+    visible: Shiny Gigantamax Charizard
+    timeout: 10000
+- tapOn: Open Gigantamax Blastoise
+- assertVisible: WANTED CONDITIONS
+- assertVisible: Gigantamax Blastoise
+- takeScreenshot: 06bb-target-navigation
+- tapOn: Close
+- tapOn: Clear Trade tag filter
+- assertVisible: Confirm action
+- tapOn:
+    text: ^OK$
+- tapOn: TAGS
+- scrollUntilVisible:
+    element:
+      text: "Open Favorites, 3 Pokémon"
+    direction: UP
+    timeout: 20000
+- tapOn: "Open Favorites, 3 Pokémon"
+- extendedWaitUntil:
+    visible: Sort by FAVORITE descending
+    timeout: 10000
+- tapOn: "View Shiny Shadow Venusaur"
+- assertVisible: Shiny Shadow Venusaur
+- assertVisible: Remove Favorite
+- scrollUntilVisible:
+    element:
+      text: SHADOW BONUS
+    direction: DOWN
+- assertVisible: SHADOW BONUS
+- tapOn: TRAINER BATTLES
+- assertVisible: SHADOW BONUS
+- takeScreenshot: 06cc-shadow-move-presentation
+- tapOn: Close
+- tapOn: "View Shiny Metagross"
+- assertVisible: Shiny Metagross
+- assertVisible: Remove Favorite
+- tapOn: Edit Pokémon
+- assertVisible: Save Pokémon
+- assertVisible: Combat Power
+- tapOn: Open Max Move upgrades
+- scrollUntilVisible:
+    element:
+      text: Max Move Levels
+    direction: DOWN
+    timeout: 20000
+- takeScreenshot: 06d-caught-instance-editor
+- tapOn: Close Max Move upgrades
+- scrollUntilVisible:
+    element:
+      text: Choose location background
+    direction: UP
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Choose location background
+- assertVisible: Choose a background
+- assertVisible: Vancouver City Safari
+- takeScreenshot: 06e-location-background-selector
+- tapOn: Close background selector
+- assertVisible: Save Pokémon
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 78%
+          end: 92%, 25%
+          duration: 500
+- scrollUntilVisible:
+    element:
+      id: native-move-selector-fast-move
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn:
+    id: native-move-selector-fast-move
+- assertVisible: MOVE SELECTOR
+- assertVisible: Bullet Punch
+- takeScreenshot: 06f-move-selector
+- tapOn: Close fast move selector
+- extendedWaitUntil:
+    notVisible: MOVE SELECTOR
+    timeout: 10000
+- assertVisible: Save Pokémon
+- scrollUntilVisible:
+    element:
+      text: Attack
+    direction: DOWN
+    timeout: 20000
+- assertVisible: Attack
+- scrollUntilVisible:
+    element:
+      text: "LUCKY: YES"
+    direction: UP
+    speed: 40
+    timeout: 20000
+- tapOn: "LUCKY: YES"
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          start: 50%, 82%
+          end: 50%, 45%
+          duration: 400
+- scrollUntilVisible:
+    element:
+      text: Original trainer name
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 20000
+- assertVisible: Original trainer name
+- scrollUntilVisible:
+    element:
+      text: Ball Caught
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 20000
+- extendedWaitUntil:
+    visible: Ball Caught
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Ball caught: BEAST BALL"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Ball caught: BEAST BALL"
+- takeScreenshot: 06g-caught-metadata-editor
+- scrollUntilVisible:
+    element:
+      text: Save Pokémon
+    direction: UP
+    visibilityPercentage: 50
+    timeout: 20000
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor
+- takeScreenshot: 06c-caught-instance
+- tapOn: Close
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn: "^Continue$"
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- tapOn: Open action menu
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- assertVisible: Raid
+- assertVisible: Search
+- assertVisible: Pokémon
+- assertVisible: Pokedex
+- assertVisible: Home
+- assertVisible: PvP
+- assertVisible: Trades
+- assertVisible: Rankings
+- assertVisible: Max Battles
+- takeScreenshot: 07-action-menu
+- tapOn: Close
+- assertNotVisible: Quick navigation

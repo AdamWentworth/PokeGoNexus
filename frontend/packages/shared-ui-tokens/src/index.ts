@@ -1,3 +1,7 @@
+import { collectionExperienceParityContract } from './experienceParity';
+
+export * from './experienceParity';
+
 export const colorTokens = {
   background: '#f3f4f6',
   surface: '#ffffff',
@@ -80,5 +84,84 @@ export const webCssVarTokens = {
     overlay: 1000,
     modal: 1001,
     popover: 1002,
+  },
+} as const;
+
+/**
+ * Measured values from the canonical web `/pokemon` experience.
+ *
+ * These are deliberately more specific than the general design tokens above:
+ * the native collection migration is required to preserve the existing page,
+ * not reinterpret it. Keep the CSS and native consumers in sync when the
+ * canonical collection layout changes.
+ */
+export const collectionParityTokens = {
+  colors: {
+    dark: {
+      page: '#111111',
+      header: '#111111',
+      headerActive: '#ffffff',
+      headerInactive: '#abbbb8',
+      textPrimary: '#ffffff',
+      textSecondary: '#aaaaaa',
+      searchSurface: '#ffffff',
+      searchText: '#111111',
+      tagSurface: '#222222',
+      tagTitle: '#ffffff',
+      tagSubtitle: '#dddddd',
+    },
+    light: {
+      page: '#f8fff9',
+      header: '#f8fff9',
+      headerActive: '#405753',
+      headerInactive: '#5c7470',
+      textPrimary: '#405753',
+      textSecondary: '#4b625e',
+      searchSurface: '#e7f3df',
+      searchText: '#405753',
+      tagSurface: '#f8fff9',
+      tagTitle: '#405753',
+      tagSubtitle: '#405753',
+    },
+  },
+  header: {
+    horizontalPaddingNarrow: 10,
+    horizontalPaddingWide: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    underlineMinWidth: 100,
+    underlineViewportRatio: 0.1,
+    underlineHeight: 6,
+    underlineRadius: 3,
+    narrowLabelSize: 11.2,
+    wideLabelSize: 20,
+    transitionMs: collectionExperienceParityContract.pageTransitionMs,
+  },
+  grid: {
+    gap: 8,
+    horizontalPadding: 8,
+    narrowColumns: 3,
+    mediumColumns: 6,
+    wideColumns: 9,
+    mediumBreakpoint: 481,
+    wideBreakpoint: 1024,
+  },
+  tags: {
+    pageInset: 20,
+    contentMaxWidth: 1000,
+    cardMarginVertical: 10,
+    cardPadding: 10,
+    cardRadius: 15,
+    previewCellNarrow: 34,
+    previewCellWide: 60,
+    previewGapNarrow: 10,
+    previewGapWide: 18,
+    previewRows: 2,
+    previewColumnsNarrow: 6,
+    previewColumnsWide: 9,
+    previewInlineInsetNarrow: 20,
+    previewBlockInset: 8,
+    footerHorizontalInset: 10,
+    footerVerticalInset: 8,
   },
 } as const;

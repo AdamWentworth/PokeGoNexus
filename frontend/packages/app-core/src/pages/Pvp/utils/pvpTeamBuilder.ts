@@ -1,4 +1,4 @@
-import type { PokemonPvPRankingEntry } from '@shared-contracts/pokemon';
+import type { PokemonPvPRankingEntry } from '@pokemongonexus/shared-contracts/pokemon';
 
 export type PvPTeamCandidate = {
   key: string;

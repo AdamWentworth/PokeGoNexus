@@ -12,6 +12,7 @@ const { createSession } = require('../services/sessionService');
 const tokenService = require('../services/tokenService');
 const {
   claimNativeOAuthLink,
+  completeNativeOAuthAuthentication,
   completeNativeOAuthLink,
   isNativeOAuthState,
   redirectNativeOAuthError,
@@ -151,6 +152,37 @@ const handleNativeProviderCallback = async ({
 }) => {
   try {
     const identity = await exchangeIdentity();
+    if (transaction.intent !== 'link') {
+      const identityOwner = await User.findOne({
+        identities: { $elemMatch: { provider, subject: identity.subject } }
+      });
+      const emailOwner = identityOwner || await User.findOne({
+        email: String(identity.email || '').trim().toLowerCase()
+      });
+
+      let result;
+      if (transaction.intent === 'register') {
+        result = emailOwner
+          ? { status: 'account-exists' }
+          : { status: 'registration-required', identity };
+      } else if (!emailOwner) {
+        result = { status: 'account-not-found' };
+      } else {
+        if (!identityOwner) {
+          emailOwner[`${provider}Id`] = identity.subject;
+          emailOwner.identities.push({
+            provider,
+            subject: identity.subject,
+            email: identity.email,
+            emailVerified: identity.emailVerified === true
+          });
+          await emailOwner.save({ writeConcern: { w: 'majority' } });
+        }
+        result = { status: 'authenticated', userId: emailOwner._id };
+      }
+      const resultCode = await completeNativeOAuthAuthentication(transaction, result);
+      return redirectNativeOAuthResult(res, resultCode);
+    }
     const linked = await linkProviderIdentity({
       provider,
       identity,

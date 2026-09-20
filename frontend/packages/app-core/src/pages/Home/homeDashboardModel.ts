@@ -1,5 +1,6 @@
 import type { Trade } from '@/features/trades/store/useTradeStore';
 import type { PokemonInstance } from '@/types/pokemonInstance';
+import { summarizeActiveCollection } from '@pokemongonexus/shared-domain/instances';
 
 export interface HomeCollectionSummary {
   caught: number;
@@ -42,25 +43,7 @@ const isCurrentUser = (
 
 export const summarizeHomeCollection = (
   instances: Record<string, PokemonInstance>,
-): HomeCollectionSummary => {
-  const summary: HomeCollectionSummary = {
-    caught: 0,
-    favorites: 0,
-    forTrade: 0,
-    wanted: 0,
-    mostWanted: 0,
-  };
-
-  Object.values(instances).forEach((instance) => {
-    if (instance.is_caught) summary.caught += 1;
-    if (instance.is_caught && instance.favorite) summary.favorites += 1;
-    if (instance.is_caught && instance.is_for_trade) summary.forTrade += 1;
-    if (instance.is_wanted) summary.wanted += 1;
-    if (instance.is_wanted && instance.most_wanted) summary.mostWanted += 1;
-  });
-
-  return summary;
-};
+): HomeCollectionSummary => summarizeActiveCollection(instances);
 
 export const summarizeHomeTrades = (
   trades: Record<string, Trade>,
@@ -115,7 +98,7 @@ export const getRecentHomeInstances = (
   limit = 4,
 ): PokemonInstance[] =>
   Object.entries(instances)
-    .filter(([, instance]) => instance.is_caught || instance.is_wanted)
+    .filter(([, instance]) => !instance.disabled && (instance.is_caught || instance.is_wanted))
     .sort(([, left], [, right]) => {
       const updated = Number(right.last_update ?? 0) - Number(left.last_update ?? 0);
       if (updated !== 0) return updated;

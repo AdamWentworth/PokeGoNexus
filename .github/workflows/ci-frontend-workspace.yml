@@ -5,6 +5,8 @@ on:
     paths:
       - "frontend/packages/app-core/**"
       - "frontend/packages/shared-contracts/**"
+      - "frontend/packages/shared-domain/**"
+      - "frontend/packages/shared-api-client/**"
       - "frontend/packages/shared-ui-tokens/**"
       - "frontend/package.json"
       - "frontend/package-lock.json"
@@ -14,6 +16,8 @@ on:
     paths:
       - "frontend/packages/app-core/**"
       - "frontend/packages/shared-contracts/**"
+      - "frontend/packages/shared-domain/**"
+      - "frontend/packages/shared-api-client/**"
       - "frontend/packages/shared-ui-tokens/**"
       - "frontend/package.json"
       - "frontend/package-lock.json"

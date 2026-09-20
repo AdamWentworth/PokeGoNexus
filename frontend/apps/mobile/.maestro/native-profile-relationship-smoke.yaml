@@ -1,0 +1,62 @@
+appId: ${APP_ID}
+name: Native trainer profile relationship smoke
+tags:
+  - android
+  - native-profile
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/profile-relationship
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Cancel friend request?
+    timeout: 45000
+- assertVisible: Your pending request to Misty will be canceled.
+- tapOn: Cancel request
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn: "^Continue$"
+- assertVisible: Friend request canceled.
+- assertVisible: TRAINER PROFILE
+- assertVisible: CeruleanLeader
+- assertVisible: Add friend
+- tapOn: Add friend
+- assertVisible: Friend request sent.
+- assertVisible: Request sent
+- tapOn: Request sent
+- assertVisible: Cancel friend request?
+- tapOn: Cancel request
+- assertVisible: Friend request canceled.
+- scrollUntilVisible:
+    element:
+      id: native-profile-block-trainer
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- tapOn:
+    id: native-profile-block-trainer
+    point: "50%,25%"
+    retryTapIfNoChange: true
+- assertVisible: Block Misty?
+- tapOn: Block trainer
+- assertVisible: Trainer blocked.
+- scrollUntilVisible:
+    element:
+      text: Blocked
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Blocked
+- takeScreenshot: native-trainer-profile-relationship

@@ -1,7 +1,8 @@
 // src/utils/PokemonIDUtils.ts
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
-import type { PokemonVariant } from '../types/pokemonVariants';
 import type { ParsedKeyParts } from '../types/keys';
+
+export { determineVariantId } from './determineVariantId';
 
 export function generateUUID(): string {
   return uuidv4();
@@ -75,70 +76,4 @@ export function getEntityKeyFrom(input: {
     input?.variant_id ??
     '',
   );
-}
-
-export function determineVariantId(pokemon: PokemonVariant): string {
-  const paddedId = pokemon.pokemon_id.toString().padStart(4, '0');
-  const vt = pokemon.variantType;
-
-  // Quick match for costume-related images
-  if (Array.isArray(pokemon.costumes)) {
-    for (const costume of pokemon.costumes) {
-      const { name, image_url, image_url_shiny, shadow_costume } = costume;
-
-      if (pokemon.currentImage === image_url) {
-        return `${paddedId}-${name}_default`;
-      }
-
-      if (pokemon.currentImage === image_url_shiny) {
-        return `${paddedId}-${name}_shiny`;
-      }
-
-      if (shadow_costume) {
-        if (pokemon.currentImage === shadow_costume.image_url_shadow_costume) {
-          return `${paddedId}-shadow_${name}_default`;
-        }
-
-        if (pokemon.currentImage === shadow_costume.image_url_shiny_shadow_costume) {
-          return `${paddedId}-shadow_${name}_shiny`;
-        }
-      }
-    }
-  }
-
-  // Check variantType suffix matches
-  const explicitSuffixTypes = new Set([
-    'gigantamax',
-    'shiny_gigantamax',
-    'dynamax',
-    'shiny_dynamax',
-    'primal',
-    'shiny_primal',
-  ]);
-
-  if (vt) {
-    if (
-      vt.startsWith('mega') ||
-      vt.startsWith('shiny_mega') ||
-      vt.startsWith('fusion_') ||
-      vt.startsWith('shiny_fusion_') ||
-      explicitSuffixTypes.has(vt)
-    ) {
-      return `${paddedId}-${vt}`;
-    }
-  }
-
-  // Check standard image match fallback
-  if (pokemon.currentImage === pokemon.image_url) {
-    return `${paddedId}-default`;
-  } else if (pokemon.currentImage === pokemon.image_url_shadow) {
-    return `${paddedId}-shadow`;
-  } else if (pokemon.currentImage === pokemon.image_url_shiny) {
-    return `${paddedId}-shiny`;
-  } else if (pokemon.currentImage === pokemon.image_url_shiny_shadow) {
-    return `${paddedId}-shiny_shadow`;
-  }
-
-  // Final fallback: just use the ID if no image match
-  return paddedId;
 }

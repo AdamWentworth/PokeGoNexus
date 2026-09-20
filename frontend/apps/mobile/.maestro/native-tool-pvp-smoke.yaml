@@ -1,0 +1,153 @@
+appId: ${APP_ID}
+name: Native PvP tool smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/tools?tool=pvp&owned=1"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "PvP Rankings"
+- scrollUntilVisible:
+    element:
+      text: "Bulbasaur"
+    direction: DOWN
+    timeout: 15000
+- takeScreenshot: "native-pvp-rankings"
+- scrollUntilVisible:
+    element:
+      text: "My Pokémon"
+    direction: UP
+    timeout: 15000
+- tapOn: "My Pokémon"
+- extendedWaitUntil:
+    visible: "Leafy"
+    timeout: 10000
+- assertVisible: ".*1 fully detailed from 1 caught.*evaluated locally against 3 meta opponents.*"
+- extendedWaitUntil:
+    visible: ".*evaluated locally against 3 meta opponents.*"
+    timeout: 20000
+- assertVisible: "CP 1,477"
+- assertVisible: "0/15/15 IV"
+- takeScreenshot: "native-pvp-owned-roster"
+- tapOn: "All Pokémon"
+- tapOn: "Team Builder"
+- assertVisible: "THREE-POKÉMON TEAM"
+- runFlow:
+    when:
+      visible: "Remove Bulbasaur from Lead"
+    commands:
+      - tapOn: "Remove Bulbasaur from Lead"
+- runFlow:
+    when:
+      visible: "Remove Ivysaur from Safe Swap"
+    commands:
+      - tapOn: "Remove Ivysaur from Safe Swap"
+- assertVisible: "0 / 3"
+- takeScreenshot: "native-pvp-team-builder-empty"
+- scrollUntilVisible:
+    element:
+      text: "Add suggested Bulbasaur"
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- tapOn: "Add suggested Bulbasaur"
+- scrollUntilVisible:
+    element:
+      text: "Add suggested Clodsire"
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- tapOn: "Add suggested Clodsire"
+- assertVisible: "2 / 3"
+- takeScreenshot: "native-pvp-team-builder-filled"
+- scrollUntilVisible:
+    element:
+      text: "Battle Lab"
+    direction: UP
+    speed: 40
+    timeout: 15000
+- tapOn: "Battle Lab"
+- assertVisible: "Simulate a focused matchup"
+- scrollUntilVisible:
+    element:
+      text: "Simulate battle"
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- tapOn: "Simulate battle"
+- assertVisible: "Simulated result"
+- scrollUntilVisible:
+    element:
+      text: "Team battle"
+    direction: UP
+    speed: 40
+    timeout: 15000
+- tapOn: "Team battle"
+- assertVisible: "Switching"
+- scrollUntilVisible:
+    element:
+      text: "Run team battle"
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- tapOn: "Run team battle"
+- scrollUntilVisible:
+    element:
+      text: "SWITCH-AWARE 3V3 RESULT"
+    direction: DOWN
+    speed: 40
+    timeout: 20000
+- assertVisible: "SWITCH-AWARE 3V3 RESULT"
+- takeScreenshot: "native-pvp-team-battle-result"
+- scrollUntilVisible:
+    element:
+      text: "Test meta teams"
+    direction: UP
+    speed: 40
+    timeout: 15000
+- tapOn: "Test meta teams"
+- scrollUntilVisible:
+    element:
+      text: "ROLE-BALANCED META FIELD"
+    direction: DOWN
+    speed: 40
+    timeout: 20000
+- assertVisible: "ROLE-BALANCED META FIELD"
+- scrollUntilVisible:
+    element:
+      text: "IV Rank"
+    direction: UP
+    speed: 40
+    timeout: 15000
+- tapOn: "IV Rank"
+- runFlow:
+    when:
+      visible: ".*version:.*"
+    commands:
+      # The development client can place its own unlabeled developer-tools close control over
+      # this tab. Target that control directly; a text selector can report a
+      # successful tap without dismissing the development-client sheet.
+      - tapOn:
+          point: "90%,46%"
+      - waitForAnimationToEnd
+      - assertNotVisible: ".*version:.*"
+      - tapOn: "IV Rank"
+- assertVisible: "Find the strongest IV spread for this league"
+- tapOn: "Bulbasaur"
+- scrollUntilVisible:
+    element:
+      text: "RANK 1 SPREAD"
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- assertVisible: "RANK 1 SPREAD"
+- takeScreenshot: "native-pvp-iv-rank"

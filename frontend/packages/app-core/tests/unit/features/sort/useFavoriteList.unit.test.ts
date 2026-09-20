@@ -54,4 +54,23 @@ describe('useFavoriteList', () => {
       'cp-invalid',
     ]);
   });
+
+  it('preserves zero CP, stable ties, and the original collection order', () => {
+    const fixtures: FavoriteFixture[] = [
+      { id: 'missing', favorite: true },
+      { id: 'zero', favorite: true, cp: 0, cp50: 5000 },
+      { id: 'tie-first', favorite: true, cp: 1500, pokedex_number: 6 },
+      { id: 'fallback', favorite: true, cp: null, cp50: 2500 },
+      { id: 'tie-second', favorite: true, cp: '1500', pokedex_number: '6' },
+    ];
+    const original = [...fixtures];
+    const { result, rerender } = renderHook(() => useFavoriteList(fixtures));
+    expect(result.current.map(({ id }) => id)).toEqual([
+      'fallback', 'tie-first', 'tie-second', 'zero', 'missing',
+    ]);
+    expect(fixtures).toEqual(original);
+    const sorted = result.current;
+    rerender();
+    expect(result.current).toBe(sorted);
+  });
 });

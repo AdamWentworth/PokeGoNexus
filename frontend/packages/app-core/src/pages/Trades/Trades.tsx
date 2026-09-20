@@ -15,6 +15,7 @@ import TradeStatusButtons from '@/pages/Trades/TradeStatusButtons';
 import TradeTargetsWorkspace from '@/pages/Trades/TradeTargetsWorkspace';
 import type { TradeStatusFilter } from '@/pages/Trades/types';
 import { getStoredUsername } from '@/utils/storage';
+import { countTradeActivity } from '@pokemongonexus/shared-domain/trade-activity';
 
 import './TradeStatusButtons.css';
 import './TradeActivity.css';
@@ -73,25 +74,10 @@ function Trades() {
     activePage: activeSection,
     onChange: setActiveSection,
   });
-  const activityCounts = useMemo(() => {
-    const counts: Record<TradeStatusFilter, number> = {
-      Accepting: 0,
-      Proposed: 0,
-      Pending: 0,
-      Completed: 0,
-      Cancelled: 0,
-    };
-    Object.values(trades ?? {}).forEach((trade) => {
-      const status = String(trade.trade_status ?? '').toLowerCase();
-      if (status === 'proposed') {
-        if (trade.username_accepting === currentUsername) counts.Accepting += 1;
-        if (trade.username_proposed === currentUsername) counts.Proposed += 1;
-      } else if (status === 'pending') counts.Pending += 1;
-      else if (status === 'completed') counts.Completed += 1;
-      else if (status === 'cancelled' || status === 'denied') counts.Cancelled += 1;
-    });
-    return counts;
-  }, [currentUsername, trades]);
+  const activityCounts = useMemo(
+    () => countTradeActivity(Object.values(trades ?? {}), currentUsername),
+    [currentUsername, trades],
+  );
 
   return (
     <AppPageShell

@@ -1,0 +1,128 @@
+appId: ${APP_ID}
+name: Native trade-preferences parity smoke
+tags:
+  - android
+  - native-trades
+  - trade-preferences
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/trade-preferences?coverage=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Trade Preferences
+    timeout: 45000
+- assertVisible: "^For Trade \\([0-9]+\\)$"
+- assertVisible: "^Wanted \\([0-9]+\\)$"
+- assertVisible: Shiny Bulbasaur
+- assertVisible: WANTED POKÉMON
+- assertVisible: Edit preferences
+- tapOn: Trade Activity
+- extendedWaitUntil:
+    visible: Your trades
+    timeout: 10000
+- assertVisible: No trades here
+- takeScreenshot: 00-trade-activity-page
+- tapOn: Trade Preferences
+- extendedWaitUntil:
+    visible: WANTED POKÉMON
+    timeout: 10000
+- swipe:
+    start: "50%,82%"
+    end: "50%,54%"
+    duration: 500
+- extendedWaitUntil:
+    visible: Shiny Charmander
+    timeout: 10000
+- assertNotVisible: Shiny Mewtwo
+- takeScreenshot: 01-for-trade-view
+- scrollUntilVisible:
+    element:
+      text: "^Wanted \\([0-9]+\\)$"
+    direction: UP
+    speed: 40
+    visibilityPercentage: 100
+    timeout: 20000
+- tapOn: "^Wanted \\([0-9]+\\)$"
+- tapOn: "^For Trade \\([0-9]+\\)$"
+- extendedWaitUntil:
+    visible: Edit preferences
+    timeout: 10000
+- tapOn: Edit preferences
+- assertNotVisible: Save changes
+- tapOn: No additional rules
+- assertVisible: Mirror trade
+- scrollUntilVisible:
+    element:
+      text: Must match
+    direction: DOWN
+    speed: 40
+    visibilityPercentage: 100
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: Leave out
+    direction: DOWN
+    speed: 40
+    visibilityPercentage: 100
+    timeout: 20000
+- takeScreenshot: 02-for-trade-edit-rules
+- scrollUntilVisible:
+    element:
+      id: preference-candidate-wanted-metagross
+    direction: DOWN
+    speed: 50
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: preference-candidate-wanted-metagross
+- swipe:
+    start: "20%,82%"
+    end: "20%,44%"
+    duration: 500
+- swipe:
+    start: "20%,82%"
+    end: "20%,44%"
+    duration: 500
+- extendedWaitUntil:
+    visible:
+      id: trade-preferences-save
+    timeout: 10000
+- tapOn:
+    id: trade-preferences-save
+- extendedWaitUntil:
+    visible: Preferences saved.
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "^Wanted \\([0-9]+\\)$"
+    direction: UP
+    speed: 40
+    visibilityPercentage: 100
+    timeout: 20000
+- tapOn:
+    text: "^Wanted \\([0-9]+\\)$"
+- extendedWaitUntil:
+    visible: FOR TRADE POKÉMON
+    timeout: 10000
+- swipe:
+    start: "50%,82%"
+    end: "50%,54%"
+    duration: 500
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 10000
+- assertVisible: Shiny Gigantamax Charizard
+- takeScreenshot: 03-wanted-view

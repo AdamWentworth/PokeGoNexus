@@ -1,0 +1,69 @@
+appId: com.pokegonexus.app
+name: Signed-in Profile and Friends share retained sliding panels
+tags:
+  - android
+  - native-navigation
+---
+# Run on an already signed-in normal APK. This flow never clears app data,
+# opens device fixtures, saves profile edits, or changes trainer relationships.
+- stopApp
+- openLink: pokegonexus://native/profile
+- extendedWaitUntil:
+    visible:
+      id: native-trainer-profile
+    timeout: 45000
+- repeat:
+    times: 5
+    commands:
+      - tapOn:
+          text: "^Friends$"
+          index: 0
+      - extendedWaitUntil:
+          visible: Friends view
+          timeout: 10000
+      - tapOn: Requests view
+      - assertVisible: Incoming requests
+      - tapOn: Find view
+      - assertVisible: Find trainers
+      - tapOn: Blocked view
+      - assertVisible: Blocked trainers
+      - tapOn: Friends view
+      - assertVisible: Your friends
+      - tapOn:
+          text: "^Profile$"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            id: native-trainer-profile
+          timeout: 10000
+# Switching panels must not build route history. Back closes Friends locally;
+# a second Back leaves this workspace, rather than revealing an earlier tab visit.
+- tapOn:
+    text: "^Friends$"
+    index: 0
+- assertVisible: Friends view
+- back
+- assertVisible:
+    id: native-trainer-profile
+- takeScreenshot: profile-friends-after-repeated-visits
+- back
+- assertNotVisible:
+    id: native-trainer-workspace
+# Old Friends links (including notification sub-tabs) enter the same screen.
+- openLink: pokegonexus://native/friends?tab=requests
+- extendedWaitUntil:
+    visible: Incoming requests
+    timeout: 30000
+- tapOn:
+    text: "^Profile$"
+    index: 0
+- assertVisible:
+    id: native-trainer-profile
+- tapOn:
+    text: "^Friends$"
+    index: 0
+- assertVisible: Incoming requests
+- tapOn: Friends view
+- tapOn:
+    text: "^Profile$"
+    index: 0

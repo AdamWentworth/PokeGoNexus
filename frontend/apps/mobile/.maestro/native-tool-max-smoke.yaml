@@ -1,0 +1,145 @@
+appId: ${APP_ID}
+name: Native Max Battles tool smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/tools?tool=max&owned=1"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: "Max Battles"
+    timeout: 45000
+- extendedWaitUntil:
+    visible: "Leafy"
+    timeout: 20000
+- assertVisible: "CP 987.*Level 37.*87% IV"
+- assertVisible: "Max Move.*Grass"
+- assertVisible: "Attack index"
+- assertVisible: "Max power"
+- assertVisible: "1 Max-ready entries from 1 caught Max Pokémon.*"
+- assertVisible: "Recorded level.*recorded IVs.*recorded Fast Move.*"
+- takeScreenshot: "native-tool-max-owned-roster"
+- tapOn: "ALL POKÉMON"
+- assertVisible: "Top damage dealers"
+- takeScreenshot: "native-tool-max-initial"
+- tapOn: "Tank"
+- assertVisible: "Top tanks"
+- assertVisible: "INCOMING ATTACK TYPE"
+- tapOn: "water"
+- assertVisible: "Top tanks vs Water"
+- tapOn: "All types"
+- tapOn: "Search Max rankings"
+- inputText: Charizard
+- hideKeyboard
+- extendedWaitUntil:
+    visible: ".*Charizard.*"
+    timeout: 10000
+- tapOn: "Search Max rankings"
+- eraseText: 20
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Show .* more Max rankings"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Show .* more Max rankings"
+- scrollUntilVisible:
+    element:
+      text: ".*How Max roles are ranked"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*How Max roles are ranked"
+- assertVisible: "Damage uses Attack.*"
+- scrollUntilVisible:
+    element:
+      text: "Boss teams"
+    direction: UP
+    speed: 80
+    timeout: 60000
+- tapOn: "Boss teams"
+- assertVisible: "RECOMMENDED PARTY"
+- assertVisible: "Can this group beat Dynamax Bulbasaur.*"
+- tapOn: "Add one Trainer"
+- assertVisible: "2 Trainers"
+- scrollUntilVisible:
+    element:
+      text: "Damage team member.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Damage team member.*"
+- extendedWaitUntil:
+    visible: "Choose Damage team member"
+    timeout: 10000
+- tapOn: "Select Dynamax Charizard for Damage"
+- scrollUntilVisible:
+    element:
+      text: "Advanced setup"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Advanced setup"
+- assertVisible: "Boss HP and model details"
+- scrollUntilVisible:
+    element:
+      text: "Stress test"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Stress test"
+- assertVisible: "Miss orbs and targeted dodges.*"
+- scrollUntilVisible:
+    element:
+      text: "Two-star Max.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Two-star Max.*"
+- assertVisible: "1 Trainers"
+- scrollUntilVisible:
+    element:
+      text: "Boss HP estimate"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Boss HP estimate"
+- eraseText: 20
+- inputText: "12000"
+- hideKeyboard
+- tapOn: "Reset recommendations"
+- assertVisible: "Collect scheduled meter orbs and dodge targeted warnings."
+- takeScreenshot: "native-tool-max-simulator"
+- scrollUntilVisible:
+    element:
+      text: "Standardized matchup"
+    direction: DOWN
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: ".*expected pressure across legal boss movesets"
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Show .* more Max rankings"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Show .* more Max rankings"
+- scrollUntilVisible:
+    element:
+      text: "Search Max Battle bosses"
+    direction: UP
+    speed: 80
+    timeout: 60000
+- tapOn: "Search Max Battle bosses"
+- inputText: Charizard
+- hideKeyboard
+- assertVisible: "Boss results"
+- tapOn: "Select Gigantamax Charizard Max boss"
+- assertVisible: "Can this group beat Gigantamax Charizard.*"
+- takeScreenshot: "native-tool-max-boss-selected"

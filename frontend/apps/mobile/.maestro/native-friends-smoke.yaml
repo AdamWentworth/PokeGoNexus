@@ -1,0 +1,59 @@
+appId: ${APP_ID}
+name: Native friends workflow smoke
+tags:
+  - android
+  - native-friends
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/friends
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Your friends
+    timeout: 45000
+- assertVisible: HarbourMew
+- takeScreenshot: native-friends-initial
+- tapOn: Remove HarbourMew
+- assertVisible: Remove HarbourMew?
+- tapOn: Remove friend
+- assertVisible: Friend removed.
+- assertVisible: Your friends will appear here. Find a trainer to get started.
+- tapOn: Requests
+- assertVisible: Incoming requests
+- assertVisible: PewterLeader
+- tapOn: Accept Brock
+- assertVisible: Friend request accepted.
+- assertVisible: CeladonLeader
+- tapOn: Decline Erika
+- assertVisible: Friend request declined.
+- assertVisible: No incoming requests.
+- assertVisible: Blue
+- tapOn: Cancel request to Blue
+- assertVisible: Friend request canceled.
+- assertVisible: No sent requests.
+- tapOn: Find
+- assertVisible: Find trainers
+- assertVisible: PalletRival
+- tapOn: Add GaryOak
+- assertVisible: Friend request sent.
+- tapOn: Requests
+- assertVisible: PalletRival
+- tapOn: Find
+- tapOn: Blocked
+- assertVisible: Blocked trainers
+- assertVisible: Rocket
+- tapOn: Unblock Rocket
+- assertVisible: Trainer unblocked.
+- assertVisible: You have not blocked any trainers.
+- takeScreenshot: native-friends-workflow

@@ -26,6 +26,7 @@ import {
 
 const Home = lazy(() => import('./pages/Home/Home'));
 const GettingStarted = lazy(() => import('./pages/Home/GettingStarted'));
+const Download = lazy(() => import('./pages/Download/Download'));
 const Help = lazy(() => import('./pages/Help/Help'));
 const FAQ = lazy(() => import('./pages/FAQ/FAQ'));
 const About = lazy(() => import('./pages/Information/About'));
@@ -73,6 +74,7 @@ const AppContent: React.FC = () => {
           <Routes>
           <Route path="/"             element={<Home />} />
           <Route path="/getting-started" element={<GettingStarted />} />
+          <Route path="/download" element={<Download />} />
           <Route path="/help" element={<Help />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/about" element={<About />} />

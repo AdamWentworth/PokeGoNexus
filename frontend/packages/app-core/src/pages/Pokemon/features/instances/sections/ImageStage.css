@@ -15,7 +15,7 @@
 
 /* Caught overlay only: expand location backdrop to the same max-width column */
 .caught-instance .image-container .background-container {
-  top: -20px;
+  top: -44px;
   left: 50%;
   right: auto;
   width: min(86vw, 447px);
@@ -25,7 +25,7 @@
 .caught-instance .image-container .background-image {
   background-position: center top;
   -webkit-mask-image: radial-gradient(
-    ellipse 57% 94% at 50% 56%,
+    ellipse 57% 62% at 50% 56%,
     rgba(0, 0, 0, 1) 0%,
     rgba(0, 0, 0, 0.98) 52%,
     rgba(0, 0, 0, 0.9) 64%,
@@ -33,7 +33,7 @@
     rgba(0, 0, 0, 0) 88%
   );
   mask-image: radial-gradient(
-    ellipse 57% 94% at 50% 56%,
+    ellipse 57% 62% at 50% 56%,
     rgba(0, 0, 0, 1) 0%,
     rgba(0, 0, 0, 0.98) 52%,
     rgba(0, 0, 0, 0.9) 64%,

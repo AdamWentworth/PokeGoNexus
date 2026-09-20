@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import PokemonCard from '@/pages/Pokemon/components/Menus/PokemonMenu/PokemonCard';
 
 const { pokemonImagePresentationSpy } = vi.hoisted(() => ({
@@ -102,6 +103,23 @@ function renderCard(pokemonOverrides: Record<string, unknown> = {}) {
 }
 
 describe('PokemonCard', () => {
+  it('enters fast-select after the shared collection hold duration', () => {
+    vi.useFakeTimers();
+    const { toggleCardHighlight, setIsFastSelectEnabled } = renderCard({
+      instanceData: { instance_id: 'instance-123' },
+    });
+    const card = screen.getByRole('button', { name: /view bulbasaur details/i });
+
+    fireEvent.touchStart(card, { touches: [{ clientX: 20, clientY: 20 }] });
+    vi.advanceTimersByTime(collectionExperienceParityContract.cardLongPressMs - 1);
+    expect(setIsFastSelectEnabled).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(setIsFastSelectEnabled).toHaveBeenCalledWith(true);
+    expect(toggleCardHighlight).toHaveBeenCalledWith('instance-123');
+    vi.useRealTimers();
+  });
+
   it('uses variant_id as fallback key for modifier-click selection', () => {
     const { toggleCardHighlight, setIsFastSelectEnabled } = renderCard({
       instanceData: {},

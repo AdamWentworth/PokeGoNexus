@@ -10,6 +10,10 @@ import {
 import { WebView } from 'react-native-webview';
 import { runtimeConfig } from '../config/runtimeConfig';
 import { logDebug } from '../observability/logger';
+import {
+  classifyWebNavigation,
+  trustedEmbeddedOrigins,
+} from '../security/webNavigationPolicy';
 
 const PRIMARY_PATH = '/pokemon';
 const FALLBACK_PATH = '/';
@@ -123,20 +127,54 @@ const WEBVIEW_DIAGNOSTIC_SCRIPT = `
 true;
 `;
 
-export const WebReplicaApp = () => {
+type WebReplicaAppProps = {
+  initialPath?: string;
+  onOpenNativePath?: (path: string) => boolean;
+};
+
+const normalizeInitialPath = (value?: string): string => {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return PRIMARY_PATH;
+  return value;
+};
+
+export const WebReplicaApp = ({ initialPath, onOpenNativePath }: WebReplicaAppProps) => {
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAttemptedPathFallbackRef = useRef(false);
   const hasAttemptedHostFallbackRef = useRef(false);
   const hasCompletedInitialLoadRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [baseUrl, setBaseUrl] = useState(runtimeConfig.api.frontendAppUrl);
-  const [path, setPath] = useState(PRIMARY_PATH);
+  const requestedPath = normalizeInitialPath(initialPath);
+  const [path, setPath] = useState(requestedPath);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const targetUrl = useMemo(
     () => resolveUrl(baseUrl, path),
     [baseUrl, path],
   );
+  const trustedOrigins = useMemo(
+    () => trustedEmbeddedOrigins(runtimeConfig.api.frontendAppUrl),
+    [],
+  );
+  const embeddedOriginWhitelist = useMemo(
+    () => [
+      ...trustedOrigins.map((origin) => `${origin}/*`),
+      'about:*',
+      'blob:*',
+      'data:*',
+    ],
+    [trustedOrigins],
+  );
+  const appOrigins = useMemo(() => {
+    const values = [runtimeConfig.api.frontendAppUrl, PROD_FRONTEND_APP_URL];
+    return values.flatMap((value) => {
+      try {
+        return [new URL(value).origin];
+      } catch {
+        return [];
+      }
+    });
+  }, []);
 
   const clearLoadTimeout = () => {
     if (!loadTimeoutRef.current) return;
@@ -171,7 +209,7 @@ export const WebReplicaApp = () => {
       setIsLoading(true);
       setLoadError(null);
       setBaseUrl(PROD_FRONTEND_APP_URL);
-      setPath(PRIMARY_PATH);
+      setPath(requestedPath);
       return;
     }
 
@@ -206,12 +244,38 @@ export const WebReplicaApp = () => {
     setLoadError(null);
     setIsLoading(true);
     setBaseUrl(runtimeConfig.api.frontendAppUrl);
-    setPath(PRIMARY_PATH);
+    setPath(requestedPath);
     setReloadNonce((prev) => prev + 1);
   };
 
   const handleOpenInBrowser = () => {
     void Linking.openURL(targetUrl);
+  };
+
+  const handleNavigationRequest = (url: string): boolean => {
+    const disposition = classifyWebNavigation(url, trustedOrigins);
+    if (disposition === 'embedded') {
+      if (hasCompletedInitialLoadRef.current && onOpenNativePath) {
+        try {
+          const parsed = new URL(url);
+          if (appOrigins.includes(parsed.origin)) {
+            const canonicalPath = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+            if (onOpenNativePath(canonicalPath)) return false;
+          }
+        } catch {
+          // Embedded non-HTTP documents stay in the canonical app.
+        }
+      }
+      return true;
+    }
+
+    if (disposition === 'external') {
+      void Linking.openURL(url).catch(() => {
+        logDebug('webview-navigation', `Unable to open external URL: ${url}`);
+      });
+    }
+
+    return false;
   };
 
   const handleWebViewDiagnosticMessage = (rawMessage: string): void => {
@@ -267,10 +331,10 @@ export const WebReplicaApp = () => {
           <Text style={styles.errorTitle}>Unable to load app</Text>
           <Text style={styles.errorBody}>{loadError}</Text>
           <View style={styles.errorActions}>
-            <Pressable onPress={handleRetry} style={styles.retryButton}>
+            <Pressable accessibilityRole="button" onPress={handleRetry} style={styles.retryButton}>
               <Text style={styles.retryButtonText}>Retry</Text>
             </Pressable>
-            <Pressable onPress={handleOpenInBrowser} style={styles.browserButton}>
+            <Pressable accessibilityRole="button" onPress={handleOpenInBrowser} style={styles.browserButton}>
               <Text style={styles.browserButtonText}>Open in Browser</Text>
             </Pressable>
           </View>
@@ -281,13 +345,16 @@ export const WebReplicaApp = () => {
         testID="web-replica-webview"
         source={{ uri: targetUrl }}
         style={styles.webview}
-        originWhitelist={['*']}
+        originWhitelist={embeddedOriginWhitelist}
         javaScriptEnabled
         domStorageEnabled
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         cacheEnabled={false}
         injectedJavaScriptBeforeContentLoaded={WEBVIEW_DIAGNOSTIC_SCRIPT}
+        onShouldStartLoadWithRequest={(request) =>
+          handleNavigationRequest(request.url)
+        }
         onMessage={(event) =>
           handleWebViewDiagnosticMessage(event.nativeEvent.data)
         }
@@ -319,7 +386,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
@@ -332,7 +399,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   errorOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 30,
     justifyContent: 'center',
     alignItems: 'center',

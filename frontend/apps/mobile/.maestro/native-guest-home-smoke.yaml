@@ -1,0 +1,98 @@
+appId: ${APP_ID}
+name: Native guest landing parity smoke
+tags:
+  - android
+  - native-home
+  - guest
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/home?guest=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: THE ULTIMATE TRAINER HUB
+    timeout: 45000
+- assertVisible: Build your collection.
+- assertVisible: Find the right trade.
+- assertVisible: QUICK NAVIGATION
+- assertVisible: Tap the Poké Ball below to explore the app.
+- takeScreenshot: 01-guest-hero-and-hint
+- tapOn: Open action menu from tip
+- assertVisible: Quick navigation
+- assertVisible: Register
+- assertVisible: Login
+- assertNotVisible: Share Trade Board
+- assertNotVisible: Profile
+- takeScreenshot: 01b-guest-action-menu
+- tapOn: Close
+- assertNotVisible: Quick navigation
+- scrollUntilVisible:
+    element:
+      text: You each have what the other trainer wants
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Explore Pokémon Go Nexus
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Pokémon collection
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- assertVisible: Pokémon collection
+- scrollUntilVisible:
+    element:
+      text: Search & discovery
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Trades
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: The trade is the destination.*
+    direction: DOWN
+    visibilityPercentage: 20
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Trainer tools
+    direction: DOWN
+    visibilityPercentage: 40
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: Trade Board
+    direction: DOWN
+    visibilityPercentage: 40
+    timeout: 20000
+- assertVisible: Trade Board
+- scrollUntilVisible:
+    element:
+      text: Quick start guide
+    direction: DOWN
+    visibilityPercentage: 40
+    timeout: 20000
+- assertVisible: Bring your collection. Find the right trainer.
+- assertVisible: Quick start guide
+- takeScreenshot: 02-guest-features-and-footer

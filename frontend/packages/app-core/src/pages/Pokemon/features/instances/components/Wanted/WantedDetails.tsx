@@ -14,7 +14,7 @@ import useImageSelection from '../../utils/useImageSelection';
 
 import {
   EXCLUDE_IMAGES_trade,
-  FILTER_NAMES,
+  FILTER_NAMES_TRADE,
   INCLUDE_IMAGES_trade,
 } from '../../utils/constants';
 
@@ -113,13 +113,13 @@ const WantedDetails: React.FC<WantedDetailsProps> = ({
     selectedImages: selectedExcludeImages,
     toggleImageSelection: toggleExcludeImageSelection,
     setSelectedImages: setSelectedExcludeImages
-  } = useImageSelection(INCLUDE_IMAGES_trade);
+  } = useImageSelection(EXCLUDE_IMAGES_trade);
 
   const {
     selectedImages: selectedIncludeOnlyImages,
     toggleImageSelection: toggleIncludeOnlyImageSelection,
     setSelectedImages: setSelectedIncludeOnlyImages
-  } = useImageSelection(EXCLUDE_IMAGES_trade);
+  } = useImageSelection(INCLUDE_IMAGES_trade);
 
   const initializeSelection = (filterNames: string[], filters: Record<string, unknown>) => {
     return filterNames.map((name) => !!filters[name]);
@@ -128,10 +128,16 @@ const WantedDetails: React.FC<WantedDetailsProps> = ({
   useEffect(() => {
     if (trade_filters) {
       setSelectedExcludeImages(
-        initializeSelection(FILTER_NAMES.slice(6), trade_filters)
+        initializeSelection(
+          FILTER_NAMES_TRADE.slice(0, EXCLUDE_IMAGES_trade.length),
+          trade_filters,
+        )
       );
       setSelectedIncludeOnlyImages(
-        initializeSelection(FILTER_NAMES.slice(0, 6), trade_filters)
+        initializeSelection(
+          FILTER_NAMES_TRADE.slice(EXCLUDE_IMAGES_trade.length),
+          trade_filters,
+        )
       );
     }
   }, [trade_filters, setSelectedExcludeImages, setSelectedIncludeOnlyImages]);

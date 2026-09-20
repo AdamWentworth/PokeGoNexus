@@ -1,0 +1,121 @@
+appId: ${APP_ID}
+name: Native account security parity smoke
+tags:
+  - android
+  - native-account
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/account
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: LOGIN IDENTITY
+    timeout: 45000
+- assertVisible: Account details
+- takeScreenshot: native-account-security-initial
+- tapOn: Username
+- eraseText: 20
+- inputText: TrainerTwo
+- hideKeyboard
+- tapOn: Current password
+- inputText: Valid_password_42!
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: Email
+    direction: DOWN
+    timeout: 10000
+- tapOn: Email
+- eraseText: 40
+- inputText: trainer.updated@example.com
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: New password
+    direction: DOWN
+    timeout: 10000
+- tapOn: New password
+- inputText: Stronger_password_43!
+- scrollUntilVisible:
+    element:
+      text: Confirm new password
+    direction: DOWN
+    timeout: 10000
+- tapOn: Confirm new password
+- inputText: Stronger_password_43!
+- hideKeyboard
+- tapOn: Update account
+- assertVisible: Account updated.
+- tapOn: Dismiss message
+- scrollUntilVisible:
+    element:
+      text: Connected accounts
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: demo@pokegonexus.local
+    direction: DOWN
+    timeout: 10000
+- assertVisible: demo@pokegonexus.local
+- tapOn: Disconnect Google
+- assertVisible: Disconnect Google?
+- assertVisible: Current password
+- tapOn: Enter your account password
+- inputText: Stronger_password_43!
+- hideKeyboard
+- tapOn: Disconnect
+- assertVisible: Google disconnected.
+- tapOn: Dismiss message
+- assertVisible: Connect Google
+- tapOn: Connect Google
+- assertVisible: Google connected.
+- tapOn: Dismiss message
+- tapOn: Connect Discord
+- assertVisible: Discord connected.
+- tapOn: Dismiss message
+- scrollUntilVisible:
+    element:
+      text: Sign out every device
+    direction: DOWN
+    centerElement: true
+    timeout: 10000
+- tapOn:
+    text: Sign out every device
+    point: "15%,50%"
+    retryTapIfNoChange: true
+- assertVisible: Sign out every device?
+- assertVisible: Current password
+- tapOn: Enter your account password
+- inputText: Stronger_password_43!
+- hideKeyboard
+- tapOn: Sign out every device
+- assertVisible: All sessions revoked.
+- tapOn: Dismiss message
+- assertNotVisible: All sessions revoked.
+- scrollUntilVisible:
+    element:
+      id: native-account-delete-button
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+- tapOn:
+    id: native-account-delete-button
+- extendedWaitUntil:
+    visible: Permanently delete your account?
+    timeout: 10000
+- takeScreenshot: native-account-security-confirmation
+- tapOn: Cancel
+- assertVisible: Delete account
+- takeScreenshot: native-account-security

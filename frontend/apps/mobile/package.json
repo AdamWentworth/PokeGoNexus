@@ -1,44 +1,98 @@
 {
   "name": "mobile",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start:dev-client": "expo start --dev-client",
+    "start:native-preview": "cross-env EXPO_PUBLIC_MOBILE_EXPERIENCE=native-preview expo start --dev-client",
+    "start:native-preview:performance": "cross-env EXPO_PUBLIC_MOBILE_EXPERIENCE=native-preview expo start --dev-client --no-dev --minify",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
+    "assets:collection-glow": "node scripts/build-native-collection-status-glow.mjs",
+    "assets:spinner": "node scripts/build-native-loading-spinner-strips.mjs",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "parity:smoke:web": "node scripts/run-native-web-parity-smoke.mjs",
+    "parity:routes:web": "node scripts/run-native-real-route-smoke.mjs",
+    "parity:routes:web:performance": "cross-env POKEGONEXUS_REAL_ROUTE_PERFORMANCE=true node scripts/run-native-real-route-smoke.mjs",
+    "parity:audit:sheets": "node scripts/build-native-parity-contact-sheets.mjs",
+    "device:smoke:android": "bash scripts/run-android-device-smoke.sh",
+    "build:android:manual": "bash scripts/build-android-manual-standalone.sh",
+    "performance:android:report": "node scripts/build-android-performance-report.mjs",
+    "performance:parity:android:release": "cross-env POKEGONEXUS_ANDROID_REQUIRE_PHYSICAL=true POKEGONEXUS_SMOKE_RUNTIME=standalone POKEGONEXUS_SMOKE_PERFORMANCE=true POKEGONEXUS_SMOKE_COLOR_SCHEME=dark POKEGONEXUS_SMOKE_FLOW=.maestro-performance POKEGONEXUS_SMOKE_ARTIFACT_DIR=.artifacts/performance-parity/native-android bash scripts/run-android-device-smoke.sh",
+    "device:smoke:android:release-lifecycle": "cross-env POKEGONEXUS_SMOKE_RUNTIME=standalone POKEGONEXUS_SMOKE_NETWORK=offline POKEGONEXUS_SMOKE_FLOW=.maestro-release/native-persistence-lifecycle.yaml bash scripts/run-android-device-smoke.sh"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.6",
+    "@expo/metro-runtime": "~57.0.16",
+    "@maplibre/maplibre-react-native": "^11.3.7",
+    "@pokemongonexus/app-core": "file:../../packages/app-core",
+    "@pokemongonexus/shared-api-client": "file:../../packages/shared-api-client",
+    "@pokemongonexus/shared-contracts": "file:../../packages/shared-contracts",
+    "@pokemongonexus/shared-domain": "file:../../packages/shared-domain",
     "@pokemongonexus/shared-ui-tokens": "file:../../packages/shared-ui-tokens",
-    "expo": "~55.0.29",
-    "expo-constants": "~55.0.15",
-    "expo-status-bar": "~55.0.6",
-    "react": "19.2.0",
-    "react-native": "0.83.10",
-    "react-native-safe-area-context": "~5.6.2",
-    "react-native-webview": "13.16.0"
+    "@react-native-community/netinfo": "12.0.1",
+    "@react-native-community/slider": "5.2.0",
+    "@tanstack/react-query": "^5.102.2",
+    "expo": "~57.0.24",
+    "expo-clipboard": "~57.0.2",
+    "expo-constants": "~57.0.16",
+    "expo-crypto": "~57.0.3",
+    "expo-dev-client": "~57.0.19",
+    "expo-image": "~57.0.5",
+    "expo-linear-gradient": "~57.0.2",
+    "expo-linking": "~57.0.10",
+    "expo-router": "~57.0.22",
+    "expo-secure-store": "~57.0.4",
+    "expo-sharing": "~57.0.21",
+    "expo-splash-screen": "~57.0.9",
+    "expo-sqlite": "~57.0.3",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "expo-web-browser": "~57.0.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-qrcode-svg": "^6.3.21",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-sse": "^1.2.1",
+    "react-native-svg": "15.15.4",
+    "react-native-view-shot": "5.1.0",
+    "react-native-web": "^0.21.2",
+    "react-native-webview": "13.16.1",
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",
-    "@types/react": "19.2.10",
+    "@types/pngjs": "^6.0.5",
+    "@types/react": "~19.2.14",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.3",
-    "eslint-config-expo": "~55.0.1",
+    "eslint-config-expo": "~57.0.2",
     "jest": "29.7.0",
-    "jest-expo": "~55.0.21",
-    "react-test-renderer": "19.2.0",
-    "typescript": "~5.9.2"
+    "jest-expo": "~57.0.5",
+    "pngjs": "^3.4.0",
+    "react-test-renderer": "19.2.8",
+    "sharp": "^0.35.4",
+    "typescript": "~6.0.3"
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setupTests.ts"
+    ],
     "moduleNameMapper": {
-      "^react$": "<rootDir>/node_modules/react",
-      "^react/(.*)$": "<rootDir>/node_modules/react/$1"
+      "^react$": "<rootDir>/../../node_modules/react",
+      "^react/(.*)$": "<rootDir>/../../node_modules/react/$1"
     },
     "roots": [
       "<rootDir>/tests"
@@ -46,6 +100,14 @@
     "testPathIgnorePatterns": [
       "/node_modules/"
     ]
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "react",
+        "react-dom"
+      ]
+    }
   },
   "private": true
 }

@@ -261,14 +261,16 @@ test('records satisfaction only from completed trade history', async ({ page }) 
     user_1_trade_satisfaction: false,
     user_2_trade_satisfaction: false,
   };
+  const trades = { [trade.trade_id]: trade };
   await installE2eRoutes(page, {
-    trades: { [trade.trade_id]: trade },
+    trades,
     userOverview: { related_instances: instances },
   });
   await routeTradeCommand(page, async (route) => {
     expect(route.request().method()).toBe('PUT');
     expect(route.request().postDataJSON()).toEqual({ satisfied: true });
     trade = { ...trade, user_2_trade_satisfaction: true, last_update: 200 };
+    trades[trade.trade_id] = trade;
     await json(route, { trade, affected_instances: {} });
   });
 

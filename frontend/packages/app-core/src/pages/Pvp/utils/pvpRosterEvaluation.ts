@@ -2,8 +2,8 @@ import type {
   PokemonPvPRankingEntry,
   PokemonPvPBattleMechanics,
   PokemonPvPRosterEvaluationResponse,
-} from '@shared-contracts/pokemon';
-import type { PokemonVariant } from '@/types/pokemonVariants';
+} from '@pokemongonexus/shared-contracts/pokemon';
+import type { PokemonVariant } from '../../../types/pokemonVariants';
 
 import { type OwnedPvPRankingEntry } from './pvpRoster';
 import { buildPvPBattleFighter, buildPvPEntryFighter } from './pvpBattleLab';

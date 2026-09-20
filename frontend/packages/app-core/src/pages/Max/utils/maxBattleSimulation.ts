@@ -1,5 +1,5 @@
-import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { MaxBattleProfile } from '@shared-contracts/pokemon';
+import type { MaxBattleProfile } from '@pokemongonexus/shared-contracts/pokemon';
+import type { PokemonVariant } from '@pokemongonexus/shared-contracts/variants';
 
 import {
   MAX_MODEL_CONSTANTS,

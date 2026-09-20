@@ -1,5 +1,5 @@
-import type { Move, CrownForm } from '@/types/pokemonSubTypes';
-import { resolveActiveCrownForm } from '@/utils/crownHelpers';
+import type { Move, CrownForm } from '../../types/pokemonSubTypes';
+import { resolveActiveCrownForm } from '../../utils/crownHelpers';
 
 type CrownMoveState = {
   is_crown: boolean;

@@ -1,0 +1,60 @@
+appId: ${APP_ID}
+name: Native standalone offline persistence lifecycle
+tags:
+  - android
+  - native-release
+  - native-offline
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/persistence?owner=alpha
+- extendedWaitUntil:
+    visible: Offline storage proof
+    timeout: 45000
+- extendedWaitUntil:
+    visible: "Alpha cache: empty"
+    timeout: 30000
+- assertVisible: "Alpha outbox: 0 pending · 0 accepted"
+- tapOn: Seed offline cache and mutation
+- extendedWaitUntil:
+    visible: "Alpha outbox: 1 pending · 0 accepted"
+    timeout: 30000
+- assertVisible: Offline mutation retained in SQLite.
+- assertVisible: "Alpha cache: retained"
+- assertVisible: "Last sync error: offline"
+- stopApp
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/persistence?owner=alpha
+- extendedWaitUntil:
+    visible: "Alpha outbox: 1 pending · 0 accepted"
+    timeout: 30000
+- assertVisible: "Alpha cache: retained"
+- assertVisible: "Last sync error: offline"
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/persistence?owner=beta
+- extendedWaitUntil:
+    visible: "Beta cache: empty"
+    timeout: 15000
+- assertVisible: "Beta outbox: 0 pending · 0 accepted"
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/persistence?owner=alpha
+- extendedWaitUntil:
+    visible: "Alpha outbox: 1 pending · 0 accepted"
+    timeout: 15000
+- tapOn: Accept by Receiver
+- extendedWaitUntil:
+    visible: "Alpha outbox: 0 pending · 1 accepted"
+    timeout: 30000
+- assertVisible: Receiver accepted the retained mutation.
+- stopApp
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/persistence?owner=alpha
+- extendedWaitUntil:
+    visible: "Alpha outbox: 0 pending · 1 accepted"
+    timeout: 30000
+- tapOn: Confirm canonical snapshot
+- extendedWaitUntil:
+    visible: "Alpha outbox: 0 pending · 0 accepted"
+    timeout: 30000
+- assertVisible: Canonical snapshot confirmed the mutation.
+- assertVisible: "Alpha cache: retained"
+- takeScreenshot: native-release-offline-persistence

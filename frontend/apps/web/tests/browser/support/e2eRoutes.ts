@@ -4,7 +4,9 @@ import path from 'node:path';
 import type { Page, Route } from '@playwright/test';
 
 export type E2eRouteOptions = {
+  baseUrl?: string;
   mockImages?: boolean;
+  preserveBrowserConnectivity?: boolean;
   searchResults?: unknown[];
   communityRankings?: unknown;
   locationSuggestions?: unknown[];
@@ -13,11 +15,13 @@ export type E2eRouteOptions = {
   friendsOverview?: unknown;
   trainerPreferences?: unknown;
   userInstances?: unknown;
+  syncInstances?: Record<string, unknown>;
   publicUser?: unknown;
   userOverview?: unknown;
   trades?: unknown;
   pokedexSpecies?: unknown[];
   pokemonCatalogDelayMs?: number;
+  pvpData?: unknown;
   raidDataDelayMs?: number;
   customTags?: unknown[];
   tagOrders?: {
@@ -103,7 +107,7 @@ const makePvPEntry = (
   name,
   pokemonId,
   variantKind: 'pokemon',
-  imageUrl: `/images/pokemon/${rank}.png`,
+  imageUrl: `/images/default/pokemon_${pokemonId}.png`,
   types: [type],
   moveset: [
     {
@@ -171,7 +175,7 @@ const makePvPEntry = (
   statProduct: (100 + rank) * (130 - rank) * (140 + rank),
 });
 
-const pvpDataFixture = {
+export const pvpDataFixture = {
   source: {
     name: 'PvPoke',
     version: 'e2e-pvpoke',
@@ -186,8 +190,8 @@ const pvpDataFixture = {
       label: 'Great League',
       cpLimit: 1_500,
       entries: [
-        makePvPEntry(1, 'clodsire', 'Clodsire', 'poison', 'Earthquake'),
-        makePvPEntry(2, 'azumarill', 'Azumarill', 'water', 'Play Rough'),
+        makePvPEntry(1, 'clodsire', 'Clodsire', 'poison', 'Earthquake', 980),
+        makePvPEntry(2, 'azumarill', 'Azumarill', 'water', 'Play Rough', 184),
         makePvPEntry(3, 'bulbasaur', 'Bulbasaur', 'grass', 'Seed Bomb', 1),
       ],
     },
@@ -369,6 +373,17 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
     });
   }
 
+  if (!options.preserveBrowserConnectivity) {
+    // Mocked browser tests are intentionally self-contained and should not inherit a
+    // transient offline signal from the host or a neighboring Chromium context.
+    await page.addInitScript(() => {
+      Object.defineProperty(Navigator.prototype, 'onLine', {
+        configurable: true,
+        get: () => true,
+      });
+    });
+  }
+
   await page.addInitScript(() => {
     const eventSources = new Set<MockEventSource>();
     class MockEventSource extends EventTarget {
@@ -486,7 +501,7 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
 
   for (const pathPattern of ['**/api/pokemon/pvp-data', '**/__e2e/pokemon/pvp-data']) {
     await page.route(pathPattern, async (route) => {
-      await fulfillJson(route, pvpDataFixture);
+      await fulfillJson(route, options.pvpData ?? pvpDataFixture);
     });
   }
 
@@ -648,7 +663,13 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
 
   for (const pathPattern of ['**/api/users/instances/sync**', '**/__e2e/users/instances/sync**']) {
     await page.route(pathPattern, async (route) => {
-      await fulfillJson(route, { checkpoint: 'e2e-checkpoint', not_modified: true });
+      await fulfillJson(route, options.syncInstances
+        ? {
+            checkpoint: 'e2e-performance-checkpoint',
+            instances: options.syncInstances,
+            not_modified: false,
+          }
+        : { checkpoint: 'e2e-checkpoint', not_modified: true });
     });
   }
 

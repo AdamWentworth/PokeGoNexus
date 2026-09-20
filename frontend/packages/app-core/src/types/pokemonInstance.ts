@@ -6,4 +6,4 @@ export type {
   PokemonSizeClass,
   WantedSizePreferences,
   WantedSizeRange,
-} from '@shared-contracts/instances';
+} from '@pokemongonexus/shared-contracts/instances';

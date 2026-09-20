@@ -33,6 +33,7 @@ describe('pokemonDisplayPresentation', () => {
           fusion_form: 'Dawn Wings Necrozma',
           crown: true,
           purified: true,
+          dynamax: true,
         },
       }),
     ).toEqual({
@@ -76,13 +77,13 @@ describe('pokemonDisplayPresentation', () => {
     expect(determineImageUrlMock).not.toHaveBeenCalled();
   });
 
-  it('normalizes display attributes before delegating image selection', () => {
+  it('normalizes catalog display attributes before delegating image selection', () => {
     determineImageUrlMock.mockReset();
     determineImageUrlMock.mockReturnValue('/images/custom.png');
 
     expect(
       resolvePokemonDisplayImageUrl({
-        pokemon: basePokemon,
+        pokemon: { ...basePokemon, instanceData: undefined },
         attributes: {
           isFemale: true,
           isMega: true,
@@ -99,7 +100,7 @@ describe('pokemonDisplayPresentation', () => {
 
     expect(determineImageUrlMock).toHaveBeenCalledWith(
       true,
-      basePokemon,
+      { ...basePokemon, instanceData: undefined },
       true,
       'X',
       true,
@@ -109,5 +110,22 @@ describe('pokemonDisplayPresentation', () => {
       true,
       'Crowned Sword',
     );
+  });
+
+  it('uses the shared owned-instance artwork resolver before renderer-specific code', () => {
+    determineImageUrlMock.mockReset();
+
+    expect(
+      resolvePokemonDisplayImageUrl({
+        pokemon: {
+          ...basePokemon,
+          image_url: '/images/base.png',
+          image_url_shiny: '/images/shiny.png',
+          instanceData: { shiny: true },
+        },
+        attributes: {},
+      }),
+    ).toBe('/images/shiny.png');
+    expect(determineImageUrlMock).not.toHaveBeenCalled();
   });
 });

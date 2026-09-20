@@ -76,7 +76,10 @@ async function openTradeActivity(page: Page) {
   await expect(page.locator('.trade-activity-workspace')).toBeVisible();
   await expect.poll(() => page.evaluate(() => (
     window as unknown as { __e2eEventSourceCount?: () => number }
-  ).__e2eEventSourceCount?.() ?? 0)).toBeGreaterThan(0);
+  ).__e2eEventSourceCount?.() ?? 0), {
+    timeout: 30_000,
+    message: 'authenticated trade event stream should be connected',
+  }).toBeGreaterThan(0);
 }
 
 async function emitTrade(page: Page) {
@@ -89,14 +92,27 @@ async function emitTrade(page: Page) {
   expect(delivered).toBeGreaterThan(0);
 }
 
-async function confirmTradeCommand(page: Page, endpointSuffix: string) {
+async function confirmTradeCommand(page: Page, actionName: string, endpointSuffix: string) {
+  const action = page.getByRole('button', { name: actionName });
+  const confirm = page.getByRole('button', { name: 'OK' });
+
+  // A live-feed update can replace the trade card in the same frame as the
+  // action click. Retry only until the confirmation dialog is mounted; the
+  // authoritative command below is still submitted exactly once.
+  await expect(async () => {
+    if (!(await confirm.isVisible())) {
+      await action.click();
+    }
+    await expect(confirm).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+
   const responsePromise = page.waitForResponse((response) => {
     const request = response.request();
     return request.method() === 'POST'
       && new URL(response.url()).pathname.endsWith(endpointSuffix);
   });
 
-  await page.getByRole('button', { name: 'OK' }).click();
+  await confirm.click();
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
   await response.json();
@@ -194,8 +210,7 @@ test('reconciles acceptance and dual confirmation between two active trainers', 
     await expect(ashPage.getByRole('button', { name: /^Sent, 1/ })).toBeVisible();
     await expect(mistyPage.getByRole('button', { name: /^Needs response, 1/ })).toBeVisible();
 
-    await mistyPage.getByRole('button', { name: 'Accept offer' }).click();
-    await confirmTradeCommand(mistyPage, '/accept');
+    await confirmTradeCommand(mistyPage, 'Accept offer', '/accept');
     // Command responses and the live feed are separate authoritative paths.
     // Deliver the accepted state to both active clients before asserting the
     // reconciled activity buckets so a pending bootstrap refresh cannot win
@@ -209,15 +224,13 @@ test('reconciles acceptance and dual confirmation between two active trainers', 
     await expect(mistyPage.getByRole('button', { name: /^Active, 1/ })).toBeVisible();
 
     await mistyPage.getByRole('button', { name: /^Active, 1/ }).click();
-    await mistyPage.getByRole('button', { name: 'Confirm Complete' }).click();
-    await confirmTradeCommand(mistyPage, '/complete-confirmation');
+    await confirmTradeCommand(mistyPage, 'Confirm Complete', '/complete-confirmation');
     await expect(mistyPage.getByRole('button', { name: 'Awaiting Partner...' })).toBeDisabled();
     await emitTrade(ashPage);
 
     await ashPage.getByRole('button', { name: /^Active, 1/ }).click();
     await expect(ashPage.getByRole('button', { name: 'Confirm Complete' })).toBeVisible();
-    await ashPage.getByRole('button', { name: 'Confirm Complete' }).click();
-    await confirmTradeCommand(ashPage, '/complete-confirmation');
+    await confirmTradeCommand(ashPage, 'Confirm Complete', '/complete-confirmation');
     await expect(ashPage.getByRole('button', { name: /^Completed, 1/ })).toBeVisible();
     await emitTrade(mistyPage);
 

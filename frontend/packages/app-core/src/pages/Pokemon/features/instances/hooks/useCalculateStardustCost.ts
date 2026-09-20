@@ -5,36 +5,13 @@ import { parseVariantId } from '@/utils/PokemonIDUtils';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { Instances } from '@/types/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
+import { calculateTradeCost } from '@pokemongonexus/shared-domain/trade-cost';
 
 interface UseCalculateStardustCostResult {
   stardustCost: number;
   isSpecialTrade: boolean;
   isRegisteredTrade: boolean;
 }
-
-const REG_COST = 100;
-const UNREG_COST_NOT_SPECIAL: Record<number, number> = {
-  1: 20000,
-  2: 16000,
-  3: 1600,
-  4: 800,
-  5: 800,
-};
-const UNREG_COST_SPECIAL: Record<number, number> = {
-  1: 1000000,
-  2: 800000,
-  3: 80000,
-  4: 40000,
-  5: 40000,
-};
-const REG_COST_SPECIAL: Record<number, number> = {
-  1: 20000,
-  2: 16000,
-  3: 1600,
-  4: 800,
-  5: 800,
-};
-const MAX_COST = 1000000;
 
 export const useCalculateStardustCost = (
   friendshipLevel: number,
@@ -48,51 +25,17 @@ export const useCalculateStardustCost = (
   const [isRegisteredTrade, setIsRegisteredTrade] = useState(false);
 
   useEffect(() => {
-    const calculateCost = () => {
-      if (!passedInPokemon || !selectedMatchedInstance) return 0;
-
-      let specialTrade = false;
-
-      if (passedInPokemon.instanceData?.shiny || passedInPokemon.rarity === 'Legendary') {
-        specialTrade = true;
-      }
-      if (selectedMatchedInstance.shiny || selectedMatchedInstance.rarity === 'Legendary') {
-        specialTrade = true;
-      }
-
-      setIsSpecialTrade(specialTrade);
-
-      const passedInInstanceId =
-        passedInPokemon.instanceData?.instance_id ??
-        passedInPokemon.variant_id ??
-        '';
-      const selectedInstanceId = selectedMatchedInstance.instance_id ?? '';
-
-      const passedInIsRegistered = isPokemonRegistered(passedInInstanceId, myInstances);
-      const selectedIsRegistered = isPokemonRegistered(selectedInstanceId, instances);
-
-      setIsRegisteredTrade(passedInIsRegistered && selectedIsRegistered);
-
-      let cost: number;
-
-      if (specialTrade) {
-        if (passedInIsRegistered && selectedIsRegistered) {
-          cost = REG_COST_SPECIAL[friendshipLevel] ?? MAX_COST;
-        } else {
-          cost = UNREG_COST_SPECIAL[friendshipLevel] ?? MAX_COST;
-        }
-      } else {
-        if (!passedInIsRegistered || !selectedIsRegistered) {
-          cost = UNREG_COST_NOT_SPECIAL[friendshipLevel] ?? 100;
-        } else {
-          cost = REG_COST;
-        }
-      }
-
-      return cost;
-    };
-
-    setStardustCost(calculateCost());
+    const result = calculateTradeCost({
+      friendshipLevel,
+      receivedPokemon: passedInPokemon,
+      offeredInstance: selectedMatchedInstance,
+      currentTrainerInstances: myInstances,
+      partnerInstances: instances,
+      parseVariantId,
+    });
+    setStardustCost(result.stardustCost);
+    setIsSpecialTrade(result.isSpecialTrade);
+    setIsRegisteredTrade(result.isRegisteredTrade);
   }, [
     friendshipLevel,
     passedInPokemon,
@@ -103,21 +46,4 @@ export const useCalculateStardustCost = (
 
   return { stardustCost, isSpecialTrade, isRegisteredTrade };
 };
-
-function isPokemonRegistered(
-  instanceId: string,
-  instances: Instances
-): boolean {
-  if (!instanceId || !instances) {
-    return false;
-  }
-
-  const { baseKey } = parseVariantId(instanceId);
-
-  return Object.entries(instances).some(([key, data]) => {
-    const { baseKey: thisBaseKey } = parseVariantId(key);
-    return thisBaseKey === baseKey && Boolean(data.registered);
-  });
-}
-
 export default useCalculateStardustCost;

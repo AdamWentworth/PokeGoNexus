@@ -1,0 +1,57 @@
+appId: ${APP_ID}
+name: Native account confirmation keyboard lifecycle smoke
+tags:
+  - android
+  - native-account
+  - native-keyboard
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/account
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: LOGIN IDENTITY
+    timeout: 45000
+- scrollUntilVisible:
+    element:
+      text: Confirm new password
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- tapOn: Confirm new password
+- inputText: Focus_restore_probe_42!
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: demo@pokegonexus.local
+    direction: DOWN
+    speed: 40
+    timeout: 15000
+- tapOn: Disconnect Google
+- assertVisible: Disconnect Google?
+- tapOn: Enter your account password
+- inputText: Valid_password_42!
+- hideKeyboard
+- tapOn: Disconnect
+- extendedWaitUntil:
+    visible: Google disconnected.
+    timeout: 15000
+- assertVisible: Connect Google
+- tapOn: Dismiss message
+- tapOn: Connect Google
+- extendedWaitUntil:
+    visible: Google connected.
+    timeout: 15000
+- assertVisible: Disconnect Google
+- takeScreenshot: native-account-keyboard-feedback

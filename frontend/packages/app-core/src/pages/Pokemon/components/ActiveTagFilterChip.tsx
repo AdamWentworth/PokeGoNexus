@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { buildClearActiveTagMessage } from '@pokemongonexus/shared-ui-tokens';
 
 import CollectionPriorityStar from '@/components/pokemonComponents/CollectionPriorityStar';
 import { useModal } from '@/contexts/ModalContext';
@@ -34,9 +35,7 @@ const ActiveTagFilterChip: React.FC<ActiveTagFilterChipProps> = ({
 
   const handleClearActiveTagFilter = useCallback(async () => {
     if (!onClearTagFilter) return;
-    const confirmed = await confirm(
-      `Clear the ${displayName} tag? This returns you to browsing all available Pokémon and forms in Pokémon GO, without using your personal tag lists.`,
-    );
+    const confirmed = await confirm(buildClearActiveTagMessage(displayName));
     if (confirmed) {
       onClearTagFilter();
     }

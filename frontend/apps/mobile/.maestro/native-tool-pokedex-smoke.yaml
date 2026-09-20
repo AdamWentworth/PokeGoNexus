@@ -1,0 +1,37 @@
+appId: ${APP_ID}
+name: Native Pokédex tool smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/tools?tool=pokedex"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "Pokédex"
+- assertVisible: "Kanto"
+- assertVisible: "Advanced"
+- takeScreenshot: "native-tool-pokedex-regions"
+- tapOn: "Shiny"
+- tapOn: "Kanto"
+- tapOn: "Search Pokédex"
+- inputText: "bulba"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Shiny Bulbasaur"
+    timeout: 15000
+- assertVisible: "Register all"
+- assertVisible: "Unregister all"
+- tapOn: "Register all"
+- assertVisible: "Register every visible entry?"
+- assertVisible: ".*mark all 1 currently visible entries.*"
+- tapOn: "Cancel"
+- assertNotVisible: "Register every visible entry?"
+- takeScreenshot: "native-tool-pokedex-region-detail"

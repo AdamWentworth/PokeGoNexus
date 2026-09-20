@@ -41,7 +41,11 @@ const consolidatedPageBaselines: ReadonlyArray<{
   { name: "max-battles", path: "/max" },
   { name: "pvp-tools", path: "/pvp" },
   { name: "community-rankings", path: "/rankings" },
-  { name: "trade-board-builder", path: "/trade-board" },
+  {
+    name: "trade-board-builder",
+    path: "/trade-board",
+    readySelector: ".trade-board-builder-page__empty",
+  },
   { name: "raid-methodology", path: "/raid/methodology" },
   { name: "pvp-methodology", path: "/pvp/methodology" },
   { name: "help-information", path: "/help" },
@@ -202,14 +206,18 @@ test.describe("core responsive visual regression", () => {
           name: "Build your collection. Find the right trade.",
         }),
       ).toBeVisible();
-      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-      await expect(
-        page.getByRole("alert").filter({ hasText: "You’re offline" }),
-      ).toBeVisible();
-      await expectVisualBaseline(
-        page,
-        themedSnapshotName("offline-status.png", themeMode),
-      );
+      try {
+        await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+        await expect(
+          page.getByRole("alert").filter({ hasText: "You’re offline" }),
+        ).toBeVisible();
+        await expectVisualBaseline(
+          page,
+          themedSnapshotName("offline-status.png", themeMode),
+        );
+      } finally {
+        await page.evaluate(() => window.dispatchEvent(new Event("online")));
+      }
     });
 
     test(`matches the ${themeMode} login baseline`, async ({ page }) => {

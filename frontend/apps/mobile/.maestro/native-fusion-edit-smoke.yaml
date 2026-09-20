@@ -1,0 +1,57 @@
+appId: ${APP_ID}
+name: Native Fusion editing smoke
+tags:
+  - android
+  - native-instance
+  - fusion-editing
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-necrozma
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Necrozma
+    timeout: 45000
+- tapOn: Edit Pokémon
+- assertVisible: Fusion
+- assertVisible: "Power form: Base form"
+- tapOn: "Power form: Dawn Wings Necrozma"
+- assertVisible: FUSION PARTNER
+- assertVisible: "Power form: Lunala"
+- tapOn: Choose location background
+- assertVisible: Fusion sky
+- tapOn: Use Fusion sky background
+- takeScreenshot: fusion-01-selected
+- swipe:
+    start: 50%, 76%
+    end: 50%, 48%
+    duration: 500
+- swipe:
+    start: 50%, 76%
+    end: 50%, 48%
+    duration: 500
+- swipe:
+    start: 50%, 76%
+    end: 50%, 48%
+    duration: 500
+- extendedWaitUntil:
+    visible:
+      id: native-move-selector-charged-move
+    timeout: 10000
+- tapOn:
+    id: native-move-selector-charged-move
+- assertVisible: Moongeist Beam
+- tapOn: Close charged move selector
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor

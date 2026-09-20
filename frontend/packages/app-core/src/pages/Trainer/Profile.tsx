@@ -57,7 +57,10 @@ import type {
   TrainerTitle,
   UpdateTrainerProfileRequest,
 } from "@shared-contracts/users";
-import { TRAINER_TITLE_OPTIONS } from "@shared-contracts/users";
+import {
+  TRAINER_TITLE_OPTIONS,
+  TRAINER_TITLE_VISUALS,
+} from "@shared-contracts/users";
 
 import TrainerPageShell from "./TrainerPageShell";
 import TrainerShowcasePicker from "./TrainerShowcasePicker";
@@ -103,17 +106,6 @@ const SHOWCASE_DRAG_THRESHOLD_PX = 7;
 const trainerTitleOptionByID = new Map(
   TRAINER_TITLE_OPTIONS.map((option) => [option.id, option]),
 );
-
-type TrainerTitleVisualConfig =
-  | {
-      assets: string[];
-    }
-  | {
-      masks: string[];
-    }
-  | {
-      icon: IconType;
-    };
 
 type TrainerCollectionVisual =
   | {
@@ -163,36 +155,14 @@ const TrainerCollectionIcon = ({
   );
 };
 
-const trainerTitleVisualByID: Record<
-  TrainerTitle,
-  TrainerTitleVisualConfig
-> = {
-  "raid-regular": {
-    masks: ["/images/raid_face.png"],
-  },
-  "shadow-raider": { masks: ["/images/shadow_search.png"] },
-  "super-mega-raider": {
-    masks: ["/images/pokemon_details_cp_mega.png"],
-  },
-  "max-battler": { masks: ["/images/gigantamax_title_mask.png"] },
-  "battle-league-trainer": {
-    masks: ["/images/pvp_title_mask.png"],
-  },
-  "rocket-hunter": { masks: ["/images/teamrocket_r_full.png"] },
-  "shiny-hunter": { masks: ["/images/shiny_search.png"] },
-  "pokedex-collector": { masks: ["/images/kanto_search.png"] },
-  "costume-collector": { masks: ["/images/costume_search.png"] },
-  "hundo-hunter": { masks: ["/images/appraisal_04.png"] },
-  "size-collector": { icon: FaRulerCombined },
-  "lucky-trader": { masks: ["/images/lucky-icon.png"] },
-  "egg-hatcher": { masks: ["/images/ic_egg_inv.png"] },
-  "route-explorer": { masks: ["/images/route_icon.png"] },
-  "showcase-star": { icon: FaMedal },
-  "party-player": { icon: FaUsers },
-};
+const trainerTitleFallbackIcon = {
+  medal: FaMedal,
+  ruler: FaRulerCombined,
+  users: FaUsers,
+} satisfies Record<'medal' | 'ruler' | 'users', IconType>;
 
 const TrainerTitleVisual = ({ title }: { title: TrainerTitle }) => {
-  const visual = trainerTitleVisualByID[title];
+  const visual = TRAINER_TITLE_VISUALS[title];
 
   if ("masks" in visual) {
     return (
@@ -217,31 +187,10 @@ const TrainerTitleVisual = ({ title }: { title: TrainerTitle }) => {
     );
   }
 
-  if ("icon" in visual) {
-    const Icon = visual.icon;
-    return (
-      <span className="trainer-title-visual trainer-title-visual-fallback">
-        <Icon aria-hidden="true" />
-      </span>
-    );
-  }
-
+  const Icon = trainerTitleFallbackIcon[visual.icon];
   return (
-    <span
-      className={`trainer-title-visual ${
-        visual.assets.length > 1 ? "trainer-title-visual-pair" : ""
-      }`}
-      aria-hidden="true"
-    >
-      {visual.assets.map((asset) => (
-        <img
-          src={asset}
-          alt=""
-          draggable={false}
-          data-title-asset={asset}
-          key={asset}
-        />
-      ))}
+    <span className="trainer-title-visual trainer-title-visual-fallback">
+      <Icon aria-hidden="true" />
     </span>
   );
 };

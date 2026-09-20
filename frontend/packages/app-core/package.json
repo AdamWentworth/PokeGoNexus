@@ -4,6 +4,37 @@
   "private": true,
   "type": "module",
   "description": "Shared source-of-truth app core for web/mobile/desktop hosts.",
+  "exports": {
+    "./fusion-move-pool": "./src/features/pokemonDisplay/fusionMovePool.ts",
+    "./pokemon-variants": "./src/features/variants/utils/createPokemonVariants.ts",
+    "./raid-model": "./src/pages/Raid/utils/raidRankings.ts",
+    "./raid-roster": "./src/pages/Raid/utils/raidRoster.ts",
+    "./raid-party": "./src/pages/Raid/utils/raidParty.ts",
+    "./raid-party-optimizer": "./src/pages/Raid/utils/raidPartyOptimizer.ts",
+    "./raid-party-simulation": "./src/pages/Raid/utils/raidPartySimulation.ts",
+    "./raid-calibration": "./src/pages/Raid/utils/raidCalibration.ts",
+    "./raid-calibration-model": "./src/pages/Raid/utils/raidCalibrationModel.ts",
+    "./raid-combat": "./src/pages/Raid/utils/raidCombat.ts",
+    "./raid-rules": "./src/pages/Raid/utils/raidRules.ts",
+    "./raid-team-selection": "./src/pages/Raid/utils/raidTeamSelection.ts",
+    "./raid-types": "./src/pages/Raid/utils/raidTypes.ts",
+    "./raid-presentation-model": "./src/pages/Raid/utils/raidPresentationModel.ts",
+    "./max-battle-model": "./src/pages/Max/utils/maxBattleModel.ts",
+    "./max-battle-simulation": "./src/pages/Max/utils/maxBattleSimulation.ts",
+    "./max-roster": "./src/pages/Max/utils/maxRoster.ts",
+    "./pvp-roster": "./src/pages/Pvp/utils/pvpRoster.ts",
+    "./pvp-roster-evaluation": "./src/pages/Pvp/utils/pvpRosterEvaluation.ts",
+    "./pvp-battle-mechanics": "./src/pages/Pvp/utils/pvpBattleMechanics.ts",
+    "./pvp-move-hydration": "./src/pages/Pvp/utils/pvpMoveHydration.ts",
+    "./pvp-team-builder": "./src/pages/Pvp/utils/pvpTeamBuilder.ts",
+    "./pvp-iv-pokemon": "./src/pages/Pvp/utils/pvpIvPokemon.ts",
+    "./pvp-iv-rank": "./src/pages/Pvp/utils/pvpIvRank.ts",
+    "./pvp-iv-roster": "./src/pages/Pvp/utils/pvpIvRoster.ts",
+    "./pokedex-detail-model": "./src/pages/Pokedex/pokedexRegistrationModel.ts",
+    "./pokedex-detail-pokemon": "./src/pages/Pokedex/pokedexPokemonDetailModel.ts",
+    "./pokedex-registration": "./src/features/pokedex/registrationProjection.ts",
+    "./image-helpers": "./src/utils/imageHelpers.ts"
+  },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",
     "@vitest/ui": "^4.1.5",
@@ -12,6 +43,9 @@
   },
   "dependencies": {
     "@fontsource-variable/roboto": "^5.3.0",
+    "@pokemongonexus/shared-contracts": "file:../shared-contracts",
+    "@pokemongonexus/shared-domain": "file:../shared-domain",
+    "@pokemongonexus/shared-ui-tokens": "file:../shared-ui-tokens",
     "@tanstack/react-query": "^5.101.4"
   }
 }

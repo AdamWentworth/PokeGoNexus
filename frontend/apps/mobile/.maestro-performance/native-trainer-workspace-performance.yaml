@@ -1,0 +1,157 @@
+appId: ${APP_ID}
+name: Native trainer workspace performance contract
+tags:
+  - android
+  - performance
+  - native-trainer-workspace
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/profile?performance=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: YOUR TRAINER CARD
+    timeout: 60000
+
+# Profile edit, title, showcase picker/selection/reorder, and save results.
+- tapOn: Edit
+- extendedWaitUntil:
+    visible: Pokemon GO name
+    timeout: 10000
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 82%
+          end: 92%, 28%
+          duration: 450
+- scrollUntilVisible:
+    element:
+      text: Max Battler
+    direction: DOWN
+    timeout: 20000
+- tapOn: Max Battler
+- assertVisible: 3/3 selected
+- scrollUntilVisible:
+    element:
+      id: native-profile-showcase-slot-4
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: native-profile-showcase-slot-4
+- extendedWaitUntil:
+    visible: Choose a caught Pokémon
+    timeout: 10000
+- tapOn: Shiny Suicune
+- extendedWaitUntil:
+    visible: "Shiny Suicune, edit showcase slot 4"
+    timeout: 10000
+- tapOn: Move showcase slot 4 left
+- extendedWaitUntil:
+    visible: "Shiny Suicune, edit showcase slot 3"
+    timeout: 10000
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 82%
+          end: 92%, 28%
+          duration: 450
+- scrollUntilVisible:
+    element:
+      text: Save profile
+    direction: DOWN
+    speed: 80
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Save profile
+- assertVisible: Profile updated.
+
+# Relationship confirmation and committed relationship result.
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/profile-relationship?performance=1
+- extendedWaitUntil:
+    visible: Cancel friend request?
+    timeout: 30000
+- tapOn: Cancel
+- tapOn: Request sent
+- assertVisible: Cancel friend request?
+- tapOn: Cancel request
+- assertVisible: Friend request canceled.
+
+# Friends tab slide, server-style command, search result, and confirmation.
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/friends?performance=1
+- extendedWaitUntil:
+    visible: Your friends
+    timeout: 30000
+- tapOn: Requests view
+- extendedWaitUntil:
+    visible: Incoming requests
+    timeout: 10000
+- tapOn: Accept Brock
+- assertVisible: Friend request accepted.
+- tapOn: Find view
+- extendedWaitUntil:
+    visible: Find trainers
+    timeout: 10000
+- tapOn: Search
+- assertVisible: PalletRival
+- tapOn: Friends view
+- extendedWaitUntil:
+    visible: Your friends
+    timeout: 10000
+- tapOn: Remove HarbourMew
+- assertVisible: Remove HarbourMew?
+
+# Settings selection, boolean projection, and saved result.
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/settings?performance=1
+- extendedWaitUntil:
+    visible: WHO CAN SEE YOU
+    timeout: 30000
+- tapOn: "Profile visibility, Everyone"
+- tapOn: Friends only
+- assertVisible: "Profile visibility, Friends only"
+- scrollUntilVisible:
+    element:
+      text: Show profile location
+    direction: DOWN
+    timeout: 20000
+- tapOn: Show profile location
+- tapOn: Save privacy
+- assertVisible: Privacy settings saved.
+
+# Account update, provider confirmation, and provider result.
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/account?performance=1
+- extendedWaitUntil:
+    visible: LOGIN IDENTITY
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: Update account
+    direction: DOWN
+    timeout: 20000
+- tapOn: Update account
+- assertVisible: Account updated.
+- tapOn: Dismiss message
+- scrollUntilVisible:
+    element:
+      text: Connected accounts
+    direction: DOWN
+    timeout: 20000
+- tapOn: Disconnect Google
+- assertVisible: Disconnect Google?
+- tapOn: Disconnect
+- assertVisible: Google disconnected.

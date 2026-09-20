@@ -3,8 +3,10 @@ import { produce } from 'immer';
 import { putBatchedPokemonUpdates, putInstancesBulk } from '@/db/indexedDB';
 import { createScopedLogger } from '@/utils/logger';
 import { setStorageNumber, STORAGE_KEYS } from '@/utils/storage';
-import { resolveInstanceCollectionKey } from '@/features/instances/utils/instanceIdentity';
-import { getFavoriteTradeConflict } from '@/features/instances/utils/favoriteTradeRules';
+import {
+  getFavoriteTradeConflict,
+  resolveInstanceCollectionKey,
+} from '@pokemongonexus/shared-domain/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { MutableInstances, SetInstancesFn } from '@/types/instances';
 

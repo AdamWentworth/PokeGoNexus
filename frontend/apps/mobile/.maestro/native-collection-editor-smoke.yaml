@@ -1,0 +1,131 @@
+appId: ${APP_ID}
+name: Native collection editor interaction smoke
+tags:
+  - android
+  - native-collection
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-metagross
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- runFlow:
+    when:
+      visible: "Something went wrong.*"
+    commands:
+      - tapOn:
+          id: ${APP_ID}:id/reload_button
+- extendedWaitUntil:
+    visible: Shiny Metagross
+    timeout: 45000
+- tapOn: Edit Pokémon
+- assertVisible: Save Pokémon
+- tapOn: Open Max Move upgrades
+- assertVisible: Max Move Levels
+- tapOn: Close Max Move upgrades
+- tapOn: Choose location background
+- assertVisible: Vancouver City Safari
+- tapOn: Close background selector
+- scrollUntilVisible:
+    element:
+      id: native-move-selector-fast-move
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 20000
+- tapOn:
+    id: native-move-selector-fast-move
+- assertVisible: MOVE SELECTOR
+- assertVisible: Bullet Punch
+- tapOn: Close fast move selector
+- extendedWaitUntil:
+    notVisible: MOVE SELECTOR
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Attack
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 20000
+- assertVisible: Attack
+- takeScreenshot: native-collection-editor
+- scrollUntilVisible:
+    element:
+      text: "LUCKY: YES"
+    direction: UP
+    speed: 40
+    timeout: 20000
+- tapOn: "LUCKY: YES"
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          start: 50%, 82%
+          end: 50%, 45%
+          duration: 400
+- scrollUntilVisible:
+    element:
+      text: Original trainer name
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 20000
+- assertVisible: Original trainer name
+- scrollUntilVisible:
+    element:
+      text: Ball Caught
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "Ball caught: BEAST BALL"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Ball caught: BEAST BALL"
+- takeScreenshot: native-collection-metadata-editor
+- scrollUntilVisible:
+    element:
+      text: Save Pokémon
+    direction: UP
+    visibilityPercentage: 50
+    timeout: 20000
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor
+- takeScreenshot: native-collection-saved-instance
+- tapOn: Close
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn: "^Continue$"
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- tapOn: Open action menu
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- assertVisible: Raid
+- assertVisible: Search
+- assertVisible: Pokémon
+- assertVisible: Pokedex
+- assertVisible: Home
+- assertVisible: PvP
+- assertVisible: Trades
+- assertVisible: Rankings
+- assertVisible: Max Battles
+- tapOn: Close
+- assertNotVisible: Quick navigation

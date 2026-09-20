@@ -1,10 +1,9 @@
-import type { PokemonVariant } from '@/types/pokemonVariants';
+import type { PokemonVariant } from '../../../types/pokemonVariants';
 import type {
   Move,
-  PokemonMovesChunk,
   PokemonPvPRankingEntry,
   PokemonPvPRankingMove,
-} from '@shared-contracts/pokemon';
+} from '@pokemongonexus/shared-contracts/pokemon';
 
 import { toPvPRankingMove } from './pvpRoster';
 
@@ -45,7 +44,11 @@ export const buildPvPMoveMechanicsLookupFromVariants = (
 };
 
 export const buildPvPMoveMechanicsLookupFromChunk = (
-  chunk: PokemonMovesChunk,
+  chunk: ReadonlyArray<{
+    moves?: readonly Move[];
+    fusion?: ReadonlyArray<{ moves?: readonly Move[] }>;
+    crownForms?: ReadonlyArray<{ moves?: readonly Move[] }>;
+  }>,
 ): PvPMoveMechanicsLookup => {
   const lookup = new Map<string, PokemonPvPRankingMove>();
   for (const entry of chunk) {

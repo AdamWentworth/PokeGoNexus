@@ -12,6 +12,7 @@ import {
   FaUserFriends,
 } from 'react-icons/fa';
 import { Link } from 'react-router';
+import { homeExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
 import {
@@ -56,7 +57,10 @@ const RecentPokemon = ({ instance, variant }: RecentPokemonProps) => {
 
   return (
     <li>
-      <Link to="/pokemon" aria-label={`Open ${name} in your Pokémon collection`}>
+      <Link
+        to={homeExperienceParityContract.recentPokemonPath}
+        aria-label={`Open ${name} in your Pokémon collection`}
+      >
         <span className="home-recent-pokemon__image">
           {image ? <img src={image} alt="" /> : <span>#{instance.pokemon_id}</span>}
         </span>
@@ -230,23 +234,23 @@ const HomeDashboard = ({ user }: HomeDashboardProps) => {
               <span className="home-eyebrow">Your collection</span>
               <h2 id="home-collection-heading">At a glance</h2>
             </div>
-            <Link to="/pokemon">Manage Pokémon <FaArrowRight aria-hidden="true" /></Link>
+            <Link to={homeExperienceParityContract.collectionPath}>Manage Pokémon <FaArrowRight aria-hidden="true" /></Link>
           </header>
 
           {instancesLoading ? (
             <div className="home-panel-state" role="status">Loading your collection…</div>
           ) : (
             <div className="home-stat-grid">
-              <Link to="/pokemon?filter=caught" className="home-stat home-stat--caught">
+              <Link to={homeExperienceParityContract.collectionSummaryPaths.caught} className="home-stat home-stat--caught">
                 <strong>{collection.caught.toLocaleString()}</strong><span>Caught</span>
               </Link>
-              <Link to="/pokemon?filter=favorites" className="home-stat home-stat--favorite">
+              <Link to={homeExperienceParityContract.collectionSummaryPaths.favorites} className="home-stat home-stat--favorite">
                 <strong>{collection.favorites.toLocaleString()}</strong><span><FaStar aria-hidden="true" /> Favorites</span>
               </Link>
-              <Link to="/pokemon?filter=trade" className="home-stat home-stat--trade">
+              <Link to={homeExperienceParityContract.collectionSummaryPaths.trade} className="home-stat home-stat--trade">
                 <strong>{collection.forTrade.toLocaleString()}</strong><span><FaExchangeAlt aria-hidden="true" /> For Trade</span>
               </Link>
-              <Link to="/pokemon?filter=wanted" className="home-stat home-stat--wanted">
+              <Link to={homeExperienceParityContract.collectionSummaryPaths.wanted} className="home-stat home-stat--wanted">
                 <strong>{collection.wanted.toLocaleString()}</strong><span><FaHeart aria-hidden="true" /> Wanted</span>
                 {collection.mostWanted ? <small>{collection.mostWanted} most wanted</small> : null}
               </Link>
@@ -254,7 +258,7 @@ const HomeDashboard = ({ user }: HomeDashboardProps) => {
           )}
 
           <div className="home-collection-panel__actions">
-            <Link to="/pokemon"><span>Open collection</span><FaArrowRight aria-hidden="true" /></Link>
+            <Link to={homeExperienceParityContract.collectionPath}><span>Open collection</span><FaArrowRight aria-hidden="true" /></Link>
             <Link to="/trade-board"><FaShareAlt aria-hidden="true" /><span>Share Trade Board</span></Link>
           </div>
         </section>
@@ -293,7 +297,7 @@ const HomeDashboard = ({ user }: HomeDashboardProps) => {
             <span className="home-eyebrow">Recently updated</span>
             <h2 id="home-recent-heading">Your latest Pokémon</h2>
           </div>
-          <Link to="/pokemon">View all <FaArrowRight aria-hidden="true" /></Link>
+          <Link to={homeExperienceParityContract.collectionPath}>View all <FaArrowRight aria-hidden="true" /></Link>
         </header>
         {instancesLoading || variantsLoading ? (
           <div className="home-panel-state" role="status">Loading recent Pokémon…</div>

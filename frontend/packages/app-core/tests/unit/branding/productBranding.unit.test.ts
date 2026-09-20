@@ -21,7 +21,12 @@ describe('product branding', () => {
       join(projectRoot, 'index.html'),
       join(projectRoot, 'public', 'manifest.json'),
     ];
-    const violations = files.filter((file) => LEGACY_PRODUCT_NAME.test(readFileSync(file, 'utf8')));
+    const violations = files.filter((file) => {
+      // Repository URLs and versioned download paths must keep their real names;
+      // those identifiers are not the product copy this check protects.
+      const copy = readFileSync(file, 'utf8').replace(/https?:\/\/[^\s"'`<>]+/g, '');
+      return LEGACY_PRODUCT_NAME.test(copy);
+    });
 
     expect(violations, 'Use “Pokémon Go Nexus” in user-facing product text.').toEqual([]);
     expect(readFileSync(join(projectRoot, 'index.html'), 'utf8')).toContain('Pokémon Go Nexus');

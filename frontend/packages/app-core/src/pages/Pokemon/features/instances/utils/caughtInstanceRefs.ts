@@ -4,4 +4,4 @@ export {
   findInstanceByRefs,
   normalizeInstanceToken,
   parseBackgroundId,
-} from '@/features/instances/utils/instanceIdentity';
+} from '@pokemongonexus/shared-domain/instances';

@@ -2,11 +2,12 @@
 
 import type { PokemonVariant } from '../types/pokemonVariants';
 import type { Costume, CrownForm, FemaleVariantData, MegaEvolution } from '../types/pokemonSubTypes';
-import { createScopedLogger } from '@/utils/logger';
-import { resolveActiveCrownForm } from '@/utils/crownHelpers';
+import { resolveActiveCrownForm } from './crownHelpers';
 
 const DEFAULT_IMAGE_URL = '/images/default_pokemon.png';
-const log = createScopedLogger('imageHelpers');
+// Image selection is consumed by both Vite and React Native. Keep this pure so
+// Metro does not pull the Vite-only import.meta logger into its bundle.
+const log = { warn: (..._args: unknown[]) => undefined };
 type VariantImageData = Partial<PokemonVariant> & Partial<FemaleVariantData>;
 
 export function determineImageUrl(

@@ -1,0 +1,52 @@
+appId: ${APP_ID}
+name: Native instance overlay swipe smoke
+tags:
+  - android
+  - native-instance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-gmax-charizard
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Shiny Gigantamax Charizard
+    timeout: 45000
+- assertNotVisible: Previous Pokémon
+- assertVisible: Next Pokémon
+- swipe:
+    start: 85%, 25%
+    end: 15%, 25%
+    duration: 450
+- extendedWaitUntil:
+    visible: Shiny Suicune
+    timeout: 10000
+- swipe:
+    start: 15%, 25%
+    end: 85%, 25%
+    duration: 450
+- extendedWaitUntil:
+    visible: Shiny Gigantamax Charizard
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: native-instance-next
+      enabled: true
+    timeout: 10000
+- tapOn:
+    id: native-instance-next
+    enabled: true
+- extendedWaitUntil:
+    visible: Shiny Suicune
+    timeout: 10000
+- takeScreenshot: native-instance-swipe
