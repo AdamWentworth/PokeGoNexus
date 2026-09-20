@@ -167,7 +167,7 @@ describe('NativeLoadingSpinner', () => {
         .ensureAlpha()
         .raw()
         .toBuffer();
-      expect(decoded).toEqual(Buffer.concat(expected.compactFrames));
+      expect(decoded.equals(Buffer.concat(expected.compactFrames))).toBe(true);
     }
   }, 30_000);
 });

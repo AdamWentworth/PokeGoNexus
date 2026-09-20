@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "frontend/apps/mobile/**"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - "frontend/patches/**"
       - "frontend/packages/shared-api-client/**"
       - "frontend/packages/shared-contracts/**"
       - "frontend/packages/shared-domain/**"
@@ -13,6 +16,9 @@ on:
     branches: ["main", "master"]
     paths:
       - "frontend/apps/mobile/**"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - "frontend/patches/**"
       - "frontend/packages/shared-api-client/**"
       - "frontend/packages/shared-contracts/**"
       - "frontend/packages/shared-domain/**"
@@ -54,6 +60,9 @@ jobs:
 
       - name: Verify Android Beta Release Gates
         run: node --test scripts/android-beta/release.test.mjs
+
+      - name: Verify Native URL Decoder Compatibility
+        run: node --test scripts/query-string-security.test.cjs
 
       - name: Verify Expo Dependency Health
         run: npx expo-doctor
