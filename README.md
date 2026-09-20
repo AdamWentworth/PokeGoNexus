@@ -142,13 +142,16 @@ Go services have their own test suites. Use the affected service's README and
 [CI workflow](.github/workflows/) for the complete checks, including database,
 container, security, and contract tests where applicable.
 
-GitHub Actions has **no scheduled workflows**:
+Repository-defined workflows have **no cron schedules**:
 
 | Workflow | When it runs |
 | --- | --- |
 | Service CI | Relevant pull requests, relevant pushes to `master`/`main`, and manual runs |
 | `ci-frontend` browser checks | Desktop Chromium and mobile Chrome on relevant changes; the full browser matrix on manual runs |
 | `smoke-frontend-prod` | Manual only; checks public production routes and assets using GET/HEAD requests |
+
+GitHub-managed CodeQL default setup is configured separately and retains its
+weekly security scans.
 
 For full browser coverage, select **Actions → ci-frontend → Run workflow**.
 Firefox, WebKit, and mobile Safari emulation remain available there and locally.
