@@ -5,10 +5,10 @@ invitation, automatic APK publication, or over-the-air updates are configured.
 
 ## Branch and release policy
 
-Finish preparation on `mobile/native-migration`, then merge through a reviewed PR
-to `master` once web, shared-package, authentication, and mobile CI checks pass.
-Keep the working Vite website. After integration, use short-lived feature branches
-for both clients rather than keeping a permanent native fork.
+The native migration has merged into `master`, alongside the Vite website, and
+the completed `mobile/native-migration` branch has been retired. Use short-lived
+feature branches and reviewed PRs to `master` for both clients. Web,
+shared-package, authentication, and mobile CI checks apply to their affected code.
 
 Merging source, deploying the web image through HomeOps, and publishing an Android
 beta are separate operations. A merge does not publish an APK. Android candidates
