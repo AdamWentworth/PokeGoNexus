@@ -494,8 +494,22 @@ const setAuthAndTheme = async (
   theme: 'dark' | 'light',
 ) => {
   await page.addInitScript(({ activeTheme, authState, user }) => {
+    // These are warm-route measurements: IndexedDB survives between pages.
+    // Keep its catalog metadata with it. Clearing only the version markers
+    // forces every page to rebuild and rewrite the same catalog, creating an
+    // artificial backlog of catalog/tag writes that blocks preference saves.
+    const catalogMetadata = [
+      'variantsTimestamp',
+      'variantsPayloadHash',
+      'pokemonCatalogVersion',
+      'pokemonMovesVersion',
+      'pokemonRaidDataVersion',
+    ].map((key) => [key, localStorage.getItem(key)] as const);
     localStorage.clear();
     sessionStorage.clear();
+    for (const [key, value] of catalogMetadata) {
+      if (value !== null) localStorage.setItem(key, value);
+    }
     localStorage.setItem('isLightMode', String(activeTheme === 'light'));
     if (authState === 'signed-in') localStorage.setItem('user', JSON.stringify(user));
   }, { activeTheme: theme, authState: auth, user: signedInUser });
