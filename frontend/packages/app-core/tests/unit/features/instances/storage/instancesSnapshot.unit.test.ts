@@ -21,7 +21,7 @@ describe('collection snapshot transactions', () => {
 
   it('preserves the previous collection and timestamp when a save is interrupted after 500 rows', async () => {
     const originalPut = IDBObjectStore.prototype.put;
-    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(function (value, key) {
+    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(function (this: IDBObjectStore, value, key) {
       const request = originalPut.call(this, value, key);
       if (value.instance_id === 'new-550') {
         request.addEventListener('success', () => this.transaction.abort());
@@ -37,7 +37,7 @@ describe('collection snapshot transactions', () => {
     const db = (await initInstancesDB())!;
     const originalClear = IDBObjectStore.prototype.clear;
     let concurrentRead: Promise<PokemonInstance[]> | undefined;
-    vi.spyOn(IDBObjectStore.prototype, 'clear').mockImplementation(function () {
+    vi.spyOn(IDBObjectStore.prototype, 'clear').mockImplementation(function (this: IDBObjectStore) {
       const request = originalClear.call(this);
       request.addEventListener('success', () => {
         concurrentRead = db.getAll(INSTANCES_STORE);
