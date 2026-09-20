@@ -24,7 +24,9 @@ describe('product branding', () => {
     const violations = files.filter((file) => {
       // Repository URLs and versioned download paths must keep their real names;
       // those identifiers are not the product copy this check protects.
-      const copy = readFileSync(file, 'utf8').replace(/https?:\/\/[^\s"'`<>]+/g, '');
+      const copy = readFileSync(file, 'utf8')
+        .replace(/https?:\/\/[^\s"'`<>]+/g, '')
+        .replace(/\bPokeGoNexus-Android-(?:\d+|\$\{[^}\r\n]+\})\.apk\b/g, '');
       return LEGACY_PRODUCT_NAME.test(copy);
     });
 
