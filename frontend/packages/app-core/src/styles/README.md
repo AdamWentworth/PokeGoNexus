@@ -16,6 +16,14 @@ This folder contains shared styling primitives used across the app.
      - `FeatureName.base.css` (default/base selectors)
      - `FeatureName.responsive.css` (media-query overrides)
 
+3. Shared application layout components
+   - Use `AppPageShell` for responsive page gutters, maximum content widths, safe-area spacing, and the page background contract.
+   - Use `ProductPageHeader` for standard page identity, supporting copy, and page actions.
+   - Use `SegmentedControl` for sibling views that behave as buttons or tabs.
+   - Use `PageState` for empty, loading, error, and retry states.
+   - Feature CSS may set the documented component custom properties to preserve a page's identity, but should not recreate the component geometry.
+   - Pokémon collection overlays and the signed-out Home hero are intentional immersive exceptions; their structure serves a different interaction model.
+
 ## Naming
 
 1. Token prefixes
@@ -44,3 +52,4 @@ This folder contains shared styling primitives used across the app.
    - Add a new token only if reuse is expected.
 2. Do not duplicate hard-coded brand colors or elevation values across files.
 3. From `frontend/`, run `npm --workspace apps/web run lint:styles` before merging styling-heavy changes.
+4. Add or update dark/light desktop/mobile visual baselines when a shared primitive changes.

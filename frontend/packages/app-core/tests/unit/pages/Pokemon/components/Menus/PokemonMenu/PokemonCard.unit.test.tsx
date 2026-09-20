@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import PokemonCard from '@/pages/Pokemon/components/Menus/PokemonMenu/PokemonCard';
 
 const { pokemonImagePresentationSpy } = vi.hoisted(() => ({
@@ -102,6 +103,23 @@ function renderCard(pokemonOverrides: Record<string, unknown> = {}) {
 }
 
 describe('PokemonCard', () => {
+  it('enters fast-select after the shared collection hold duration', () => {
+    vi.useFakeTimers();
+    const { toggleCardHighlight, setIsFastSelectEnabled } = renderCard({
+      instanceData: { instance_id: 'instance-123' },
+    });
+    const card = screen.getByRole('button', { name: /view bulbasaur details/i });
+
+    fireEvent.touchStart(card, { touches: [{ clientX: 20, clientY: 20 }] });
+    vi.advanceTimersByTime(collectionExperienceParityContract.cardLongPressMs - 1);
+    expect(setIsFastSelectEnabled).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(setIsFastSelectEnabled).toHaveBeenCalledWith(true);
+    expect(toggleCardHighlight).toHaveBeenCalledWith('instance-123');
+    vi.useRealTimers();
+  });
+
   it('uses variant_id as fallback key for modifier-click selection', () => {
     const { toggleCardHighlight, setIsFastSelectEnabled } = renderCard({
       instanceData: {},
@@ -146,7 +164,11 @@ describe('PokemonCard', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Select Bulbasaur' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Select Bulbasaur. Press Space to select it for tagging.',
+      }),
+    ).toBeInTheDocument();
 
     rerender(
       <PokemonCard
@@ -165,8 +187,64 @@ describe('PokemonCard', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'View Bulbasaur details' }),
+      screen.getByRole('button', {
+        name: 'View Bulbasaur details. Press Space to select it for tagging.',
+      }),
     ).toBeInTheDocument();
+  });
+
+  it('uses the red-orange Most Wanted star instead of Favorite on wanted cards', () => {
+    const { rerender } = render(
+      <PokemonCard
+        pokemon={makePokemon({
+          instanceData: {
+            instance_id: 'wanted-1',
+            is_wanted: true,
+            most_wanted: true,
+            favorite: true,
+          },
+        })}
+        onSelect={vi.fn()}
+        onSwipe={vi.fn()}
+        toggleCardHighlight={vi.fn()}
+        setIsFastSelectEnabled={vi.fn()}
+        isEditable
+        isFastSelectEnabled={false}
+        isHighlighted={false}
+        tagFilter="Wanted"
+        sortType="name"
+        variantByPokemonId={new Map()}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Most Wanted' })).toHaveClass(
+      'most-wanted-icon',
+    );
+    expect(screen.queryByAltText('Favorite')).not.toBeInTheDocument();
+
+    rerender(
+      <PokemonCard
+        pokemon={makePokemon({
+          instanceData: {
+            instance_id: 'wanted-1',
+            is_wanted: true,
+            most_wanted: false,
+          },
+        })}
+        onSelect={vi.fn()}
+        onSwipe={vi.fn()}
+        toggleCardHighlight={vi.fn()}
+        setIsFastSelectEnabled={vi.fn()}
+        isEditable
+        isFastSelectEnabled={false}
+        isHighlighted={false}
+        tagFilter="Wanted"
+        sortType="name"
+        variantByPokemonId={new Map()}
+      />,
+    );
+
+    expect(screen.queryByRole('img', { name: 'Most Wanted' })).not.toBeInTheDocument();
   });
 
   it('renders mega-prefixed display names in catalog cards for mega instances', () => {

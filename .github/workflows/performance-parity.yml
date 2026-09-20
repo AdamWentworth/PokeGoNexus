@@ -1,0 +1,67 @@
+name: performance-parity
+
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: Repetitions per interaction and per route/theme state
+        required: false
+        default: "3"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      POKEGONEXUS_PERFORMANCE_SAMPLES: ${{ inputs.samples || '3' }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Install the matching Chromium runtime
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate performance report tooling
+        run: npm run performance:parity:test
+
+      - name: Compare Vite with the native React tree
+        id: parity
+        continue-on-error: true
+        run: npm run performance:parity:browser
+
+      - name: Upload differential evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: performance-parity-browser-proxy
+          path: |
+            frontend/.artifacts/performance-parity/
+            frontend/apps/web/.artifacts/browser/test-results/
+            frontend/apps/mobile/.artifacts/native-real-routes/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Summarize diagnostic result
+        if: always()
+        run: |
+          if [ "${{ steps.parity.outcome }}" = "success" ]; then
+            echo "React Native Web diagnostic met every strict browser-proxy threshold."
+          else
+            echo "React Native Web diagnostic found strict differences; inspect the uploaded report."
+            echo "This is not an Android release verdict. Run the physical-android suite for that verdict."
+          fi

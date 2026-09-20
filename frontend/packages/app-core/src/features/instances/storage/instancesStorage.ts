@@ -16,10 +16,6 @@ import type { PokemonVariant } from '@/types/pokemonVariants';
 const log = createScopedLogger('instancesStorage');
 const canDebugLog = loggerInternals.shouldEmit('debug');
 
-async function yieldToPaint() {
-  await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-}
-
 export async function getInstancesData(): Promise<{
   data: Instances;
   timestamp: number;
@@ -63,44 +59,37 @@ export async function setInstancesData(payload: {
 }
 
 /**
- * Authoritative REPLACE: clear store, then bulk put full snapshot.
+ * Authoritative REPLACE: atomically replace the full snapshot.
  * Use this right after mergeInstancesData so the cache matches UI exactly.
- * This version writes in chunks and yields between batches to avoid long tasks.
+ * Readers (including a newly opened page) must see either the previous snapshot
+ * or the complete replacement, even if a page closes during persistence.
  */
 export async function replaceInstancesData(
   data: Instances,
   timestamp: number,
 ): Promise<void> {
   const t0 = performance.now();
-  const db = await idb.initInstancesDB();
-  if (!db) return;
-
-  // 1) Clear in its own transaction
-  {
-    const tx = db.transaction(idb.INSTANCES_STORE, 'readwrite');
-    await tx.store.clear();
-    await tx.done;
-  }
-
-  // 2) Prepare items
   const items: PokemonInstance[] = Object.entries(data).map(([instance_id, row]) => ({
     ...row,
     instance_id,
   }));
 
-  // 3) Write in chunks — a fresh tx per chunk — then yield
-  const CHUNK = 500;
-  for (let i = 0; i < items.length; i += CHUNK) {
-    const slice = items.slice(i, i + CHUNK);
-
-    const tx = db.transaction(idb.INSTANCES_STORE, 'readwrite');
-    const store = tx.store;
-    for (const item of slice) {
-      await store.put(item);
-    }
-    await tx.done;
-
-    await yieldToPaint();
+  const db = await idb.initInstancesDB();
+  if (!db) return;
+  const tx = db.transaction(idb.INSTANCES_STORE, 'readwrite');
+  const writes: Promise<unknown>[] = [];
+  try {
+    // Queue requests together instead of waiting for each individual row.
+    // Yielding to a paint here would allow IndexedDB to commit a partial save.
+    writes.push(tx.store.clear());
+    for (const item of items) writes.push(tx.store.put(item));
+    await Promise.all([...writes, tx.done]);
+  } catch (error) {
+    // A synchronous put failure (for example DataCloneError) does not abort
+    // the transaction automatically. Roll back its clear and earlier writes.
+    try { tx.abort(); } catch { /* The transaction may already have aborted. */ }
+    await Promise.allSettled([...writes, tx.done]);
+    throw error;
   }
 
   if (canDebugLog) {

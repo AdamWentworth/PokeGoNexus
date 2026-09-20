@@ -24,8 +24,8 @@ function normalizeStatus(status: string | InstanceStatus): Canonical {
 
 // 1) Derive status from instance flags, using canonical names.
 export function getStatusFromInstance(instance: PokemonInstance): InstanceStatus {
-  if (instance.is_caught) return 'Caught' as InstanceStatus;
   if (instance.is_for_trade) return 'Trade' as InstanceStatus;
+  if (instance.is_caught) return 'Caught' as InstanceStatus;
   if (instance.is_wanted) return 'Wanted' as InstanceStatus;
   return 'Missing' as InstanceStatus;
 }
@@ -54,7 +54,7 @@ const MESSAGES: TransitionMessageMap = {
   Wanted: {
     Caught: (name) => `Caught ${name}?`,
     Trade: (name) => `Caught ${name} and list for Trade?`,
-    Missing: (name) => `Transfer ${name}?`,
+    Missing: (name) => `Remove ${name} from your Wanted list?`,
   },
   Missing: {
     Caught: (name) => `Caught ${name}?`,

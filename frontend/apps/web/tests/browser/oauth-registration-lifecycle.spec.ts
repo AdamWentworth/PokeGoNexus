@@ -27,10 +27,10 @@ async function installOAuthLifecycle(
     completedPayload: {} as Record<string, unknown>,
   };
 
-  await page.route('**/__e2e/auth/**', async (route) => {
+  const handleAuthRoute = async (route: Route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const path = url.pathname.replace('/__e2e/auth', '');
+    const path = url.pathname.replace(/^\/(?:__e2e|api)\/auth/, '');
 
     if (request.method() === 'GET' && path === `/${provider}`) {
       expect(url.searchParams.get('intent')).toBe('register');
@@ -102,7 +102,11 @@ async function installOAuthLifecycle(
     }
 
     await fulfillJson(route, { message: `Unhandled auth route: ${request.method()} ${path}` }, 404);
-  });
+  };
+
+  for (const pathPattern of ['**/__e2e/auth/**', '**/api/auth/**']) {
+    await page.route(pathPattern, handleAuthRoute);
+  }
 
   await page.route(`**/__e2e/users/update-user/${account.id}`, async (route) => {
     await fulfillJson(route, { success: true });

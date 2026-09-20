@@ -1,4 +1,5 @@
 import type { PokemonVariant } from '@/types/pokemonVariants';
+import { resolveBackgroundCostume } from '@/utils/backgroundCostume';
 
 export type SortableCostume = {
   name: string;
@@ -47,14 +48,25 @@ export const normalizeAvailableForms = (validatedForms: unknown[]): string[] => 
 export const getPokemonSuggestions = (
   pokemonData: PokemonVariant[],
   query: string,
-): string[] =>
-  Array.from(
+  limit = 6,
+): string[] => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return [];
+
+  return Array.from(
     new Set(
       pokemonData
-        .filter((entry) => entry.name.toLowerCase().startsWith(query.toLowerCase()))
+        .filter((entry) => {
+          const normalizedName = entry.name.toLowerCase();
+          return (
+            normalizedName.startsWith(normalizedQuery) &&
+            normalizedName !== normalizedQuery
+          );
+        })
         .map((entry) => entry.name),
     ),
-  );
+  ).slice(0, limit);
+};
 
 export const computeMaxAvailability = (
   currentPokemonData?: PokemonVariant,
@@ -98,7 +110,7 @@ export const getSelectedCostumeId = (
 
 export const isBackgroundAllowedForSelection = (
   currentPokemonData: PokemonVariant | undefined,
-  costume: string | null,
+  _costume: string | null,
   availableCostumes: SortableCostume[],
 ): boolean => {
   const backgrounds = currentPokemonData?.backgrounds as BackgroundRow[] | undefined;
@@ -106,14 +118,7 @@ export const isBackgroundAllowedForSelection = (
     return false;
   }
 
-  if (!costume) {
-    return backgrounds.some((background) => background.costume_id == null);
-  }
-
-  const selectedCostumeId = getSelectedCostumeId(availableCostumes, costume);
   return backgrounds.some(
-    (background) =>
-      background.costume_id === selectedCostumeId || background.costume_id == null,
+    (background) => resolveBackgroundCostume(background, availableCostumes) !== null,
   );
 };
-

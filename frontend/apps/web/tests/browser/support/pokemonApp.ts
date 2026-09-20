@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { installE2eRoutes } from './e2eRoutes';
+import { installE2eRoutes, type E2eRouteOptions } from './e2eRoutes';
 
 const cardSelector = '.pokemon-card[role="button"]';
 
@@ -26,10 +26,13 @@ type TouchPoint = {
   clientY: number;
 };
 
-export async function openPokemonPage(page: Page) {
-  await installE2eRoutes(page);
+export async function openPokemonPage(page: Page, routeOptions: E2eRouteOptions = {}) {
+  await installE2eRoutes(page, routeOptions);
 
-  const response = await page.goto('/pokemon', { waitUntil: 'domcontentloaded' });
+  const pokemonUrl = routeOptions.baseUrl
+    ? new URL('/pokemon', routeOptions.baseUrl).href
+    : '/pokemon';
+  const response = await page.goto(pokemonUrl, { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), '/pokemon document response should be OK').toBe(true);
 
   const firstCard = page.locator(cardSelector).first();
@@ -40,16 +43,26 @@ export async function openPokemonPage(page: Page) {
   return { firstCard };
 }
 
-export async function openCaughtPokemonList(page: Page) {
-  await openPokemonPage(page);
+export async function openCaughtPokemonList(
+  page: Page,
+  routeOptions: E2eRouteOptions = {},
+) {
+  await openPokemonPage(page, routeOptions);
   await expect
     .poll(() => countIndexedDbStore(page, 'instancesDB', 'instances'))
     .toBeGreaterThan(0);
 
-  const caughtCount = await markFirstInstancesCaught(page, 12);
-  expect(caughtCount).toBeGreaterThan(0);
+  // The app can finish an in-flight IndexedDB reconciliation between the
+  // count probe and this write. Retry the idempotent update so workflow-only
+  // performance runs cannot fail on that narrow clear-and-repopulate window.
+  await expect
+    .poll(() => markFirstInstancesCaught(page, 12), { timeout: 10_000 })
+    .toBeGreaterThan(0);
 
-  const response = await page.goto('/pokemon', { waitUntil: 'domcontentloaded' });
+  const pokemonUrl = routeOptions.baseUrl
+    ? new URL('/pokemon', routeOptions.baseUrl).href
+    : '/pokemon';
+  const response = await page.goto(pokemonUrl, { waitUntil: 'domcontentloaded' });
   expect(response?.ok(), '/pokemon reload response should be OK').toBe(true);
   await expect(page.locator(cardSelector).first()).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('.app-loading-overlay')).toHaveCount(0);

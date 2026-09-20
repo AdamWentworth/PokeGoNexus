@@ -49,6 +49,15 @@ describe('variantSearchHelpers', () => {
 
     expect(getPokemonSuggestions(variants, 'Bu')).toEqual(['Bulbasaur', 'Butterfree']);
     expect(getPokemonSuggestions(variants, 'iv')).toEqual(['Ivysaur']);
+    expect(getPokemonSuggestions(variants, 'Bulbasaur')).toEqual([]);
+  });
+
+  it('limits broad autocomplete matches to a manageable visual list', () => {
+    const variants = Array.from({ length: 8 }, (_, index) =>
+      makeVariant({ name: `Char-${index + 1}` }),
+    );
+
+    expect(getPokemonSuggestions(variants, 'Cha')).toHaveLength(6);
   });
 
   it('computeMaxAvailability reports dynamax and gigantamax flags', () => {
@@ -103,7 +112,7 @@ describe('variantSearchHelpers', () => {
     expect(getSelectedCostumeId(availableCostumes, 'Missing')).toBeUndefined();
   });
 
-  it('isBackgroundAllowedForSelection supports default and costume-specific backgrounds', () => {
+  it('allows backgrounds only when their exact costume can be resolved', () => {
     const variant = makeVariant({
       backgrounds: [
         { background_id: 1, costume_id: null },
@@ -116,6 +125,15 @@ describe('variantSearchHelpers', () => {
     expect(isBackgroundAllowedForSelection(variant, 'Party', availableCostumes)).toBe(true);
     expect(
       isBackgroundAllowedForSelection(
+        makeVariant({
+          backgrounds: [{ background_id: 2, costume_id: 7 }] as PokemonVariant['backgrounds'],
+        }),
+        null,
+        availableCostumes,
+      ),
+    ).toBe(true);
+    expect(
+      isBackgroundAllowedForSelection(
         makeVariant({ backgrounds: [{ background_id: 3, costume_id: 9 }] as PokemonVariant['backgrounds'] }),
         'Party',
         availableCostumes,
@@ -123,4 +141,3 @@ describe('variantSearchHelpers', () => {
     ).toBe(false);
   });
 });
-

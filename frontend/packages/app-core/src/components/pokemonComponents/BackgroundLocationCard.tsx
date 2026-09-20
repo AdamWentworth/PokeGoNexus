@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './BackgroundLocationCard.css';
 import type { VariantBackground } from '@/types/pokemonSubTypes';
+import {
+  backgroundMatchesVariant,
+  backgroundMatchesCostume,
+  normalizeCostumeId,
+  type CostumeReference,
+} from '@/utils/backgroundCostume';
 
 type Props = {
   pokemon?: {
@@ -8,8 +14,10 @@ type Props = {
     backgrounds?: VariantBackground[];
   };
   onSelectBackground?: (background: VariantBackground | null) => void;
-  selectedCostumeId?: number;
+  selectedCostumeId?: number | null;
   filterBackground?: (background: VariantBackground) => boolean;
+  costumeOptions?: CostumeReference[];
+  showCostumePairing?: boolean;
   title?: string;
   containerClassName?: string;
   itemClassName?: string;
@@ -29,6 +37,8 @@ const BackgroundLocationCard: React.FC<Props> = ({
   onSelectBackground,
   selectedCostumeId,
   filterBackground,
+  costumeOptions = [],
+  showCostumePairing = false,
   title = 'Select Background',
   containerClassName = 'background-location-card',
   itemClassName = 'background-item',
@@ -49,24 +59,10 @@ const BackgroundLocationCard: React.FC<Props> = ({
     if (!pokemon?.backgrounds) return [];
 
     const defaultFilter = (background: VariantBackground) => {
-      const normalizedVariantType = (pokemon.variantType ?? '').toLowerCase();
-      const isFusionVariant =
-        normalizedVariantType.startsWith('fusion_') ||
-        normalizedVariantType.startsWith('shiny_fusion_');
-      if (isFusionVariant) return true;
-
-      if (selectedCostumeId != null) {
-        if (!background.costume_id) return true;
-        return background.costume_id === selectedCostumeId;
+      if (selectedCostumeId !== undefined) {
+        return backgroundMatchesCostume(background, selectedCostumeId);
       }
-
-      if (pokemon.variantType) {
-        const variantTypeId = pokemon.variantType.split('_')[1];
-        if (!background.costume_id) return true;
-        return background.costume_id === parseInt(variantTypeId, 10);
-      }
-
-      return true;
+      return backgroundMatchesVariant(background, pokemon.variantType);
     };
 
     return pokemon.backgrounds.filter(filterBackground ?? defaultFilter);
@@ -103,10 +99,14 @@ const BackgroundLocationCard: React.FC<Props> = ({
           const showLocationLabel =
             backgroundLocationLabel.length > 0 &&
             backgroundLocationLabel.toLowerCase() !== backgroundTitle.toLowerCase();
+          const backgroundCostumeId = normalizeCostumeId(background.costume_id);
+          const backgroundCostumeName = costumeOptions.find(
+            (costume) => normalizeCostumeId(costume.costume_id) === backgroundCostumeId,
+          )?.name;
 
           return (
             <button
-              key={background.background_id}
+              key={`${background.background_id}:${backgroundCostumeId ?? 'none'}`}
               type="button"
               className={`${itemClassName} ${
                 selectedBackgroundId === background.background_id ? selectedItemClassName : ''
@@ -120,6 +120,13 @@ const BackgroundLocationCard: React.FC<Props> = ({
 
                 <div className="background-info">
                   <div className="background-card-title">{backgroundTitle}</div>
+                  {showCostumePairing ? (
+                    <div className="background-card-costume">
+                      {backgroundCostumeId === null
+                        ? 'No costume'
+                        : backgroundCostumeName ?? `Costume #${backgroundCostumeId}`}
+                    </div>
+                  ) : null}
                   {showLocationLabel ? (
                     <div className="background-card-subtitle">{backgroundLocationLabel}</div>
                   ) : null}

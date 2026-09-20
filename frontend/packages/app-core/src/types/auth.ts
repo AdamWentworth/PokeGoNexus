@@ -36,22 +36,6 @@ export interface RegisterFormErrors {
   [key: string]: string;
 }
 
-export interface AccountFormValues {
-  userId: string;
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  pokemonGoName: string;
-  pokemonGoNameDisabled: boolean;
-  trainerCode: string;
-  allowLocation: boolean;
-  location: string;
-  coordinates: Coordinates | null;
-  accessTokenExpiry: string;
-  refreshTokenExpiry: string;
-}
-
 export interface FormErrors {
   [key: string]: string;
 }

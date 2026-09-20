@@ -2,6 +2,7 @@ import React from 'react';
 
 import FriendshipLevel from '@/components/pokemonComponents/FriendshipLevel';
 import MoveDisplay from '@/components/pokemonComponents/MoveDisplay';
+import type { WantedSizePreferences } from '@/types/pokemonInstance';
 
 type PokemonMove = {
   move_id: number;
@@ -16,6 +17,7 @@ type PokemonResultDetailsProps = {
   prefLucky?: boolean;
   weight?: number | null;
   height?: number | null;
+  wantedSizePreferences?: WantedSizePreferences | null;
   fastMoveId?: number | null;
   chargedMove1Id?: number | null;
   chargedMove2Id?: number | null;
@@ -30,6 +32,7 @@ const PokemonResultDetails: React.FC<PokemonResultDetailsProps> = ({
   prefLucky = false,
   weight,
   height,
+  wantedSizePreferences,
   fastMoveId,
   chargedMove1Id,
   chargedMove2Id,
@@ -49,22 +52,36 @@ const PokemonResultDetails: React.FC<PokemonResultDetailsProps> = ({
       )}
 
       <div className="pokemon-weight-height">
-        {typeof weight === 'number' && weight > 0 && (
+        {wantedSizePreferences?.weight ? (
+          <div className="pokemon-weight">
+            <p>
+              <strong>{wantedSizePreferences.weight.category}</strong>
+            </p>
+            <p>WANTED WEIGHT</p>
+          </div>
+        ) : typeof weight === 'number' && weight > 0 ? (
           <div className="pokemon-weight">
             <p>
               <strong>{weight}kg</strong>
             </p>
             <p>WEIGHT</p>
           </div>
-        )}
-        {typeof height === 'number' && height > 0 && (
+        ) : null}
+        {wantedSizePreferences?.height ? (
+          <div className="pokemon-height">
+            <p>
+              <strong>{wantedSizePreferences.height.category}</strong>
+            </p>
+            <p>WANTED HEIGHT</p>
+          </div>
+        ) : typeof height === 'number' && height > 0 ? (
           <div className="pokemon-height">
             <p>
               <strong>{height}m</strong>
             </p>
             <p>HEIGHT</p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {hasMoves && (

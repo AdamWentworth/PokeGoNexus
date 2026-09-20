@@ -12,6 +12,11 @@
   z-index: 1100;
 }
 
+.close-button--stacked-beneath {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .close-button-image {
   /* Small screens */
   width: clamp(50px, 12vw, 80px);

@@ -32,8 +32,8 @@ export const resolveTradeTargetsPanelCopy = (isMirror: boolean): TradeTargetsPan
       }
     : {
         eyebrow: 'Desired Return',
-        title: 'Trade Targets',
+        title: 'Wanted Pokémon',
         description:
-          'Choose the Pokemon you would accept for this trade and fine-tune the filters below.',
-        listTitle: 'Target List',
+          'Choose the Pokémon you want in return for this For Trade listing.',
+        listTitle: 'Wanted Pokémon',
       };

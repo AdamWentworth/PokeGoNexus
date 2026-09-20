@@ -60,11 +60,53 @@ vi.mock('@/pages/Pokemon/features/instances/CaughtInstance', () => ({
 }));
 
 vi.mock('@/pages/Pokemon/features/instances/TradeInstance', () => ({
-  default: () => <div data-testid="trade-instance" />,
+  default: ({ compactListingView }: { compactListingView?: boolean }) => (
+    <div
+      data-testid="trade-instance"
+      data-compact-listing={String(compactListingView)}
+    />
+  ),
+}));
+
+vi.mock('@/features/trades/preferences/TradePreferenceHandoff', () => ({
+  default: () => <div data-testid="trade-preference-handoff" />,
+}));
+
+vi.mock('@/features/trades/proposal/CatalogTradeLauncherPanel', () => ({
+  default: () => <div data-testid="trade-details" />,
+}));
+
+vi.mock('@/features/trades/proposal/CatalogWantedLauncherPanel', () => ({
+  default: ({
+    wantedPokemon,
+  }: {
+    wantedPokemon: { instanceData?: { instance_id?: string | null } };
+  }) => (
+    <div
+      data-testid="wanted-details"
+      data-draft-instance-id={wantedPokemon.instanceData?.instance_id ?? 'none'}
+    />
+  ),
 }));
 
 vi.mock('@/pages/Pokemon/features/instances/components/Trade/TradeTargetsPanel', () => ({
-  default: () => <div data-testid="trade-details" />,
+  default: ({ isEditable, summaryMode }: { isEditable: boolean; summaryMode?: boolean }) => (
+    <div
+      data-testid="own-trade-targets"
+      data-editable={String(isEditable)}
+      data-summary={String(summaryMode)}
+    />
+  ),
+}));
+
+vi.mock('@/pages/Pokemon/features/instances/components/Wanted/WantedDetails', () => ({
+  default: ({ isEditable, summaryMode }: { isEditable: boolean; summaryMode?: boolean }) => (
+    <div
+      data-testid="own-wanted-targets"
+      data-editable={String(isEditable)}
+      data-summary={String(summaryMode)}
+    />
+  ),
 }));
 
 vi.mock('@/pages/Pokemon/features/instances/WantedInstance', async () => {
@@ -73,37 +115,21 @@ vi.mock('@/pages/Pokemon/features/instances/WantedInstance', async () => {
   return {
     default: ({
       pokemon,
+      compactListingView,
     }: {
       pokemon: { instanceData?: { instance_id?: string | null } };
+      compactListingView?: boolean;
     }) => {
       const [draftInstanceId] = ReactActual.useState(
         () => pokemon.instanceData?.instance_id ?? 'none',
       );
 
       return (
-        <div data-testid="wanted-instance" data-draft-instance-id={draftInstanceId}>
-          {draftInstanceId}
-        </div>
-      );
-    },
-  };
-});
-
-vi.mock('@/pages/Pokemon/features/instances/components/Wanted/WantedDetails', async () => {
-  const ReactActual = await vi.importActual<typeof import('react')>('react');
-
-  return {
-    default: ({
-      pokemon,
-    }: {
-      pokemon: { instanceData?: { instance_id?: string | null } };
-    }) => {
-      const [draftInstanceId] = ReactActual.useState(
-        () => pokemon.instanceData?.instance_id ?? 'none',
-      );
-
-      return (
-        <div data-testid="wanted-details" data-draft-instance-id={draftInstanceId}>
+        <div
+          data-testid="wanted-instance"
+          data-draft-instance-id={draftInstanceId}
+          data-compact-listing={String(compactListingView)}
+        >
           {draftInstanceId}
         </div>
       );
@@ -132,6 +158,7 @@ function makePokemon(overrides: Record<string, unknown> = {}) {
 function renderOverlay(
   tagFilter: string,
   pokemonOverrides: Record<string, unknown> = {},
+  isEditable = false,
 ) {
   render(
     <InstanceOverlay
@@ -143,13 +170,45 @@ function renderOverlay(
       instances={{}}
       sortType="name"
       sortMode="ascending"
-      isEditable={true}
+      isEditable={isEditable}
       username="ash"
     />,
   );
 }
 
 describe('InstanceOverlay', () => {
+  it('shows read-only targets and the preference handoff for the owner trade listing', () => {
+    renderOverlay('trade', { instanceData: { instance_id: 'trade-1' } }, true);
+
+    expect(screen.getByTestId('own-trade-targets')).toHaveAttribute(
+      'data-editable',
+      'false',
+    );
+    expect(screen.getByTestId('trade-instance')).toHaveAttribute(
+      'data-compact-listing',
+      'true',
+    );
+    expect(screen.getByTestId('own-trade-targets')).toHaveAttribute('data-summary', 'true');
+    expect(screen.getByTestId('trade-preference-handoff')).toBeInTheDocument();
+    expect(screen.queryByTestId('trade-details')).not.toBeInTheDocument();
+  });
+
+  it('shows read-only offers and the preference handoff for the owner wanted listing', () => {
+    renderOverlay('wanted', { instanceData: { instance_id: 'wanted-1' } }, true);
+
+    expect(screen.getByTestId('own-wanted-targets')).toHaveAttribute(
+      'data-editable',
+      'false',
+    );
+    expect(screen.getByTestId('wanted-instance')).toHaveAttribute(
+      'data-compact-listing',
+      'true',
+    );
+    expect(screen.getByTestId('own-wanted-targets')).toHaveAttribute('data-summary', 'true');
+    expect(screen.getByTestId('trade-preference-handoff')).toBeInTheDocument();
+    expect(screen.queryByTestId('wanted-details')).not.toBeInTheDocument();
+  });
+
   it('uses stacked trade layout below 768px and side-by-side at 768px and above', async () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
@@ -168,7 +227,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
       />,
     );
@@ -192,7 +251,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
       />,
     );
@@ -203,10 +262,26 @@ describe('InstanceOverlay', () => {
     expect(screen.getByTestId('caught-instance')).toBeInTheDocument();
   });
 
-  it('renders trade overlay windows when tag filter is trade', () => {
+  it('renders the Wanted overlay for a Most Wanted tag result', () => {
+    renderOverlay('Most Wanted', {
+      instanceData: {
+        instance_id: 'most-wanted-1',
+        is_wanted: true,
+        most_wanted: true,
+      },
+    });
+
+    expect(screen.getByTestId('wanted-instance')).toBeInTheDocument();
+    expect(screen.getByTestId('wanted-details')).toBeInTheDocument();
+    expect(screen.queryByTestId('caught-instance')).not.toBeInTheDocument();
+    expect(document.querySelector('.instance-overlay')).toHaveClass('wanted-mode');
+  });
+
+  it('renders trade details and proposal in one unified window', () => {
     renderOverlay('trade');
     expect(screen.getByTestId('trade-instance')).toBeInTheDocument();
     expect(screen.getByTestId('trade-details')).toBeInTheDocument();
+    expect(screen.getAllByTestId('window-overlay')).toHaveLength(1);
   });
 
   it('renders the type background layer for trade overlays too', () => {
@@ -215,8 +290,50 @@ describe('InstanceOverlay', () => {
     });
 
     const background = document.querySelector('.io-bg-img') as HTMLImageElement | null;
+    const backgroundLayer = document.querySelector('.io-bg') as HTMLDivElement | null;
+    const motionShell = document.querySelector('.instance-motion-shell');
     expect(background).not.toBeNull();
     expect(background?.getAttribute('src')).toContain('bg_fire.png');
+    expect(motionShell?.contains(background)).toBe(false);
+    expect(backgroundLayer?.style.getPropertyValue('--io-bg-base-scale')).toBe('1.06');
+    expect(backgroundLayer?.style.getPropertyValue('--io-bg-transition-opacity')).toBe('0.58');
+    expect(backgroundLayer?.style.getPropertyValue('--io-bg-transition-scale')).toBe('1.09');
+  });
+
+  it('renders type and wanted-lucky backgrounds behind wanted overlays', () => {
+    const { unmount } = render(
+      <InstanceOverlay
+        pokemon={makePokemon({
+          type1_name: 'Grass',
+          instanceData: { instance_id: 'wanted-1', is_wanted: true },
+        })}
+        onClose={vi.fn()}
+        variants={[]}
+        tagFilter="wanted"
+        lists={{}}
+        instances={{}}
+        sortType="name"
+        sortMode="ascending"
+        isEditable
+        username="ash"
+      />,
+    );
+
+    let background = document.querySelector('.io-bg-img') as HTMLImageElement | null;
+    expect(background?.getAttribute('src')).toContain('bg_grass.png');
+    expect(document.querySelector('.instance-overlay')).toHaveClass('wanted-mode');
+    unmount();
+
+    renderOverlay('wanted', {
+      type1_name: 'Grass',
+      instanceData: {
+        instance_id: 'wanted-2',
+        is_wanted: true,
+        pref_lucky: true,
+      },
+    });
+    background = document.querySelector('.io-bg-img') as HTMLImageElement | null;
+    expect(background?.getAttribute('src')).toContain('bg_lucky.png');
   });
 
   it('falls back to pokemon status when tag filter is unknown', () => {
@@ -262,15 +379,11 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
       />,
     );
 
-    expect(screen.getByTestId('wanted-instance')).toHaveAttribute(
-      'data-draft-instance-id',
-      'wanted-1',
-    );
     expect(screen.getByTestId('wanted-details')).toHaveAttribute(
       'data-draft-instance-id',
       'wanted-1',
@@ -286,15 +399,11 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
       />,
     );
 
-    expect(screen.getByTestId('wanted-instance')).toHaveAttribute(
-      'data-draft-instance-id',
-      'wanted-2',
-    );
     expect(screen.getByTestId('wanted-details')).toHaveAttribute(
       'data-draft-instance-id',
       'wanted-2',
@@ -352,20 +461,25 @@ describe('InstanceOverlay', () => {
   it('treats buttons and nested icon elements as interactive swipe targets', () => {
     const button = document.createElement('button');
     const image = document.createElement('img');
+    const range = document.createElement('input');
+    range.type = 'range';
     const wrapper = document.createElement('div');
     wrapper.className = 'mirror';
 
     button.appendChild(image);
     wrapper.appendChild(document.createElement('img'));
     document.body.appendChild(button);
+    document.body.appendChild(range);
     document.body.appendChild(wrapper);
 
     try {
       expect(isSwipeInteractiveTarget(button)).toBe(true);
       expect(isSwipeInteractiveTarget(image)).toBe(true);
       expect(isSwipeInteractiveTarget(wrapper.firstElementChild)).toBe(true);
+      expect(isSwipeInteractiveTarget(range)).toBe(true);
     } finally {
       button.remove();
+      range.remove();
       wrapper.remove();
     }
   });
@@ -388,7 +502,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
       />,
     );
@@ -412,7 +526,7 @@ describe('InstanceOverlay', () => {
         instances={latestInstances}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
       />,
     );
@@ -435,7 +549,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -463,7 +577,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -474,7 +588,6 @@ describe('InstanceOverlay', () => {
     expect(screen.getByRole('button', { name: 'Next Pokemon' })).not.toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Next Pokemon' }));
     await waitFor(() => expect(onNavigatePokemon).toHaveBeenCalledWith(p2));
-    expect(screen.getByTestId('trade-instance')).toBeInTheDocument();
     expect(screen.getByTestId('trade-details')).toBeInTheDocument();
   });
 
@@ -493,7 +606,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -535,7 +648,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -560,7 +673,6 @@ describe('InstanceOverlay', () => {
     });
 
     await waitFor(() => expect(onNavigatePokemon).toHaveBeenCalledWith(p2));
-    expect(screen.getByTestId('trade-instance')).toBeInTheDocument();
     expect(screen.getByTestId('trade-details')).toBeInTheDocument();
   });
 
@@ -579,7 +691,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -619,7 +731,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, makePokemon({ variant_id: '0002-default', instanceData: { instance_id: 'i-2' } })]}
       />,
@@ -663,7 +775,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -705,7 +817,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
         onNavigatePokemon={onNavigatePokemon}
@@ -758,7 +870,7 @@ describe('InstanceOverlay', () => {
         instances={{}}
         sortType="name"
         sortMode="ascending"
-        isEditable={true}
+        isEditable={false}
         username="ash"
         navigationPokemons={[p1, p2]}
       />,

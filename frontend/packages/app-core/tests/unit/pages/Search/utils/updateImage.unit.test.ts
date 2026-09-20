@@ -49,6 +49,7 @@ describe('updateImage', () => {
       'Normal',
       'Any',
       false,
+      false,
     );
     expect(result).toBeNull();
   });
@@ -62,6 +63,7 @@ describe('updateImage', () => {
       '',
       'Normal',
       'Any',
+      false,
       true,
     );
     expect(result).toBe('/images/gmax.png');
@@ -76,6 +78,7 @@ describe('updateImage', () => {
       '',
       'Normal',
       'Any',
+      false,
       true,
     );
     expect(result).toBe('/images/gmax_shiny.png');
@@ -91,6 +94,7 @@ describe('updateImage', () => {
       'Normal',
       'Female',
       false,
+      false,
     );
     expect(result).toBe('/images/female_shadow.png');
   });
@@ -104,6 +108,7 @@ describe('updateImage', () => {
       'party_hat',
       'Normal',
       'Any',
+      false,
       false,
     );
     expect(result).toBe('/images/costume_shiny_shadow.png');
@@ -119,7 +124,53 @@ describe('updateImage', () => {
       'Normal',
       'Female',
       false,
+      false,
     );
     expect(result).toBe('/images/costume_female_shiny.png');
+  });
+
+  it('ignores a stale costume image when dynamax is enabled', () => {
+    const result = updateImage(
+      pokemonData as any,
+      'Pikachu',
+      false,
+      false,
+      'party_hat',
+      'Normal',
+      'Any',
+      true,
+      false,
+    );
+    expect(result).toBe('/images/base.png');
+  });
+
+  it('ignores stale shadow and costume state when dynamax is enabled', () => {
+    const result = updateImage(
+      pokemonData as any,
+      'Pikachu',
+      false,
+      true,
+      'party_hat',
+      'Normal',
+      'Any',
+      true,
+      false,
+    );
+    expect(result).toBe('/images/base.png');
+  });
+
+  it('prefers gigantamax artwork even if stale costume state leaks through', () => {
+    const result = updateImage(
+      pokemonData as any,
+      'Pikachu',
+      false,
+      false,
+      'party_hat',
+      'Normal',
+      'Any',
+      false,
+      true,
+    );
+    expect(result).toBe('/images/gmax.png');
   });
 });

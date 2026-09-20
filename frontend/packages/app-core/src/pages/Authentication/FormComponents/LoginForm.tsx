@@ -1,6 +1,6 @@
 // LoginForm.tsx
 
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import './LoginForm.css';
 
 import { useModal } from '../../../contexts/ModalContext';
@@ -9,7 +9,7 @@ import type { FormErrors } from '../../../types/auth';
 import { startGoogleAuthentication } from '@/services/authService';
 import { startDiscordAuthentication } from '@/services/authService';
 import { startFacebookAuthentication } from '@/services/authService';
-import { FaDiscord, FaFacebookF } from 'react-icons/fa';
+import { FaDiscord, FaEye, FaEyeSlash, FaFacebookF } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 
 interface LoginFormProps {
@@ -28,6 +28,7 @@ const LoginForm: FC<LoginFormProps> = ({
   onResetPassword,
 }) => {
   const { alert } = useModal();
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleResetPassword = () => {
     if (onResetPassword) {
@@ -41,24 +42,59 @@ const LoginForm: FC<LoginFormProps> = ({
     <div className="login-page">
       <div className="login-form">
         <form onSubmit={onSubmit}>
-          <input
-            type="text"
-            name="username"
-            value={values.username}
-            onChange={onChange}
-            placeholder="Username or Email"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            value={values.password}
-            onChange={onChange}
-            placeholder="Password"
-            required
-          />
-          {errors.password && <div className="error-message">{errors.password}</div>}
-          {errors.username && <div className="error-message">{errors.username}</div>}
+          <div className="login-field">
+            <label htmlFor="login-username">Username or email</label>
+            <input
+              id="login-username"
+              type="text"
+              name="username"
+              value={values.username}
+              onChange={onChange}
+              placeholder="Username or Email"
+              autoComplete="username"
+              aria-invalid={Boolean(errors.username)}
+              aria-describedby={errors.username ? 'login-username-error' : undefined}
+              required
+            />
+            {errors.username && (
+              <small id="login-username-error" className="login-field-error" role="alert">
+                {errors.username}
+              </small>
+            )}
+          </div>
+
+          <div className="login-field">
+            <label htmlFor="login-password">Password</label>
+            <span className="login-password-control">
+              <input
+                id="login-password"
+                type={isPasswordVisible ? 'text' : 'password'}
+                name="password"
+                value={values.password}
+                onChange={onChange}
+                placeholder="Password"
+                autoComplete="current-password"
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? 'login-password-error' : undefined}
+                required
+              />
+              <button
+                type="button"
+                className="login-password-toggle"
+                aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                aria-pressed={isPasswordVisible}
+                onClick={() => setIsPasswordVisible((isVisible) => !isVisible)}
+              >
+                {isPasswordVisible ? <FaEyeSlash aria-hidden="true" /> : <FaEye aria-hidden="true" />}
+              </button>
+            </span>
+            {errors.password && (
+              <small id="login-password-error" className="login-field-error" role="alert">
+                {errors.password}
+              </small>
+            )}
+          </div>
+
           <button type="submit">Login</button>
           <button
             type="button"

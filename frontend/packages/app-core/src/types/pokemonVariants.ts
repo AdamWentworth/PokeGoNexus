@@ -1,54 +1,8 @@
-// src/types/pokemonVariants.ts
-import type { BasePokemon } from './pokemonBase';
-import type { PokemonInstance } from './pokemonInstance';
-
-export type VariantKind =
-  | 'default'
-  | 'shiny'
-  | 'shadow'
-  | 'shiny_shadow'
-  | 'primal'
-  | 'shiny_primal'
-  | 'dynamax'
-  | 'shiny_dynamax'
-  | 'gigantamax'
-  | 'shiny_gigantamax'
-  | `costume_${string}`
-  | `costume_${string}_shiny`
-  | `shadow_costume_${string}`
-  | `shiny_shadow_costume_${string}`
-  | `mega${string}`
-  | `shiny_mega${string}`
-  | `fusion_${string}`
-  | `shiny_fusion_${string}`;
-
-export interface VariantCommon {
-  variantType: VariantKind;
-  currentImage: string | undefined;
-  species_name: string;
-  primal?: boolean;
-  megaForm?: string;
-  fusion_id?: number | null;
-  instanceData?: PokemonInstance;
-  raidRoster?: {
-    source: 'caught';
-    instanceId: string;
-    moveSource: 'recorded' | 'estimated';
-    hiddenPowerTypeEstimated?: boolean;
-    levelSource: 'recorded' | 'inferred' | 'estimated';
-    ivSource: 'recorded' | 'estimated';
-    formSource?: 'base' | 'fusion' | 'crown' | 'mega';
-    cpSource?: 'recorded' | 'calculated';
-  };
-}
-
-// Omit base fields that get transformed in variants
-export type PokemonVariant = Omit<BasePokemon, 'variantType' | 'currentImage' | 'raid_boss' | 'backgrounds'> &
-  VariantCommon & {
-    // Additional variant-only properties
-    raid_boss?: BasePokemon['raid_boss'];
-    backgrounds?: BasePokemon['backgrounds'];
-    variant_id: string;
-  };
-
-export type AllVariants = PokemonVariant[];
+// Compatibility aliases. The authoritative variant contract is shared by the
+// web and native hosts in shared-contracts.
+export type {
+  PokemonVariant,
+  PokemonVariantCommon as VariantCommon,
+  PokemonVariantKind as VariantKind,
+  PokemonVariants as AllVariants,
+} from '@pokemongonexus/shared-contracts/variants';

@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { FaCheckCircle, FaKey, FaLock } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { feedback } from '@/components/feedback';
 
 import { confirmPasswordReset } from '@/services/authService';
 import './ResetPassword.css';
@@ -20,16 +20,16 @@ const ResetPassword = () => {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!token) return toast.error('This reset link is incomplete.');
-    if (!validPassword) return toast.error('Choose a password that meets every requirement.');
-    if (password !== confirmation) return toast.error('Passwords do not match.');
+    if (!token) return feedback.error('This reset link is incomplete.');
+    if (!validPassword) return feedback.error('Choose a password that meets every requirement.');
+    if (password !== confirmation) return feedback.error('Passwords do not match.');
     setSubmitting(true);
     try {
       await confirmPasswordReset({ token, password });
       setComplete(true);
       window.setTimeout(() => navigate('/login'), 2500);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'This reset link is invalid or expired.');
+      feedback.error(error instanceof Error ? error.message : 'This reset link is invalid or expired.');
     } finally {
       setSubmitting(false);
     }
@@ -38,7 +38,7 @@ const ResetPassword = () => {
   return (
     <div className="password-reset-page">
       <section className="password-reset-card">
-        <div className="password-reset-brand">PokeGoNexus</div>
+        <div className="password-reset-brand">Pokémon Go Nexus</div>
         {complete ? (
           <div className="password-reset-success">
             <FaCheckCircle />

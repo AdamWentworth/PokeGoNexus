@@ -17,6 +17,9 @@ interface LevelGenderRowProps {
   onLevelChange: (value: string) => void;
   gender: string | null;
   onGenderChange: (value: string | null) => void;
+  showLevel?: boolean;
+  showGenderWhenUnset?: boolean;
+  searchMode?: boolean;
 }
 
 const isGenderlessRate = (genderRate: string | undefined): boolean => {
@@ -32,22 +35,32 @@ const LevelGenderRow: React.FC<LevelGenderRowProps> = ({
   onLevelChange,
   gender,
   onGenderChange,
+  showLevel = true,
+  showGenderWhenUnset = false,
+  searchMode = false,
 }) => {
-  const hasDefinedGender = gender !== null && gender !== '';
-  const showGender = hasDefinedGender || isGenderlessRate(pokemon.gender_rate);
+  const hasDefinedGender =
+    gender !== null && gender !== '' && (!searchMode || gender !== 'Any');
+  const showGender =
+    showGenderWhenUnset || hasDefinedGender || isGenderlessRate(pokemon.gender_rate);
+
+  if (!showLevel && !showGender) return null;
 
   return (
     <div className="level-gender-row">
-      <Level
-        editMode={editMode}
-        level={level}
-        onLevelChange={onLevelChange}
-      />
+      {showLevel ? (
+        <Level
+          editMode={editMode}
+          level={level}
+          onLevelChange={onLevelChange}
+        />
+      ) : null}
       {showGender ? (
         <div className="gender-wrapper">
           <Gender
             pokemon={pokemon}
             editMode={editMode}
+            searchMode={searchMode}
             onGenderChange={onGenderChange}
           />
         </div>

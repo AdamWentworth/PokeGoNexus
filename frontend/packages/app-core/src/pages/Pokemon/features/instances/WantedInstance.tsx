@@ -1,25 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './WantedInstance.css';
 
+import { useModal } from '@/contexts/ModalContext';
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
-
 import EditSaveComponent from '@/components/EditSaveComponent';
-import CloseButton from '@/components/CloseButton';
-import NameComponent from './components/Caught/NameComponent';
-import Gender from '@/components/pokemonComponents/Gender';
-import Weight from '@/components/pokemonComponents/Weight';
-import Types from '@/components/pokemonComponents/Types';
-import Height from '@/components/pokemonComponents/Height';
 import Moves from '@/components/pokemonComponents/Moves';
-import FriendshipManager from './components/Wanted/FriendshipManager';
-import BackgroundLocationCard from '@/components/pokemonComponents/BackgroundLocationCard';
-import OverlayPortal from '@/components/OverlayPortal';
-
-import { determineImageUrl } from '@/utils/imageHelpers';
-import { getEntityKey } from './utils/getEntityKey';
 import type { PokemonInstance } from '@/types/pokemonInstance';
-import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { VariantBackground } from '@/types/pokemonSubTypes';
+import type { PokemonVariant } from '@/types/pokemonVariants';
+import { determineImageUrl } from '@/utils/imageHelpers';
+import { createScopedLogger } from '@/utils/logger';
+import { backgroundMatchesVariant } from '@/utils/backgroundCostume';
+
+import FriendshipManager from './components/Wanted/FriendshipManager';
+import MostWantedToggle from './components/Wanted/MostWantedToggle';
+import WantedSizePreferences from './components/Wanted/WantedSizePreferences';
+import {
+  buildWantedSizePreferences,
+  getStoredWantedSizePreference,
+  type WantedSizePreference,
+} from './components/Wanted/wantedSizePreferences';
+import BackgroundSelector from './sections/BackgroundSelector';
+import IdentityRow from './sections/IdentityRow';
+import ImageStage from './sections/ImageStage';
+import LevelGenderRow from './sections/LevelGenderRow';
+import TradeBackgroundModal from './sections/TradeBackgroundModal';
+import { getEntityKey } from './utils/getEntityKey';
+
+const log = createScopedLogger('WantedInstance');
 
 type BackgroundOption = VariantBackground;
 
@@ -31,231 +39,387 @@ type WantedPokemon = PokemonVariant & {
 interface WantedInstanceProps {
   pokemon: WantedPokemon;
   isEditable: boolean;
+  catalogView?: boolean;
+  compactListingView?: boolean;
+  onPreviewInstanceDataChange?: (patch: Partial<PokemonInstance>) => void;
 }
 
-const WantedInstance: React.FC<WantedInstanceProps> = ({ pokemon, isEditable }) => {
-  const updateDetails = useInstancesStore((s) => s.updateInstanceDetails);
-  const entityKey = getEntityKey(pokemon);
+type MovesSelection = {
+  fastMove: number | null;
+  chargedMove1: number | null;
+  chargedMove2: number | null;
+};
 
-  const [editMode, setEditMode] = useState<boolean>(false);
-  const [nickname, setNickname] = useState<string | null>(pokemon.instanceData.nickname);
-  const isFavorite = !!pokemon.instanceData.favorite;
-  const [gender, setGender] = useState<string | null>(pokemon.instanceData.gender);
-  const [isFemale, setIsFemale] = useState<boolean>(pokemon.instanceData.gender === 'Female');
-  const [currentImage, setCurrentImage] = useState<string>(determineImageUrl(isFemale, pokemon));  // Set the initial image based on gender
-  const [weight, setWeight] = useState<number | null>(pokemon.instanceData.weight);
-  const [height, setHeight] = useState<number | null>(pokemon.instanceData.height);
-  const [moves, setMoves] = useState<{
-    fastMove: number | null;
-    chargedMove1: number | null;
-    chargedMove2: number | null;
-  }>({
-    fastMove: pokemon.instanceData.fast_move_id,
-    chargedMove1: pokemon.instanceData.charged_move1_id,
-    chargedMove2: pokemon.instanceData.charged_move2_id,
-  });
-  const [friendship, setFriendship] = useState<number>(
-    Number((pokemon.instanceData.friendship_level as number | undefined) ?? 0),
+const hasSpecificGender = (gender: string | null): boolean =>
+  Boolean(gender && gender !== 'Any' && gender !== 'Both');
+
+const hasDesiredDetails = (
+  gender: string | null,
+  weight: WantedSizePreference,
+  height: WantedSizePreference,
+  moves: MovesSelection,
+): boolean =>
+  Boolean(
+    hasSpecificGender(gender) ||
+      weight != null ||
+      height != null ||
+      moves.fastMove ||
+      moves.chargedMove1 ||
+      moves.chargedMove2,
   );
-  const [isLucky, setIsLucky] = useState<boolean>(!!pokemon.instanceData.pref_lucky);
 
-  // Background-related state
-  const [showBackgrounds, setShowBackgrounds] = useState<boolean>(false);
-  const [selectedBackground, setSelectedBackground] = useState<BackgroundOption | null>(null);
+const WantedInstance: React.FC<WantedInstanceProps> = ({
+  pokemon,
+  isEditable,
+  catalogView = false,
+  compactListingView = false,
+  onPreviewInstanceDataChange,
+}) => {
+  const updateDetails = useInstancesStore((state) => state.updateInstanceDetails);
+  const { alert } = useModal();
+  const entityKey = getEntityKey(pokemon);
+  const instanceData = pokemon.instanceData;
 
-  // State to hold Dynamax and Gigantamax
-  const [dynamax] = useState<boolean>(!!pokemon.instanceData.dynamax);
-  const [gigantamax] = useState<boolean>(!!pokemon.instanceData.gigantamax);
-
-  // On mount, set background if relevant
-  useEffect(() => {
-    if (pokemon.instanceData.location_card !== null) {
-      const locationCardId = parseInt(pokemon.instanceData.location_card, 10);
-      const background = pokemon.backgrounds.find(
-        (bg: BackgroundOption) => bg.background_id === locationCardId
+  const [editMode, setEditMode] = useState(false);
+  const [nickname, setNickname] = useState<string | null>(instanceData.nickname);
+  const [gender, setGender] = useState<string | null>(instanceData.gender);
+  const [weight, setWeight] = useState<WantedSizePreference>(() =>
+    getStoredWantedSizePreference(
+      instanceData.wanted_size_preferences,
+      instanceData.weight,
+      pokemon.sizes,
+      'weight',
+    ),
+  );
+  const [height, setHeight] = useState<WantedSizePreference>(() =>
+    getStoredWantedSizePreference(
+      instanceData.wanted_size_preferences,
+      instanceData.height,
+      pokemon.sizes,
+      'height',
+    ),
+  );
+  const [moves, setMoves] = useState<MovesSelection>({
+    fastMove: instanceData.fast_move_id,
+    chargedMove1: instanceData.charged_move1_id,
+    chargedMove2: instanceData.charged_move2_id,
+  });
+  const [friendship, setFriendship] = useState(
+    Math.max(0, Math.min(5, Math.trunc(Number(instanceData.friendship_level ?? 0)))),
+  );
+  const [isLucky, setIsLucky] = useState(Boolean(instanceData.pref_lucky));
+  const [mostWanted, setMostWanted] = useState(Boolean(instanceData.most_wanted));
+  const [showBackgrounds, setShowBackgrounds] = useState(false);
+  const [selectedBackground, setSelectedBackground] =
+    useState<BackgroundOption | null>(() => {
+      const locationCardId = Number.parseInt(String(instanceData.location_card ?? ''), 10);
+      return (
+        (pokemon.backgrounds ?? []).find(
+          (background) => background.background_id === locationCardId,
+        ) ?? null
       );
-      if (background) {
-        setSelectedBackground(background);
-      }
-    }
-  }, [pokemon.backgrounds, pokemon.instanceData.location_card]);
+    });
 
   useEffect(() => {
-    // Update the image when the gender or pokemon changes or max states change
-    const updatedImage = determineImageUrl(
-      isFemale,
-      pokemon,
-      false,
-      undefined,
-      false,
-      undefined,
-      false,
-      gigantamax
-    );
-    setCurrentImage(updatedImage);
-  }, [isFemale, pokemon, dynamax, gigantamax]);
+    onPreviewInstanceDataChange?.({
+      pref_lucky: isLucky,
+      most_wanted: mostWanted,
+    });
+  }, [isLucky, mostWanted, onPreviewInstanceDataChange]);
 
-  const handleNicknameChange = (newNickname: string | null) => setNickname(newNickname);
-  const handleGenderChange = (newGender: string | null) => {
-    setGender(newGender);
-    setIsFemale(newGender === 'Female');  // Update gender state and isFemale flag
-  };
-  const handleWeightChange = (newWeight: string) => setWeight(newWeight === '' ? null : Number(newWeight));
-  const handleHeightChange = (newHeight: string) => setHeight(newHeight === '' ? null : Number(newHeight));
-  const handleMovesChange = (newMoves: { fastMove: number | null; chargedMove1: number | null; chargedMove2: number | null }) => setMoves(newMoves);
+  useEffect(() => {
+    if (!editMode) setMostWanted(Boolean(instanceData.most_wanted));
+  }, [editMode, instanceData.most_wanted]);
+
+  useEffect(() => {
+    if (editMode) return;
+    setWeight(
+      getStoredWantedSizePreference(
+        instanceData.wanted_size_preferences,
+        instanceData.weight,
+        pokemon.sizes,
+        'weight',
+      ),
+    );
+    setHeight(
+      getStoredWantedSizePreference(
+        instanceData.wanted_size_preferences,
+        instanceData.height,
+        pokemon.sizes,
+        'height',
+      ),
+    );
+  }, [
+    editMode,
+    instanceData.height,
+    instanceData.wanted_size_preferences,
+    instanceData.weight,
+    pokemon.sizes,
+  ]);
+
+  const backgrounds = useMemo(() => pokemon.backgrounds ?? [], [pokemon.backgrounds]);
+  const selectableBackgrounds = useMemo(
+    () =>
+      backgrounds.filter((background) =>
+        backgroundMatchesVariant(background, pokemon.variantType),
+      ),
+    [backgrounds, pokemon.variantType],
+  );
+
+  useEffect(() => {
+    const locationCardId = Number.parseInt(String(instanceData.location_card ?? ''), 10);
+    setSelectedBackground(
+      selectableBackgrounds.find(
+        (background) => background.background_id === locationCardId,
+      ) ?? null,
+    );
+  }, [instanceData.location_card, selectableBackgrounds]);
+
+  const isFemale = gender === 'Female';
+  const dynamax = Boolean(instanceData.dynamax);
+  const gigantamax = Boolean(instanceData.gigantamax);
+  const isShadow = Boolean(instanceData.shadow);
+  const isPurified = Boolean(instanceData.purified);
+  const displayName = pokemon.name ?? pokemon.species_name ?? 'Pokemon';
+  const wantedSizePreferences = useMemo(
+    () => buildWantedSizePreferences(weight, height, pokemon.sizes),
+    [height, pokemon.sizes, weight],
+  );
+  const currentImage = useMemo(
+    () =>
+      determineImageUrl(
+        isFemale,
+        pokemon,
+        false,
+        undefined,
+        false,
+        undefined,
+        false,
+        gigantamax,
+      ),
+    [gigantamax, isFemale, pokemon],
+  );
+
+  const displayPokemon = useMemo(
+    () => ({
+      ...pokemon,
+      instanceData: {
+        ...instanceData,
+        nickname,
+        gender,
+        weight: null,
+        height: null,
+        wanted_size_preferences: wantedSizePreferences,
+        fast_move_id: moves.fastMove,
+        charged_move1_id: moves.chargedMove1,
+        charged_move2_id: moves.chargedMove2,
+      },
+    }),
+    [
+      gender,
+      instanceData,
+      moves,
+      nickname,
+      pokemon,
+      wantedSizePreferences,
+    ],
+  );
+
+  const showWantedDetails =
+    editMode || hasDesiredDetails(gender, weight, height, moves);
 
   const handleBackgroundSelect = (background: BackgroundOption | null) => {
-    setSelectedBackground(background);
+    setSelectedBackground(
+      background && backgroundMatchesVariant(background, pokemon.variantType)
+        ? background
+        : null,
+    );
     setShowBackgrounds(false);
   };
 
-  const toggleEditMode = () => {
-    if (editMode) {
-      void updateDetails(entityKey, { 
-        nickname, 
-        favorite: isFavorite, 
-        gender, 
-        weight, 
-        height,
+  const toggleEditMode = async () => {
+    if (!editMode) {
+      setEditMode(true);
+      return;
+    }
+
+    try {
+      await updateDetails(entityKey, {
+        nickname,
+        gender,
+        weight: null,
+        height: null,
+        wanted_size_preferences: wantedSizePreferences,
         fast_move_id: moves.fastMove,
         charged_move1_id: moves.chargedMove1,
         charged_move2_id: moves.chargedMove2,
         friendship_level: friendship,
         pref_lucky: isLucky,
-        location_card: selectedBackground ? String(selectedBackground.background_id) : null,
-        dynamax: dynamax,
-        gigantamax: gigantamax
+        most_wanted: mostWanted,
+        location_card: selectedBackground
+          ? String(selectedBackground.background_id)
+          : null,
       });
+      setEditMode(false);
+    } catch (error) {
+      log.error('Error updating wanted details:', error);
+      await alert('An error occurred while updating the wanted Pokémon. Please try again.');
     }
-    setEditMode(!editMode);
   };
 
-  const selectableBackgrounds = pokemon.backgrounds.filter((background: BackgroundOption) => {
-    if (!background.costume_id) {
-      return true;
-    }
-    const variantTypeId = pokemon.variantType?.split('_')[1];
-    return background.costume_id === parseInt(variantTypeId ?? '', 10);
-  });
-
-  return (
-    <div className="wanted-instance">
-      <div className="top-row">
-        <div className="edit-save-container">
-            <EditSaveComponent editMode={editMode} toggleEditMode={toggleEditMode} isEditable={isEditable} />
+  const friendshipSection = (
+    <section
+      className={`wanted-instance__conditions${isEditable ? ' has-actions' : ''}${
+        isEditable || mostWanted ? ' has-priority' : ''
+      }`}
+      aria-labelledby={`${entityKey}-conditions`}
+    >
+      {isEditable ? (
+        <div className="wanted-instance__condition-actions">
+          <EditSaveComponent
+            editMode={editMode}
+            toggleEditMode={toggleEditMode}
+            isEditable
+            label={editMode ? 'Save wanted listing' : 'Edit wanted listing'}
+          />
         </div>
-        <h2>Wanted</h2>
+      ) : null}
+      <div className="wanted-instance__conditions-label">
+        <strong id={`${entityKey}-conditions`}>Wanted conditions</strong>
+        <span>Friendship and eligibility</span>
       </div>
-
-      {selectableBackgrounds.length > 0 && (
-        <div className="background-select-container">
-          <div className={`background-select-row ${editMode ? 'active' : ''}`}>
-            <img
-              src={'/images/location.png'}
-              alt="Background Selector"
-              className="background-icon"
-              onClick={editMode ? () => setShowBackgrounds(!showBackgrounds) : undefined}
+      {isEditable || mostWanted ? (
+        <div className="wanted-instance__condition-right-actions">
+          {editMode ? (
+            <BackgroundSelector
+              canPick={selectableBackgrounds.length > 0}
+              editMode
+              onToggle={() => setShowBackgrounds((visible) => !visible)}
+              variant="header"
             />
-          </div>
+          ) : null}
+          <MostWantedToggle
+            active={mostWanted}
+            editMode={editMode}
+            onChange={setMostWanted}
+          />
         </div>
-      )}
-
-      <FriendshipManager 
-        friendship={friendship} 
-        setFriendship={setFriendship} 
-        editMode={editMode} 
+      ) : null}
+      <FriendshipManager
+        friendship={friendship}
+        setFriendship={setFriendship}
+        editMode={editMode}
         isLucky={isLucky}
         setIsLucky={setIsLucky}
       />
+    </section>
+  );
 
-      <div className="image-container">
-        {selectedBackground && (
-          <div className="background-container">
-            <div className="background-image" style={{ backgroundImage: `url(${selectedBackground.image_url})` }}></div>
-            <div className="brightness-overlay"></div>
-          </div>
-        )}
-        <div className="pokemon-image-container">
-          {isLucky && (
-            <img
-              src={`/images/lucky.png`}
-              alt="Lucky backdrop"
-              className="lucky-backdrop"
-            />
-          )}
-          <img 
-            src={currentImage}  // Use the updated image state here
-            alt={pokemon.name} 
-            className="pokemon-image"
-          />
-          {dynamax && (
-            <img 
-              src={'/images/dynamax.png'} 
-              alt="Dynamax Badge" 
-              className="max-badge" 
-            />
-          )}
-          {gigantamax && (
-            <img 
-              src={'/images/gigantamax.png'} 
-              alt="Gigantamax Badge" 
-              className="max-badge" 
-            />
-          )}
-        </div>
-      </div>
+  const wantedImageStage = (
+    <ImageStage
+      selectedBackground={selectedBackground}
+      isLucky={isLucky}
+      currentImage={currentImage}
+      name={displayName}
+      dynamax={dynamax}
+      gigantamax={gigantamax}
+      isPurified={isPurified}
+    />
+  );
 
-      <div className="name-container">
-        <NameComponent pokemon={pokemon} editMode={editMode} onNicknameChange={handleNicknameChange} />
-      </div>
+  const wantedDetails = showWantedDetails ? (
+    <div className="wanted-instance__requirements" aria-label="Wanted Pokémon details">
+      <LevelGenderRow
+        pokemon={displayPokemon}
+        editMode={editMode}
+        level={null}
+        onLevelChange={() => undefined}
+        gender={gender}
+        onGenderChange={setGender}
+        showLevel={false}
+        showGenderWhenUnset={editMode}
+        searchMode
+      />
 
-      <div className="gender-container">
-      { (editMode || (gender !== null && gender !== '')) && (
-          <div className="gender-wrapper">
-            <Gender 
-              pokemon={pokemon} 
-              editMode={editMode} 
-              onGenderChange={handleGenderChange} 
-            />
-          </div>
-        )}
-      </div>
+      <WantedSizePreferences
+        weight={weight}
+        height={height}
+        editMode={editMode}
+        onWeightChange={setWeight}
+        onHeightChange={setHeight}
+      />
 
-      <div className="stats-container">
-        <Weight pokemon={pokemon} editMode={editMode} onWeightChange={handleWeightChange} />
-        <Types pokemon={pokemon} />
-        <Height pokemon={pokemon} editMode={editMode} onHeightChange={handleHeightChange} />
-      </div>
-
-      <div className="moves-container">
+      <div className="wanted-instance__moves">
         <Moves
-          pokemon={pokemon}
+          pokemon={displayPokemon}
           editMode={editMode}
-          onMovesChange={handleMovesChange}
-          isShadow={!!pokemon.instanceData.shadow}
-          isPurified={!!pokemon.instanceData.purified}
+          onMovesChange={setMoves}
+          isShadow={isShadow}
+          isPurified={isPurified}
         />
       </div>
+    </div>
+  ) : null;
 
-      {showBackgrounds && (
-      <OverlayPortal>
-        <div className="background-overlay" onClick={() => setShowBackgrounds(false)}>
-          <div className="background-overlay-content" onClick={(e) => e.stopPropagation()}>
-            <BackgroundLocationCard
-              pokemon={pokemon}
-              onSelectBackground={handleBackgroundSelect}
-              // No selectedCostumeId passed, so it uses pokemon.variantType for filtering.
-            />
-          </div>
-          <CloseButton
-            onClick={(event) => {
-              event.stopPropagation();
-              setShowBackgrounds(false);
-            }}
+  if (catalogView) {
+    return (
+      <div className="caught-instance wanted-instance wanted-instance--catalog-view">
+        <div className="instance-details-body">
+          {friendshipSection}
+          {wantedImageStage}
+          <IdentityRow
+            pokemon={displayPokemon}
+            isLucky={isLucky}
+            isShadow={isShadow}
+            isPurified={isPurified}
+            editMode={false}
+            onToggleLucky={() => undefined}
+            onNicknameChange={setNickname}
+            onTogglePurify={() => undefined}
+            showLucky={false}
+            showPurify={false}
+            eyebrow="Wanted"
           />
+          {wantedDetails}
         </div>
-      </OverlayPortal>
-    )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`caught-instance wanted-instance wanted-instance--caught-layout${
+        compactListingView ? ' wanted-instance--compact-listing' : ''
+      }`}
+    >
+      <div className="instance-details-body">
+        {friendshipSection}
+
+        {wantedImageStage}
+
+        <IdentityRow
+          pokemon={displayPokemon}
+          isLucky={isLucky}
+          isShadow={isShadow}
+          isPurified={isPurified}
+          editMode={editMode}
+          onToggleLucky={() => undefined}
+          onNicknameChange={setNickname}
+          onTogglePurify={() => undefined}
+          showLucky={false}
+          showPurify={false}
+          eyebrow="Wanted"
+        />
+
+        {wantedDetails}
+
+        <TradeBackgroundModal
+          showBackgrounds={showBackgrounds}
+          pokemon={pokemon}
+          onClose={() => setShowBackgrounds(false)}
+          onSelectBackground={handleBackgroundSelect}
+        />
+      </div>
     </div>
   );
 };

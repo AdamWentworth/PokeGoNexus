@@ -1,25 +1,27 @@
 .pvp-methodology-page {
-  min-height: 100vh;
-  padding: clamp(1rem, 3vw, 2rem);
-  color: var(--color-text-primary, #f6ffff);
-  text-align: left;
-  background:
+  --app-page-shell-background:
     radial-gradient(circle at 10% 0%, rgba(66, 213, 194, 0.17), transparent 30rem),
     radial-gradient(circle at 92% 16%, rgba(237, 111, 165, 0.13), transparent 27rem),
     var(--color-background, #0d1112);
+  --app-page-shell-color: var(--color-text-primary, #f6ffff);
+
+  text-align: left;
 }
 
 .pvp-methodology-shell {
-  width: min(100%, 960px);
-  margin: 0 auto;
+  max-width: 960px;
 }
 
-.pvp-methodology-header {
-  padding: clamp(0.75rem, 3vw, 2rem) 0 clamp(1.5rem, 4vw, 2.75rem);
-  border-bottom: 1px solid rgba(115, 204, 204, 0.24);
+.pvp-methodology-product-header {
+  --product-header-border: rgba(115, 204, 204, 0.24);
+  --product-header-label: #72e8dc;
+
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--product-header-border);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
 }
 
-.pvp-methodology-back,
 .pvp-methodology-return {
   display: inline-flex;
   gap: 0.5rem;
@@ -37,8 +39,6 @@
   transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
-.pvp-methodology-back:hover,
-.pvp-methodology-back:focus-visible,
 .pvp-methodology-return:hover,
 .pvp-methodology-return:focus-visible {
   border-color: rgba(114, 232, 220, 0.76);
@@ -46,7 +46,6 @@
   background: rgba(66, 213, 194, 0.14);
 }
 
-.pvp-methodology-eyebrow,
 .pvp-methodology-kicker {
   margin: 2rem 0 0.35rem;
   color: #72e8dc;
@@ -56,54 +55,16 @@
   text-transform: uppercase;
 }
 
-.pvp-methodology-header h1 {
-  max-width: 18ch;
-  margin: 0;
-  font-size: clamp(2rem, 6vw, 4.25rem);
-  line-height: 0.98;
-}
-
-.pvp-methodology-intro {
-  max-width: 66ch;
-  margin: 1rem 0 0;
-  color: rgba(224, 242, 243, 0.82);
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  line-height: 1.55;
-}
-
 .pvp-methodology-nav {
-  position: sticky;
-  z-index: 4;
-  top: 0;
-  display: flex;
-  gap: 0.35rem;
-  overflow-x: auto;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(115, 204, 204, 0.18);
-  background: color-mix(in srgb, var(--color-background, #0d1112) 88%, transparent);
-  backdrop-filter: blur(14px);
-  scrollbar-width: none;
-}
-
-.pvp-methodology-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.pvp-methodology-nav a {
-  flex: 0 0 auto;
-  padding: 0.4rem 0.65rem;
-  border-radius: 999px;
-  color: rgba(224, 242, 243, 0.76);
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.pvp-methodology-nav a:hover,
-.pvp-methodology-nav a:focus-visible {
-  color: #071313;
-  background: #72e8dc;
+  --in-page-navigation-accent: #72e8dc;
+  --in-page-navigation-active-text: #071313;
+  --in-page-navigation-background: color-mix(
+    in srgb,
+    var(--color-background, #0d1112) 88%,
+    transparent
+  );
+  --in-page-navigation-border: rgba(115, 204, 204, 0.18);
+  --in-page-navigation-text: rgba(224, 242, 243, 0.76);
 }
 
 .pvp-methodology-section {
@@ -312,14 +273,13 @@
 }
 
 :root[data-theme='light'] .pvp-methodology-page {
-  color: #102a32;
-  background:
+  --app-page-shell-color: #102a32;
+  --app-page-shell-background:
     radial-gradient(circle at 10% 0%, rgba(66, 213, 194, 0.18), transparent 30rem),
     radial-gradient(circle at 92% 16%, rgba(237, 111, 165, 0.14), transparent 27rem),
     #edf7f6;
 }
 
-:root[data-theme='light'] .pvp-methodology-intro,
 :root[data-theme='light'] .pvp-methodology-section > p:not(.pvp-methodology-kicker, .pvp-methodology-validation),
 :root[data-theme='light'] .pvp-methodology-tool-list p,
 :root[data-theme='light'] .pvp-methodology-steps span,
@@ -332,11 +292,8 @@
 }
 
 :root[data-theme='light'] .pvp-methodology-nav {
-  background: rgba(237, 247, 246, 0.9);
-}
-
-:root[data-theme='light'] .pvp-methodology-nav a {
-  color: rgba(20, 55, 63, 0.72);
+  --in-page-navigation-background: rgba(237, 247, 246, 0.9);
+  --in-page-navigation-text: rgba(20, 55, 63, 0.72);
 }
 
 :root[data-theme='light'] .pvp-methodology-callout {
@@ -354,7 +311,6 @@
   background: rgba(255, 255, 255, 0.66);
 }
 
-:root[data-theme='light'] .pvp-methodology-back,
 :root[data-theme='light'] .pvp-methodology-return {
   color: #087d91;
   border-color: rgba(21, 139, 154, 0.22);
@@ -362,26 +318,6 @@
 }
 
 @media (max-width: 760px) {
-  .pvp-methodology-page {
-    padding: 0.65rem;
-  }
-
-  .pvp-methodology-header h1 {
-    max-width: 14ch;
-  }
-
-  .pvp-methodology-nav {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    overflow: visible;
-  }
-
-  .pvp-methodology-nav a {
-    min-width: 0;
-    padding-inline: 0.25rem;
-    text-align: center;
-  }
-
   .pvp-methodology-section {
     scroll-margin-top: 6.5rem;
   }
@@ -412,7 +348,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pvp-methodology-back,
   .pvp-methodology-return {
     transition: none;
   }

@@ -1,7 +1,0 @@
-/* SearchSection */
-
-.search-button img {
-    width: clamp(50px, 7vw, 80px);
-    height: auto;
-    display: block;
-  }

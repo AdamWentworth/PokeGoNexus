@@ -19,6 +19,17 @@ export const readPokemonCatalogFilter = (
   return catalogFilterByQueryValue[value.trim().toLowerCase()] ?? null;
 };
 
+export const readPokemonCatalogStateFilter = (
+  state: unknown,
+): PokemonCatalogFilter | null => {
+  if (!state || typeof state !== "object") return null;
+
+  const value = (state as { instanceData?: unknown }).instanceData;
+  if (typeof value !== "string") return null;
+
+  return catalogFilterByQueryValue[value.trim().toLowerCase()] ?? null;
+};
+
 export const readPokemonCatalogSearch = (search: string): string =>
   new URLSearchParams(search).get("search")?.trim() ?? "";
 

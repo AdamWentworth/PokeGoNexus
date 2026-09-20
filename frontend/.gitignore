@@ -5,3 +5,4 @@
 /apps/*/package-lock.json
 /.artifacts/*
 !/.artifacts/README.md
+/apps/*/.artifacts/

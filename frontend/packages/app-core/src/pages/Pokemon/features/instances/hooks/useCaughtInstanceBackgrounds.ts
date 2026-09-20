@@ -80,7 +80,9 @@ export const useCaughtInstanceBackgrounds = ({
       const locationCardId = parseBackgroundId(locationCard);
       if (locationCardId == null) return null;
       return (
-        backgrounds.find((background) => background.background_id === locationCardId) ?? null
+        selectableBackgrounds.find(
+          (background) => background.background_id === locationCardId,
+        ) ?? null
       );
     })();
 
@@ -112,6 +114,7 @@ export const useCaughtInstanceBackgrounds = ({
     pokemon.pokemon_id,
     resolvedFusionBackgrounds.fusionId,
     selectedBackground,
+    selectableBackgrounds,
   ]);
 
   return {

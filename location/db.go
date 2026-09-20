@@ -16,8 +16,8 @@ func ConnectDB(dsn string) *pgxpool.Pool {
 		logrus.Fatalf("Unable to parse database DSN: %v", err)
 	}
 
-	config.MaxConns = int32(readEnvIntWithDefault("DB_MAX_OPEN_CONNS", 25))
-	config.MinConns = int32(readEnvIntWithDefault("DB_MIN_IDLE_CONNS", 2))
+	config.MaxConns = readEnvInt32WithDefault("DB_MAX_OPEN_CONNS", 25)
+	config.MinConns = readEnvInt32WithDefault("DB_MIN_IDLE_CONNS", 2)
 	config.MaxConnIdleTime = time.Duration(readEnvIntWithDefault("DB_CONN_MAX_IDLE_MIN", 10)) * time.Minute
 	config.MaxConnLifetime = time.Duration(readEnvIntWithDefault("DB_CONN_MAX_LIFETIME_MIN", 60)) * time.Minute
 	config.HealthCheckPeriod = 30 * time.Second

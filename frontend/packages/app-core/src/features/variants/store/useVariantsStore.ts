@@ -1,7 +1,6 @@
 // src/features/variants/store/useVariantsStore.ts
 import { create } from 'zustand';
 import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { PokedexLists } from '@/types/pokedex';
 import { variantsRepository } from '../repositories/variantsRepository';
 import { createScopedLogger } from '@/utils/logger';
 import {
@@ -23,7 +22,6 @@ import {
 
 interface VariantsState {
   variants: PokemonVariant[];
-  pokedexLists: PokedexLists;
   variantsLoading: boolean;
   isRefreshing: boolean;
   isMovesLoading: boolean;
@@ -41,7 +39,6 @@ let raidDataHydrationRequest: Promise<void> | null = null;
 
 export const useVariantsStore = create<VariantsState>((set, get) => ({
   variants: [],
-  pokedexLists: {} as PokedexLists,
   variantsLoading: true,
   isRefreshing: false,
   isMovesLoading: false,
@@ -50,9 +47,9 @@ export const useVariantsStore = create<VariantsState>((set, get) => ({
 
   async hydrateFromCache() {
     try {
-      const { variants, pokedexLists } = await variantsRepository.loadCache();
+      const { variants } = await variantsRepository.loadCache();
       if (variants.length) {
-        set({ variants, pokedexLists, variantsLoading: false });
+        set({ variants, variantsLoading: false });
         // Move pools power detail and instance controls, but they should not
         // delay catalog cards from becoming usable.
         void get().ensureMoves();
@@ -78,8 +75,8 @@ export const useVariantsStore = create<VariantsState>((set, get) => ({
     try {
       // The repository refresh path checks the lightweight catalog manifest first.
       // Matching versions return IndexedDB data; changed versions fetch the data chunk.
-      const { variants, pokedexLists } = await variantsRepository.fetchFresh();
-      set({ variants, pokedexLists, variantsLoading: false });
+      const { variants } = await variantsRepository.fetchFresh();
+      set({ variants, variantsLoading: false });
       if (variants.length) {
         void get().ensureMoves();
         if (get().raidDataRequested) {
@@ -91,9 +88,9 @@ export const useVariantsStore = create<VariantsState>((set, get) => ({
 
       // Fallback to whatever cache we have
       try {
-        const { variants, pokedexLists } = await variantsRepository.loadCache();
+        const { variants } = await variantsRepository.loadCache();
         if (variants.length) {
-          set({ variants, pokedexLists, variantsLoading: false });
+          set({ variants, variantsLoading: false });
         } else {
           set({ variantsLoading: false });
         }

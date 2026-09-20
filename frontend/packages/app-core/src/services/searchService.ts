@@ -13,6 +13,7 @@ import { searchContract } from '@shared-contracts/search';
 export type { SearchQueryParams, SearchResultRow } from '@shared-contracts/search';
 
 const SEARCH_API_URL = import.meta.env.VITE_SEARCH_API_URL;
+export const SEARCH_REQUEST_TIMEOUT_MS = 30_000;
 
 export async function searchPokemon(
   queryParams: SearchQueryParams,
@@ -21,6 +22,7 @@ export async function searchPokemon(
     buildUrl(SEARCH_API_URL, searchContract.endpoints.searchPokemon, queryParams),
     {
       method: 'GET',
+      timeoutMs: SEARCH_REQUEST_TIMEOUT_MS,
     },
   );
 

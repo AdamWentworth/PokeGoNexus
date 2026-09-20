@@ -1,0 +1,167 @@
+appId: ${APP_ID}
+name: Native collection production-mode performance probe
+tags:
+  - android
+  - native-collection
+  - performance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?interaction=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 45000
+- tapOn: Search Pokémon
+- extendedWaitUntil:
+    visible: Variants
+    timeout: 10000
+- tapOn:
+    id: native-collection-filter-shiny
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 10000
+- tapOn: Close Pokémon search
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 10000
+- tapOn: Sort by NUMBER ascending
+- extendedWaitUntil:
+    visible:
+      id: native-collection-sort-menu
+    timeout: 10000
+- tapOn: NAME
+- extendedWaitUntil:
+    visible: Abomasnow
+    timeout: 10000
+- tapOn: Search Pokémon
+- inputText: Ivysaur
+- extendedWaitUntil:
+    visible: Ivysaur
+    timeout: 10000
+- tapOn: SHOW EVOLUTIONARY LINE
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 10000
+- tapOn: Close Pokémon search
+- extendedWaitUntil:
+    visible: Abomasnow
+    timeout: 10000
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- tapOn: "Open For Trade, 3 Pokémon"
+- extendedWaitUntil:
+    visible: "(TRADE)"
+    timeout: 10000
+- assertVisible: Shiny Gigantamax Charizard
+- waitForAnimationToEnd
+- tapOn:
+    id: parity-card-smoke-gmax-charizard
+- extendedWaitUntil:
+    visible:
+      id: native-instance-overlay
+    timeout: 10000
+- tapOn: Edit Pokémon
+- extendedWaitUntil:
+    visible: Save Pokémon
+    timeout: 10000
+- tapOn: Save Pokémon
+- extendedWaitUntil:
+    visible: Edit Pokémon
+    timeout: 10000
+- tapOn:
+    id: native-instance-next
+- extendedWaitUntil:
+    visible: Shiny Rayquaza
+    timeout: 10000
+- swipe:
+    start: 80%, 50%
+    end: 20%, 50%
+    duration: 350
+- extendedWaitUntil:
+    visible: Shiny Suicune
+    timeout: 10000
+- swipe:
+    start: 20%, 50%
+    end: 80%, 50%
+    duration: 350
+- extendedWaitUntil:
+    visible: Shiny Rayquaza
+    timeout: 10000
+- tapOn:
+    text: Close
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- tapOn: "Open Favorites, 3 Pokémon"
+- extendedWaitUntil:
+    visible: "(FAVORITES)"
+    timeout: 10000
+- assertVisible: Shiny Shadow Venusaur
+- assertVisible: Sort by FAVORITE descending
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- tapOn: "Open For Trade, 3 Pokémon"
+- extendedWaitUntil:
+    visible: "(TRADE)"
+    timeout: 10000
+- assertVisible: Shiny Gigantamax Charizard
+- tapOn: WISHLIST
+- extendedWaitUntil:
+    visible: Wanted tags
+    timeout: 10000
+- tapOn: "Open Most Wanted, 2 Pokémon"
+- extendedWaitUntil:
+    visible: "(MOST WANTED)"
+    timeout: 10000
+- assertVisible: Gigantamax Blastoise
+- tapOn: Clear Most Wanted tag filter
+- extendedWaitUntil:
+    visible:
+      id: native-confirmation-dialog
+    timeout: 10000
+- tapOn: Cancel
+- tapOn:
+    # The anchor and the open-menu close button deliberately share this exact
+    # bottom-centre geometry. A coordinate avoids Maestro spending up to two
+    # minutes waiting for the menu's perpetual cloud/star animation to make an
+    # accessibility selector "settle" before it injects the tap.
+    point: 50%, 94%
+    waitToSettleTimeoutMs: 100
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- tapOn:
+    point: 50%, 94%
+    waitToSettleTimeoutMs: 100
+- extendedWaitUntil:
+    notVisible: Quick navigation
+    timeout: 10000
+- longPressOn: "View Gigantamax Blastoise"
+- extendedWaitUntil:
+    visible: "Organize (1)"
+    timeout: 10000
+- tapOn: "Organize (1)"
+- extendedWaitUntil:
+    visible: Organize Pokémon
+    timeout: 10000
+- tapOn: Close Pokémon organizer

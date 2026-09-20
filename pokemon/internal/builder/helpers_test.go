@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"math"
 	"reflect"
 	"testing"
 
@@ -21,6 +22,9 @@ func TestPayloadHelpersPreserveLegacyConversions(t *testing.T) {
 		{value: []byte("10"), want: 10, ok: true},
 		{value: "11", want: 11, ok: true},
 		{value: "bad", want: 0, ok: false},
+		{value: math.MaxFloat64, want: 0, ok: false},
+		{value: math.NaN(), want: 0, ok: false},
+		{value: float64(9.5), want: 0, ok: false},
 		{value: nil, want: 0, ok: false},
 	}
 	for _, testCase := range integerCases {

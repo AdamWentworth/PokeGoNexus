@@ -18,7 +18,7 @@ func getUsernameByUserID(userID string) (string, error) {
 }
 
 func buildPokemonInstancePayload(instance PokemonInstance) map[string]interface{} {
-	return map[string]interface{}{
+	payload := map[string]interface{}{
 		"pokemon_id":       instance.PokemonID,
 		"nickname":         instance.Nickname,
 		"cp":               instance.CP,
@@ -73,6 +73,8 @@ func buildPokemonInstancePayload(instance PokemonInstance) map[string]interface{
 		"max_guard":        instance.MaxGuard,
 		"max_spirit":       instance.MaxSpirit,
 	}
+	payload["wanted_size_preferences"] = instance.WantedSizes
+	return payload
 }
 
 func GetUpdates(c fiber.Ctx) error {

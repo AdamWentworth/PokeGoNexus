@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { toast } from 'react-toastify';
+import { feedback } from '@/components/feedback';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationStore } from '@/features/location/store/useLocationStore';
@@ -127,9 +127,9 @@ export function useInitLocation(enabled = true) {
     const showPermissionNotice = () => {
       if (hasShownPermissionNotice()) return;
 
-      toast.warn(
+      feedback.warning(
         'Location access is blocked on this device. Allow it in your browser settings or choose a saved location.',
-        { toastId: LOCATION_PERMISSION_TOAST_ID },
+        { id: LOCATION_PERMISSION_TOAST_ID },
       );
       rememberPermissionNotice();
     };

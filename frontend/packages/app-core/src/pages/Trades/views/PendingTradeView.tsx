@@ -3,7 +3,6 @@ import LoadingSpinner from '../../../components/LoadingSpinner';
 import MoveDisplay from '../../../components/pokemonComponents/MoveDisplay';
 import IV from '../../../components/pokemonComponents/IV';
 import Gender from '../../../components/pokemonComponents/Gender';
-import FriendshipLevel from '../../../components/pokemonComponents/FriendshipLevel';
 import { TRADE_FRIENDSHIP_LEVELS } from '../../../db/indexedDB';
 import { formatDate } from '../../../utils/formattingHelpers';
 import { hasDetails } from '../helpers/hasDetails';
@@ -12,6 +11,7 @@ import type { PartnerInfo } from '../../../services/tradeService';
 import PartnerInfoModal from '../components/PartnerInfoModal';
 import type { TradeMove, TradePokemonDetails, TradeViewTrade } from './types';
 import { getStoredUsername } from '@/utils/storage';
+import TradeExchangeSummary from '@/pages/Trades/components/TradeExchangeSummary';
 import './PendingTradeView.css';
 
 type DetailSection = 'left' | 'right';
@@ -201,7 +201,8 @@ const PendingTradeView: React.FC<PendingTradeViewProps> = ({
               <>
                 <div className="pokemon-image-container">
                   <div className="image-wrapper">
-                    {trade.is_lucky_trade ? (
+                    {trade.is_lucky_trade &&
+                    (details.currentImage || details.pokemon_image_url) ? (
                       <div className="lucky-backdrop-wrapper">
                         <img
                           src="/images/lucky.png"
@@ -355,25 +356,18 @@ const PendingTradeView: React.FC<PendingTradeViewProps> = ({
           onClick={handleRevealInfo}
           disabled={revealInProgress}
         >
-          <span>Reveal Trade Partner Info</span>
+          <span>Coordinate trade</span>
         </button>
         {error && <p className="error">{error}</p>}
       </div>
       <div className="trade-pokemon">
         {renderPokemonSection(leftDetails, 'left', leftHeading, currentUsername)}
 
-        <div className="center-column">
-          <FriendshipLevel level={friendshipLevel} prefLucky={Boolean(trade.is_lucky_trade)} />
-          <div className="trade-icon">
-            <img src="/images/pogo_trade_icon.png" alt="Trade Icon" />
-          </div>
-          <div className="stardust-display">
-            <img src="/images/stardust.png" alt="Stardust" className="stardust-icon" />
-            <span className="stardust-cost">
-              {trade.trade_dust_cost?.toLocaleString() || '0'}
-            </span>
-          </div>
-        </div>
+        <TradeExchangeSummary
+          friendshipLevel={friendshipLevel}
+          isLuckyTrade={Boolean(trade.is_lucky_trade)}
+          stardustCost={trade.trade_dust_cost}
+        />
 
         {renderPokemonSection(rightDetails, 'right', rightHeading, partnerUsername)}
       </div>
@@ -395,7 +389,11 @@ const PendingTradeView: React.FC<PendingTradeViewProps> = ({
         </button>
       </div>
 
-      <PartnerInfoModal partnerInfo={partnerInfo} onClose={handleCloseModal} />
+      <PartnerInfoModal
+        partnerInfo={partnerInfo}
+        partnerUsername={partnerUsername}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };

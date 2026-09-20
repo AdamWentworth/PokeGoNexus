@@ -1,0 +1,93 @@
+.segmented-control {
+  --segmented-accent: var(--color-accent-primary);
+  --segmented-active-text: #fff;
+  --segmented-border: var(--color-ui-border);
+  --segmented-surface: var(--color-ui-control);
+  --segmented-text: var(--color-text-secondary);
+
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(var(--segmented-columns), minmax(0, 1fr));
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1);
+  border: 1px solid var(--segmented-border);
+  border-radius: var(--radius-panel);
+  background: var(--segmented-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.segmented-control > button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--segmented-text);
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+.segmented-control > button:hover:not(.is-active) {
+  color: var(--color-text-primary);
+  background: var(--color-ui-control-hover);
+}
+
+.segmented-control > button.is-active {
+  border-color: color-mix(in srgb, var(--segmented-accent) 76%, transparent);
+  color: var(--segmented-active-text);
+  background: var(--segmented-accent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--segmented-accent) 22%, transparent);
+}
+
+.segmented-control > button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-ui-focus) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.segmented-control__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.segmented-control__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.segmented-control__badge {
+  display: grid;
+  min-width: 22px;
+  min-height: 22px;
+  flex: none;
+  place-items: center;
+  padding-inline: 5px;
+  border-radius: var(--radius-pill);
+  color: inherit;
+  background: color-mix(in srgb, currentcolor 14%, transparent);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 520px) {
+  .segmented-control > button {
+    min-height: 44px;
+    gap: 6px;
+    padding-inline: 8px;
+    font-size: 0.76rem;
+  }
+}

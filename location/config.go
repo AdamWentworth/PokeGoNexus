@@ -51,6 +51,18 @@ func readEnvIntWithDefault(key string, fallback int) int {
 	return n
 }
 
+func readEnvInt32WithDefault(key string, fallback int32) int32 {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback
+	}
+	n, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil || n <= 0 {
+		return fallback
+	}
+	return int32(n)
+}
+
 func LoadConfig() *Config {
 	serverPort := readPort()
 

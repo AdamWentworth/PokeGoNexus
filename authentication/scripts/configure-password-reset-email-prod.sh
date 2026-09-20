@@ -20,7 +20,7 @@ cp "$env_file" "$backup"
 sed -i '/^RESEND_API_KEY=/d;/^PASSWORD_RESET_FROM=/d;/^PASSWORD_RESET_REPLY_TO=/d' "$env_file"
 {
   printf 'RESEND_API_KEY=%s\n' "$resend_api_key"
-  printf 'PASSWORD_RESET_FROM=%s\n' 'PokeGoNexus Accounts <accounts@mail.pokegonexus.com>'
+  printf 'PASSWORD_RESET_FROM=%s\n' 'Pokémon Go Nexus Accounts <accounts@mail.pokegonexus.com>'
   printf 'PASSWORD_RESET_REPLY_TO=%s\n' 'accounts@pokegonexus.com'
 } >> "$env_file"
 chmod 600 "$env_file"

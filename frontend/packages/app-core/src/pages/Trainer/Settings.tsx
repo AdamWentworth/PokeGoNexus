@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  FaComments,
+  FaDiscord,
   FaEye,
+  FaFire,
   FaLock,
   FaMoon,
   FaSave,
   FaShieldAlt,
   FaSyncAlt,
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { feedback } from '@/components/feedback';
 
 import ThemeSwitch from '@/components/ThemeSwitch';
 import {
@@ -55,7 +58,7 @@ const Settings = () => {
   }, [preferencesQuery.data]);
   useEffect(() => {
     if (preferencesQuery.error) {
-      toast.error(
+      feedback.error(
         preferencesQuery.error instanceof Error
           ? preferencesQuery.error.message
           : 'Could not load settings.',
@@ -72,7 +75,18 @@ const Settings = () => {
     );
   };
 
-  const savePreferences = async () => {
+  const updateCoordinationMethod = (
+    method: TrainerPreferences['coordination_method'],
+  ) => {
+    setPreferences((current) => current ? {
+      ...current,
+      coordination_method: method,
+      coordination_handle: method === 'none' ? null : current.coordination_handle,
+      share_trade_contact: method === 'none' ? false : current.share_trade_contact,
+    } : current);
+  };
+
+  const savePreferences = async (successMessage = 'Settings saved') => {
     if (!preferences) return;
     setSaving(true);
     const request: UpdateTrainerPreferencesRequest = {
@@ -80,6 +94,9 @@ const Settings = () => {
       collection_visibility: preferences.collection_visibility,
       friend_request_permission: preferences.friend_request_permission,
       trainer_code_visibility: preferences.trainer_code_visibility,
+      coordination_method: preferences.coordination_method,
+      coordination_handle: preferences.coordination_handle?.trim() || null,
+      share_trade_contact: preferences.share_trade_contact,
       show_location: preferences.show_location,
       show_pokemon_go_name: preferences.show_pokemon_go_name,
     };
@@ -88,9 +105,9 @@ const Settings = () => {
       setPreferences(updated);
       queryClient.setQueryData(socialQueryKeys.preferences, updated);
       await queryClient.invalidateQueries({ queryKey: ['social', 'profile'] });
-      toast.success('Privacy settings saved');
+      feedback.success(successMessage);
     } catch (error) {
-      toast.error(
+      feedback.error(
         error instanceof Error ? error.message : 'Could not save settings.',
       );
     } finally {
@@ -190,6 +207,7 @@ const Settings = () => {
                   <option value="friends">Friends only</option>
                   <option value="private">Only me</option>
                 </select>
+                <small>Controls where the code appears. Accepted-trade sharing is configured separately below.</small>
               </label>
             </div>
             <div className="trainer-setting-toggles">
@@ -225,7 +243,7 @@ const Settings = () => {
                 type="button"
                 className="trainer-button trainer-button-primary"
                 disabled={saving}
-                onClick={() => void savePreferences()}
+                onClick={() => void savePreferences('Privacy settings saved')}
               >
                 <FaSave />
                 {saving ? 'Saving...' : 'Save privacy'}
@@ -237,6 +255,102 @@ const Settings = () => {
             <FaLock />
             Private account data is never shown on public profiles.
           </div>
+
+          <section className="trainer-section trainer-coordination-section">
+            <header>
+              <div>
+                <span>After an offer is accepted</span>
+                <h2>Trade coordination</h2>
+              </div>
+              <FaComments />
+            </header>
+            <p className="trainer-section-copy">
+              Pokémon Go Nexus does not provide messaging. Choose how an accepted trade
+              partner can connect with you to arrange the exchange in Pokémon GO.
+            </p>
+            <div className="trainer-settings-grid">
+              <label className="trainer-field">
+                <span>Preferred coordination method</span>
+                <select
+                  value={preferences.coordination_method}
+                  onChange={(event) => updateCoordinationMethod(
+                    event.target.value as TrainerPreferences['coordination_method'],
+                  )}
+                >
+                  <option value="campfire">Campfire (recommended)</option>
+                  <option value="discord">Discord</option>
+                  <option value="other">Another community or app</option>
+                  <option value="none">Do not share coordination details</option>
+                </select>
+                <small>
+                  Campfire connects to Niantic Friends and supports direct messages.
+                </small>
+              </label>
+              {preferences.coordination_method !== 'none' ? (
+                <label className="trainer-field">
+                  <span>
+                    {preferences.coordination_method === 'campfire'
+                      ? 'Campfire username or Niantic ID (optional)'
+                      : preferences.coordination_method === 'discord'
+                        ? 'Discord username'
+                        : 'Community or app handle'}
+                  </span>
+                  <input
+                    type="text"
+                    maxLength={80}
+                    autoComplete="off"
+                    value={preferences.coordination_handle ?? ''}
+                    onChange={(event) => updatePreference(
+                      'coordination_handle',
+                      event.target.value,
+                    )}
+                    placeholder={preferences.coordination_method === 'campfire'
+                      ? 'Optional—your Trainer Code can connect you first'
+                      : 'Shown only to accepted trade partners'}
+                  />
+                  <small>Use a platform username—not an email address or phone number.</small>
+                </label>
+              ) : null}
+            </div>
+            <div className="trainer-setting-toggles">
+              <label>
+                <span>
+                  {preferences.coordination_method === 'discord'
+                    ? <FaDiscord aria-hidden="true" />
+                    : <FaFire aria-hidden="true" />}
+                  Share with accepted trade partners
+                </span>
+                <input
+                  type="checkbox"
+                  checked={preferences.share_trade_contact}
+                  disabled={preferences.coordination_method === 'none'}
+                  onChange={(event) => updatePreference(
+                    'share_trade_contact',
+                    event.target.checked,
+                  )}
+                />
+              </label>
+            </div>
+            <div className="trainer-coordination-summary">
+              <FaShieldAlt aria-hidden="true" />
+              <p>
+                Your Pokémon GO name, Trainer Code, preferred method, and saved handle are
+                never added to search results through this setting. They become available
+                only while a trade is accepted and active.
+              </p>
+            </div>
+            <div className="trainer-form-actions">
+              <button
+                type="button"
+                className="trainer-button trainer-button-primary"
+                disabled={saving}
+                onClick={() => void savePreferences('Trade coordination settings saved')}
+              >
+                <FaSave />
+                {saving ? 'Saving...' : 'Save coordination'}
+              </button>
+            </div>
+          </section>
         </>
       ) : null}
 
@@ -277,7 +391,7 @@ const Settings = () => {
         </header>
         <div className="trainer-device-settings">
           <div>
-            <span>
+            <span className="trainer-sync-status">
               <strong>
                 {sync.status === 'error'
                   ? 'Needs attention'

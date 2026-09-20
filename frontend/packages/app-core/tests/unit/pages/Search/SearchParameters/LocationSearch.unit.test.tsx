@@ -65,7 +65,7 @@ describe('LocationSearch', () => {
       />,
     );
 
-    fireEvent.change(screen.getByPlaceholderText('Enter location'), {
+    fireEvent.change(screen.getByPlaceholderText('Search for a city'), {
       target: { value: 'Sea' },
     });
 
@@ -95,7 +95,7 @@ describe('LocationSearch', () => {
 
     render(<LocationSearch {...createProps()} />);
 
-    fireEvent.change(screen.getByPlaceholderText('Enter location'), {
+    fireEvent.change(screen.getByPlaceholderText('Search for a city'), {
       target: { value: 'Sea' },
     });
 
@@ -123,7 +123,7 @@ describe('LocationSearch', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Use Current Location' }));
+    fireEvent.click(screen.getByRole('button', { name: /Use saved location/ }));
 
     expect(setUseCurrentLocation).toHaveBeenCalledWith(true);
     expect(setCity).toHaveBeenCalledWith('');
@@ -136,12 +136,48 @@ describe('LocationSearch', () => {
   it('does not fetch suggestions for short input', async () => {
     render(<LocationSearch {...createProps()} />);
 
-    fireEvent.change(screen.getByPlaceholderText('Enter location'), {
+    fireEvent.change(screen.getByPlaceholderText('Search for a city'), {
       target: { value: 'Se' },
     });
 
     await waitFor(() => {
       expect(fetchSuggestionsMock).not.toHaveBeenCalled();
     });
+  });
+
+  it('keeps custom location active when no saved location exists', () => {
+    const setUseCurrentLocation = vi.fn();
+    const setCoordinates = vi.fn();
+    render(
+      <LocationSearch
+        {...createProps({ setUseCurrentLocation, setCoordinates })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Use saved location/ }));
+
+    expect(setUseCurrentLocation).not.toHaveBeenCalled();
+    expect(setCoordinates).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('No saved location is available. Search for a city instead.'),
+    ).toBeInTheDocument();
+  });
+
+  it('updates search radius and result count independently', () => {
+    const setRange = vi.fn();
+    const setResultsLimit = vi.fn();
+    render(
+      <LocationSearch {...createProps({ setRange, setResultsLimit })} />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Search radius'), {
+      target: { value: '20' },
+    });
+    fireEvent.change(screen.getByLabelText('Maximum results'), {
+      target: { value: '50' },
+    });
+
+    expect(setRange).toHaveBeenCalledWith(20);
+    expect(setResultsLimit).toHaveBeenCalledWith(50);
   });
 });

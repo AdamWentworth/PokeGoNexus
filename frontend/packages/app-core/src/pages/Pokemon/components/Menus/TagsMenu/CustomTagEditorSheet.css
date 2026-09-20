@@ -1,0 +1,111 @@
+.custom-tag-editor-overlay {
+  position: fixed;
+  z-index: 2200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.custom-tag-editor {
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 36px);
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  border-radius: 18px;
+  background: var(--color-search-section-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+}
+
+.custom-tag-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 13%, transparent);
+}
+
+.custom-tag-editor__header span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-accent-primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.custom-tag-editor__header h2 { margin: 3px 0 0; }
+
+.custom-tag-editor__close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.custom-tag-editor__body { padding: 20px; }
+.custom-tag-editor__body > p { margin: 0 0 18px; color: var(--color-text-secondary); line-height: 1.45; }
+.custom-tag-editor__body label { display: grid; gap: 7px; font-weight: 800; }
+.custom-tag-editor__body input {
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 24%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.custom-tag-editor__body fieldset { margin: 18px 0 0; padding: 0; border: 0; }
+.custom-tag-editor__body legend { margin-bottom: 8px; font-weight: 800; }
+.custom-tag-editor__colors { display: grid; grid-template-columns: repeat(8, minmax(36px, 1fr)); gap: 8px; }
+.custom-tag-editor__colors button {
+  min-width: 36px;
+  aspect-ratio: 1;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  background: var(--tag-swatch);
+  cursor: pointer;
+}
+.custom-tag-editor__colors button[aria-pressed='true'] { border-color: var(--color-text-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-swatch) 32%, transparent); }
+
+.custom-tag-editor__preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--tag-preview) 54%, transparent);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--tag-preview) 13%, transparent);
+}
+.custom-tag-editor__preview span { width: 16px; height: 16px; border-radius: 50%; background: var(--tag-preview); }
+
+.custom-tag-editor__footer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 14px 20px max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--color-text-primary) 13%, transparent);
+}
+.custom-tag-editor__footer button { min-height: 46px; padding: 10px 16px; border-radius: 10px; font: inherit; font-weight: 850; cursor: pointer; }
+.custom-tag-editor__delete { justify-self: start; border: 1px solid color-mix(in srgb, var(--color-danger) 50%, transparent); background: color-mix(in srgb, var(--color-danger) 11%, transparent); color: var(--color-danger); }
+.custom-tag-editor__save { border: 1px solid var(--color-accent-primary); background: var(--color-accent-primary); color: #fff; }
+
+@media (max-width: 560px) {
+  .custom-tag-editor-overlay { align-items: end; padding: 0; }
+  .custom-tag-editor { width: 100%; max-height: 100dvh; border-radius: 18px 18px 0 0; }
+  .custom-tag-editor__colors { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+}

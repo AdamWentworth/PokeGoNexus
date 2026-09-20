@@ -1,6 +1,7 @@
 // AlertDialog.tsx
 
-import React, { useState } from 'react';
+import React from 'react';
+import OverlayPortal, { useOverlayMotion } from '../OverlayPortal';
 import './AlertDialog.css';
 
 type AlertDialogProps = {
@@ -8,26 +9,23 @@ type AlertDialogProps = {
   onClose: () => void;
 };
 
-const AlertDialog: React.FC<AlertDialogProps> = ({ message, onClose }) => {
-  const [closing, setClosing] = useState(false);
+type AlertSurfaceProps = AlertDialogProps & React.HTMLAttributes<HTMLDivElement>;
 
-  const handleClick = () => {
-    setClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
-
+const AlertSurface: React.FC<AlertSurfaceProps> = ({ message, onClose, ...rootProps }) => {
+  const overlayMotion = useOverlayMotion();
   return (
-    <div 
-      className={`modal-overlay ${closing ? 'fade-out' : ''}`}
-      onClick={handleClick}
-    >
+    <div {...rootProps} className="alert-modal-overlay" onClick={() => overlayMotion?.requestClose(onClose)}>
       <div className="alert-modal">
         <p>{message}</p>
       </div>
     </div>
   );
 };
+
+const AlertDialog: React.FC<AlertDialogProps> = ({ message, onClose }) => (
+  <OverlayPortal onClose={onClose}>
+    <AlertSurface message={message} onClose={onClose} />
+  </OverlayPortal>
+);
 
 export default AlertDialog;

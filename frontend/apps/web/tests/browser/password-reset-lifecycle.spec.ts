@@ -17,9 +17,12 @@ test('requests a reset, changes the password, and logs in with it', async ({ pag
   await installE2eRoutes(page);
   const state = { requested: false, reset: false, loggedIn: false };
 
-  await page.route('**/__e2e/auth/**', async (route) => {
+  const handleAuthRoute = async (route: Route) => {
     const request = route.request();
-    const path = new URL(request.url()).pathname.replace('/__e2e/auth', '');
+    const path = new URL(request.url()).pathname.replace(
+      /^\/(?:__e2e|api)\/auth/,
+      '',
+    );
     const payload = request.postDataJSON() as Record<string, unknown> | null;
 
     if (request.method() === 'POST' && path === '/reset-password') {
@@ -58,7 +61,11 @@ test('requests a reset, changes the password, and logs in with it', async ({ pag
       return;
     }
     await json(route, { message: `Unhandled auth route: ${request.method()} ${path}` }, 404);
-  });
+  };
+
+  for (const pathPattern of ['**/__e2e/auth/**', '**/api/auth/**']) {
+    await page.route(pathPattern, handleAuthRoute);
+  }
 
   await page.goto('/login');
   const perfTelemetryButton = page.getByRole('button', { name: /Perf telemetry/i });
@@ -70,6 +77,8 @@ test('requests a reset, changes the password, and logs in with it', async ({ pag
   await resetDialog.getByPlaceholder('you@example.com').fill('trainer@example.com');
   await resetDialog.getByRole('button', { name: 'Email reset link' }).click();
   await expect.poll(() => state.requested).toBe(true);
+  await expect(resetDialog).toHaveCount(0);
+  await page.waitForTimeout(350);
 
   await page.goto(`/reset-password?token=${token}`);
   await page.getByLabel('New password', { exact: true }).fill(newPassword);

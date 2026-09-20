@@ -1,6 +1,7 @@
 // PokemonCard.tsx
 import { useEffect, useState, memo, useRef, useMemo } from 'react';
 import CP from '@/components/pokemonComponents/CP';
+import CollectionPriorityStar from '@/components/pokemonComponents/CollectionPriorityStar';
 import PokemonImagePresentation from './PokemonImagePresentation';
 import './PokemonCard.css';
 import { usePokemonCardTouchHandlers } from './hooks/usePokemonCardTouchHandlers';
@@ -213,6 +214,8 @@ const PokemonCard = memo(({
     ${isDisabled ? 'disabled-card' : ''}
     ${shouldJiggle ? 'jiggle' : ''}
   `.trim();
+  const isWantedListing =
+    displayModel.ownershipClass === 'wanted' || Boolean(pokemon.instanceData?.is_wanted);
 
   // Modifier-click toggles selection on desktop; normal activation delegates to the
   // parent, which selects catalog entries and opens owned instance details.
@@ -235,6 +238,8 @@ const PokemonCard = memo(({
       if (isEditable) {
         setIsFastSelectEnabled(true);
         toggleCardHighlight(highlightKey);
+      } else {
+        onSelect();
       }
     } else if (e.key === 'Enter') {
       onSelect();
@@ -252,9 +257,9 @@ const PokemonCard = memo(({
       tabIndex={0}
       role="button"
       aria-label={
-        pokemon.instanceData?.instance_id
-          ? `View ${pokemon.name} details`
-          : `Select ${pokemon.name}`
+        `${pokemon.instanceData?.instance_id ? 'View' : 'Select'} ${pokemon.name}${
+          pokemon.instanceData?.instance_id ? ' details' : ''
+        }${isEditable ? '. Press Space to select it for tagging.' : ''}`
       }
     >
       {/* Select chip (desktop hover only before fast-select is enabled) */}
@@ -277,14 +282,22 @@ const PokemonCard = memo(({
       </div>
 
       <div className="fav-container">
-        {pokemon.instanceData?.favorite && (
-          <img
-            src="/images/fav_pressed.png"
-            alt="Favorite"
+        {!isWantedListing && pokemon.instanceData?.favorite && (
+          <CollectionPriorityStar
+            filled
+            label="Favorite"
+            tone="favorite"
             className="favorite-icon"
-            draggable={false}
           />
         )}
+        {isWantedListing && pokemon.instanceData?.most_wanted ? (
+          <CollectionPriorityStar
+            filled
+            className="favorite-icon most-wanted-icon"
+            label="Most Wanted"
+            tone="most-wanted"
+          />
+        ) : null}
       </div>
 
       <PokemonImagePresentation

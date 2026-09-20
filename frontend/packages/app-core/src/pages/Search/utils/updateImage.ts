@@ -42,6 +42,7 @@ export const updateImage = (
   selectedCostume: string | null | undefined,
   form: string | null | undefined,
   selectedGender: string | null | undefined,
+  dynamax: boolean,
   gigantamax: boolean,
 ): string | null => {
   const matchedPokemon = pokemonData.find(
@@ -66,11 +67,12 @@ export const updateImage = (
     return url;
   }
 
+  const effectiveShadowChecked = dynamax ? false : shadowChecked;
   const isFemale = selectedGender === 'Female';
   const hasFemaleData = matchedPokemon.female_data !== undefined;
   const hasUniqueFemaleForm = matchedPokemon.female_unique === 1;
 
-  if (shinyChecked && shadowChecked) {
+  if (shinyChecked && effectiveShadowChecked) {
     if (matchedPokemon.shadow_shiny_available) {
       url =
         isFemale && hasFemaleData && hasUniqueFemaleForm
@@ -94,7 +96,7 @@ export const updateImage = (
           matchedPokemon.female_data?.image_url ||
           null
         : matchedPokemon.image_url_shiny || null;
-  } else if (shadowChecked) {
+  } else if (effectiveShadowChecked) {
     url =
       isFemale && hasFemaleData && hasUniqueFemaleForm
         ? matchedPokemon.female_data?.shadow_image_url ||
@@ -108,14 +110,14 @@ export const updateImage = (
         : matchedPokemon.image_url || null;
   }
 
-  if (selectedCostume && selectedCostume !== '') {
+  if (!dynamax && selectedCostume && selectedCostume !== '') {
     const selectedCostumeData = matchedPokemon.costumes?.find(
       (costume) => costume.name === selectedCostume,
     );
     if (selectedCostumeData) {
       if (isFemale && selectedCostumeData.image_url_female) {
         url =
-          shinyChecked && shadowChecked
+          shinyChecked && effectiveShadowChecked
             ? selectedCostumeData.image_url_shiny_female ||
               selectedCostumeData.image_url_female ||
               null
@@ -123,18 +125,18 @@ export const updateImage = (
               ? selectedCostumeData.image_url_shiny_female ||
                 selectedCostumeData.image_url_female ||
                 null
-              : shadowChecked
+              : effectiveShadowChecked
                 ? selectedCostumeData.image_url_shadow ||
                   selectedCostumeData.image_url_female ||
                   null
                 : selectedCostumeData.image_url_female || null;
-      } else if (shinyChecked && shadowChecked) {
+      } else if (shinyChecked && effectiveShadowChecked) {
         url =
           selectedCostumeData.image_url_shiny_shadow ||
           selectedCostumeData.image_url_shiny ||
           selectedCostumeData.image_url ||
           null;
-      } else if (shadowChecked) {
+      } else if (effectiveShadowChecked) {
         url = selectedCostumeData.image_url_shadow || selectedCostumeData.image_url || null;
       } else if (shinyChecked) {
         url = selectedCostumeData.image_url_shiny || selectedCostumeData.image_url || null;

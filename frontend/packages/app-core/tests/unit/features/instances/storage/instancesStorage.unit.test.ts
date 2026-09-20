@@ -76,6 +76,7 @@ describe('instancesStorage', () => {
 
     expect(clear).toHaveBeenCalledTimes(1);
     expect(put).toHaveBeenCalledTimes(2);
+    expect(fakeDb.transaction).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem('ownershipTimestamp')).toBe('999');
   });
 

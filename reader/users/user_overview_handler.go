@@ -52,7 +52,8 @@ func instanceToMap(in PokemonInstance) map[string]interface{} {
 		"most_wanted": in.MostWanted, "caught_tags": in.CaughtTags, "trade_tags": in.TradeTags,
 		"wanted_tags": in.WantedTags, "not_trade_list": in.NotTradeList,
 		"not_wanted_list": in.NotWantedList, "trade_filters": in.TradeFilters,
-		"wanted_filters": in.WantedFilters,
+		"wanted_filters":          in.WantedFilters,
+		"wanted_size_preferences": in.WantedSizes,
 
 		// Misc
 		"friendship_level": in.FriendshipLevel, "mirror": in.Mirror,

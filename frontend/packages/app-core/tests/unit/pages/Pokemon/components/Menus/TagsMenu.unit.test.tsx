@@ -4,10 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import TagsMenu from '@/pages/Pokemon/components/Menus/TagsMenu/TagsMenu';
 import type { TagBuckets, TagItem } from '@/types/tags';
-
-vi.mock('@/pages/Pokemon/components/Menus/TagsMenu/hooks/useDownloadImage', () => ({
-  default: () => ({ isDownloading: false, downloadImage: vi.fn() }),
-}));
+import { useTagsStore } from '@/features/tags/store/useTagsStore';
 
 const { confirmMock } = vi.hoisted(() => ({
   confirmMock: vi.fn().mockResolvedValue(true),
@@ -44,6 +41,17 @@ describe('TagsMenu', () => {
   beforeEach(() => {
     confirmMock.mockClear();
     confirmMock.mockResolvedValue(true);
+    useTagsStore.setState({
+      customTags: { caught: {}, wanted: {} },
+      tagOrders: {
+        caught: ['system:caught', 'system:favorites', 'system:trade'],
+        wanted: ['system:wanted', 'system:most-wanted'],
+      },
+      createCustomTag: vi.fn().mockResolvedValue({}) as any,
+      updateCustomTag: vi.fn().mockResolvedValue({}) as any,
+      deleteCustomTag: vi.fn().mockResolvedValue(undefined) as any,
+      saveTagOrder: vi.fn().mockResolvedValue(undefined) as any,
+    });
   });
 
   it('derives Trade from caught and Most Wanted from wanted only', () => {
@@ -154,31 +162,209 @@ describe('TagsMenu', () => {
     expect(container.querySelector('[data-tag="Trade"]')).toBeNull();
   });
 
-  it('shows a sticky active tag filter escape hatch in focused side panels', async () => {
-    const onClearTagFilter = vi.fn();
-
+  it('does not repeat the active Pokemon filter over the tag overview', () => {
     render(
       <TagsMenu
-        panel="wishlist"
+        panel="inventory"
         onSelectTag={vi.fn()}
         activeTags={{ caught: {}, wanted: {} }}
         variants={[]}
-        tagFilter="Wanted"
-        onClearTagFilter={onClearTagFilter}
+        tagFilter="Caught"
+        onClearTagFilter={vi.fn()}
       />,
     );
 
-    const clearButton = screen.getByRole('button', { name: /clear wanted tag filter/i });
-    const chip = clearButton.closest('.active-tag-filter-row');
-    expect(chip).toHaveClass('active-tag-filter-placement-panel');
-    expect(chip).toHaveClass('active-tag-filter-wanted');
+    expect(document.querySelector('.active-tag-filter-row')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clear caught tag filter/i })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-tag="Caught"]')).toBeInTheDocument();
+  });
 
-    fireEvent.click(clearButton);
+  it('does not render a required foreign-catalog filter over the tag overview', () => {
+    render(
+      <TagsMenu
+        panel="inventory"
+        onSelectTag={vi.fn()}
+        activeTags={{ caught: {}, wanted: {} }}
+        variants={[]}
+        tagFilter="Caught"
+      />,
+    );
+
+    expect(document.querySelector('.active-tag-filter-row')).not.toBeInTheDocument();
+  });
+
+  it('renders editable custom tags and filters with a stable id selector', () => {
+    const customItem = makeItem({ instance_id: 'custom-1', is_caught: true });
+    useTagsStore.setState({
+      customTags: {
+        caught: {
+          'tag-raids': {
+            tag: {
+              tag_id: 'tag-raids',
+              parent: 'caught',
+              name: 'Raid team',
+              color: '#2563EB',
+              sort: 10,
+            },
+            items: { 'custom-1': customItem },
+          },
+        },
+        wanted: {},
+      },
+    });
+    const onSelectTag = vi.fn();
+
+    render(
+      <TagsMenu
+        activeTags={{
+          caught: { 'custom-1': customItem },
+          wanted: {},
+          'custom:tag-raids': { 'custom-1': customItem },
+        }}
+        isEditable
+        onSelectTag={onSelectTag}
+        panel="inventory"
+        variants={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Raid team'));
+    expect(onSelectTag).toHaveBeenCalledWith('custom:tag-raids');
+    expect(screen.getByRole('button', { name: /edit raid team tag/i })).toBeInTheDocument();
+  });
+
+  it('allows custom and system tags to be interleaved and saves the complete order', async () => {
+    const customItem = makeItem({ instance_id: 'custom-shadow', is_caught: true });
+    const saveTagOrder = vi.fn().mockResolvedValue(undefined);
+    useTagsStore.setState({
+      customTags: {
+        caught: {
+          'tag-shadow': {
+            tag: {
+              tag_id: 'tag-shadow',
+              parent: 'caught',
+              name: 'Shadow Shinies',
+              color: '#7C3AED',
+              sort: 10,
+            },
+            items: { 'custom-shadow': customItem },
+          },
+        },
+        wanted: {},
+      },
+      tagOrders: {
+        caught: ['custom:tag-shadow', 'system:favorites', 'system:caught', 'system:trade'],
+        wanted: ['system:wanted', 'system:most-wanted'],
+      },
+      saveTagOrder,
+    });
+
+    const { container } = render(
+      <TagsMenu
+        activeTags={{ caught: { 'custom-shadow': customItem }, wanted: {} }}
+        isEditable
+        onSelectTag={vi.fn()}
+        panel="inventory"
+        variants={[]}
+      />,
+    );
+
+    expect(
+      [...container.querySelectorAll('.tag-item')].map((element) => element.getAttribute('data-tag')),
+    ).toEqual(['custom:tag-shadow', 'Favorites', 'Caught', 'Trade']);
+
+    fireEvent.click(screen.getByRole('button', { name: /arrange/i }));
+    const caughtHandle = screen.getByRole('button', {
+      name: /press and drag all caught to reorder/i,
+    });
+    const favoritesCard = container.querySelector<HTMLElement>('[data-tag="Favorites"]');
+    expect(favoritesCard).toBeTruthy();
+    vi.spyOn(favoritesCard as HTMLElement, 'getBoundingClientRect').mockReturnValue({
+      bottom: 400,
+      height: 200,
+      left: 20,
+      right: 380,
+      top: 200,
+      width: 360,
+      x: 20,
+      y: 200,
+      toJSON: () => ({}),
+    });
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: vi.fn().mockReturnValue(favoritesCard),
+    });
+    fireEvent.pointerDown(caughtHandle, {
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+      button: 0,
+      clientX: 200,
+      clientY: 500,
+    });
+    expect(document.querySelector('.tag-item-drag-preview')).toBeInTheDocument();
+    expect(container.querySelector('.tag-footer-icon')).not.toBeInTheDocument();
+    fireEvent.pointerMove(document, { pointerId: 1, clientX: 200, clientY: 250 });
+    fireEvent.pointerUp(document, { pointerId: 1, clientX: 200, clientY: 250 });
+    expect(document.querySelector('.tag-item-drag-preview')).not.toBeInTheDocument();
+    expect(document.body).not.toHaveClass('tag-drag-active');
+    Reflect.deleteProperty(document, 'elementFromPoint');
+    fireEvent.click(screen.getByRole('button', { name: /save order/i }));
 
     await waitFor(() => {
-      expect(confirmMock).toHaveBeenCalledWith(expect.stringContaining('Clear the Wanted tag?'));
-      expect(onClearTagFilter).toHaveBeenCalledTimes(1);
+      expect(saveTagOrder).toHaveBeenCalledWith('caught', [
+        'custom:tag-shadow',
+        'system:caught',
+        'system:favorites',
+        'system:trade',
+      ]);
     });
+  });
+
+  it('always clears a floating tag when the pointer is cancelled outside the handle', () => {
+    render(
+      <TagsMenu
+        activeTags={{ caught: {}, wanted: {} }}
+        isEditable
+        onSelectTag={vi.fn()}
+        panel="inventory"
+        variants={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /arrange/i }));
+    const handle = screen.getByRole('button', {
+      name: /press and drag favorites to reorder/i,
+    });
+    fireEvent.pointerDown(handle, {
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 200,
+      clientY: 300,
+    });
+    expect(document.querySelector('.tag-item-drag-preview')).toBeInTheDocument();
+
+    fireEvent.pointerCancel(document, { pointerId: 7 });
+
+    expect(document.querySelector('.tag-item-drag-preview')).not.toBeInTheDocument();
+    expect(document.body).not.toHaveClass('tag-drag-active');
+  });
+
+  it('opens the custom tag creator from an editable tag panel', () => {
+    render(
+      <TagsMenu
+        activeTags={{ caught: {}, wanted: {} }}
+        isEditable
+        onSelectTag={vi.fn()}
+        panel="wishlist"
+        variants={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /new wanted tag/i }));
+    expect(screen.getByRole('dialog', { name: /new wanted tag/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/community day/i)).toBeInTheDocument();
   });
 
 

@@ -31,6 +31,33 @@ describe('overlay helpers', () => {
     ).toBe('trade');
   });
 
+  it('treats Most Wanted as a Wanted filter rather than a separate ownership type', () => {
+    expect(
+      deriveInitialOverlay(
+        'Most Wanted',
+        pokemon({ instanceData: { is_wanted: true, most_wanted: true } }),
+      ),
+    ).toBe('wanted');
+  });
+
+  it('falls back to ownership flags when a filtered instance has no status', () => {
+    expect(
+      deriveInitialOverlay(
+        'unknown',
+        pokemon({ instanceData: { is_wanted: true, most_wanted: true } }),
+      ),
+    ).toBe('wanted');
+  });
+
+  it('treats a caught Pokémon listed for trade as a trade overlay', () => {
+    expect(
+      deriveInitialOverlay(
+        'unknown',
+        pokemon({ instanceData: { is_caught: true, is_for_trade: true } }),
+      ),
+    ).toBe('trade');
+  });
+
   it('falls back from unknown tag to instance status, top-level status, then caught', () => {
     expect(
       deriveInitialOverlay(
@@ -99,6 +126,14 @@ describe('overlay helpers', () => {
         pokemon({
           type1_name: 'Water',
           instanceData: { lucky: true },
+        }),
+      ),
+    ).toBe('/images/backgrounds/bg_lucky.png');
+    expect(
+      getBackgroundImageSrc(
+        pokemon({
+          type1_name: 'Water',
+          instanceData: { is_wanted: true, pref_lucky: true },
         }),
       ),
     ).toBe('/images/backgrounds/bg_lucky.png');

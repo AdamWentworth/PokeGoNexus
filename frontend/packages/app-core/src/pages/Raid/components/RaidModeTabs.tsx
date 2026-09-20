@@ -1,3 +1,6 @@
+import { FaChartBar, FaCrosshairs } from 'react-icons/fa';
+
+import SegmentedControl from '@/components/layout/SegmentedControl';
 import type { RaidViewMode } from "../utils/raidViewModel";
 
 interface RaidModeTabsProps {
@@ -5,24 +8,19 @@ interface RaidModeTabsProps {
   onChange: (viewMode: RaidViewMode) => void;
 }
 
-const RAID_VIEWS: Array<{ label: string; value: RaidViewMode }> = [
-  { label: "Attacker rankings", value: "rankings" },
-  { label: "Boss counters", value: "boss" },
-];
+const RAID_VIEW_ITEMS = [
+  { icon: <FaChartBar />, label: 'Attacker rankings', value: 'rankings' },
+  { icon: <FaCrosshairs />, label: 'Boss counters', value: 'boss' },
+] as const;
 
 const RaidModeTabs = ({ viewMode, onChange }: RaidModeTabsProps) => (
-  <section className="raid-mode-tabs" aria-label="Raid planner views">
-    {RAID_VIEWS.map((view) => (
-      <button
-        className={viewMode === view.value ? "active" : ""}
-        key={view.value}
-        onClick={() => onChange(view.value)}
-        type="button"
-      >
-        {view.label}
-      </button>
-    ))}
-  </section>
+  <SegmentedControl
+    ariaLabel="Raid planner views"
+    className="raid-view-switcher"
+    items={RAID_VIEW_ITEMS}
+    onChange={onChange}
+    value={viewMode}
+  />
 );
 
 export default RaidModeTabs;

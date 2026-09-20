@@ -47,7 +47,7 @@ describe('TradeTargetsList', () => {
     const props = buildProps();
     render(<TradeTargetsList {...props} />);
 
-    fireEvent.click(screen.getByAltText('Trade Target Bulbasaur'));
+    fireEvent.click(screen.getByAltText('Wanted Pokémon Bulbasaur'));
 
     expect(props.onPokemonClick).toHaveBeenCalledWith('variant-1_uuid-1');
     expect(useSortManagerMock.mock.calls[0]).toHaveLength(3);
@@ -59,7 +59,7 @@ describe('TradeTargetsList', () => {
     });
     render(<TradeTargetsList {...props} />);
 
-    expect(screen.getByText('No trade targets currently selected.')).toBeInTheDocument();
+    expect(screen.getByText('No Wanted Pokémon are currently selected.')).toBeInTheDocument();
   });
 
   it('falls back to parent current image when item image is missing', () => {
@@ -77,7 +77,7 @@ describe('TradeTargetsList', () => {
 
     render(<TradeTargetsList {...props} />);
 
-    const image = screen.getByAltText('Trade Target Ivysaur') as HTMLImageElement;
+    const image = screen.getByAltText('Wanted Pokémon Ivysaur') as HTMLImageElement;
     expect(image.src).toContain('/images/fallback.png');
   });
 
@@ -87,5 +87,35 @@ describe('TradeTargetsList', () => {
 
     expect(screen.getByText('Bulbasaur')).toBeInTheDocument();
     expect(screen.getByText('#001')).toBeInTheDocument();
+  });
+
+  it('renders compact summary targets as read-only cards', () => {
+    render(
+      <TradeTargetsList
+        {...buildProps({ onPokemonClick: undefined })}
+        compact
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /Bulbasaur/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Bulbasaur')).toBeInTheDocument();
+  });
+
+  it('supports candidate search and bulk selection while editing', () => {
+    const props = buildProps({ editMode: true });
+    render(<TradeTargetsList {...props} />);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search Wanted Pokémon' }), {
+      target: { value: 'squirtle' },
+    });
+    expect(screen.getByText('No Pokémon match this view.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Allow all' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(props.setLocalNotWantedList).toHaveBeenNthCalledWith(1, {});
+    expect(props.setLocalNotWantedList).toHaveBeenNthCalledWith(2, {
+      'variant-1_uuid-1': true,
+    });
   });
 });

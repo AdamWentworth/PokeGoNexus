@@ -263,6 +263,39 @@ describe('MapView', () => {
     expect(screen.getByText('inst-1')).toBeInTheDocument();
   });
 
+  it('renders a useful empty map state before and after a search', () => {
+    const { rerender } = render(
+      <ThemeProvider>
+        <MapView
+          data={[]}
+          hasSearched={false}
+          instanceData="caught"
+          pokemonCache={pokemonCache}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Map nearby results' }),
+    ).toBeInTheDocument();
+
+    rerender(
+      <ThemeProvider>
+        <MapView
+          data={[]}
+          hasSearched
+          instanceData="caught"
+          pokemonCache={pokemonCache}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'No locations to map' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/widening your distance/i)).toBeInTheDocument();
+  });
+
   it('renders wanted popup when wanted point is clicked', async () => {
     renderMapView('wanted');
 

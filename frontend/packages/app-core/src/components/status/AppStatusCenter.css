@@ -1,0 +1,182 @@
+.app-status-center {
+  --app-status-accent: #65b9f7;
+  --app-status-soft: rgba(101, 185, 247, 0.15);
+
+  position: fixed;
+  z-index: 60;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: max(1rem, env(safe-area-inset-left));
+  display: grid;
+  width: min(31rem, calc(100vw - 2rem));
+  min-height: 4.4rem;
+  box-sizing: border-box;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--app-status-accent) 55%, transparent);
+  border-left: 4px solid var(--app-status-accent);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--color-surface-2, #252c2a) 95%, #07110e);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+  color: var(--color-text-primary, #f4fbf8);
+  text-align: left;
+  animation: app-status-enter var(--motion-fast, 180ms) ease-out both;
+}
+
+.app-status-center--offline,
+.app-status-center--warning {
+  --app-status-accent: #f4bb55;
+  --app-status-soft: rgba(244, 187, 85, 0.14);
+}
+
+.app-status-center--success {
+  --app-status-accent: #48d597;
+  --app-status-soft: rgba(72, 213, 151, 0.14);
+}
+
+.app-status-center__icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0.65rem;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--app-status-soft);
+  color: var(--app-status-accent);
+}
+
+.app-status-center__copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.app-status-center__copy strong {
+  color: var(--app-status-accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-status-center__copy span {
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary, #f4fbf8);
+  font-size: 0.79rem;
+  line-height: 1.35;
+}
+
+.app-status-center > button,
+.app-status-center__actions button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--app-status-accent) 48%, transparent);
+  border-radius: 0.65rem;
+  background: var(--app-status-soft);
+  color: var(--app-status-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.app-status-center__actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.app-status-center__actions .app-status-center__secondary {
+  border-color: var(--color-ui-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.app-status-center button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.app-status-center button:focus-visible {
+  outline: 3px solid var(--app-status-accent);
+  outline-offset: 2px;
+}
+
+:root[data-theme='light'] .app-status-center {
+  background: color-mix(in srgb, var(--light-surface-base, #f8fff9) 97%, white);
+  box-shadow: 0 12px 30px rgba(25, 67, 50, 0.2);
+  color: var(--light-text-primary, #17221d);
+}
+
+:root[data-theme='light'] .app-status-center--offline,
+:root[data-theme='light'] .app-status-center--warning {
+  --app-status-accent: #765800;
+  --app-status-soft: rgba(118, 88, 0, 0.12);
+}
+
+:root[data-theme='light'] .app-status-center--success {
+  --app-status-accent: #166534;
+  --app-status-soft: rgba(22, 101, 52, 0.12);
+}
+
+:root[data-theme='light'] .app-status-center--update {
+  --app-status-accent: #005bb5;
+  --app-status-soft: rgba(0, 91, 181, 0.12);
+}
+
+:root[data-theme='light'] .app-status-center__copy span {
+  color: var(--light-text-primary, #17221d);
+}
+
+@keyframes app-status-enter {
+  from {
+    transform: translateY(0.65rem);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-status-center {
+    right: 0.45rem;
+    bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 4.25rem);
+    left: 0.45rem;
+    width: auto;
+    grid-template-columns: 2.2rem minmax(0, 1fr);
+    gap: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .app-status-center__icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0.55rem;
+  }
+
+  .app-status-center > button,
+  .app-status-center__actions {
+    grid-column: 1 / -1;
+  }
+
+  .app-status-center > button {
+    width: 100%;
+  }
+
+  .app-status-center__actions button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-status-center {
+    animation: none;
+  }
+}

@@ -307,7 +307,7 @@ describe('Pokedex page', () => {
   it('guards category navigation, advanced qualities, region detail search, and Pokemon drill-in', async () => {
     render(<Pokedex />);
 
-    expect(await screen.findByRole('heading', { name: 'Pokedex' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Pokédex' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: /Advanced/i })).toHaveAttribute(
       'aria-checked',
       'false',
@@ -409,7 +409,7 @@ describe('Pokedex page', () => {
 
     render(<Pokedex />);
 
-    await screen.findByRole('heading', { name: 'Pokedex' });
+    await screen.findByRole('heading', { name: 'Pokédex' });
     fireEvent.click(screen.getByRole('tab', { name: /^Shiny$/i }));
     fireEvent.click(screen.getByRole('button', { name: /^100%$/i }));
 
@@ -454,7 +454,7 @@ describe('Pokedex page', () => {
     });
   });
 
-  it('jumps directly to the selected region after opening the detail view', async () => {
+  it('smoothly scrolls to an explicitly opened region without retargeting category changes', async () => {
     serviceMocks.getPokedexSpecies.mockResolvedValue([
       ...makeKantoSpeciesCatalog(),
       makePokedexSpecies({
@@ -473,9 +473,16 @@ describe('Pokedex page', () => {
     await waitFor(() => {
       expect(scrollIntoView).toHaveBeenCalledWith({
         block: 'start',
-        behavior: 'auto',
+        behavior: 'smooth',
       });
     });
     expect(scrollIntoView.mock.instances.at(-1)).toHaveTextContent('Johto');
+
+    scrollIntoView.mockClear();
+    fireEvent.click(screen.getByRole('tab', { name: /^Shiny$/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /^Shiny$/i })).toHaveAttribute('aria-selected', 'true');
+    });
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ import PokemonSearchBar, {
 } from '@/pages/Search/PokemonSearchBar';
 import type { SearchOwnershipMode } from '@/pages/Search/utils/ownershipMode';
 import type { PokemonVariant } from '@/types/pokemonVariants';
+import { createDefaultPokemonSearchDraft } from '@/pages/Search/searchSessionCache';
 
 type SearchView = 'list' | 'map';
 
@@ -87,6 +88,15 @@ const defaultMockConfig: MockConfig = {
 let mockConfig: MockConfig = { ...defaultMockConfig };
 
 vi.mock('@/pages/Search/SearchParameters/VariantSearch', () => ({
+  default: () => <div data-testid="legacy-variant-search" />,
+  VariantSearchPrimaryInput: () => <div data-testid="primary-pokemon-input" />,
+}));
+
+vi.mock('@/pages/Search/SearchParameters/AppearanceFilters', () => ({
+  default: () => <div data-testid="variant-search" />,
+}));
+
+vi.mock('@/pages/Search/SearchParameters/useVariantSearchController', () => ({
   default: ({
     setPokemon,
     setIsShiny,
@@ -102,7 +112,7 @@ vi.mock('@/pages/Search/SearchParameters/VariantSearch', () => ({
     setPokemon: (value: string) => void;
     setIsShiny: (value: boolean) => void;
     setIsShadow: (value: boolean) => void;
-    setCostume: (value: string) => void;
+    setCostume: (value: string | null) => void;
     setSelectedForm: (value: string) => void;
     setSelectedMoves: (value: MockConfig['selectedMoves']) => void;
     setSelectedGender: (value: string) => void;
@@ -134,7 +144,27 @@ vi.mock('@/pages/Search/SearchParameters/VariantSearch', () => ({
       setGigantamax,
     ]);
 
-    return <div data-testid="variant-search" />;
+    return {
+      handleImageError: vi.fn(),
+      imageError: false,
+      imageUrl: '/images/bulbasaur.png',
+      selectedBackground: null,
+      resetVariantFilters: () => {
+        setIsShiny(false);
+        setIsShadow(false);
+        setCostume(null);
+        setSelectedForm('');
+        setSelectedMoves({
+          fastMove: null,
+          chargedMove1: null,
+          chargedMove2: null,
+        });
+        setSelectedGender('Any');
+        setSelectedBackgroundId(null);
+        setDynamax(false);
+        setGigantamax(false);
+      },
+    };
   },
 }));
 
@@ -222,9 +252,6 @@ const onSearchMock = vi.fn<
 >().mockResolvedValue(undefined);
 
 const setViewMock = vi.fn<(nextValue: React.SetStateAction<SearchView>) => void>();
-const setIsCollapsedMock = vi.fn<
-  (nextValue: React.SetStateAction<boolean>) => void
->();
 
 const pokemonCache = [
   {
@@ -232,6 +259,16 @@ const pokemonCache = [
     name: 'Bulbasaur',
     form: null,
     costumes: [{ name: 'Party', costume_id: 7 }],
+    backgrounds: [
+      {
+        background_id: 42,
+        costume_id: 7,
+        image_url: '/images/party-bg.png',
+        name: 'Party City',
+        location: 'Seattle',
+        date: '2025-01-02',
+      },
+    ],
     max: [],
   },
 ] as unknown as PokemonVariant[];
@@ -266,7 +303,68 @@ describe('PokemonSearchBar', () => {
     };
     onSearchMock.mockClear();
     setViewMock.mockClear();
-    setIsCollapsedMock.mockClear();
+  });
+
+  const mountAdvancedSearchState = async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }));
+    expect(await screen.findByTestId('variant-search')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Location' }));
+    expect(await screen.findByRole('button', { name: 'trigger-search' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Matching' }));
+    expect(await screen.findByTestId('ownership-search')).toBeInTheDocument();
+  };
+
+  it('keeps advanced controls out of the primary search surface', async () => {
+    render(
+      <PokemonSearchBar
+        onSearch={onSearchMock}
+        isLoading={false}
+        view="list"
+        setView={setViewMock}
+        pokemonCache={pokemonCache}
+      />,
+    );
+
+    expect(screen.getByTestId('primary-pokemon-input')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Caught' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('variant-search')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Location/ }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'trigger-search' })).toBeInTheDocument();
+    expect(screen.queryByTestId('variant-search')).not.toBeInTheDocument();
+  });
+
+  it('summarizes active filters and resets them from the compact surface', () => {
+    render(
+      <PokemonSearchBar
+        onSearch={onSearchMock}
+        isLoading={false}
+        view="list"
+        setView={setViewMock}
+        pokemonCache={pokemonCache}
+      />,
+    );
+
+    const caughtButton = screen.getByRole('button', { name: 'Caught' });
+    const forTradeButton = screen.getByRole('button', { name: 'For Trade' });
+    fireEvent.click(forTradeButton);
+
+    expect(forTradeButton).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Current search filters')).toHaveTextContent(
+      'For Trade',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+
+    expect(caughtButton).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.queryByLabelText('Current search filters'),
+    ).not.toBeInTheDocument();
   });
 
   it('blocks shadow trade/wanted queries before dispatching search', async () => {
@@ -279,18 +377,116 @@ describe('PokemonSearchBar', () => {
         isLoading={false}
         view="list"
         setView={setViewMock}
-        isCollapsed={false}
-        setIsCollapsed={setIsCollapsedMock}
         pokemonCache={pokemonCache}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'trigger-search' }));
+    await mountAdvancedSearchState();
+    fireEvent.click(screen.getByRole('button', { name: 'Apply and search' }));
 
     expect(onSearchMock).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(dialog.querySelector('[role="alert"]')).toHaveTextContent(
+      'Check these filtersShadow Pokemon cannot be listed for trade or wanted',
+    );
     expect(
-      screen.getByText('Shadow Pokemon cannot be listed for trade or wanted'),
-    ).toBeInTheDocument();
+      screen.getByLabelText('Current Pokémon search').closest('.pokemon-search-bar'),
+    ).not.toHaveClass('pokemon-search-bar--compact');
+  });
+
+  it('collapses a submitted mobile search into a useful editable summary', async () => {
+    render(
+      <PokemonSearchBar
+        onSearch={onSearchMock}
+        isLoading={false}
+        view="list"
+        setView={setViewMock}
+        pokemonCache={pokemonCache}
+      />,
+    );
+
+    await mountAdvancedSearchState();
+    fireEvent.click(screen.getByRole('button', { name: 'Apply and search' }));
+
+    await waitFor(() => {
+      expect(onSearchMock).toHaveBeenCalledTimes(1);
+    });
+
+    const summary = screen.getByLabelText('Current Pokémon search');
+    const searchBar = summary.closest('.pokemon-search-bar');
+    expect(searchBar).toHaveClass('pokemon-search-bar--compact');
+    expect(summary).toHaveTextContent('Bulbasaur');
+    expect(summary).toHaveTextContent('Caught');
+    expect(summary).toHaveTextContent('Seattle, WA, USA');
+    expect(summary).toHaveTextContent('2 filters');
+    expect(screen.getByAltText('Bulbasaur preview')).toHaveAttribute(
+      'src',
+      '/images/bulbasaur.png',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Modify search' }));
+    expect(searchBar).not.toHaveClass('pokemon-search-bar--compact');
+  });
+
+  it('restores a cached search directly into its compact submitted state', async () => {
+    render(
+      <PokemonSearchBar
+        initialDraft={{
+          ...createDefaultPokemonSearchDraft(),
+          pokemon: 'Bulbasaur',
+          city: 'Seattle, WA, USA',
+          coordinates: { latitude: 47.6062, longitude: -122.3321 },
+          resultsLimit: 10,
+        }}
+        onSearch={onSearchMock}
+        isLoading={false}
+        view="list"
+        setView={setViewMock}
+        pokemonCache={pokemonCache}
+      />,
+    );
+
+    const summary = screen.getByLabelText('Current Pokémon search');
+    await waitFor(() => {
+      expect(summary.closest('.pokemon-search-bar')).toHaveClass(
+        'pokemon-search-bar--compact',
+      );
+    });
+    expect(summary).toHaveTextContent('Bulbasaur');
+    expect(summary).toHaveTextContent('Seattle, WA, USA');
+    expect(onSearchMock).not.toHaveBeenCalled();
+  });
+
+  it('closes valid filters immediately while the search continues', async () => {
+    let resolveSearch: (() => void) | undefined;
+    onSearchMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSearch = resolve;
+        }),
+    );
+
+    render(
+      <PokemonSearchBar
+        onSearch={onSearchMock}
+        isLoading={false}
+        view="list"
+        setView={setViewMock}
+        pokemonCache={pokemonCache}
+      />,
+    );
+
+    await mountAdvancedSearchState();
+    expect(screen.getByTestId('pokemon-filter-icon')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Apply and search' }));
+
+    await waitFor(() => {
+      expect(onSearchMock).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    resolveSearch?.();
   });
 
   it('builds trade query params with caught-only and wanted-only fields normalized', async () => {
@@ -320,16 +516,18 @@ describe('PokemonSearchBar', () => {
         isLoading={false}
         view="list"
         setView={setViewMock}
-        isCollapsed={false}
-        setIsCollapsed={setIsCollapsedMock}
         pokemonCache={pokemonCache}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'trigger-search' }));
+    await mountAdvancedSearchState();
+    fireEvent.click(screen.getByRole('button', { name: 'Apply and search' }));
 
     await waitFor(() => {
       expect(onSearchMock).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     const [queryParams, boundaryWKT] = onSearchMock.mock.calls[0];
@@ -357,7 +555,6 @@ describe('PokemonSearchBar', () => {
       range_km: 5,
       limit: 10,
     });
-    expect(setIsCollapsedMock).toHaveBeenCalledWith(true);
   });
 
   it('uses list/map controls with canonical view keys', () => {
@@ -367,8 +564,6 @@ describe('PokemonSearchBar', () => {
         isLoading={false}
         view="list"
         setView={setViewMock}
-        isCollapsed={false}
-        setIsCollapsed={setIsCollapsedMock}
         pokemonCache={pokemonCache}
       />,
     );

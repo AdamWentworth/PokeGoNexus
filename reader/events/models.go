@@ -99,6 +99,7 @@ type PokemonInstance struct {
 	DateCaught      *string  `gorm:"column:date_caught" json:"date_caught"`
 	DateAdded       *string  `gorm:"column:date_added" json:"date_added"`
 	WantedFilters   JSON     `gorm:"column:wanted_filters;type:json" json:"wanted_filters"`
+	WantedSizes     RawJSON  `gorm:"column:wanted_size_preferences;type:json" json:"wanted_size_preferences"`
 	TradeFilters    JSON     `gorm:"column:trade_filters;type:json" json:"trade_filters"`
 	Mega            bool     `gorm:"column:mega;default:false" json:"mega"`
 	MegaForm        *string  `gorm:"column:mega_form" json:"mega_form"`

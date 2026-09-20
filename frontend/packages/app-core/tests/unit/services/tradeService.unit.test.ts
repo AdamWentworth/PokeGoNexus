@@ -16,8 +16,11 @@ describe('tradeService.revealPartnerInfo', () => {
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({
+          sharingEnabled: true,
           trainerCode: '1234 5678 9012',
           pokemonGoName: 'AshKetchum',
+          coordinationMethod: 'campfire',
+          coordinationHandle: 'AshCampfire',
         }),
         {
           status: 200,
@@ -29,8 +32,11 @@ describe('tradeService.revealPartnerInfo', () => {
     const result = await revealPartnerInfo({ trade_id: 't1' });
 
     expect(result).toEqual({
+      sharingEnabled: true,
       trainerCode: '1234 5678 9012',
       pokemonGoName: 'AshKetchum',
+      coordinationMethod: 'campfire',
+      coordinationHandle: 'AshCampfire',
     });
   });
 

@@ -44,6 +44,31 @@ func TestVerifyJWT_OK(t *testing.T) {
 	}
 }
 
+func TestVerifyJWT_AcceptsAuthorizationHeader(t *testing.T) {
+	jwtSecret = []byte("test-secret")
+	app := fiber.New()
+	app.Get("/ok", verifyJWT, func(c fiber.Ctx) error {
+		return c.SendString(c.Locals("user_id").(string))
+	})
+
+	token := signAccessToken(t, jwtSecret, jwt.SigningMethodHS256, AccessTokenClaims{
+		UserID: "mobile-user",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+		},
+	})
+	req := httptest.NewRequest("GET", "/ok", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+}
+
 func TestVerifyJWT_MissingCookie(t *testing.T) {
 	jwtSecret = []byte("test-secret")
 	app := fiber.New()

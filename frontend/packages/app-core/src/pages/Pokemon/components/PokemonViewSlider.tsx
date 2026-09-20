@@ -1,5 +1,7 @@
 import React from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
+import HorizontalPageSlider from '@/components/motion/HorizontalPageSlider';
 import PokemonMenu from './Menus/PokemonMenu/PokemonMenu';
 import TagsMenu from './Menus/TagsMenu/TagsMenu';
 import type { SwipeHandlers } from '../hooks/useSwipeHandler';
@@ -26,7 +28,7 @@ type PokemonViewSliderProps = {
   highlightedCards: Set<string>;
   tagFilter: string;
   sidePanelTagFilter: string;
-  onClearTagFilter: () => void;
+  onClearTagFilter?: () => void;
   activeTags: TagBuckets;
   instances: Instances;
   sortType: SortType;
@@ -74,79 +76,70 @@ const PokemonViewSlider: React.FC<PokemonViewSliderProps> = ({
   toggleEvolutionaryLine,
   activeView,
   onTagSelect,
-}) => (
-  <div
-    className="view-slider-container"
-    ref={containerRef}
+}) => {
+  const activeIndex = collectionExperienceParityContract.viewOrder.indexOf(activeView);
+
+  return (
+  <HorizontalPageSlider
+    activeIndex={activeIndex}
+    viewportClassName="view-slider-container"
+    trackClassName="view-slider"
+    panelClassName="slider-panel"
+    viewportRef={containerRef}
     {...swipeHandlers}
-    style={{
-      overflow: 'hidden',
-      touchAction: 'pan-y',
-      willChange: 'transform',
-    }}
+    sizing="fill"
+    transform={transform}
+    isDragging={isDragging}
   >
-    <div
-      className="view-slider"
-      style={{
-        transform,
-        transition: isDragging
-          ? 'none'
-          : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
-      }}
-    >
-      <div className="slider-panel">
-        <TagsMenu
-          panel="inventory"
-          onSelectTag={onTagSelect}
-          activeTags={activeTags}
-          variants={variants}
-          tagFilter={sidePanelTagFilter}
-          onClearTagFilter={onClearTagFilter}
-        />
-      </div>
+    <TagsMenu
+      panel="inventory"
+      onSelectTag={onTagSelect}
+      activeTags={activeTags}
+      variants={variants}
+      tagFilter={sidePanelTagFilter}
+      onClearTagFilter={onClearTagFilter}
+      isEditable={isEditable}
+    />
 
-      <div className="slider-panel">
-        <PokemonMenu
-          isEditable={isEditable}
-          sortedPokemons={sortedPokemons}
-          allPokemons={variants}
-          loading={loading}
-          selectedPokemon={selectedPokemon}
-          setSelectedPokemon={setSelectedPokemon}
-          isFastSelectEnabled={isFastSelectEnabled}
-          toggleCardHighlight={toggleCardHighlight}
-          highlightedCards={highlightedCards}
-          tagFilter={tagFilter}
-          onClearTagFilter={onClearTagFilter}
-          lists={activeTags}
-          instances={instances}
-          sortType={sortType}
-          setSortType={setSortType}
-          sortMode={sortMode}
-          setSortMode={setSortMode}
-          variants={variants}
-          username={username}
-          setIsFastSelectEnabled={setIsFastSelectEnabled}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          showEvolutionaryLine={showEvolutionaryLine}
-          toggleEvolutionaryLine={toggleEvolutionaryLine}
-          activeView={activeView}
-        />
-      </div>
+    <PokemonMenu
+      isEditable={isEditable}
+      sortedPokemons={sortedPokemons}
+      allPokemons={variants}
+      loading={loading}
+      selectedPokemon={selectedPokemon}
+      setSelectedPokemon={setSelectedPokemon}
+      isFastSelectEnabled={isFastSelectEnabled}
+      toggleCardHighlight={toggleCardHighlight}
+      highlightedCards={highlightedCards}
+      tagFilter={tagFilter}
+      onClearTagFilter={onClearTagFilter}
+      lists={activeTags}
+      instances={instances}
+      sortType={sortType}
+      setSortType={setSortType}
+      sortMode={sortMode}
+      setSortMode={setSortMode}
+      variants={variants}
+      username={username}
+      setIsFastSelectEnabled={setIsFastSelectEnabled}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      showEvolutionaryLine={showEvolutionaryLine}
+      toggleEvolutionaryLine={toggleEvolutionaryLine}
+      activeView={activeView}
+    />
 
-      <div className="slider-panel">
-        <TagsMenu
-          panel="wishlist"
-          onSelectTag={onTagSelect}
-          activeTags={activeTags}
-          variants={variants}
-          tagFilter={sidePanelTagFilter}
-          onClearTagFilter={onClearTagFilter}
-        />
-      </div>
-    </div>
-  </div>
-);
+    <TagsMenu
+      panel="wishlist"
+      onSelectTag={onTagSelect}
+      activeTags={activeTags}
+      variants={variants}
+      tagFilter={sidePanelTagFilter}
+      onClearTagFilter={onClearTagFilter}
+      isEditable={isEditable}
+    />
+  </HorizontalPageSlider>
+  );
+};
 
 export default PokemonViewSlider;

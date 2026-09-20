@@ -6,6 +6,28 @@ func isShadowVariantID(variantID string) bool {
 	return strings.Contains(strings.ToLower(strings.TrimSpace(variantID)), "shadow")
 }
 
+// normalizeFavoriteTradeState resolves invalid legacy/client snapshots without
+// allowing one protected state to overwrite the other. Existing state wins;
+// ambiguous new snapshots receive neither flag.
+func normalizeFavoriteTradeState(
+	favorite bool,
+	isForTrade bool,
+	hasExisting bool,
+	existingFavorite bool,
+	existingForTrade bool,
+) (bool, bool) {
+	if !favorite || !isForTrade {
+		return favorite, isForTrade
+	}
+	if hasExisting && existingFavorite && !existingForTrade {
+		return true, false
+	}
+	if hasExisting && existingForTrade && !existingFavorite {
+		return false, true
+	}
+	return false, false
+}
+
 // normalizeOwnershipState enforces canonical invariants for instance ownership
 // and intent flags.
 func normalizeOwnershipState(

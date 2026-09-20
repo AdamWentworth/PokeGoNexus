@@ -28,7 +28,7 @@ import {
   FaUsers,
 } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router";
-import { toast } from "react-toastify";
+import { feedback } from '@/components/feedback';
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
@@ -57,7 +57,10 @@ import type {
   TrainerTitle,
   UpdateTrainerProfileRequest,
 } from "@shared-contracts/users";
-import { TRAINER_TITLE_OPTIONS } from "@shared-contracts/users";
+import {
+  TRAINER_TITLE_OPTIONS,
+  TRAINER_TITLE_VISUALS,
+} from "@shared-contracts/users";
 
 import TrainerPageShell from "./TrainerPageShell";
 import TrainerShowcasePicker from "./TrainerShowcasePicker";
@@ -103,17 +106,6 @@ const SHOWCASE_DRAG_THRESHOLD_PX = 7;
 const trainerTitleOptionByID = new Map(
   TRAINER_TITLE_OPTIONS.map((option) => [option.id, option]),
 );
-
-type TrainerTitleVisualConfig =
-  | {
-      assets: string[];
-    }
-  | {
-      masks: string[];
-    }
-  | {
-      icon: IconType;
-    };
 
 type TrainerCollectionVisual =
   | {
@@ -163,36 +155,14 @@ const TrainerCollectionIcon = ({
   );
 };
 
-const trainerTitleVisualByID: Record<
-  TrainerTitle,
-  TrainerTitleVisualConfig
-> = {
-  "raid-regular": {
-    masks: ["/images/raid_face.png"],
-  },
-  "shadow-raider": { masks: ["/images/shadow_search.png"] },
-  "super-mega-raider": {
-    masks: ["/images/pokemon_details_cp_mega.png"],
-  },
-  "max-battler": { masks: ["/images/gigantamax_title_mask.png"] },
-  "battle-league-trainer": {
-    masks: ["/images/pvp_title_mask.png"],
-  },
-  "rocket-hunter": { masks: ["/images/teamrocket_r_full.png"] },
-  "shiny-hunter": { masks: ["/images/shiny_search.png"] },
-  "pokedex-collector": { masks: ["/images/kanto_search.png"] },
-  "costume-collector": { masks: ["/images/costume_search.png"] },
-  "hundo-hunter": { masks: ["/images/appraisal_04.png"] },
-  "size-collector": { icon: FaRulerCombined },
-  "lucky-trader": { masks: ["/images/lucky-icon.png"] },
-  "egg-hatcher": { masks: ["/images/ic_egg_inv.png"] },
-  "route-explorer": { masks: ["/images/route_icon.png"] },
-  "showcase-star": { icon: FaMedal },
-  "party-player": { icon: FaUsers },
-};
+const trainerTitleFallbackIcon = {
+  medal: FaMedal,
+  ruler: FaRulerCombined,
+  users: FaUsers,
+} satisfies Record<'medal' | 'ruler' | 'users', IconType>;
 
 const TrainerTitleVisual = ({ title }: { title: TrainerTitle }) => {
-  const visual = trainerTitleVisualByID[title];
+  const visual = TRAINER_TITLE_VISUALS[title];
 
   if ("masks" in visual) {
     return (
@@ -217,31 +187,10 @@ const TrainerTitleVisual = ({ title }: { title: TrainerTitle }) => {
     );
   }
 
-  if ("icon" in visual) {
-    const Icon = visual.icon;
-    return (
-      <span className="trainer-title-visual trainer-title-visual-fallback">
-        <Icon aria-hidden="true" />
-      </span>
-    );
-  }
-
+  const Icon = trainerTitleFallbackIcon[visual.icon];
   return (
-    <span
-      className={`trainer-title-visual ${
-        visual.assets.length > 1 ? "trainer-title-visual-pair" : ""
-      }`}
-      aria-hidden="true"
-    >
-      {visual.assets.map((asset) => (
-        <img
-          src={asset}
-          alt=""
-          draggable={false}
-          data-title-asset={asset}
-          key={asset}
-        />
-      ))}
+    <span className="trainer-title-visual trainer-title-visual-fallback">
+      <Icon aria-hidden="true" />
     </span>
   );
 };
@@ -760,13 +709,13 @@ const Profile = () => {
         highlight_instance_ids: highlightIds.filter(Boolean),
       };
       await updateTrainerProfile(request);
-      toast.success("Profile updated");
+      feedback.success("Profile updated");
       setEditingHighlightSlot(null);
       setShowcaseDragPreview(null);
       setEditing(false);
       await loadProfile();
     } catch (saveError) {
-      toast.error(
+      feedback.error(
         saveError instanceof Error
           ? saveError.message
           : "Could not update profile.",
@@ -782,15 +731,15 @@ const Profile = () => {
       switch (profile.viewer.relationship) {
         case "none":
           await sendFriendRequest(profile.user.username);
-          toast.success("Friend request sent");
+          feedback.success("Friend request sent");
           break;
         case "incoming":
           await acceptFriendRequest(profile.viewer.friendship_id || "");
-          toast.success("Friend request accepted");
+          feedback.success("Friend request accepted");
           break;
         case "outgoing":
           await deleteFriendRequest(profile.viewer.friendship_id || "");
-          toast.info("Friend request canceled");
+          feedback.info("Friend request canceled");
           break;
         case "friend": {
           const shouldRemove = await confirm(
@@ -798,7 +747,7 @@ const Profile = () => {
           );
           if (!shouldRemove) return;
           await removeFriend(profile.user.user_id);
-          toast.info("Friend removed");
+          feedback.info("Friend removed");
           break;
         }
         default:
@@ -807,7 +756,7 @@ const Profile = () => {
       await queryClient.invalidateQueries({ queryKey: socialQueryKeys.friends });
       await loadProfile();
     } catch (relationshipError) {
-      toast.error(
+      feedback.error(
         relationshipError instanceof Error
           ? relationshipError.message
           : "Could not update friendship.",
@@ -827,12 +776,12 @@ const Profile = () => {
       await queryClient.invalidateQueries({
         queryKey: socialQueryKeys.profile(profile.user.username),
       });
-      toast.info("Trainer blocked");
+      feedback.info("Trainer blocked");
       navigate("/profile/friends", {
         state: { contextBackTo: currentProfilePath },
       });
     } catch (blockError) {
-      toast.error(
+      feedback.error(
         blockError instanceof Error
           ? blockError.message
           : "Could not block trainer.",
@@ -992,11 +941,15 @@ const Profile = () => {
               </div>
               <div
                 className="trainer-card-level-track"
+                role="progressbar"
                 aria-label={
                   cardTrainerLevel
                     ? `Trainer level ${cardTrainerLevel}`
                     : "Trainer level not shared"
                 }
+                aria-valuemin={0}
+                aria-valuemax={50}
+                aria-valuenow={cardTrainerLevel || 0}
               >
                 <span
                   style={{
@@ -1015,7 +968,7 @@ const Profile = () => {
             <div className="trainer-card-body">
               <header className="trainer-card-heading">
                 <div>
-                  <span>PokeGoNexus</span>
+                  <span>Pokémon Go Nexus</span>
                   <h2>Trainer card</h2>
                 </div>
                 <div className="trainer-card-number">

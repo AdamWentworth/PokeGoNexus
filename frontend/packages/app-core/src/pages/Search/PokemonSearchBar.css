@@ -1,251 +1,712 @@
-/* PokemonSearchBar.css */
-
 .pokemon-search-bar {
-  color: var(--color-searchbar-text);
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-searchbar-surface);
-  align-items: center;
-  width: 100%;
-  position: sticky; 
-  top: 0;
+  position: sticky;
   z-index: 1000;
-  /* box-shadow: 0px 4px 2px -2px rgb(168, 168, 168); */
+  top: 0;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  background: color-mix(in srgb, var(--color-searchbar-surface) 96%, transparent);
+  color: var(--color-searchbar-text);
+  backdrop-filter: blur(12px);
 }
 
-/* Combined container for both error message and view controls */
-.controls-container {
+.search-mobile-summary {
+  display: none;
+}
+
+.search-primary-surface {
+  display: grid;
+  box-sizing: border-box;
+  width: min(calc(100% - 28px), 1180px);
+  grid-template-columns: minmax(190px, 1.35fr) auto minmax(145px, 0.8fr) auto auto;
+  align-items: end;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 17%, transparent);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--color-search-section-surface) 92%, var(--color-text-primary) 8%);
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.15);
+}
+
+.search-primary-pokemon-field {
+  min-width: 0;
+}
+
+.search-primary-pokemon-control {
   display: flex;
+  min-width: 0;
   align-items: center;
-  justify-content: flex-start; /* Align items to the start */
+  gap: 8px;
+}
+
+.search-primary-pokemon-control .pokemon-search-row {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.selected-pokemon-preview {
+  position: relative;
+  display: grid;
+  box-sizing: border-box;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+  background-position: center;
+  background-size: cover;
+}
+
+.selected-pokemon-preview.has-background::after {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-search-section-surface) 18%, transparent);
+  content: '';
+}
+
+.selected-pokemon-preview__artwork {
+  position: relative;
+  z-index: 1;
+  --pokemon-artwork-width: calc(100% - 8px);
+  --pokemon-artwork-height: calc(100% - 8px);
+  --pokemon-max-badge-size: 28%;
+
+  max-width: 124px;
+  max-height: 124px;
+}
+
+.selected-pokemon-preview__pokemon {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.28));
+}
+
+.search-primary-pokemon-field > label,
+.search-primary-ownership legend {
+  display: block;
+  margin: 0 0 6px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.search-primary-pokemon-field .pokemon-search-row {
+  position: relative;
   width: 100%;
-  padding: 10px 20px; /* Add padding for layout */
-  position: relative; /* Use relative positioning to ensure correct height */
+  margin: 0;
+}
+
+.pokemon-search-input-control {
+  position: relative;
+}
+
+.search-primary-pokemon-field .pokemon-search-row input[type='text'] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 44px 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 27%, transparent);
+  border-radius: 9px;
+  background: var(--color-search-section-input-bg);
+  color: var(--color-search-section-input-text);
+  font: inherit;
+}
+
+.pokemon-search-input-clear {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.pokemon-search-input-clear:hover {
+  background: color-mix(in srgb, var(--color-text-primary) 9%, transparent);
+  color: var(--color-text-primary);
+}
+
+.pokemon-search-input-clear:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 32%, transparent);
+  outline-offset: 0;
+}
+
+.search-primary-pokemon-field .pokemon-search-row input[type='text']:focus {
+  border-color: var(--color-accent-primary);
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 24%, transparent);
+}
+
+.search-primary-pokemon-field .autocomplete-suggestions {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: min(420px, 52vh);
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  border-radius: 12px;
+  background: color-mix(
+    in srgb,
+    var(--color-search-section-surface) 96%,
+    var(--color-text-primary) 4%
+  );
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  scrollbar-width: thin;
+}
+
+.autocomplete-suggestion-button {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 64px;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 9px 5px 5px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.autocomplete-suggestion-button:hover,
+.autocomplete-suggestion-button[aria-selected='true'] {
+  border-color: color-mix(in srgb, var(--color-accent-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--color-accent-primary) 14%, transparent);
+}
+
+.autocomplete-suggestion-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 32%, transparent);
+  outline-offset: -2px;
+}
+
+.autocomplete-suggestion-visual {
+  position: relative;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+}
+
+.autocomplete-suggestion-visual img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  transform: scale(1.2);
+}
+
+.autocomplete-suggestion-visual > span {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.autocomplete-suggestion-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.autocomplete-suggestion-copy strong {
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+
+.autocomplete-suggestion-copy small,
+.autocomplete-suggestion-number {
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.autocomplete-suggestion-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocomplete-suggestion-number {
+  padding-left: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+.search-primary-ownership {
+  display: grid;
+  min-width: 258px;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  border: 0;
+}
+
+.search-primary-ownership legend {
+  grid-column: 1 / -1;
+}
+
+.search-primary-ownership__button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 17%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.search-primary-ownership__button[aria-pressed='true'] {
+  color: var(--color-text-primary);
+}
+
+.search-primary-ownership__button--caught[aria-pressed='true'] {
+  border-color: color-mix(in srgb, #2196f3 72%, transparent);
+  background: color-mix(in srgb, #2196f3 22%, transparent);
+}
+
+.search-primary-ownership__button--trade[aria-pressed='true'] {
+  border-color: color-mix(in srgb, #31b777 72%, transparent);
+  background: color-mix(in srgb, #31b777 22%, transparent);
+}
+
+.search-primary-ownership__button--wanted[aria-pressed='true'] {
+  border-color: color-mix(in srgb, #ff5965 72%, transparent);
+  background: color-mix(in srgb, #ff5965 22%, transparent);
+}
+
+.search-primary-location,
+.search-primary-filter-button,
+.search-primary-submit {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.search-primary-location {
+  min-width: 0;
+  justify-content: flex-start;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 17%, transparent);
+  background: transparent;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.search-primary-location > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.search-primary-location small {
+  color: var(--color-text-secondary);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.search-primary-location strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-primary-filter-button {
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+  color: var(--color-text-primary);
+}
+
+.search-primary-filter-button > span {
+  color: var(--color-accent-primary);
+  font-size: 1.1rem;
+  line-height: 0;
+}
+
+.search-primary-submit {
+  border: 1px solid #0069d2;
+  background: #0069d2;
+  color: #fff;
+}
+
+.search-primary-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.search-primary-location:hover,
+.search-primary-filter-button:hover,
+.search-primary-ownership__button:hover {
+  background-color: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+}
+
+.search-primary-location:focus-visible,
+.search-primary-filter-button:focus-visible,
+.search-primary-submit:focus-visible,
+.search-primary-ownership__button:focus-visible,
+.search-filter-summary button:focus-visible,
+.view-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 34%, transparent);
+  outline-offset: 2px;
+}
+
+.search-filter-summary {
+  display: flex;
+  box-sizing: border-box;
+  width: min(calc(100% - 28px), 1180px);
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 2px 5px;
+}
+
+.search-filter-summary__chips {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.search-filter-summary__chips span {
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.search-filter-summary > button {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.search-results-toolbar {
+  display: flex;
+  box-sizing: border-box;
+  width: min(calc(100% - 28px), 1180px);
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 7px;
 }
 
 .error-message {
-  color: red;
-  font-weight: bold;
-  padding: 5px 10px;
-  border-radius: 5px;
-  flex-grow: 1; /* Take up remaining space */
-  text-align: left; /* Align text to the left */
-  height: 30px;
-  align-content:center;
-  margin-left: 10px;
+  min-width: 0;
+  color: var(--color-danger);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
-/* Centered view controls */
 .view-controls {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute; /* Position it relative to the controls-container */
-  left: 50%; /* Center it */
-  transform: translateX(-50%); /* Correct the centering */
-  gap: 10px; /* Add space between buttons */
-  margin-top: 0; /* Remove top margin */
+  flex: 0 0 auto;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
 }
 
 .view-button {
-  background: #444;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 50%;
-  display: flex;
+  display: inline-flex;
+  min-width: 76px;
+  height: 38px;
   align-items: center;
   justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
   cursor: pointer;
-  margin: 0 5px;
 }
 
-.view-button:hover {
-  background-color: #666;
+.view-button.active {
+  border-color: color-mix(in srgb, var(--color-accent-primary) 68%, transparent);
+  background: color-mix(in srgb, var(--color-accent-primary) 22%, transparent);
+  color: var(--color-text-primary);
 }
 
-.pokemon-search-bar .toggle-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #444;
-  color: white;
-  cursor: pointer;
-  padding: 3px 5px;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.pokemon-search-bar .toggle-button:hover {
-  background-color: #666;
-}
-
-.pokemon-search-bar .toggle-button svg {
-  width: 12px;
-  height: 12px;
-}
-
-.pokemon-search-bar.collapsed {
-  height: 0;
-  overflow: hidden;
-}
-
-.search-bar-container {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.pokemon-variant, .location-search, .ownership-status {
-  flex: 1;
-  display: flex;
-}
-
-.collapsible-container {
-  width: 100%;
-  max-height: 1000px; /* Set a high value for expanded state */
-  transition: max-height 0.6s ease-in-out;
-  visibility: hidden; /* Default hidden */
-}
-
-.collapsible-container .content {
-  height: auto;
-  visibility: visible; /* Default to visible */
-  overflow: visible;
-}
-
-.collapsible-container.collapsed {
-  max-height: 0;
-  overflow: hidden; /* Default hidden to avoid content overflow */
-  transition: max-height 0.6s ease-in-out, visibility 0s linear 0.6s; /* Add visibility delay */
-}
-
-/* Additional CSS for the controls and buttons */
-.pokemon-search-bar .toggle-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #444;
-  color: white;
-  cursor: pointer;
-  padding: 3px 5px;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.pokemon-search-bar .toggle-button:hover {
-  background-color: #666;
-}
-
-.pokemon-search-bar .toggle-button svg {
-  width: 12px;
-  height: 12px;
-}
-
-.pokemon-search-bar.collapsed {
-  height: 0;
-  overflow: hidden;
-}
-
-/* Adjust the sticky header bar itself */
-.pokemon-search-bar {
-  transition: height 0.6s ease-in-out, padding 0.6s ease-in-out;
-}
-
-@media (max-width: 480px) {
-.search-bar-container {
-  flex-direction: column;
-}
-.pokemon-variant, .location-search, .ownership-status {
-  flex-direction: column;
-}
-.controls-container {
-  flex-direction: column;
-  padding-top: 0px;
-}
-.error-message {
-  height: auto;
-  margin-left: 0px;
-  text-align: center;
-}
-.view-controls {
-  position: relative;
-  left: unset;
-  transform: unset;
-}
-.pokemon-search-bar {
-  top:0px
-}
-.pokemon-search-bar h3 {
-  margin-block-end: 5px;
-  margin-block-start: 5px;
-}
-}
-
-@media (min-width: 481px) and (max-width: 767px) {
-  .search-bar-container {
-    flex-direction: column;
+@media (max-width: 900px) {
+  .search-primary-surface {
+    grid-template-columns: minmax(180px, 1fr) minmax(258px, auto) auto auto;
   }
-  .pokemon-variant, .location-search, .ownership-status {
-    flex-direction: column;
+
+  .search-primary-location {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
-  .controls-container {
-    flex-direction: column;
-    padding-top: 0px;
-  }
-  .error-message {
-    height: auto;
-    margin-left: 0px;
-    text-align: center;
-  }
-  .view-controls {
+}
+
+@media (max-width: 620px) {
+  .pokemon-search-bar {
     position: relative;
-    left: unset;
-    transform: unset;
-  }
+    top: auto;
   }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .search-bar-container {
-    flex-direction: column;
-  }
-  .pokemon-variant, .location-search, .ownership-status {
-    flex-direction: column;
-  }
-  .controls-container {
-    flex-direction: column;
-    padding-top: 0px;
-  }
-  .error-message {
-    height: auto;
-    margin-left: 0px;
-    text-align: center;
-  }
-  .view-controls {
-    position: relative;
-    left: unset;
-    transform: unset;
-  }
-}
-
-
-@media (min-width: 1024px) and (max-width: 1439px){
-  .search-bar-container {
-    flex-direction: column;
-  }
-  .pokemon-variant, .location-search, .ownership-status {
-    flex-direction: column;
+  .search-primary-surface {
+    width: calc(100% - 20px);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 13px;
   }
 
-  .location-ownership-row {
+  .pokemon-search-bar--compact .search-primary-surface,
+  .pokemon-search-bar--compact .search-filter-summary {
+    display: none;
+  }
+
+  .pokemon-search-bar--compact .search-mobile-summary {
     display: flex;
-    justify-content: space-between;
+  }
+
+  .search-mobile-summary {
+    box-sizing: border-box;
+    width: calc(100% - 20px);
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 17%, transparent);
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--color-search-section-surface) 92%, var(--color-text-primary) 8%);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+  }
+
+  .search-mobile-summary__content {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .search-mobile-summary__content > span {
+    color: color-mix(in srgb, var(--color-accent-primary) 80%, var(--color-text-primary));
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .search-mobile-summary__content > strong {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    line-height: 1.2;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .search-mobile-summary__meta {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .search-mobile-summary__meta > span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 7px;
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 13%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+    color: var(--color-text-secondary);
+    font-size: 0.66rem;
+    font-weight: 750;
+    line-height: 1.15;
+  }
+
+  .search-mobile-summary__meta .search-mobile-summary__ownership--caught {
+    border-color: color-mix(in srgb, #2196f3 48%, transparent);
+    background: color-mix(in srgb, #2196f3 14%, transparent);
+    color: color-mix(in srgb, #2196f3 75%, var(--color-text-primary));
+  }
+
+  .search-mobile-summary__meta .search-mobile-summary__ownership--trade {
+    border-color: color-mix(in srgb, #31b777 48%, transparent);
+    background: color-mix(in srgb, #31b777 14%, transparent);
+    color: color-mix(in srgb, #31b777 75%, var(--color-text-primary));
+  }
+
+  .search-mobile-summary__meta .search-mobile-summary__ownership--wanted {
+    border-color: color-mix(in srgb, #ff5965 48%, transparent);
+    background: color-mix(in srgb, #ff5965 14%, transparent);
+    color: color-mix(in srgb, #ff5965 75%, var(--color-text-primary));
+  }
+
+  .search-mobile-summary > button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid color-mix(in srgb, var(--color-accent-primary) 55%, transparent);
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--color-accent-primary) 15%, transparent);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 850;
+    flex: 0 0 auto;
+    cursor: pointer;
+  }
+
+  .search-mobile-summary__preview {
+    width: 62px;
+    height: 62px;
+    flex-basis: 62px;
+  }
+
+  .search-mobile-summary > button:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 34%, transparent);
+    outline-offset: 2px;
+  }
+
+  .search-primary-pokemon-field,
+  .search-primary-ownership,
+  .search-primary-location {
+    grid-column: 1 / -1;
+  }
+
+  .search-primary-pokemon-control.has-preview {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .search-primary-pokemon-control.has-preview > .selected-pokemon-preview {
     width: 100%;
-    margin-right: 20px;
+    height: 168px;
+    flex-basis: auto;
+    align-self: center;
+    border-radius: 18px;
+  }
+
+  .search-primary-pokemon-control.has-preview .selected-pokemon-preview__artwork {
+    --pokemon-artwork-width: 156px;
+    --pokemon-artwork-height: 156px;
+
+    max-width: calc(100% - 12px);
+    max-height: calc(100% - 12px);
+  }
+
+  .search-primary-ownership {
+    min-width: 0;
+  }
+
+  .search-primary-location {
+    grid-row: auto;
+  }
+
+  .search-primary-filter-button,
+  .search-primary-submit {
+    width: 100%;
+  }
+
+  .search-filter-summary,
+  .search-results-toolbar {
+    width: calc(100% - 20px);
+  }
+
+  .search-filter-summary {
+    align-items: flex-start;
+  }
+
+  .search-filter-summary__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .search-filter-summary__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-filter-summary__chips span {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .search-primary-pokemon-control.has-preview > .selected-pokemon-preview {
+    height: 156px;
+  }
+
+  .search-primary-pokemon-control.has-preview .selected-pokemon-preview__artwork {
+    --pokemon-artwork-width: 144px;
+    --pokemon-artwork-height: 144px;
+  }
+
+  .search-mobile-summary__preview {
+    width: 54px;
+    height: 54px;
+    flex-basis: 54px;
   }
 }

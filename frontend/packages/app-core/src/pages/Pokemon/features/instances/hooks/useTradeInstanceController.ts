@@ -6,6 +6,7 @@ import { resolvePokemonDisplayImageUrl } from '@/features/pokemonDisplay/pokemon
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { VariantBackground } from '@/types/pokemonSubTypes';
+import { backgroundMatchesVariant } from '@/utils/backgroundCostume';
 import {
   areInstanceIvsEmpty,
   getInitialCpText,
@@ -124,16 +125,19 @@ export const useTradeInstanceController = (
   );
 
   useEffect(() => {
-    if (pokemon.instanceData.location_card !== null) {
-      const locationCardId = parseInt(pokemon.instanceData.location_card, 10);
-      const background = pokemon.backgrounds.find(
-        (bg: BackgroundOption) => bg.background_id === locationCardId,
-      );
-      if (background) {
-        setSelectedBackground(background);
-      }
+    if (pokemon.instanceData.location_card === null) {
+      setSelectedBackground(null);
+      return;
     }
-  }, [pokemon.backgrounds, pokemon.instanceData.location_card]);
+
+    const locationCardId = parseInt(pokemon.instanceData.location_card, 10);
+    const background = pokemon.backgrounds.find(
+      (candidate: BackgroundOption) =>
+        candidate.background_id === locationCardId &&
+        backgroundMatchesVariant(candidate, pokemon.variantType),
+    );
+    setSelectedBackground(background ?? null);
+  }, [pokemon.backgrounds, pokemon.instanceData.location_card, pokemon.variantType]);
 
   useEffect(() => {
     const { attack, defense, stamina } = currentBaseStats;
@@ -198,10 +202,17 @@ export const useTradeInstanceController = (
     [],
   );
   const handleDateCaughtChange = useCallback((newDate: string) => setDateCaught(newDate), []);
-  const handleBackgroundSelect = useCallback((background: BackgroundOption | null) => {
-    setSelectedBackground(background);
-    setShowBackgrounds(false);
-  }, []);
+  const handleBackgroundSelect = useCallback(
+    (background: BackgroundOption | null) => {
+      setSelectedBackground(
+        background && backgroundMatchesVariant(background, pokemon.variantType)
+          ? background
+          : null,
+      );
+      setShowBackgrounds(false);
+    },
+    [pokemon.variantType],
+  );
   const handleToggleMaxOptions = useCallback(
     () => setShowMaxOptions((prev) => !prev),
     [],

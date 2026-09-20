@@ -2,7 +2,7 @@
 
 .action-menu-button {
   position: fixed;
-  bottom: 1.25rem;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
@@ -16,6 +16,12 @@
   padding: 0;
   cursor: pointer;
   overflow: hidden;
+}
+
+.action-menu-button:focus-visible {
+  border-radius: 50%;
+  outline: 3px solid var(--color-ui-focus);
+  outline-offset: 4px;
 }
 
 .action-menu-button-image {
@@ -46,6 +52,20 @@
   transform: scale(1.05);
 }
 
+.action-menu-button:disabled {
+  cursor: default;
+}
+
+.action-menu-button:disabled .action-menu-button-image {
+  transform: none;
+}
+
 :root[data-theme='light'] .action-menu-button-image {
   filter: drop-shadow(0 0 3px var(--light-icon-shadow-color));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-menu-button-image {
+    transition-duration: 1ms;
+  }
 }

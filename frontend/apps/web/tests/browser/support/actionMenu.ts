@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 export async function openActionMenu(page: Page, projectName: string) {
-  const actionMenuButton = page.getByRole('button', { name: 'Action Menu' });
+  const actionMenuButton = page.getByRole('button', { name: 'Action Menu', exact: true });
   const openMenu = page.locator('.action-menu-overlay[data-menu-state="open"]');
 
   for (let attempt = 0; attempt < 4; attempt += 1) {

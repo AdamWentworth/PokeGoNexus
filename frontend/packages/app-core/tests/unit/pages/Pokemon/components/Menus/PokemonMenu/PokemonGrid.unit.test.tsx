@@ -233,10 +233,10 @@ describe('PokemonGrid', () => {
     });
     expect(screen.queryByTestId('grid-loading-source')).not.toBeInTheDocument();
 
-    rerender(<GridHarness activeView="pokedex" pokemons={pokemons} />);
+    rerender(<GridHarness activeView="inventory" pokemons={pokemons} />);
     expect(screen.queryByTestId('grid-loading-source')).not.toBeInTheDocument();
 
-    rerender(<GridHarness activeView="tags" pokemons={pokemons} />);
+    rerender(<GridHarness activeView="wishlist" pokemons={pokemons} />);
     expect(screen.queryByTestId('grid-loading-source')).not.toBeInTheDocument();
 
     rerender(<GridHarness activeView="pokemon" pokemons={pokemons} />);

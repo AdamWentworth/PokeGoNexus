@@ -72,6 +72,15 @@
   grid-column: 1;
 }
 
+.weight-type-height-container.without-types {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 420px;
+}
+
+.weight-type-height-container.without-types > .height-container {
+  grid-column: 2;
+}
+
 .weight-type-height-container.terminal-spacing {
   margin-bottom: 14px;
 }

@@ -32,14 +32,19 @@ func main() {
 	if err := resolveInstanceSchema(); err != nil {
 		logrus.Fatalf("Failed to validate instances schema: %v", err)
 	}
-	if err := refreshAllRankings(DB); err != nil {
-		logrus.Fatalf("Failed to build Pokemon rankings read model: %v", err)
-	}
 
 	// 4) Start observability server + Kafka Consumer
 	ctx, cancel := context.WithCancel(context.Background())
 	go startObservabilityServer(ctx)
 	go StartConsumer(ctx)
+	go func() {
+		logrus.Info("Initial Pokemon rankings reconciliation started in the background.")
+		if err := refreshAllRankings(DB); err != nil {
+			logrus.Errorf("Failed to build Pokemon rankings read model: %v", err)
+			return
+		}
+		logrus.Info("Initial Pokemon rankings reconciliation completed.")
+	}()
 
 	// 5) Scheduler
 	var err error // Declare err in function scope

@@ -79,16 +79,40 @@
   --color-search-moves-select-outline: #a3a3a3;
   --color-search-moves-add-button-text: #fff;
   --color-search-moves-add-button-border: #fff;
+  --background-instance-panel: #333;
+  --border-instance-panel: 0 solid transparent;
+  --shadow-instance-panel: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --filter-icon-from-black: invert(1);
+  --filter-icon-from-white: none;
+  --color-icon-button-hover: rgba(255, 255, 255, 0.08);
+
+  /* Shared application structure. Feature themes may override the accents. */
+  --color-ui-panel: #171c1d;
+  --color-ui-panel-raised: #202728;
+  --color-ui-control: #0d1516;
+  --color-ui-control-hover: #202728;
+  --color-ui-border: #315052;
+  --color-ui-label: #8fc6cb;
+  --color-ui-focus: #62ddd4;
 
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 10px;
   --space-4: 12px;
   --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
 
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 15px;
+  --radius-control: 10px;
+  --radius-panel: 14px;
+  --radius-pill: 999px;
+
+  --layout-page-max: 1180px;
+  --layout-reading-max: 760px;
 
   --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-image: 0 4px 4px rgba(0, 0, 0, 0.2);
@@ -112,10 +136,10 @@
   --light-surface-highlight: #e3f7dc;
   --light-surface-hover: #ffffff;
   --light-input-bg: #e7f3df;
-  --light-text-primary: #48615e;
+  --light-text-primary: #405753;
   --light-text-heading: #2f4744;
-  --light-text-secondary: #6f8782;
-  --light-text-inactive: #abbbb8;
+  --light-text-secondary: #4b625e;
+  --light-text-inactive: #5c7470;
   --light-border-strong: #000000;
   --light-filter-invert: invert(1);
   --light-filter-mid-invert: invert(0.5);
@@ -138,6 +162,20 @@
   --light-caught-unselected-text: #8aa09a;
   --light-caught-iv-track: #d4ddd8;
   --light-caught-input-border: #a9c0ba;
+  --color-text-primary: var(--light-text-primary);
+  --color-text-secondary: var(--light-text-secondary);
+  --color-accent-primary: #005bb5;
+  --color-accent-primary-hover: #00498f;
+  --background-instance-panel: linear-gradient(
+    180deg,
+    rgba(248, 255, 249, 0.98) 0%,
+    rgba(228, 241, 235, 0.96) 100%
+  );
+  --border-instance-panel: 1px solid rgba(157, 181, 173, 0.42);
+  --shadow-instance-panel: var(--light-caught-shadow);
+  --filter-icon-from-black: none;
+  --filter-icon-from-white: invert(1);
+  --color-icon-button-hover: rgba(72, 97, 94, 0.12);
   --color-pokemon-menu-surface: var(--light-surface-base);
   --color-pokemon-header-surface: var(--light-surface-base);
   --color-pokemon-header-shadow: var(--light-surface-base);
@@ -198,6 +236,13 @@
   --color-search-moves-select-outline: var(--light-border-strong);
   --color-search-moves-add-button-text: var(--light-text-primary);
   --color-search-moves-add-button-border: var(--light-border-strong);
+  --color-ui-panel: rgba(255, 255, 255, 0.9);
+  --color-ui-panel-raised: #edf5f1;
+  --color-ui-control: rgba(255, 255, 255, 0.82);
+  --color-ui-control-hover: #ffffff;
+  --color-ui-border: #9bb8b1;
+  --color-ui-label: #28636a;
+  --color-ui-focus: #08766b;
   --light-caught-input-focus: #48615e;
   --light-caught-card-bg: rgba(213, 227, 221, 0.92);
   --light-caught-card-border: rgba(149, 171, 164, 0.58);

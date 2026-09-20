@@ -44,7 +44,6 @@ describe('useInstancesStore', () => {
 
     useVariantsStore.setState({
       variants: [],
-      pokedexLists: {} as any,
       variantsLoading: false,
       isRefreshing: false,
     });
@@ -177,7 +176,6 @@ describe('useInstancesStore', () => {
   it('updateInstanceStatus delegates to action factory and triggers periodic sync', async () => {
     useVariantsStore.setState({
       variants: [{ variant_id: '0001-default', pokemon_id: 1 } as any],
-      pokedexLists: {} as any,
       variantsLoading: false,
       isRefreshing: false,
     });

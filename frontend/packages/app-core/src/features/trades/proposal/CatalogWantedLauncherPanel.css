@@ -1,0 +1,147 @@
+.catalog-wanted-launcher {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.85rem max(0.9rem, 2.5vw) 1rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, #ef6b7f 30%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-primary, #fff);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.catalog-wanted-launcher > header {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.catalog-wanted-launcher > header h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  line-height: 1.2;
+}
+
+.catalog-wanted-launcher__empty {
+  color: var(--color-text-secondary, #b7c9c9);
+  line-height: 1.4;
+}
+
+.catalog-wanted-launcher__heading-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.catalog-wanted-launcher__heading-meta > span {
+  color: #53d39a;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.catalog-wanted-launcher__heading-meta > strong {
+  display: inline-grid;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  padding-inline: 0.38rem;
+  border-radius: 999px;
+  background: rgba(83, 211, 154, 0.12);
+  color: #bdf5d7;
+  font-size: 0.72rem;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.catalog-wanted-launcher__returns {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
+  align-content: start;
+  gap: 0.5rem;
+  min-height: min(28vh, 14rem);
+  max-height: min(56dvh, 34rem);
+  padding: 0.15rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.catalog-wanted-launcher__returns button {
+  min-width: 0;
+  min-height: 9.35rem;
+  display: grid;
+  grid-template-rows: 5rem minmax(3.4rem, auto);
+  place-items: center;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.55rem 0.5rem 0.8rem;
+  border: 1px solid rgba(83, 211, 154, 0.3);
+  border-radius: 0.7rem;
+  background: rgba(8, 22, 22, 0.6);
+  color: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .catalog-wanted-launcher {
+    padding: 0.75rem 0.7rem max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .catalog-wanted-launcher__returns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    min-height: min(32dvh, 14rem);
+    max-height: min(60dvh, 36rem);
+    padding-inline: 0;
+    scrollbar-gutter: auto;
+  }
+
+  .catalog-wanted-launcher__returns button {
+    padding-inline: 0.45rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .catalog-wanted-launcher__returns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.catalog-wanted-launcher__media {
+  position: relative;
+  display: grid;
+  width: 5rem;
+  height: 5rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.55rem;
+}
+
+.catalog-wanted-launcher__returns .catalog-wanted-launcher__media > img:not(.pokemon-location-background) {
+  position: relative;
+  z-index: 1;
+  width: 4rem;
+  height: 4rem;
+  object-fit: contain;
+}
+
+.catalog-wanted-launcher__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  max-width: 100%;
+  min-height: 3.4rem;
+  padding-inline: 0.2rem;
+  box-sizing: border-box;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.18;
+  overflow-wrap: break-word;
+  text-align: center;
+  text-wrap: balance;
+}

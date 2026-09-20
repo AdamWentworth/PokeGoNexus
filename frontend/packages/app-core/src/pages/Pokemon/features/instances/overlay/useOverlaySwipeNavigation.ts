@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import type {
   DragEventHandler,
   MouseEventHandler,
@@ -126,8 +127,8 @@ export const useOverlaySwipeNavigation = ({
         scheduleNavTimeout(() => {
           setIsSwipeAnimating(false);
           setIsBackgroundTransitioning(false);
-        }, 220);
-      }, 120);
+        }, collectionExperienceParityContract.instanceOverlaySwipe.entryTransitionMs);
+      }, collectionExperienceParityContract.instanceOverlaySwipe.swapDelayMs);
     },
     [
       isNavigableOverlay,

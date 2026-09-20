@@ -1,152 +1,181 @@
-import { useEffect, useRef } from 'react';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
-import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import { fromLonLat } from 'ol/proj';
-import XYZ from 'ol/source/XYZ';
-import VectorSource from 'ol/source/Vector';
-import { Circle, Fill, Style } from 'ol/style';
-import { useModal } from '@/contexts/ModalContext';
+import { useEffect, useState } from 'react';
+import { FaCheck, FaCopy, FaDiscord, FaExternalLinkAlt, FaFire, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import type { PartnerInfo } from '@shared-contracts/trades';
 
-import CloseButton from '@/components/CloseButton';
-import { useTheme } from '@/contexts/ThemeContext';
+import OverlayDismissButton from '@/components/OverlayDismissButton';
+import OverlayPortal from '@/components/OverlayPortal';
 
-import 'ol/ol.css';
 import './PartnerInfoModal.css';
 
 interface PartnerInfoModalProps {
   partnerInfo: PartnerInfo | null;
+  partnerUsername?: string | null;
   onClose: () => void;
 }
 
+type CopiedField = 'trainer-code' | 'pokemon-go-name' | 'coordination-handle';
+
 export function formatTrainerCode(code?: string | null): string {
-  if (!code) return 'N/A';
+  if (!code) return '';
 
   const stripped = code.replace(/\D/g, '');
   const matches = stripped.match(/.{1,4}/g);
   return matches ? matches.join(' ') : code;
 }
 
-function PartnerInfoModal({ partnerInfo, onClose }: PartnerInfoModalProps) {
-  const mapContainer = useRef<HTMLDivElement | null>(null);
-  const { isLightMode } = useTheme();
-  const { alert } = useModal();
+const coordinationLabel = (method: PartnerInfo['coordinationMethod']): string => {
+  switch (method) {
+    case 'campfire': return 'Campfire';
+    case 'discord': return 'Discord';
+    case 'other': return 'Other community or app';
+    default: return 'No external method shared';
+  }
+};
+
+function PartnerInfoModal({ partnerInfo, partnerUsername, onClose }: PartnerInfoModalProps) {
+  const [copiedField, setCopiedField] = useState<CopiedField | null>(null);
 
   useEffect(() => {
-    const latitude = partnerInfo?.coordinates?.latitude;
-    const longitude = partnerInfo?.coordinates?.longitude;
-    if (latitude == null || longitude == null || !mapContainer.current) {
-      return;
-    }
+    if (!copiedField) return;
+    const timer = window.setTimeout(() => setCopiedField(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [copiedField]);
 
-    const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: isLightMode
-          ? 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-          : 'https://{1-4}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      }),
-    });
+  if (!partnerInfo) return null;
 
-    const markerSource = new VectorSource();
-    const markerLayer = new VectorLayer({
-      source: markerSource,
-    });
+  const displayName = partnerInfo.pokemonGoName || partnerUsername || 'your trade partner';
+  const formattedCode = formatTrainerCode(partnerInfo.trainerCode);
+  const methodLabel = coordinationLabel(partnerInfo.coordinationMethod);
 
-    const map = new Map({
-      target: mapContainer.current,
-      layers: [baseLayer, markerLayer],
-      view: new View({
-        center: fromLonLat([longitude, latitude]),
-        zoom: 12,
-      }),
-    });
-
-    const markerFeature = new Feature({
-      geometry: new Point(fromLonLat([longitude, latitude])),
-    });
-
-    markerFeature.setStyle(
-      new Style({
-        image: new Circle({
-          radius: 6,
-          fill: new Fill({ color: '#00AAFF' }),
-        }),
-      }),
-    );
-
-    markerSource.addFeature(markerFeature);
-
-    return () => {
-      map.setTarget(undefined);
-    };
-  }, [partnerInfo, isLightMode]);
-
-  if (!partnerInfo) {
-    return null;
-  }
-
-  const { trainerCode, pokemonGoName, coordinates, location } = partnerInfo;
-  const formattedCode = formatTrainerCode(trainerCode);
-
-  const handleCopyCode = async () => {
+  const copyValue = async (field: CopiedField, value: string): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(formattedCode);
-      await alert('Trainer code copied!');
+      await navigator.clipboard.writeText(value);
+      setCopiedField(field);
     } catch {
-      await alert('Unable to copy trainer code.');
+      setCopiedField(null);
     }
   };
 
+  const copyButton = (field: CopiedField, value: string, label: string) => (
+    <button
+      type="button"
+      className="partner-copy-button"
+      aria-label={`Copy ${label}`}
+      onClick={() => void copyValue(field, value)}
+    >
+      {copiedField === field ? <FaCheck aria-hidden="true" /> : <FaCopy aria-hidden="true" />}
+      <span>{copiedField === field ? 'Copied' : 'Copy'}</span>
+    </button>
+  );
+
   return (
-    <div className="partner-modal-overlay">
-      <div className="modal-content">
-        <CloseButton onClick={onClose} />
-        <h2>Partner Info</h2>
+    <OverlayPortal onClose={onClose} closeOnBackdrop>
+      <div className="partner-coordination-overlay">
+        <section
+          className="partner-coordination-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="partner-coordination-title"
+        >
+          <OverlayDismissButton
+            className="partner-coordination-close"
+            aria-label="Close trade coordination"
+            onDismiss={onClose}
+          >
+            <FaTimes aria-hidden="true" />
+          </OverlayDismissButton>
 
-        <p>
-          Trainer Code: <strong>{formattedCode} </strong>
-          {trainerCode ? (
-            <button className="copy-button" onClick={handleCopyCode}>
-              Copy
-            </button>
-          ) : null}
-        </p>
-        {!trainerCode ? <p className="info-message">We hope they'll add you!</p> : null}
+          <header className="partner-coordination-header">
+            <span>Accepted trade</span>
+            <h2 id="partner-coordination-title">Coordinate the exchange</h2>
+            <p>
+              Pokémon Go Nexus matches the trade. You and {displayName} arrange the
+              details externally, then complete it in Pokémon GO.
+            </p>
+          </header>
 
-        <p>
-          Pokemon GO Name: <strong>{pokemonGoName || 'N/A'}</strong>
-        </p>
-        {!pokemonGoName ? <p className="info-message">We hope they'll add their name soon!</p> : null}
+          {partnerInfo.sharingEnabled ? (
+            <>
+              <ol className="partner-coordination-steps" aria-label="Trade coordination steps">
+                <li><span>1</span><strong>Add trainer</strong></li>
+                <li><span>2</span><strong>Message externally</strong></li>
+                <li><span>3</span><strong>Trade in Pokémon GO</strong></li>
+              </ol>
 
-        <div className="map-wrapper">
-          {coordinates?.latitude != null && coordinates?.longitude != null ? (
-            <div ref={mapContainer} className="modal-map-container" />
-          ) : location ? (
-            <p>Location: {location}</p>
+              <div className="partner-identity-grid">
+                <article className="partner-detail-card">
+                  <span>Pokémon GO name</span>
+                  <strong>{partnerInfo.pokemonGoName || 'Not provided'}</strong>
+                  {partnerInfo.pokemonGoName
+                    ? copyButton('pokemon-go-name', partnerInfo.pokemonGoName, 'Pokémon GO name')
+                    : null}
+                </article>
+                <article className="partner-detail-card">
+                  <span>Trainer Code</span>
+                  <strong>{formattedCode || 'Not provided'}</strong>
+                  {formattedCode
+                    ? copyButton('trainer-code', formattedCode, 'trainer code')
+                    : null}
+                </article>
+              </div>
+
+              <article className={`partner-method-card partner-method-${partnerInfo.coordinationMethod}`}>
+                <div className="partner-method-icon" aria-hidden="true">
+                  {partnerInfo.coordinationMethod === 'discord' ? <FaDiscord /> : <FaFire />}
+                </div>
+                <div>
+                  <span>Preferred contact</span>
+                  <strong>{methodLabel}</strong>
+                  {partnerInfo.coordinationHandle ? (
+                    <p>@{partnerInfo.coordinationHandle}</p>
+                  ) : partnerInfo.coordinationMethod === 'campfire' ? (
+                    <p>Add the Trainer Code first, then find your new Niantic friend in Campfire.</p>
+                  ) : (
+                    <p>No username was provided. Use the Trainer Code to connect if available.</p>
+                  )}
+                </div>
+                <div className="partner-method-actions">
+                  {partnerInfo.coordinationHandle
+                    ? copyButton('coordination-handle', partnerInfo.coordinationHandle, 'coordination username')
+                    : null}
+                  {partnerInfo.coordinationMethod === 'campfire' ? (
+                    <a href="https://campfire.nianticlabs.com/" target="_blank" rel="noreferrer">
+                      Open Campfire <FaExternalLinkAlt aria-hidden="true" />
+                    </a>
+                  ) : partnerInfo.coordinationMethod === 'discord' ? (
+                    <a href="https://discord.com/app" target="_blank" rel="noreferrer">
+                      Open Discord <FaExternalLinkAlt aria-hidden="true" />
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+
+              {partnerInfo.location ? (
+                <p className="partner-general-location">
+                  <strong>General location:</strong> {partnerInfo.location}
+                </p>
+              ) : null}
+            </>
           ) : (
-            <p>We have no location data for this trainer.</p>
+            <div className="partner-sharing-unavailable">
+              <FaShieldAlt aria-hidden="true" />
+              <div>
+                <strong>{displayName} has not shared coordination details.</strong>
+                <p>The trade remains active, but you will need an existing way to contact them.</p>
+              </div>
+            </div>
           )}
-        </div>
 
-        <div className="additional-text-container">
-          <p>
-            Please proceed with adding <strong>{pokemonGoName || 'this Trainer'}</strong> as a friend on Pokemon Go!
-          </p>
-          <img src="/images/campfire.png" alt="Campfire" className="campfire-image" />
-          <p>
-            We recommend installing and using Niantic&apos;s Campfire App to communicate and sync up for your Trade!
-          </p>
-        </div>
-
-        <p className="bottom-message">
-          Pokemon Go friends can be messaged directly using Campfire!
-        </p>
+          <aside className="partner-coordination-safety">
+            <FaShieldAlt aria-hidden="true" />
+            <p>
+              Messaging and the in-game exchange happen outside Pokémon Go Nexus. Protect
+              your privacy, confirm the trainer and Pokémon, and never send money or account credentials.
+            </p>
+          </aside>
+        </section>
       </div>
-    </div>
+    </OverlayPortal>
   );
 }
 

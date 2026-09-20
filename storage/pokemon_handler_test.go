@@ -72,3 +72,20 @@ func TestHasExplicitEmptyStringRejectsNullOrEmptyVariantID(t *testing.T) {
 		t.Fatalf("non-empty variant_id should be valid")
 	}
 }
+
+func TestAddOptionalJSONUpdatePreservesFieldsOmittedByOlderClients(t *testing.T) {
+	updates := map[string]interface{}{}
+	addOptionalJSONUpdate(updates, map[string]interface{}{}, "wanted_size_preferences")
+	if _, exists := updates["wanted_size_preferences"]; exists {
+		t.Fatal("omitted wanted size preferences must preserve the stored value")
+	}
+
+	addOptionalJSONUpdate(
+		updates,
+		map[string]interface{}{"wanted_size_preferences": nil},
+		"wanted_size_preferences",
+	)
+	if got := updates["wanted_size_preferences"]; got != "{}" {
+		t.Fatalf("explicit null should clear preferences to an empty object, got %#v", got)
+	}
+}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -16,6 +17,7 @@ var tradeFriendshipLevels = map[int]string{
 	2: "Great",
 	3: "Ultra",
 	4: "Best",
+	5: "Forever",
 }
 
 type CreateTradeRequest struct {
@@ -119,9 +121,30 @@ func loadTradeForParticipant(c fiber.Ctx, tx *gorm.DB) (Trade, error) {
 }
 
 var (
-	errTradeForbidden = errors.New("trade is not available to this user")
-	errTradeConflict  = errors.New("trade state has changed")
+	errTradeForbidden     = errors.New("trade is not available to this user")
+	errTradeConflict      = errors.New("trade state has changed")
+	errPokemonNotForTrade = errors.New("one or more Pokémon are no longer marked For Trade")
+	errPokemonTradeLocked = errors.New("lucky Pokémon cannot be traded again")
 )
+
+func validateTradeInstancePair(
+	proposed PokemonInstance,
+	accepting PokemonInstance,
+	proposedUserID string,
+	acceptingUserID string,
+) error {
+	if proposed.UserID != proposedUserID || accepting.UserID != acceptingUserID ||
+		!proposed.IsCaught || !accepting.IsCaught || proposed.Disabled || accepting.Disabled {
+		return errTradeForbidden
+	}
+	if !proposed.IsForTrade || !accepting.IsForTrade {
+		return errPokemonNotForTrade
+	}
+	if proposed.Lucky || accepting.Lucky {
+		return errPokemonTradeLocked
+	}
+	return nil
+}
 
 func tradeError(c fiber.Ctx, err error, fallback string) error {
 	switch {
@@ -131,7 +154,18 @@ func tradeError(c fiber.Ctx, err error, fallback string) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": err.Error()})
 	case errors.Is(err, errTradeConflict):
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"message": err.Error()})
+	case errors.Is(err, errPokemonNotForTrade):
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"code":    "pokemon_not_for_trade",
+			"message": err.Error(),
+		})
+	case errors.Is(err, errPokemonTradeLocked):
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"code":    "pokemon_trade_locked",
+			"message": err.Error(),
+		})
 	default:
+		logrus.Errorf("%s: %v", fallback, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": fallback})
 	}
 }
@@ -248,9 +282,10 @@ func CreateTradeHandler(c fiber.Ctx) error {
 		if lockErr != nil {
 			return lockErr
 		}
-		if proposed.UserID != proposer.UserID || accepting.UserID != accepter.UserID ||
-			!proposed.IsCaught || !accepting.IsCaught || proposed.Disabled || accepting.Disabled {
-			return errTradeForbidden
+		if validationErr := validateTradeInstancePair(
+			proposed, accepting, proposer.UserID, accepter.UserID,
+		); validationErr != nil {
+			return validationErr
 		}
 		var active int64
 		if countErr := tx.Model(&Trade{}).
@@ -314,8 +349,9 @@ func AcceptTradeHandler(c fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if proposed.UserID != trade.UserIDProposed || accepting.UserID != trade.UserIDAccepting ||
-			!proposed.IsCaught || !accepting.IsCaught || proposed.Disabled || accepting.Disabled {
+		if validateTradeInstancePair(
+			proposed, accepting, trade.UserIDProposed, trade.UserIDAccepting,
+		) != nil {
 			return errTradeConflict
 		}
 		var conflicts int64
@@ -378,7 +414,40 @@ func DenyTradeHandler(c fiber.Ctx) error {
 }
 
 func CancelTradeHandler(c fiber.Ctx) error {
-	return transitionTrade(c, "pending", "cancelled", false)
+	var updated Trade
+	err := db.Transaction(func(tx *gorm.DB) error {
+		trade, err := loadTradeForParticipant(c, tx)
+		if err != nil {
+			return err
+		}
+		// A proposal may only be withdrawn by the trainer who created it.
+		// Once accepted, either participant may cancel the active trade.
+		if trade.TradeStatus == "proposed" && trade.UserIDProposed != viewerID(c) {
+			return errTradeForbidden
+		}
+		if trade.TradeStatus != "proposed" && trade.TradeStatus != "pending" {
+			return errTradeConflict
+		}
+		now := time.Now().UTC()
+		lastUpdate := now.UnixMilli()
+		cancelledBy := trade.UsernameProposed
+		if viewerID(c) == trade.UserIDAccepting {
+			cancelledBy = trade.UsernameAccepting
+		}
+		trade.TradeStatus = "cancelled"
+		trade.TradeCancelledDate = &now
+		trade.TradeCancelledBy = &cancelledBy
+		trade.LastUpdate = &lastUpdate
+		if err = tx.Save(&trade).Error; err != nil {
+			return err
+		}
+		updated = trade
+		return enqueueTradeEvent(tx, c, updated)
+	})
+	if err != nil {
+		return tradeError(c, err, "Could not cancel trade")
+	}
+	return c.JSON(tradeEnvelope(updated))
 }
 
 func transitionTrade(c fiber.Ctx, from, to string, accepterOnly bool) error {
@@ -437,8 +506,9 @@ func CompleteTradeHandler(c fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if proposed.UserID != trade.UserIDProposed || accepting.UserID != trade.UserIDAccepting ||
-			!proposed.IsCaught || !accepting.IsCaught || proposed.Disabled || accepting.Disabled {
+		if validateTradeInstancePair(
+			proposed, accepting, trade.UserIDProposed, trade.UserIDAccepting,
+		) != nil {
 			return errTradeConflict
 		}
 		if viewerID(c) == trade.UserIDProposed {
@@ -490,7 +560,7 @@ func ReproposeTradeHandler(c fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if trade.TradeStatus != "cancelled" {
+		if trade.TradeStatus != "cancelled" && trade.TradeStatus != "denied" {
 			return errTradeConflict
 		}
 		proposed, accepting, err := loadLockedTradeInstances(
@@ -611,39 +681,44 @@ func RevealTradePartnerHandler(c fiber.Ctx) error {
 		c.Params("trade_id"), userID, userID).First(&trade).Error; err != nil {
 		return tradeError(c, err, "Could not load trade")
 	}
+	if trade.TradeStatus != "pending" {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"message": "Coordination details are available only after a trade is accepted and while it remains active",
+		})
+	}
+	partnerID := tradeOtherUserID(trade, userID)
+	blocked, err := usersAreBlocked(userID, partnerID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Could not validate partner access"})
+	}
+	if blocked {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": "Coordination details are unavailable for a blocked trainer"})
+	}
 	var partner User
-	if err := db.Where("user_id = ?", tradeOtherUserID(trade, userID)).First(&partner).Error; err != nil {
+	if err := db.Where("user_id = ?", partnerID).First(&partner).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Trade partner not found"})
 	}
-	profile, err := loadUserProfile(partner.UserID)
+	profile, err := loadUserProfile(partnerID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Could not load partner privacy"})
 	}
 	response := fiber.Map{
-		"trainerCode":   nil,
-		"pokemonGoName": nil,
-		"location":      nil,
-		"coordinates":   nil,
+		"sharingEnabled":     profile.ShareTradeContact,
+		"trainerCode":        nil,
+		"pokemonGoName":      nil,
+		"coordinationMethod": "none",
+		"coordinationHandle": nil,
+		"location":           nil,
 	}
-	relationship, _, err := relationshipForUsers(userID, partner.UserID)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Could not validate partner relationship"})
+	if !profile.ShareTradeContact {
+		return c.JSON(response)
 	}
-	if profile.ShowPokemonGoName {
-		response["pokemonGoName"] = partner.PokemonGoName
-	}
-	if profile.TrainerCodeVisibility == "public" ||
-		(profile.TrainerCodeVisibility == "friends" && relationship == relationshipFriend) {
-		response["trainerCode"] = partner.TrainerCode
-	}
+	response["trainerCode"] = partner.TrainerCode
+	response["pokemonGoName"] = partner.PokemonGoName
+	response["coordinationMethod"] = profile.CoordinationMethod
+	response["coordinationHandle"] = profile.CoordinationHandle
 	if profile.ShowLocation {
 		response["location"] = partner.Location
-		if partner.Latitude != nil && partner.Longitude != nil {
-			response["coordinates"] = fiber.Map{
-				"latitude":  *partner.Latitude,
-				"longitude": *partner.Longitude,
-			}
-		}
 	}
 	return c.JSON(response)
 }

@@ -61,6 +61,7 @@ export default function PerfTelemetryPanel() {
 
   return (
     <div
+      data-testid="perf-telemetry"
       style={{
         position: 'fixed',
         right: 12,

@@ -1,17 +1,30 @@
-/* ActionMenu.css */
-
-/* Gradient overlay styling */
+/* Immersive radial navigation opened from the persistent Poké Ball. */
 .action-menu-overlay {
+  --action-menu-bg-start: #111;
+  --action-menu-bg-end: #34807d;
+  --action-menu-text: #f7fcff;
+  --action-menu-surface: rgba(7, 27, 31, 0.72);
+  --action-menu-surface-hover: rgba(20, 66, 67, 0.88);
+  --action-menu-border: rgba(111, 217, 207, 0.44);
+  --action-menu-focus: #82eee3;
+  --action-menu-trade: #63e2b4;
+
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom right, #111, #34807d);
   z-index: 2000;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: linear-gradient(to bottom right, var(--action-menu-bg-start), var(--action-menu-bg-end));
+  color: var(--action-menu-text);
   opacity: 0;
+  outline: none;
   pointer-events: none;
-  transition: opacity 0.15s ease-in-out;
+  transition:
+    translate var(--motion-overlay-duration, 280ms) var(--motion-overlay-easing, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 0.15s ease-in-out;
+  will-change: translate, opacity;
 }
 
 .action-menu-overlay.active {
@@ -19,24 +32,202 @@
   pointer-events: all;
 }
 
-/* Settings button styling (fade only) */
+body:has(.action-menu-overlay.active) [data-testid='perf-telemetry'] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+:root[data-theme='light'] .action-menu-overlay {
+  --action-menu-bg-start: #f8fbff;
+  --action-menu-bg-end: #8fcfc7;
+  --action-menu-text: #173b42;
+  --action-menu-surface: rgba(255, 255, 255, 0.74);
+  --action-menu-surface-hover: rgba(255, 255, 255, 0.94);
+  --action-menu-border: rgba(64, 126, 128, 0.42);
+  --action-menu-focus: #006c78;
+  --action-menu-trade: #087454;
+}
+
+.action-menu-close {
+  z-index: 2200;
+  bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+.trade-board-button,
+.help-button,
+.settings-button,
+.action-menu-overlay .auth-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--action-menu-border);
+  border-radius: 999px;
+  background: var(--action-menu-surface);
+  color: var(--action-menu-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  transition:
+    border-color var(--motion-fast),
+    background var(--motion-fast),
+    opacity var(--motion-base),
+    transform var(--motion-fast);
+}
+
+.trade-board-button:hover,
+.help-button:hover,
+.settings-button:hover,
+.action-menu-overlay .auth-button:hover {
+  border-color: var(--action-menu-focus);
+  background: var(--action-menu-surface-hover);
+}
+
+.trade-board-button:focus-visible,
+.help-button:focus-visible,
+.settings-button:focus-visible,
+.action-menu-overlay .auth-button:focus-visible,
+.action-menu-item:focus-visible {
+  outline: 3px solid var(--action-menu-focus);
+  outline-offset: 3px;
+}
+
+.trade-board-button {
+  position: absolute;
+  z-index: 2100;
+  top: max(1rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  gap: 10px;
+  padding: 9px 14px;
+  font-size: clamp(0.82rem, 1.3vw, 1.05rem);
+  opacity: 0;
+}
+
+.action-menu-overlay.active .trade-board-button {
+  opacity: 1;
+  transition-delay: 0.1s;
+}
+
+.trade-board-button svg {
+  width: 20px;
+  height: 20px;
+  color: var(--action-menu-trade);
+}
+
+.help-button {
+  position: absolute;
+  z-index: 2100;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  gap: 9px;
+  padding: 9px 14px;
+  font-size: clamp(0.82rem, 1.3vw, 1.05rem);
+  opacity: 0;
+}
+
+.action-menu-support {
+  position: absolute;
+  z-index: 2100;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.action-menu-support .help-button {
+  position: static;
+}
+
+.action-menu-overlay.active .help-button {
+  opacity: 1;
+  transition-delay: 0.1s;
+}
+
+.help-button svg {
+  width: 20px;
+  height: 20px;
+  color: var(--action-menu-focus);
+}
+
+.action-menu-support__panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.65rem);
+  display: grid;
+  width: min(19rem, calc(100vw - 2rem));
+  gap: 0.35rem;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  border: 1px solid var(--action-menu-border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--action-menu-bg-start) 92%, transparent);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
+  animation: action-menu-support-enter var(--motion-fast) ease-out both;
+}
+
+.action-menu-support__eyebrow {
+  padding: 0.15rem 0.45rem 0.35rem;
+  color: var(--action-menu-focus);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.action-menu-support__link {
+  display: grid;
+  min-height: 44px;
+  grid-template-columns: 1.55rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--action-menu-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.action-menu-support__link svg {
+  color: var(--action-menu-focus);
+  justify-self: center;
+}
+
+.action-menu-support__link:hover {
+  border-color: var(--action-menu-border);
+  background: var(--action-menu-surface-hover);
+}
+
+.action-menu-support__link:focus-visible {
+  outline: 3px solid var(--action-menu-focus);
+  outline-offset: 1px;
+}
+
+@keyframes action-menu-support-enter {
+  from {
+    transform: translateY(0.4rem) scale(0.98);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
 .settings-button {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  pointer-events: auto;
   z-index: 2100;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  gap: 8px;
+  padding: 7px 10px 7px 14px;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  margin-top: 20px;
-  margin-right: 20px;
 }
 
 .action-menu-overlay.active .settings-button {
@@ -44,32 +235,38 @@
   transition-delay: 0.1s;
 }
 
-/* Settings text */
-.settings-text {
-  font-size: clamp(1rem, 1.5vw, 1.5rem);
-  color: #fff;
-  margin-right: 0.5rem;
+.settings-text,
+.auth-button-text {
+  color: var(--action-menu-text);
+  font-size: clamp(0.95rem, 1.5vw, 1.25rem);
 }
 
-.settings-icon {
+.settings-icon,
+.auth-button-icon {
   width: clamp(30px, 4vw, 40px);
   height: clamp(30px, 4vw, 40px);
-  transition: transform 0.2s;
+  object-fit: contain;
+  transition: transform var(--motion-fast);
 }
 
-/* Auth button container (fade only) */
+:root[data-theme='light'] .settings-icon,
+:root[data-theme='light'] .auth-button-icon {
+  box-sizing: border-box;
+  padding: 4px;
+  border-radius: 50%;
+  background: #214f55;
+  filter: none;
+}
+
 .auth-button-container {
   position: absolute;
-  bottom: 1rem;
-  left: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
   z-index: 2100;
-  margin-bottom: 20px;
-  margin-left: 20px;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: max(1rem, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--motion-base);
 }
 
 .action-menu-overlay.active .auth-button-container {
@@ -77,36 +274,19 @@
   transition-delay: 0.1s;
 }
 
-/* Auth button styling */
 .action-menu-overlay .auth-button {
-  background: transparent;
-  border: none;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  cursor: pointer;
+  gap: 6px;
+  padding: 7px 10px 7px 14px;
 }
 
-.auth-button-text {
-  font-size: clamp(1rem, 1.5vw, 1.5rem);
-  color: #fff;
-}
-
-.auth-button-icon {
-  width: clamp(30px, 4vw, 40px);
-  height: clamp(30px, 4vw, 40px);
-  transition: transform 0.2s;
-  margin-left: 5px;
-}
-
-.auth-button:hover .auth-button-icon {
+.action-menu-overlay .auth-button:hover .auth-button-icon {
   transform: scale(1.05);
 }
 
 .auth-button-stacked {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 8px;
   align-items: flex-start;
 }
 
@@ -124,39 +304,69 @@
   height: 20px;
   padding: 0 4px;
   place-items: center;
-  border: 2px solid #173435;
+  border: 2px solid var(--action-menu-surface);
   border-radius: 999px;
-  background: #ff5965;
+  background: #e94f68;
   color: #fff;
   font-size: 0.65rem;
   font-weight: 900;
 }
 
-/* Central animated buttons */
+.theme-toggle {
+  position: absolute;
+  z-index: 2100;
+  top: calc(max(1rem, env(safe-area-inset-top)) + 58px);
+  right: max(1rem, env(safe-area-inset-right));
+  display: flex;
+  min-width: 60px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--motion-base);
+}
+
+.action-menu-overlay.active .theme-toggle {
+  opacity: 1;
+  transition-delay: 0.16s;
+}
+
+.action-menu-overlay .theme-input:focus-visible + .slider {
+  outline: 3px solid var(--action-menu-focus);
+  outline-offset: 4px;
+}
+
+/* The nine primary destinations retain the original radial arrangement. */
 .action-menu-buttons-container {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
   --action-menu-column-offset: clamp(112px, 24vmin, 250px);
   --action-menu-row-offset: clamp(116px, 22vmin, 220px);
+
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
 }
 
 .action-menu-item {
-  position: fixed;
+  position: absolute;
+  top: calc(100% - max(25px, env(safe-area-inset-bottom)));
   left: 50%;
-  top: calc(100% - 25px);
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: top 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+  padding: 4px;
+  border: 0;
+  border-radius: 14px;
   background: transparent;
-  border: none;
-  outline: none;
+  color: var(--action-menu-text);
   cursor: pointer;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition:
+    top var(--motion-base) ease,
+    opacity var(--motion-base) ease,
+    transform var(--motion-base) ease;
 }
 
 .action-menu-buttons-container.open .button-raid {
   top: 50%;
-  left: 50%;
   transform: translate(
     calc(-50% - var(--action-menu-column-offset)),
     calc(-50% - var(--action-menu-row-offset))
@@ -166,17 +376,12 @@
 
 .action-menu-buttons-container.open .button-search {
   top: 50%;
-  left: 50%;
-  transform: translate(
-    calc(-50% - var(--action-menu-column-offset)),
-    -50%
-  );
+  transform: translate(calc(-50% - var(--action-menu-column-offset)), -50%);
   opacity: 1;
 }
 
 .action-menu-buttons-container.open .button-pokemon {
   top: 50%;
-  left: 50%;
   transform: translate(
     calc(-50% - var(--action-menu-column-offset)),
     calc(-50% + var(--action-menu-row-offset))
@@ -186,21 +391,18 @@
 
 .action-menu-buttons-container.open .button-pokedex {
   top: 50%;
-  left: 50%;
   transform: translate(-50%, calc(-50% - var(--action-menu-row-offset)));
   opacity: 1;
 }
 
 .action-menu-buttons-container.open .button-home {
   top: 50%;
-  left: 50%;
   transform: translate(-50%, -50%);
   opacity: 1;
 }
 
 .action-menu-buttons-container.open .button-pvp {
   top: 50%;
-  left: 50%;
   transform: translate(
     calc(-50% + var(--action-menu-column-offset)),
     calc(-50% - var(--action-menu-row-offset))
@@ -210,17 +412,12 @@
 
 .action-menu-buttons-container.open .button-trades {
   top: 50%;
-  left: 50%;
-  transform: translate(
-    calc(-50% + var(--action-menu-column-offset)),
-    -50%
-  );
+  transform: translate(calc(-50% + var(--action-menu-column-offset)), -50%);
   opacity: 1;
 }
 
 .action-menu-buttons-container.open .button-rankings {
   top: 50%;
-  left: 50%;
   transform: translate(
     calc(-50% + var(--action-menu-column-offset)),
     calc(-50% + var(--action-menu-row-offset))
@@ -230,28 +427,34 @@
 
 .action-menu-buttons-container.open .button-max {
   top: 50%;
-  left: 50%;
   transform: translate(-50%, calc(-50% + var(--action-menu-row-offset)));
   opacity: 1;
 }
 
-/* Inner container for button content */
 .button-content {
   display: flex;
+  min-width: clamp(74px, 10vw, 160px);
   flex-direction: column;
   align-items: center;
+  padding: 5px;
+  border-radius: 12px;
 }
 
 .button-icon {
   width: clamp(66px, 8vw, 150px);
   height: clamp(66px, 8vw, 150px);
-  transition: transform 0.2s;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.18));
+  transition: transform var(--motion-fast);
 }
 
 .button-label {
   margin-top: 0.25rem;
+  color: var(--action-menu-text);
   font-size: clamp(1.05rem, 1.5vw, 1.75rem);
-  color: #fff;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -275,79 +478,97 @@
   }
 }
 
+@media (max-width: 520px) {
+  .trade-board-button {
+    padding: 7px 10px;
+  }
+
+  .trade-board-button span {
+    max-width: 84px;
+    line-height: 1.05;
+    text-align: left;
+  }
+
+  .settings-button {
+    padding-left: 10px;
+  }
+
+  .settings-text,
+  .auth-button-text {
+    font-size: 0.9rem;
+  }
+
+  .action-menu-support__panel {
+    position: fixed;
+    right: 0.5rem;
+    bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.65rem);
+    width: calc(100vw - 1rem);
+  }
+}
+
 @media (max-height: 620px) {
   .action-menu-buttons-container {
-    --action-menu-row-offset: clamp(98px, 22vh, 132px);
+    --action-menu-row-offset: clamp(90px, 22vh, 126px);
   }
 
   .button-icon {
-    width: clamp(58px, 14vh, 82px);
-    height: clamp(58px, 14vh, 82px);
+    width: clamp(54px, 14vh, 78px);
+    height: clamp(54px, 14vh, 78px);
   }
 
   .button-label {
-    font-size: clamp(0.85rem, 2.8vh, 1.1rem);
+    font-size: clamp(0.78rem, 2.8vh, 1.05rem);
+  }
+
+  .theme-toggle {
+    top: max(1rem, env(safe-area-inset-top));
+    right: calc(max(1rem, env(safe-area-inset-right)) + 132px);
   }
 }
 
-/* Light Mode Toggle styling in ActionMenu overlay */
-.theme-toggle {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  position: absolute;
-  top: calc(1rem + 60px); /* Adjust to fine-tune vertical positioning */
-  right: 1rem;
-  cursor: pointer;
-  z-index: 2100;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  margin-top: 10px;
-  margin-right: 20px;
-  gap: 10px;
+@media (max-height: 480px) and (orientation: landscape) {
+  .action-menu-buttons-container {
+    --action-menu-row-offset: clamp(78px, 22vh, 98px);
+  }
+
+  .button-icon {
+    width: clamp(46px, 13vh, 62px);
+    height: clamp(46px, 13vh, 62px);
+  }
+
+  .button-content {
+    min-width: 72px;
+    padding: 2px;
+  }
+
+  .button-label {
+    margin-top: 1px;
+    font-size: clamp(0.72rem, 2.8vh, 0.9rem);
+  }
 }
 
-.action-menu-overlay.active .theme-toggle {
-  opacity: 1;
-  transition-delay: 0.2s;
-}
-
-.icon-background {
-  width: clamp(30px, 4vw, 40px);
-  height: clamp(30px, 4vw, 40px);
-  background-color: transparent;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.4s ease;
-}
-
-.icon-background img {
-  width: 100%;
-  height: 100%;
-  filter: invert(1);
-}
-
-/* Theme toggle text styling */
-.theme-toggle-text {
-  font-size: 1rem;
-  color: #fff;
-  margin-top: 4px;
-  text-align: center;
-}
-
-:root[data-theme='light'] .action-menu-overlay {
-  background: linear-gradient(
-    to bottom right,
-    var(--light-surface-muted),
-    var(--light-gradient-accent)
-  );
-}
-
-@media (max-width: 540px) {
-  .auth-button-container {
-    margin-bottom: 10px;
-    margin-left: 8px;
+@media (prefers-reduced-motion: reduce) {
+  .action-menu-overlay,
+  .trade-board-button,
+  .help-button,
+  .action-menu-support__panel,
+  .action-menu-support__link,
+  .settings-button,
+  .auth-button-container,
+  .action-menu-overlay .auth-button,
+  .theme-toggle,
+  .action-menu-item,
+  .button-icon,
+  .settings-icon,
+  .auth-button-icon,
+  .action-menu-overlay .slider,
+  .action-menu-overlay .sun-moon,
+  .action-menu-overlay .stars,
+  .action-menu-overlay .star,
+  .action-menu-overlay .cloud-light,
+  .action-menu-overlay .cloud-dark {
+    animation: none !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
   }
 }

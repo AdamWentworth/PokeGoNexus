@@ -1,6 +1,10 @@
 // useHPPokemons.ts
 
 import { useMemo } from 'react';
+import {
+  projectPokemonCollectionSortSource,
+  sortPokemonCollectionItems,
+} from '@pokemongonexus/shared-domain/collection-sort';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { SortMode } from '@/types/sort'; // Updated import
 
@@ -9,12 +13,12 @@ const useHPPokemons = (
   sortMode: SortMode
 ): PokemonVariant[] => {
   return useMemo(() => {
-    return [...displayedPokemons].sort((a, b) => {
-      // Direct stamina comparison without filtering
-      return sortMode === 'ascending' 
-        ? a.stamina - b.stamina 
-        : b.stamina - a.stamina;
-    });
+    return sortPokemonCollectionItems(
+      displayedPokemons,
+      'hp',
+      sortMode,
+      projectPokemonCollectionSortSource,
+    );
   }, [displayedPokemons, sortMode]);
 };
 

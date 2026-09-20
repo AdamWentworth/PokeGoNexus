@@ -12,9 +12,11 @@ import {
   FaUserPlus,
 } from "react-icons/fa";
 import { useNavigate } from "react-router";
-import { toast } from "react-toastify";
+import { feedback } from '@/components/feedback';
 
 import { useModal } from "@/contexts/ModalContext";
+import HorizontalPageSlider from "@/components/motion/HorizontalPageSlider";
+import useHorizontalPageNavigation from "@/components/motion/useHorizontalPageNavigation";
 import {
   acceptFriendRequest,
   deleteFriendRequest,
@@ -35,6 +37,8 @@ import type {
 import TrainerPageShell from "./TrainerPageShell";
 
 type FriendsTab = "friends" | "requests" | "find" | "blocked";
+
+const FRIEND_TABS = ["friends", "requests", "find", "blocked"] as const;
 
 const emptyOverview: FriendsOverview = {
   friends: [],
@@ -102,6 +106,11 @@ const Friends = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<TrainerAutocompleteEntry[]>([]);
   const [searching, setSearching] = useState(false);
+  const tabSlider = useHorizontalPageNavigation({
+    pages: FRIEND_TABS,
+    activePage: tab,
+    onChange: setTab,
+  });
 
   const friendsQuery = useQuery({
     queryKey: socialQueryKeys.friends,
@@ -116,7 +125,7 @@ const Friends = () => {
   }, [navigate, user]);
   useEffect(() => {
     if (friendsQuery.error) {
-      toast.error(
+      feedback.error(
         friendsQuery.error instanceof Error
           ? friendsQuery.error.message
           : "Could not load friends.",
@@ -126,14 +135,14 @@ const Friends = () => {
 
   const runSearch = async () => {
     if (query.trim().length < 2) {
-      toast.info("Enter at least two characters.");
+      feedback.info("Enter at least two characters.");
       return;
     }
     setSearching(true);
     const outcome = await fetchTrainerAutocomplete(query.trim());
     setSearching(false);
     if (outcome.type === "error") {
-      toast.error(outcome.message);
+      feedback.error(outcome.message);
       setResults([]);
       return;
     }
@@ -151,10 +160,10 @@ const Friends = () => {
   ) => {
     try {
       await action();
-      toast.success(successMessage);
+      feedback.success(successMessage);
       await queryClient.invalidateQueries({ queryKey: socialQueryKeys.friends });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Action failed.");
+      feedback.error(error instanceof Error ? error.message : "Action failed.");
     }
   };
 
@@ -227,7 +236,16 @@ const Friends = () => {
         <div className="trainer-status">Loading friends...</div>
       ) : null}
 
-      {!loading && tab === "friends" ? (
+      <HorizontalPageSlider
+        activeIndex={tabSlider.activeIndex}
+        className="trainer-page-slider"
+        viewportRef={tabSlider.viewportRef}
+        dragOffset={tabSlider.dragOffset}
+        isDragging={tabSlider.isDragging}
+        {...tabSlider.swipeHandlers}
+      >
+        <div>
+      {!loading ? (
         <section className="trainer-section">
           <header>
             <div>
@@ -262,8 +280,10 @@ const Friends = () => {
           ) : null}
         </section>
       ) : null}
+        </div>
 
-      {!loading && tab === "requests" ? (
+        <div>
+      {!loading ? (
         <div className="trainer-section-stack">
           <section className="trainer-section">
             <header>
@@ -356,12 +376,13 @@ const Friends = () => {
           </section>
         </div>
       ) : null}
+        </div>
 
-      {tab === "find" ? (
+        <div>
         <section className="trainer-section">
           <header>
             <div>
-              <span>Search PokeGo Nexus</span>
+              <span>Search Pokémon Go Nexus</span>
               <h2>Find trainers</h2>
             </div>
           </header>
@@ -412,9 +433,10 @@ const Friends = () => {
             ))}
           </div>
         </section>
-      ) : null}
+        </div>
 
-      {!loading && tab === "blocked" ? (
+        <div>
+      {!loading ? (
         <section className="trainer-section">
           <header>
             <div>
@@ -450,6 +472,8 @@ const Friends = () => {
           ) : null}
         </section>
       ) : null}
+        </div>
+      </HorizontalPageSlider>
     </TrainerPageShell>
   );
 };

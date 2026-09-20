@@ -1,0 +1,52 @@
+appId: ${APP_ID}
+name: Native not-found and incomplete verification routes smoke
+tags:
+  - android
+  - native-routing
+---
+- openLink:
+    link: ${APP_LINK_BASE}/native/not-found?path=%2Fmissing-trainer-tool
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: "404"
+    timeout: 45000
+- assertVisible: That route wandered off.
+- assertVisible: ".*missing-trainer-tool.*"
+- assertVisible: ".*Return home.*"
+- assertVisible: ".*Getting Started.*"
+- assertVisible: ".*Frequently asked questions.*"
+- assertVisible: ".*Help & information.*"
+- takeScreenshot: 01-not-found
+- openLink:
+    link: ${APP_LINK_BASE}/native/verify-email-change
+- extendedWaitUntil:
+    visible: Email not updated
+    timeout: 15000
+- assertVisible: This verification link is incomplete.
+- assertVisible: Continue to login
+- takeScreenshot: 02-incomplete-email-verification
+- openLink:
+    link: ${APP_LINK_BASE}/native/info/faq?question=remote-trades
+- extendedWaitUntil:
+    visible: What does the fifth friendship heart mean?
+    timeout: 15000
+- assertVisible: ".*Five hearts represents Forever Friends.*"
+- scrollUntilVisible:
+    element:
+      text: ".*Link to this answer.*"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: ".*Link to this answer.*"
+- takeScreenshot: 03-deep-linked-faq-answer

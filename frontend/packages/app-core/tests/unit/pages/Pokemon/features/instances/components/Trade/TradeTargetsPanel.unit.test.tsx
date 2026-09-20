@@ -53,20 +53,6 @@ vi.mock('@/pages/Pokemon/features/instances/components/Trade/TradeTargetsList', 
   ),
 }));
 
-vi.mock('@/pages/Pokemon/features/instances/components/Trade/TradeOverlaysPanel', () => ({
-  default: ({
-    isOverlayOpen,
-    selectedPokemon,
-  }: {
-    isOverlayOpen: boolean;
-    selectedPokemon?: { key?: string } | null;
-  }) => (
-    <div data-testid="trade-overlays-panel">
-      {isOverlayOpen ? `open:${selectedPokemon?.key ?? ''}` : 'closed'}
-    </div>
-  ),
-}));
-
 vi.mock('@/pages/Pokemon/features/instances/hooks/useTradeTargetFiltering', () => ({
   default: (...args: unknown[]) => mocks.useTradeTargetFilteringMock(...args),
 }));
@@ -75,8 +61,8 @@ vi.mock('@/pages/Pokemon/features/instances/hooks/useToggleEditModeTrade', () =>
   default: (...args: unknown[]) => mocks.useToggleEditModeTradeMock(...args),
 }));
 
-vi.mock('@/pages/Pokemon/features/instances/components/Trade/useTradeProposalFlow', () => ({
-  default: (...args: unknown[]) => mocks.useTradeProposalFlowMock(...args),
+vi.mock('@/features/trades/proposal', () => ({
+  useTradeProposalFlow: (...args: unknown[]) => mocks.useTradeProposalFlowMock(...args),
 }));
 
 vi.mock('@/pages/Pokemon/features/instances/components/Trade/tradeTargetsHelpers', async () => {
@@ -152,7 +138,6 @@ const makeProps = (
     },
   ] as TradeTargetsPanelProps['variants'],
   isEditable: true,
-  username: 'ash',
   ...overrides,
 });
 
@@ -215,7 +200,6 @@ describe('TradeTargetsPanel', () => {
         variant_id: '0001-default',
       }),
     );
-    expect(screen.getByTestId('trade-overlays-panel')).toHaveTextContent('closed');
   });
 
   it('logs and skips opening overlay when variant lookup fails', () => {
@@ -250,30 +234,17 @@ describe('TradeTargetsPanel', () => {
     expect(props.openTradeTargetOverlay).not.toHaveBeenCalled();
   });
 
-  it('opens action overlay instead of wanted overlay when not editable', () => {
-    const props = makeProps({ isEditable: false });
-    render(<TradeTargetsPanel {...props} />);
-
-    fireEvent.click(screen.getByTestId('wanted-list-click'));
-
-    expect(props.openTradeTargetOverlay).not.toHaveBeenCalled();
-    expect(screen.getByTestId('trade-overlays-panel')).toHaveTextContent(
-      'open:0001-default_uuid-1',
-    );
-  });
-
   it('renders the trade target heading copy', () => {
     render(<TradeTargetsPanel {...makeProps()} />);
 
     expect(screen.getByText('Desired Return')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Trade Targets' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Wanted Pokémon' })).toHaveLength(2);
     expect(
       screen.getByText(
-        'Choose the Pokemon you would accept for this trade and fine-tune the filters below.',
+        'Choose the Pokémon you want in return for this For Trade listing.',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Target List' })).toBeInTheDocument();
-    expect(screen.getByText('1 visible')).toBeInTheDocument();
+    expect(screen.getByText('1 wanted · no advanced rules')).toBeInTheDocument();
   });
 
   it('uses mirror-specific count copy when mirror mode is active', () => {
@@ -299,11 +270,11 @@ describe('TradeTargetsPanel', () => {
     const editableProps = makeProps({ isEditable: true });
     const { rerender } = render(<TradeTargetsPanel {...editableProps} />);
 
-    const reset = screen.getByAltText('Reset Filters');
+    const reset = screen.getByRole('button', { name: 'Reset' });
     expect(reset).toBeInTheDocument();
 
     const readOnlyProps = makeProps({ isEditable: false });
     rerender(<TradeTargetsPanel {...readOnlyProps} />);
-    expect(screen.queryByAltText('Reset Filters')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
   });
 });

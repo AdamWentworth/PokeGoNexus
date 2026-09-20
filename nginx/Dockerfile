@@ -1,6 +1,10 @@
 # nginx dockerfile
 FROM nginx:1.29-alpine3.23
 
+ARG POKEGONEXUS_BUILD_SHA=development
+LABEL org.opencontainers.image.source="https://github.com/AdamWentworth/PokeGoNexus" \
+      org.opencontainers.image.revision="${POKEGONEXUS_BUILD_SHA}"
+
 # Apply latest Alpine security updates during image build.
 RUN apk upgrade --no-cache
 

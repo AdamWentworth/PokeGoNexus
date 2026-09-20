@@ -1,7 +1,7 @@
-import type { PokemonPvPLeagueKey } from '@shared-contracts/pokemon';
+import type { PokemonPvPLeagueKey } from '@pokemongonexus/shared-contracts/pokemon';
 
-import { calculateCP } from '@/utils/calculateCP';
-import { cpMultipliers } from '@/utils/constants';
+import { calculateCP } from '../../../utils/calculateCP';
+import { cpMultipliers } from '../../../utils/constants';
 
 export type PvPIvBaseStats = {
   attack: number;

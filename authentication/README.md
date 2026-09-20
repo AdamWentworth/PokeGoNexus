@@ -1,6 +1,6 @@
 ﻿# Authentication Service (Node.js) 🔒
 
-Authentication API for PokeGo Nexus.
+Authentication API for Pokémon Go Nexus.
 
 ## 📌 Overview
 
@@ -11,6 +11,7 @@ This service handles:
 - Refresh token rotation and logout
 - Verified email changes and password reset email delivery
 - Google, Discord, and Facebook OAuth registration/login/linking
+- One-use, device-bound OAuth provider linking for native clients
 - Connected identity and all-session management
 - Account update and delete (owner-only)
 - Daily MongoDB backup task (`mongodump`)
@@ -43,6 +44,8 @@ Mounted under `/auth`:
 | `GET` | `/auth/account/security` | Connected identities and active-session count |
 | `POST` | `/auth/sessions/revoke-all` | Revokes all refresh sessions |
 | `DELETE` | `/auth/account/identities/:provider` | Disconnects an OAuth identity safely |
+| `POST` | `/auth/mobile/oauth/link/start` | Starts a recent-session, device-bound native link |
+| `POST` | `/auth/mobile/oauth/link/exchange` | Consumes the one-use native callback result |
 
 Other routes:
 
@@ -80,12 +83,19 @@ Each provider requires its client ID, client secret, and callback URL:
 
 Equivalent `DISCORD_*` and `FACEBOOK_*` values configure those providers.
 
+Native account linking keeps these same provider callback URLs. The callback
+returns only a short-lived, one-use result code to
+`pokegonexus://native/account`; the native client must exchange it using the
+same user's bearer session and device ID. Access and refresh tokens are never
+placed in browser or deep-link URLs. `MOBILE_OAUTH_REDIRECT_URI` may override
+the app redirect URI for a controlled build environment.
+
 Register this exact authorized redirect URI in Google Cloud. Local frontend
 sessions may use the production HTTPS auth callback; the signed OAuth state
 returns them only to an allow-listed frontend origin.
 
 OAuth providers supply a verified account email. New users still choose a
-PokeGoNexus username and may add trainer/location details, but they do not
+Pokémon Go Nexus username and may add trainer/location details, but they do not
 create a password. Registration rejects a verified provider email already owned
 by an account. Login with a verified matching email authenticates that same
 account and records the provider identity.
@@ -277,26 +287,13 @@ Notes:
 - MongoDB is not host-exposed by default.
 - Auth host exposure is loopback-only (`127.0.0.1:3002`).
 
-## 🚀 Production Deploy (Manual CD)
+## 🚀 Production Deployment
 
-Workflow:
-
-- `deploy-auth-prod`
-
-Manual inputs:
-
-- `image_ref` (for example `latest` or `sha-<commit>`)
-- `deploy_root` (default `/srv/pokegonexus`)
-- `service_name` (default `auth_service`)
-
-Deploy behavior:
-
-- Syncs prod repo to selected branch
-- Validates `authentication/.env` keys (`DATABASE_URL`, `JWT_SECRET`)
-- Ensures `kafka_default` network exists
-- Pulls target image and recreates `auth_service`
-- Health-checks with `GET /readyz` (`200` expected)
-- Rolls back on failure (when previous image exists)
+The private HomeOps `deploy-pokegonexus-service` workflow deploys Auth. It
+accepts only the current full PokeGoNexus `master` SHA, verifies the image's
+embedded revision, deploys its immutable digest, checks `/readyz`, and rolls
+back a failed replacement. This public repository never runs deployment code
+on the production runner.
 
 ## 🛡 Security Notes
 

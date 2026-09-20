@@ -6,42 +6,13 @@ import type {
 
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import { matchFormsAndVariantType } from '@/utils/formMatcher';
-
-const toNumber = (value: unknown): number | null => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
+import { mergePokemonMoveData } from '@pokemongonexus/shared-domain/pokemon-data';
 
 export function mergePokemonMovesChunk(
   variants: PokemonVariant[],
   movesChunk: PokemonMovesChunk,
 ): PokemonVariant[] {
-  const movesByPokemonID = new Map(movesChunk.map((entry) => [Number(entry.pokemon_id), entry]));
-
-  return variants.map((variant) => {
-    const entry = movesByPokemonID.get(Number(variant.pokemon_id));
-    if (!entry) return variant;
-
-    const fusionMovesByID = new Map(
-      entry.fusion.map((fusion) => [toNumber(fusion.fusion_id), fusion.moves ?? []]),
-    );
-    const crownMovesByID = new Map(
-      entry.crownForms.map((crown) => [toNumber(crown.id), crown.moves ?? []]),
-    );
-
-    return {
-      ...variant,
-      moves: entry.moves ?? [],
-      fusion: (variant.fusion ?? []).map((fusion) => ({
-        ...fusion,
-        moves: fusionMovesByID.get(toNumber(fusion.fusion_id)) ?? fusion.moves ?? [],
-      })),
-      crownForms: (variant.crownForms ?? []).map((crown) => ({
-        ...crown,
-        moves: crownMovesByID.get(toNumber(crown.id)) ?? crown.moves ?? [],
-      })),
-    };
-  });
+  return mergePokemonMoveData(variants, movesChunk);
 }
 
 function matchingRaidEntries(variant: PokemonVariant, raidBosses: RaidBoss[]): RaidBoss[] {

@@ -8,12 +8,28 @@ import { installE2eRoutes } from "./support/e2eRoutes";
 
 const defaultRoutePaths = [
   "/",
+  "/getting-started",
+  "/help",
+  "/faq",
+  "/about",
+  "/safety",
+  "/this-route-does-not-exist",
   "/login",
   "/register",
+  "/terms",
+  "/privacy",
+  "/data-deletion",
   "/pokedex",
   "/pokemon",
   "/search",
   "/trades",
+  "/raid",
+  "/raid/methodology",
+  "/max",
+  "/pvp",
+  "/pvp/methodology",
+  "/rankings",
+  "/trade-board",
 ];
 
 const configuredRoutePaths = process.env.E2E_ROUTE_PATHS
@@ -38,61 +54,59 @@ function slugifyRoute(routePath: string) {
 }
 
 test.describe("cross-browser route smoke", () => {
-  test("loads core routes without browser runtime errors", async ({
-    page,
-  }, testInfo) => {
-    await installE2eRoutes(page);
-    const diagnostics = attachBrowserDiagnostics(page, testInfo);
-    const screenshotsDir = testInfo.outputPath("route-screenshots");
-    fs.mkdirSync(screenshotsDir, { recursive: true });
+  for (const routePath of routePaths) {
+    test(`loads ${routePath} without browser runtime errors`, async ({
+      page,
+    }, testInfo) => {
+      await installE2eRoutes(page);
+      const diagnostics = attachBrowserDiagnostics(page, testInfo);
+      const screenshotsDir = testInfo.outputPath("route-screenshots");
+      fs.mkdirSync(screenshotsDir, { recursive: true });
 
-    try {
-      for (const routePath of routePaths) {
-        await test.step(`open ${routePath}`, async () => {
-          const response = await page.goto(routePath, {
-            waitUntil: "domcontentloaded",
-          });
-          expect(
-            response?.ok(),
-            `${routePath} document response should be OK`,
-          ).toBe(true);
-
-          await expect(page.locator("#root")).toBeAttached();
-          await expect
-            .poll(
-              async () =>
-                page
-                  .locator("#root")
-                  .evaluate(
-                    (element) => element.textContent?.trim().length ?? 0,
-                  ),
-              { message: `${routePath} should render app content` },
-            )
-            .toBeGreaterThan(0);
-
-          await page.waitForLoadState("networkidle");
-          await page.waitForTimeout(settleMs);
-          await expect(page.locator(".app-error-fallback")).toHaveCount(0);
-
-          const screenshotPath = path.join(
-            screenshotsDir,
-            `${slugifyRoute(routePath)}.png`,
-          );
-          await page.screenshot({ path: screenshotPath, fullPage: true });
-          await testInfo.attach(`route-${slugifyRoute(routePath)}.png`, {
-            path: screenshotPath,
-            contentType: "image/png",
-          });
+      try {
+        const response = await page.goto(routePath, {
+          waitUntil: "domcontentloaded",
         });
-      }
-    } finally {
-      await diagnostics.flush();
-    }
+        expect(
+          response?.ok(),
+          `${routePath} document response should be OK`,
+        ).toBe(true);
 
-    const blockingErrors = diagnostics.blockingErrors();
-    expect(
-      blockingErrors,
-      `browser diagnostics should not include runtime errors:\n${JSON.stringify(blockingErrors, null, 2)}`,
-    ).toEqual([]);
-  });
+        await expect(page.locator("#root")).toBeAttached();
+        await expect
+          .poll(
+            async () =>
+              page
+                .locator("#root")
+                .evaluate(
+                  (element) => element.textContent?.trim().length ?? 0,
+                ),
+            { message: `${routePath} should render app content` },
+          )
+          .toBeGreaterThan(0);
+
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(settleMs);
+        await expect(page.locator(".app-error-fallback")).toHaveCount(0);
+
+        const screenshotPath = path.join(
+          screenshotsDir,
+          `${slugifyRoute(routePath)}.png`,
+        );
+        await page.screenshot({ path: screenshotPath, fullPage: true });
+        await testInfo.attach(`route-${slugifyRoute(routePath)}.png`, {
+          path: screenshotPath,
+          contentType: "image/png",
+        });
+      } finally {
+        await diagnostics.flush();
+      }
+
+      const blockingErrors = diagnostics.blockingErrors();
+      expect(
+        blockingErrors,
+        `browser diagnostics should not include runtime errors:\n${JSON.stringify(blockingErrors, null, 2)}`,
+      ).toEqual([]);
+    });
+  }
 });

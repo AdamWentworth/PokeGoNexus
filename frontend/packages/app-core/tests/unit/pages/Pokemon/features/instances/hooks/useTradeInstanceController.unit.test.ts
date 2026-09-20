@@ -176,4 +176,34 @@ describe('useTradeInstanceController', () => {
     expect(result.current.showBackgrounds).toBe(false);
     expect(result.current.selectedBackground).toEqual(bg);
   });
+
+  it('does not restore a no-costume background for a costumed trade instance', async () => {
+    const pokemon = makePokemon(
+      {
+        variantType: 'costume_7',
+        backgrounds: [
+          {
+            background_id: 2,
+            image_url: '/images/bg-2.png',
+            name: 'Seattle',
+            costume_id: null,
+            date: '2026-02-17',
+            location: 'Seattle',
+          },
+          {
+            background_id: 4,
+            image_url: '/images/bg-4.png',
+            name: 'Party Seattle',
+            costume_id: 7,
+            date: '2026-02-17',
+            location: 'Seattle',
+          },
+        ],
+      },
+      { costume_id: 7, location_card: '2' },
+    );
+    const { result } = renderHook(() => useTradeInstanceController(pokemon));
+
+    await waitFor(() => expect(result.current.selectedBackground).toBeNull());
+  });
 });

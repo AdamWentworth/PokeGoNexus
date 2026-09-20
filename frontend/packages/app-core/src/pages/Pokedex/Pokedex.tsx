@@ -15,6 +15,8 @@ import { AppLoadingFallback } from '@/contexts/AppLoadingContext';
 import { useContextBackHandler } from '@/contexts/ContextBackContext';
 import { useModal } from '@/contexts/ModalContext';
 import CloseButton from '@/components/CloseButton';
+import AppPageShell from '@/components/layout/AppPageShell';
+import ProductPageHeader from '@/components/layout/ProductPageHeader';
 import { determineImageUrl } from '@/utils/imageHelpers';
 import {
   getPokemonCatalogManifest,
@@ -24,6 +26,7 @@ import { createScopedLogger } from '@/utils/logger';
 
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { PokemonPokedexSpecies } from '@shared-contracts/pokemon';
+import { pokedexExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 import './Pokedex.css';
 import PokedexPokemonDetail from './PokedexPokemonDetail';
@@ -1298,9 +1301,12 @@ function Pokedex() {
     const targetSection = regionSectionRefs.current[sectionRefKey];
     if (typeof targetSection?.scrollIntoView !== 'function') return;
 
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     targetSection.scrollIntoView({
       block: 'start',
-      behavior: 'auto',
+      behavior: reducedMotion
+        ? pokedexExperienceParityContract.regionNavigationScrollBehavior.reducedMotion
+        : pokedexExperienceParityContract.regionNavigationScrollBehavior.default,
     });
     setPendingScrollRegionKey(null);
   }, [pendingScrollRegionKey, selectedCategoryKey, viewMode]);
@@ -1502,14 +1508,15 @@ function Pokedex() {
   }
 
   return (
-    <div
+    <AppPageShell
       className={`pokedex-page ${viewMode === 'detail' ? 'pokedex-page--detail' : ''}`}
+      contentClassName="pokedex-page__shell"
+      inset="comfortable"
+      maxWidth="standard"
       style={getThemeStyle(activeTheme)}
     >
-      <div className="pokedex-page__shell">
-        <header className="pokedex-page__header">
-          <div className="pokedex-page__title-row">
-            <h1 className="pokedex-page__title">Pokedex</h1>
+        <ProductPageHeader
+          actions={(
             <div className="pokedex-page__header-tools">
               <p className="pokedex-page__registration-total">
                 Registered: {activeRegistrationSummary.registeredCount} / {activeRegistrationSummary.totalCount}
@@ -1527,7 +1534,13 @@ function Pokedex() {
                 </span>
               </button>
             </div>
-          </div>
+          )}
+          className="pokedex-product-header"
+          description="Explore every released species, form, and collectible variant."
+          eyebrow="Trainer reference"
+          icon={<img alt="" src="/images/pokedex-icon.png" />}
+          title="Pokédex"
+        >
           <div className="pokedex-category-groups">
             <div className="pokedex-category-tabs" role="tablist" aria-label="Pokedex variant category">
               {visibleVariantCategories.map((category) => {
@@ -1594,7 +1607,7 @@ function Pokedex() {
               })}
             </div>
           </div>
-        </header>
+        </ProductPageHeader>
 
         <section className="pokedex-page__panel" aria-label="Pokedex catalog">
           {viewMode === 'regions' ? (
@@ -1975,7 +1988,6 @@ function Pokedex() {
           ) : null}
 
         </section>
-      </div>
       {viewMode === 'detail' && !selectedPokemon ? (
         <CloseButton
           className="pokedex-page__detail-close"
@@ -1983,7 +1995,7 @@ function Pokedex() {
           title="Back to regions"
         />
       ) : null}
-    </div>
+    </AppPageShell>
   );
 }
 

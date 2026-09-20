@@ -9,7 +9,7 @@ Read-only search service that returns trade/wanted matches from the shared MySQL
 - Dependabot issues addressed via dependency upgrades
 - Health/readiness/metrics endpoints added
 - CORS allow-list, request body-size, and rate-limits added
-- CI/CD workflows added (`ci-search.yml`, `deploy-search-prod.yml`)
+- GitHub-hosted CI plus private HomeOps production deployment
 
 ## 🧠 Why Fiber Here
 

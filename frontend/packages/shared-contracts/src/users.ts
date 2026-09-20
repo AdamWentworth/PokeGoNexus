@@ -12,6 +12,15 @@ export interface InstanceSyncEnvelope<TInstance = Record<string, unknown>> {
   instances?: Record<string, TInstance>;
 }
 
+export interface CollectionSummary {
+  collection_total: number;
+  caught: number;
+  for_trade: number;
+  wanted: number;
+  favorite: number;
+  most_wanted: number;
+}
+
 export interface UserOverviewUser {
   user_id: string;
   username: string;
@@ -41,6 +50,7 @@ export type TrainerAutocompleteEntry = {
 export type ProfileVisibility = 'public' | 'friends' | 'private';
 export type FriendRequestPermission = 'everyone' | 'nobody';
 export type TrainerCodeVisibility = 'public' | 'friends' | 'private';
+export type TradeCoordinationMethod = 'campfire' | 'discord' | 'other' | 'none';
 export type TrainerRelationship =
   | 'none'
   | 'self'
@@ -135,6 +145,34 @@ export const TRAINER_TITLE_OPTIONS = [
 export type TrainerTitle =
   (typeof TRAINER_TITLE_OPTIONS)[number]['id'];
 
+/**
+ * Canonical play-style artwork shared by the Vite and native trainer cards.
+ *
+ * Keeping the asset contract beside the title IDs prevents either frontend
+ * from silently substituting a generic badge or drifting to different art.
+ */
+export const TRAINER_TITLE_VISUALS = {
+  'raid-regular': { masks: ['/images/raid_face.png'] },
+  'shadow-raider': { masks: ['/images/shadow_search.png'] },
+  'super-mega-raider': { masks: ['/images/pokemon_details_cp_mega.png'] },
+  'max-battler': { masks: ['/images/gigantamax_title_mask.png'] },
+  'battle-league-trainer': { masks: ['/images/pvp_title_mask.png'] },
+  'rocket-hunter': { masks: ['/images/teamrocket_r_full.png'] },
+  'shiny-hunter': { masks: ['/images/shiny_search.png'] },
+  'pokedex-collector': { masks: ['/images/kanto_search.png'] },
+  'costume-collector': { masks: ['/images/costume_search.png'] },
+  'hundo-hunter': { masks: ['/images/appraisal_04.png'] },
+  'size-collector': { icon: 'ruler' },
+  'lucky-trader': { masks: ['/images/lucky-icon.png'] },
+  'egg-hatcher': { masks: ['/images/ic_egg_inv.png'] },
+  'route-explorer': { masks: ['/images/route_icon.png'] },
+  'showcase-star': { icon: 'medal' },
+  'party-player': { icon: 'users' },
+} as const satisfies Record<
+  TrainerTitle,
+  { readonly masks: readonly string[] } | { readonly icon: 'ruler' | 'medal' | 'users' }
+>;
+
 export interface TrainerPreferences {
   user_id: string;
   bio?: string | null;
@@ -142,6 +180,9 @@ export interface TrainerPreferences {
   collection_visibility: ProfileVisibility;
   friend_request_permission: FriendRequestPermission;
   trainer_code_visibility: TrainerCodeVisibility;
+  coordination_method: TradeCoordinationMethod;
+  coordination_handle?: string | null;
+  share_trade_contact: boolean;
   show_location: boolean;
   show_pokemon_go_name: boolean;
   updated_at?: string;
@@ -243,6 +284,55 @@ export interface SecondaryUserUpdateRequest {
   pokemonGoName?: string;
 }
 
+export type CustomTagParent = 'caught' | 'wanted';
+export type PokemonTagOrderKey = `system:${string}` | `custom:${string}`;
+
+export interface PokemonTagOrders {
+  caught: PokemonTagOrderKey[];
+  wanted: PokemonTagOrderKey[];
+}
+
+export interface CustomTagDefinition {
+  tag_id: string;
+  parent: CustomTagParent;
+  name: string;
+  color: string;
+  sort: number;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface CustomTagsEnvelope {
+  tags: CustomTagDefinition[];
+  orders: PokemonTagOrders;
+}
+
+export interface CreateCustomTagRequest {
+  parent: CustomTagParent;
+  name: string;
+  color: string;
+}
+
+export interface UpdateCustomTagRequest {
+  name?: string;
+  color?: string;
+}
+
+export interface UpdatePokemonTagOrderRequest {
+  parent: CustomTagParent;
+  tag_keys: PokemonTagOrderKey[];
+}
+
+export interface PokemonTagOrderEnvelope {
+  parent: CustomTagParent;
+  tag_keys: PokemonTagOrderKey[];
+}
+
+export interface DeleteCustomTagResponse {
+  tag_id: string;
+  affected_instance_ids: string[];
+}
+
 export type ErrorEnvelope = {
   message?: string;
 };
@@ -261,9 +351,12 @@ export const usersContract = {
       `/autocomplete-trainers?q=${encodeURIComponent(query)}`,
     updateUser: (userId: string) =>
       `/update-user/${encodeURIComponent(userId)}`,
+    deleteUser: (userId: string) =>
+      `/${encodeURIComponent(userId)}`,
     userOverview: (userId: string) =>
       `/users/${encodeURIComponent(userId)}/overview`,
     instanceSync: '/instances/sync',
+    collectionSummary: '/collection/summary',
     profile: '/profile',
     preferences: '/preferences',
     friends: '/friends',
@@ -277,5 +370,8 @@ export const usersContract = {
     friendBlocks: '/friends/blocks',
     friendBlock: (userId: string) =>
       `/friends/blocks/${encodeURIComponent(userId)}`,
+    tags: '/tags',
+    tagOrder: '/tags/order',
+    tag: (tagId: string) => `/tags/${encodeURIComponent(tagId)}`,
   },
 } as const;

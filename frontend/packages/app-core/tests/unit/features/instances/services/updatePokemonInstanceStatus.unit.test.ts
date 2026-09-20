@@ -205,6 +205,34 @@ describe('updatePokemonInstanceStatus (current model)', () => {
     });
   });
 
+  it('blocks a favorite caught Pokémon from being listed For Trade', () => {
+    const alertMock = vi.fn();
+    instances[EXISTING_UUID] = makeInstance({
+      instance_id: EXISTING_UUID,
+      is_caught: true,
+      favorite: true,
+      registered: true,
+    });
+
+    const result = updatePokemonInstanceStatus(
+      EXISTING_UUID,
+      'Trade',
+      variants,
+      instances,
+      alertMock,
+    );
+
+    expect(result).toBe(EXISTING_UUID);
+    expect(alertMock).toHaveBeenCalledWith(
+      'Favorite Pokémon cannot be listed For Trade. Remove Favorite first.',
+    );
+    expect(instances[EXISTING_UUID]).toMatchObject({
+      favorite: true,
+      is_caught: true,
+      is_for_trade: false,
+    });
+  });
+
   it('creates a separate wanted clone when source instance is caught', () => {
     instances[EXISTING_UUID] = makeInstance({
       instance_id: EXISTING_UUID,
@@ -233,6 +261,30 @@ describe('updatePokemonInstanceStatus (current model)', () => {
     expect(registrationUtils.updateRegistrationStatus).toHaveBeenCalledTimes(2);
   });
 
+  it('converts a wanted entry into the same caught instance', () => {
+    instances[EXISTING_UUID] = makeInstance({
+      instance_id: EXISTING_UUID,
+      variant_id: '0001-default',
+      is_wanted: true,
+      most_wanted: true,
+      wanted_tags: ['wishlist'],
+      registered: true,
+    });
+
+    const result = updatePokemonInstanceStatus(EXISTING_UUID, 'Caught', variants, instances);
+
+    expect(result).toBe(EXISTING_UUID);
+    expect(Object.keys(instances)).toEqual([EXISTING_UUID]);
+    expect(instances[EXISTING_UUID]).toMatchObject({
+      is_caught: true,
+      is_for_trade: false,
+      is_wanted: false,
+      most_wanted: false,
+      wanted_tags: [],
+      registered: true,
+    });
+  });
+
   it('resets flags when setting Missing', () => {
     instances[EXISTING_UUID] = makeInstance({
       instance_id: EXISTING_UUID,
@@ -256,6 +308,69 @@ describe('updatePokemonInstanceStatus (current model)', () => {
       instances[EXISTING_UUID],
       instances,
     );
+  });
+
+  it('does not carry custom tags across incompatible collection states', () => {
+    instances[EXISTING_UUID] = makeInstance({
+      instance_id: EXISTING_UUID,
+      variant_id: '0001-default',
+      is_caught: true,
+      registered: true,
+      caught_tags: ['inventory-tag'],
+      trade_tags: ['legacy-trade-tag'],
+      wanted_tags: ['stale-wanted-tag'],
+      favorite: true,
+      most_wanted: true,
+    });
+
+    const result = updatePokemonInstanceStatus(EXISTING_UUID, 'Wanted', variants, instances);
+
+    expect(result).toBe(FIXED_UUID);
+    expect(instances[FIXED_UUID]).toMatchObject({
+      is_caught: false,
+      is_wanted: true,
+      caught_tags: [],
+      trade_tags: [],
+      wanted_tags: [],
+      favorite: false,
+      most_wanted: false,
+    });
+    expect(instances[EXISTING_UUID].caught_tags).toEqual(['inventory-tag']);
+
+    updatePokemonInstanceStatus(EXISTING_UUID, 'Missing', variants, instances);
+    expect(instances[EXISTING_UUID]).toMatchObject({
+      caught_tags: [],
+      trade_tags: [],
+      wanted_tags: [],
+      favorite: false,
+      most_wanted: false,
+    });
+  });
+
+  it('keeps inventory tags when toggling For Trade and clears wanted-only state', () => {
+    instances[EXISTING_UUID] = makeInstance({
+      instance_id: EXISTING_UUID,
+      variant_id: '0001-default',
+      is_caught: true,
+      is_wanted: true,
+      registered: true,
+      caught_tags: ['inventory-tag'],
+      wanted_tags: ['wanted-tag'],
+      favorite: false,
+      most_wanted: true,
+    });
+
+    updatePokemonInstanceStatus(EXISTING_UUID, 'Trade', variants, instances);
+
+    expect(instances[EXISTING_UUID]).toMatchObject({
+      is_caught: true,
+      is_for_trade: true,
+      is_wanted: false,
+      caught_tags: ['inventory-tag'],
+      wanted_tags: [],
+      favorite: false,
+      most_wanted: false,
+    });
   });
 
   it('sets purified for pokemon_id 2301/2302 when variant includes default', () => {

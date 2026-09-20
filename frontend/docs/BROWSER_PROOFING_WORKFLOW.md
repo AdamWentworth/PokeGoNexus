@@ -64,10 +64,13 @@ The npm scripts run Playwright through `scripts/run-playwright-clean-env.mjs`, w
 
 ## Target Known-Bad Pages
 
-By default the smoke test opens:
+By default the browser smoke test opens the public, collection, discovery,
+trade, battle, ranking, and Trade Board routes:
 
 ```text
-/, /login, /register, /pokemon, /search, /trades
+/, /getting-started, /login, /register, /terms, /privacy, /data-deletion,
+/pokedex, /pokemon, /search, /trades, /raid, /raid/methodology, /max,
+/pvp, /pvp/methodology, /rankings, /trade-board
 ```
 
 To target only pages reported by friends or QA:
@@ -89,3 +92,19 @@ E2E_BASE_URL=http://127.0.0.1:3000 E2E_SKIP_WEBSERVER=1 npm --workspace apps/web
 ```
 
 The tests mock core API and image calls so browser failures are easier to separate from backend availability. Set `E2E_FAIL_ON_REQUEST_FAILED=1` when you want failed network requests to break the run too.
+
+## Production-safe smoke
+
+The read-only production smoke checks the deployed SPA routes, every built
+asset referenced by the deployed entry document, the PWA manifest and service
+worker, and the public Pokémon catalog manifest. It never logs in and only
+issues GET or HEAD requests.
+
+```bash
+cd frontend
+npm --workspace apps/web run smoke:production
+```
+
+Use `PRODUCTION_SMOKE_BASE_URL` to target another HTTPS deployment. The
+scheduled `smoke-frontend-prod` workflow runs this check daily and uploads its
+JSON report without requiring production credentials.

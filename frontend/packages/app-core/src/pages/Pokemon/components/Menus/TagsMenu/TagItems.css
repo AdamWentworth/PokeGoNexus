@@ -3,6 +3,11 @@
    ======================= */
 
 /* Card wrapper */
+.tags-menu .tag-items-list {
+  display: flex;
+  flex-direction: column;
+}
+
 .tags-menu .tag-item {
   --tag-item-pad: 0.625rem;     /* ~10px */
   --tag-card-radius: 0.9375rem;
@@ -26,6 +31,71 @@
   background-color: var(--color-tag-item-hover-surface);
   box-shadow: 0 12px 28px rgba(255,255,255,0.25);
   filter: var(--filter-tag-item-hover);
+}
+
+.tags-menu .tag-item-reordering {
+  cursor: default;
+  outline: 1px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  outline-offset: -1px;
+}
+
+.tags-menu .tag-item-reordering[data-dragging="true"] {
+  opacity: 0.3;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-primary) 65%, transparent);
+}
+
+.tags-menu .tag-item-reordering[data-drop-position]::after {
+  content: "";
+  position: absolute;
+  z-index: 8;
+  right: 0.5rem;
+  left: 0.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-tag-item-surface) 80%, transparent),
+    0 0 12px color-mix(in srgb, var(--color-accent-primary) 65%, transparent);
+  pointer-events: none;
+}
+
+.tags-menu .tag-item-reordering[data-drop-position="before"]::after {
+  top: 0.2rem;
+}
+
+.tags-menu .tag-item-reordering[data-drop-position="after"]::after {
+  bottom: 0.2rem;
+}
+
+body.tag-drag-active {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tags-menu.tag-drag-layer {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  pointer-events: none;
+}
+
+.tags-menu.tag-drag-layer .tag-item-drag-preview {
+  position: fixed;
+  z-index: 1;
+  margin: 0;
+  pointer-events: none;
+  opacity: 0.98;
+  transform: scale(1.025) rotate(0.2deg);
+  transform-origin: center;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.36),
+    0 0 0 2px color-mix(in srgb, var(--color-accent-primary) 72%, transparent);
+  filter: brightness(1.04);
+  will-change: transform;
 }
 
 /* Footer (title + subtitle, icon on right) */
@@ -207,6 +277,100 @@
     #fd9090ff 45%,
     #ffc5cc 100%
   );
+}
+
+.tags-menu .tag-item[data-custom="true"] {
+  border: 1px solid color-mix(in srgb, var(--custom-tag-color) 48%, transparent);
+}
+
+.tags-menu .tag-item[data-custom="true"] .tag-preview::before {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--custom-tag-color) 62%, var(--color-tag-item-surface)) 0%,
+    color-mix(in srgb, var(--custom-tag-color) 24%, var(--color-tag-item-surface)) 58%,
+    var(--color-tag-item-surface) 100%
+  );
+}
+
+.tags-menu .tag-title {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tags-menu .tag-title-color {
+  width: 0.72rem;
+  height: 0.72rem;
+  flex: 0 0 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--custom-tag-color) 60%, white);
+  border-radius: 50%;
+  background: var(--custom-tag-color);
+}
+
+.tags-menu .tag-edit-button {
+  grid-area: icon;
+  align-self: center;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--custom-tag-color) 56%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--custom-tag-color) 14%, transparent);
+  color: var(--color-tag-title);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tags-menu .tag-edit-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--custom-tag-color) 36%, transparent);
+  outline-offset: 2px;
+}
+
+.tags-menu .tag-reorder-controls {
+  grid-area: icon;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.tags-menu .tag-reorder-controls button {
+  display: grid;
+  width: 36px;
+  min-width: 36px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 25%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  color: var(--color-tag-title);
+  cursor: pointer;
+}
+
+.tags-menu .tag-reorder-controls button:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.tags-menu .tag-reorder-controls button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 38%, transparent);
+  outline-offset: 2px;
+}
+
+.tags-menu .tag-reorder-controls .tag-drag-handle {
+  width: 52px;
+  min-width: 52px;
+  height: 44px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.tags-menu .tag-item-reordering[data-dragging="true"] .tag-drag-handle {
+  cursor: grabbing;
 }
 
 /* Grid item (sprite box) */

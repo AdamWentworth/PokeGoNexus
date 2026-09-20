@@ -1,0 +1,46 @@
+appId: ${APP_ID}
+name: Native collection filter interaction smoke
+tags:
+  - android
+  - native-collection
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- runFlow:
+    when:
+      visible: "Something went wrong.*"
+    commands:
+      - tapOn:
+          id: ${APP_ID}:id/reload_button
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- tapOn: Search Pokémon
+- runFlow:
+    when:
+      visible: Try out your stylus
+    commands:
+      - tapOn: Cancel
+- extendedWaitUntil:
+    visible: Variants
+    timeout: 10000
+- tapOn:
+    id: native-collection-filter-shiny
+- extendedWaitUntil:
+    visible: Shiny Bulbasaur
+    timeout: 10000
+- assertNotVisible: Shadow Bulbasaur
+- takeScreenshot: native-collection-filter-shiny

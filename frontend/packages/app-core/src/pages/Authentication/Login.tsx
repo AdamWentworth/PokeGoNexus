@@ -12,8 +12,7 @@ import './Login.css';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
 import { useTradeStore } from '@/features/trades/store/useTradeStore';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { feedback as appFeedback } from '@/components/feedback';
 import ResetPasswordOverlay from './ResetPasswordOverlay';
 import { isApiError } from '../../utils/errors';
 import { createScopedLogger } from '@/utils/logger';
@@ -93,15 +92,15 @@ const Login: FC = () => {
     if (handledOAuthStatus.current === oauthStatus) return;
     handledOAuthStatus.current = oauthStatus;
     if (oauthStatus === 'account-exists') {
-      toast.info('An account already exists for that email. Sign in with the provider or your password.');
+      appFeedback.info('An account already exists for that email. Sign in with the provider or your password.');
       return;
     }
     if (oauthStatus === 'link-required') {
-      toast.info('That email already has a password account. Sign in normally before linking a provider.');
+      appFeedback.info('That email already has a password account. Sign in normally before linking a provider.');
       return;
     }
     if (oauthStatus !== 'success') {
-      toast.error('Provider login could not be completed securely. Please try again.');
+      appFeedback.error('Provider login could not be completed securely. Please try again.');
       return;
     }
 
@@ -124,7 +123,7 @@ const Login: FC = () => {
         setFeedback('Successfully logged in');
         setIsSuccessful(true);
       })
-      .catch(() => toast.error('Login succeeded, but your account data could not be loaded. Please try again.'))
+      .catch(() => appFeedback.error('Login succeeded, but your account data could not be loaded. Please try again.'))
       .finally(() => setIsLoading(false));
   }, [hydrateUserOverview, login, searchParams]);
 
@@ -174,7 +173,7 @@ const Login: FC = () => {
       if (isApiError(error)) {
         errorMessage = error.response.data.message;
       }
-      toast.error('Login failed: ' + errorMessage);
+      appFeedback.error('Login failed: ' + errorMessage);
       setIsSuccessful(false);
     } finally {
       setIsLoading(false);
@@ -210,7 +209,6 @@ const Login: FC = () => {
       )}
 
       {isResetPasswordOpen && <ResetPasswordOverlay onClose={closeResetPassword} />}
-      <ToastContainer />
     </div>
   );
 };

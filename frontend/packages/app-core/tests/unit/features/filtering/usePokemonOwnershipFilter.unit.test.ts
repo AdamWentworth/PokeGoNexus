@@ -107,6 +107,23 @@ describe('getFilteredPokemonsByOwnership', () => {
     expect(result[0].instanceData?.instance_id).toBe('inst-2');
   });
 
+  it('returns instances from a custom tag selector', () => {
+    const tags = makeTags();
+    tags['custom:tag-community-day'] = {
+      'inst-2': tags.caught['inst-2'],
+    };
+
+    const result = getFilteredPokemonsByOwnership(
+      makeVariants() as any,
+      makeInstances(),
+      'custom:tag-community-day',
+      tags,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].instanceData?.instance_id).toBe('inst-2');
+  });
+
   it('returns empty for unknown filters and missing', () => {
     expect(
       getFilteredPokemonsByOwnership(makeVariants() as any, makeInstances(), 'unknown', makeTags()),

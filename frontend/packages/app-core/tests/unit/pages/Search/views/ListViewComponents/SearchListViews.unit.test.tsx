@@ -15,10 +15,6 @@ vi.mock('react-router', async () => {
   };
 });
 
-vi.mock('@/pages/Search/views/ListViewComponents/MiniMap', () => ({
-  default: () => <div data-testid="mini-map" />,
-}));
-
 vi.mock('@/pages/Search/utils/URLSelect', () => ({
   URLSelect: () => '/images/mock.png',
 }));
@@ -66,7 +62,6 @@ describe('Search list view components', () => {
       />,
     );
 
-    expect(within(view.container).getByTestId('mini-map')).toBeInTheDocument();
     expect(within(view.container).getByTestId('gender-chip')).toHaveTextContent('Male');
   });
 
@@ -78,7 +73,6 @@ describe('Search list view components', () => {
       />,
     );
 
-    expect(within(view.container).getByTestId('mini-map')).toBeInTheDocument();
     expect(within(view.container).getByTestId('gender-chip')).toHaveTextContent('Male');
   });
 });

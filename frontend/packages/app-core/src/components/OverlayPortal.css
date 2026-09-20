@@ -1,0 +1,46 @@
+[data-overlay-motion] {
+  --motion-overlay-duration: 280ms;
+  --motion-overlay-easing: cubic-bezier(0.22, 1, 0.36, 1);
+
+  transition:
+    translate var(--motion-overlay-duration) var(--motion-overlay-easing),
+    opacity var(--motion-overlay-duration) ease;
+  will-change: translate, opacity;
+}
+
+[data-overlay-motion='entering'],
+[data-overlay-motion='exiting'] {
+  translate: 0 100vh;
+  translate: 0 100dvh;
+  opacity: 0;
+}
+
+[data-overlay-motion='entered'] {
+  /*
+   * Release the animation containing block after entry. Leaving either a
+   * zero translate or will-change active makes fixed descendants scroll with
+   * long overlays instead of remaining fixed to the viewport.
+   */
+  translate: none;
+  will-change: auto;
+}
+
+[data-overlay-motion='exiting'] {
+  pointer-events: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-overlay-motion] {
+    transition-duration: 1ms;
+  }
+
+  [data-overlay-motion='entering'],
+  [data-overlay-motion='exiting'] {
+    translate: 0 0;
+    opacity: 1;
+  }
+
+  [data-overlay-motion='entered'] {
+    translate: none;
+  }
+}

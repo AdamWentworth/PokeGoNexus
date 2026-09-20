@@ -18,9 +18,12 @@ This policy defines how user-facing messages should be shown in production.
 - Use for blocking in-flow messages that require acknowledgement.
 - Examples: validation gates during instance/fusion/trade interactions.
 
-3. Toast notifications (`react-toastify`)
-- Use for non-blocking system feedback.
+3. App feedback notifications (`feedback`)
+- Use the Pokémon Go Nexus `FeedbackProvider` for non-blocking system feedback.
+- Use `feedback.success`, `feedback.error`, `feedback.info`, or
+  `feedback.warning`; do not mount page-local notification containers.
 - Examples: save/copy success, background sync warnings, session notices.
+- Prefer a stable `id` for messages that may repeat during one operation.
 
 4. Inline form errors
 - Use for field-level validation and correction hints.

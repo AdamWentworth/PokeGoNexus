@@ -14,6 +14,8 @@ describe('VariantSearchInput', () => {
       <VariantSearchInput
         pokemon="Bul"
         suggestions={[]}
+        onClear={vi.fn()}
+        onDismissSuggestions={vi.fn()}
         onPokemonChange={onPokemonChange}
         onInputFocus={onInputFocus}
         onInputBlur={onInputBlur}
@@ -36,7 +38,17 @@ describe('VariantSearchInput', () => {
     render(
       <VariantSearchInput
         pokemon="Bul"
-        suggestions={['Bulbasaur', 'Bulbizarre']}
+        suggestions={[
+          {
+            imageUrl: '/images/bulbasaur.png',
+            name: 'Bulbasaur',
+            pokedexNumber: 1,
+            types: ['Grass', 'Poison'],
+          },
+          { name: 'Bulbizarre', pokedexNumber: 2 },
+        ]}
+        onClear={vi.fn()}
+        onDismissSuggestions={vi.fn()}
         onPokemonChange={vi.fn()}
         onInputFocus={vi.fn()}
         onInputBlur={vi.fn()}
@@ -44,8 +56,53 @@ describe('VariantSearchInput', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Bulbasaur' }));
+    expect(screen.getByRole('listbox', { name: 'Pokémon suggestions' }))
+      .toBeInTheDocument();
+    expect(screen.getByAltText('')).toHaveAttribute(
+      'src',
+      '/images/bulbasaur.png',
+    );
+    expect(screen.getByText('#0001')).toBeInTheDocument();
+    expect(screen.getByText('Grass · Poison')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('option', { name: /Bulbasaur/ }));
     expect(onSuggestionClick).toHaveBeenCalledWith('Bulbasaur');
-    expect(screen.getByRole('button', { name: 'Bulbizarre' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Bulbizarre/ }))
+      .toBeInTheDocument();
+  });
+
+  it('supports keyboard selection, dismissal, and clearing', () => {
+    const onSuggestionClick = vi.fn();
+    const onDismissSuggestions = vi.fn();
+    const onClear = vi.fn();
+
+    render(
+      <VariantSearchInput
+        pokemon="Bul"
+        suggestions={[
+          { name: 'Bulbasaur', pokedexNumber: 1 },
+          { name: 'Bulbizarre', pokedexNumber: 2 },
+        ]}
+        onClear={onClear}
+        onDismissSuggestions={onDismissSuggestions}
+        onPokemonChange={vi.fn()}
+        onInputFocus={vi.fn()}
+        onInputBlur={vi.fn()}
+        onSuggestionClick={onSuggestionClick}
+      />,
+    );
+
+    const input = screen.getByRole('combobox');
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(screen.getByRole('option', { name: /Bulbasaur/ }))
+      .toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSuggestionClick).toHaveBeenCalledWith('Bulbasaur');
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(onDismissSuggestions).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear Pokémon' }));
+    expect(onClear).toHaveBeenCalledTimes(1);
   });
 });

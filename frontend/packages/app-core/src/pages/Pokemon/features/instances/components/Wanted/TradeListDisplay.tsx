@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import './TradeListDisplay.css';
 import useSortManager from '@/hooks/sort/useSortManager';
 import { useViewportBelow, VIEWPORT_BREAKPOINTS } from '@/hooks/useViewport';
@@ -49,6 +49,7 @@ interface TradeListDisplayProps {
   sortType: SortType;
   sortMode: SortMode;
   onPokemonClick?: (key: string) => void;
+  compact?: boolean;
 }
 
 const extractBaseKey = (instanceId: string): string => {
@@ -77,9 +78,13 @@ const TradeListDisplay = ({
   sortType,
   sortMode,
   onPokemonClick,
+  compact = false,
 }: TradeListDisplayProps) => {
   const isSmallScreen = useViewportBelow(VIEWPORT_BREAKPOINTS.desktop);
   const notTradeMap = localNotTradeList || {};
+  const [query, setQuery] = useState('');
+  const [allowedOnly, setAllowedOnly] = useState(false);
+  const [undoSelection, setUndoSelection] = useState<BooleanMap | null>(null);
   const pokemonFullKey = pokemon?.instanceData?.instance_id ?? '';
   const pokemonBaseKey =
     pokemon?.instanceData?.variant_id ?? extractBaseKey(pokemonFullKey);
@@ -125,13 +130,25 @@ const TradeListDisplay = ({
     }),
   );
 
-  const sortedTradeListToDisplay = useSortManager(
+  const sortedTradeListToDisplay = (useSortManager(
     transformedTradeList as unknown as PokemonVariant[],
     sortType,
     sortMode,
-  ) as unknown as TradeDisplayItem[];
-
-  if (!lists || sortedTradeListToDisplay.length === 0) {
+  ) as unknown as TradeDisplayItem[]).filter((item) => {
+    const isNotTrade =
+      Boolean(notTradeMap[item.key]) ||
+      Boolean(notTradeMap[extractBaseKey(item.key)]);
+    if (allowedOnly && isNotTrade) return false;
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    if (!normalizedQuery) return true;
+    return `${item.name ?? ''} ${item.species_name ?? ''}`
+      .toLocaleLowerCase()
+      .includes(normalizedQuery);
+  });
+  if (!lists || tradeEntries.length === 0) {
+    return <div>No Pokemon currently for trade.</div>;
+  }
+  if (!editMode && !query.trim() && sortedTradeListToDisplay.length === 0) {
     return <div>No Pokemon currently for trade.</div>;
   }
 
@@ -147,72 +164,142 @@ const TradeListDisplay = ({
   const gridClass = isSmallScreen ? 'max-3-per-row' : '';
 
   return (
-    <div className={`trade-list-container ${containerClass} ${gridClass}`}>
+    <>
+      {!compact ? <div className="preference-candidate-tools">
+        <label>
+          <input
+            type="search"
+            aria-label="Search offered Pokémon"
+            value={query}
+            placeholder="Search Pokémon"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        {editMode ? (
+          <>
+            <button type="button" onClick={() => setAllowedOnly((value) => !value)}>
+              {allowedOnly ? 'Show all' : 'Allowed only'}
+            </button>
+            <button type="button" onClick={() => {
+              setUndoSelection({ ...notTradeMap });
+              setLocalNotTradeList({});
+            }}>
+              Allow all
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setUndoSelection({ ...notTradeMap });
+                setLocalNotTradeList(
+                  Object.fromEntries(tradeEntries.map(([key]) => [key, true])),
+                );
+              }}
+            >
+              Clear all
+            </button>
+            {undoSelection ? (
+              <button
+                type="button"
+                className="preference-undo-action"
+                onClick={() => {
+                  setLocalNotTradeList(undoSelection);
+                  setUndoSelection(null);
+                }}
+              >
+                Undo
+              </button>
+            ) : null}
+          </>
+        ) : null}
+      </div> : null}
+      {sortedTradeListToDisplay.length > 0 ? (
+      <div className={`trade-list-container ${containerClass} ${gridClass}${compact ? ' preference-target-summary__list' : ''}`}>
       {sortedTradeListToDisplay.map((tradePokemon) => {
         const isNotTrade =
           Boolean(notTradeMap[tradePokemon.key]) ||
           Boolean(notTradeMap[extractBaseKey(tradePokemon.key)]);
         const imageClasses = `trade-item-img ${isNotTrade ? 'grey-out' : ''}`;
+        const displayName = `${tradePokemon.form ? `${tradePokemon.form} ` : ''}${tradePokemon.name ?? 'Pokémon'}`;
+        const pokedexLabel = tradePokemon.pokedex_number
+          ? `#${String(tradePokemon.pokedex_number).padStart(4, '0')}`
+          : null;
+        const handleOpenTrade = () => {
+          if (!editMode) {
+            onPokemonClick?.(tradePokemon.key);
+          }
+        };
+        const isInteractive = !editMode && Boolean(onPokemonClick);
 
         return (
           <div
             key={tradePokemon.key}
-            className="trade-item"
-            onClick={() => {
-              if (!editMode) {
-                onPokemonClick?.(tradePokemon.key);
+            className={`trade-item ${isNotTrade ? 'is-not-trade' : ''}`}
+            onClick={handleOpenTrade}
+            role={isInteractive ? 'button' : undefined}
+            tabIndex={isInteractive ? 0 : undefined}
+            onKeyDown={(event) => {
+              if (isInteractive && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                handleOpenTrade();
               }
             }}
           >
-            {tradePokemon.variantType?.includes('dynamax') && (
+            <div className="trade-item__media">
+              {tradePokemon.variantType?.includes('dynamax') && (
+                <img
+                  src="/images/dynamax.png"
+                  alt="Dynamax"
+                  className="trade-item__max-badge"
+                />
+              )}
+
+              {tradePokemon.variantType?.includes('gigantamax') && (
+                <img
+                  src="/images/gigantamax.png"
+                  alt="Gigantamax"
+                  className="trade-item__max-badge"
+                />
+              )}
+
               <img
-                src="/images/dynamax.png"
-                alt="Dynamax"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: '3%',
-                  width: '30%',
-                  height: 'auto',
-                  zIndex: 0,
-                }}
+                src={tradePokemon.image_url ?? tradePokemon.currentImage}
+                alt={displayName}
+                className={imageClasses}
+                title={displayName}
               />
-            )}
 
-            {tradePokemon.variantType?.includes('gigantamax') && (
-              <img
-                src="/images/gigantamax.png"
-                alt="Gigantamax"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: '3%',
-                  width: '30%',
-                  height: 'auto',
-                  zIndex: 0,
-                }}
-              />
-            )}
+              {editMode && (
+                <button
+                  type="button"
+                  className="toggle-not-trade"
+                  aria-label={
+                    isNotTrade
+                      ? `Allow ${displayName}`
+                      : `Remove ${displayName}`
+                  }
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleNotTradeToggle(tradePokemon.key);
+                  }}
+                >
+                  <span aria-hidden="true">{isNotTrade ? '+' : '\u2713'}</span>
+                  <span>{isNotTrade ? 'Allow' : 'Allowed'}</span>
+                </button>
+              )}
+            </div>
 
-            <img
-              src={tradePokemon.image_url ?? tradePokemon.currentImage}
-              alt={`Trade Pokemon ${tradePokemon.name}`}
-              className={imageClasses}
-              title={`${tradePokemon.form ? `${tradePokemon.form} ` : ''}${tradePokemon.name ?? ''}`}
-            />
-
-            {editMode && (
-              <button
-                className="toggle-not-trade"
-                onClick={() => handleNotTradeToggle(tradePokemon.key)}
-              >
-                {isNotTrade ? '\u2713' : 'X'}
-              </button>
-            )}
+            <div className="trade-item__body">
+              <div className="trade-item__name" title={displayName}>{displayName}</div>
+              {pokedexLabel ? <div className="trade-item__meta">{pokedexLabel}</div> : null}
+            </div>
           </div>
         );
       })}
-    </div>
+      </div>
+      ) : (
+        <p className="preference-candidate-empty">No Pokémon match this view.</p>
+      )}
+    </>
   );
 };
 

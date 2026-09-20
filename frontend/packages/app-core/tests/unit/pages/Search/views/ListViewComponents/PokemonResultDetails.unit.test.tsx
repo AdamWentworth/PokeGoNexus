@@ -101,4 +101,39 @@ describe('PokemonResultDetails', () => {
     expect(container.querySelector('.pokemon-date')).not.toBeInTheDocument();
     expect(formatDate).not.toHaveBeenCalled();
   });
+
+  it('shows wanted size categories instead of synthetic measurements', () => {
+    const { container } = render(
+      <PokemonResultDetails
+        weight={8.5}
+        height={0.4}
+        wantedSizePreferences={{
+          weight: {
+            category: 'XL',
+            min: 8,
+            max: 9,
+            min_inclusive: false,
+            max_inclusive: true,
+          },
+          height: {
+            category: 'XXS',
+            min: null,
+            max: 0.5,
+            min_inclusive: false,
+            max_inclusive: false,
+          },
+        }}
+        formatDate={(value) => value}
+      />,
+    );
+
+    expect(container.querySelector('.pokemon-weight')).toHaveTextContent(
+      'XLWANTED WEIGHT',
+    );
+    expect(container.querySelector('.pokemon-height')).toHaveTextContent(
+      'XXSWANTED HEIGHT',
+    );
+    expect(container).not.toHaveTextContent('8.5kg');
+    expect(container).not.toHaveTextContent('0.4m');
+  });
 });

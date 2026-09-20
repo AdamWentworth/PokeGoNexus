@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import MoveDisplay from '../../../components/pokemonComponents/MoveDisplay';
 import IV from '../../../components/pokemonComponents/IV';
-import FriendshipLevel from '../../../components/pokemonComponents/FriendshipLevel';
 import Gender from '../../../components/pokemonComponents/Gender';
 import { TRADE_FRIENDSHIP_LEVELS } from '../../../db/indexedDB';
 import { formatDate } from '../../../utils/formattingHelpers';
@@ -12,6 +11,7 @@ import type {
   TradePokemonDetails,
   TradeViewTrade,
 } from './types';
+import TradeExchangeSummary from '@/pages/Trades/components/TradeExchangeSummary';
 import './ProposedTradeView.css';
 
 type DetailSection = 'offering' | 'received';
@@ -23,7 +23,7 @@ interface ProposedTradeViewProps {
   loading: boolean;
   offeringHeading: string;
   receivingHeading: string;
-  handleDelete: () => void;
+  handleCancel: () => void;
 }
 
 const hasVariantTag = (
@@ -49,7 +49,7 @@ const ProposedTradeView: React.FC<ProposedTradeViewProps> = ({
   loading,
   offeringHeading,
   receivingHeading,
-  handleDelete,
+  handleCancel,
 }) => {
   const [visibleDetails, setVisibleDetails] = useState<Record<DetailSection, boolean>>({
     offering: false,
@@ -167,7 +167,8 @@ const ProposedTradeView: React.FC<ProposedTradeViewProps> = ({
               <>
                 <div className="pokemon-image-container">
                   <div className="image-wrapper">
-                    {trade.is_lucky_trade ? (
+                    {trade.is_lucky_trade &&
+                    (details.currentImage || details.pokemon_image_url) ? (
                       <div className="lucky-backdrop-wrapper">
                         <img
                           src="/images/lucky.png"
@@ -271,23 +272,15 @@ const ProposedTradeView: React.FC<ProposedTradeViewProps> = ({
           trade.username_proposed,
         )}
 
-        <div className="center-column">
-          <FriendshipLevel level={friendshipLevel} prefLucky={Boolean(trade.is_lucky_trade)} />
-          <div className="trade-icon">
-            <img src="/images/pogo_trade_icon.png" alt="Trade Icon" />
-          </div>
-          <div className="stardust-display">
-            <img src="/images/stardust.png" alt="Stardust" className="stardust-icon" />
-            <span className="stardust-cost">
-              {trade.trade_dust_cost?.toLocaleString() || '0'}
-            </span>
-          </div>
-          <div className="trade-actions">
-            <button className="delete-button" onClick={handleDelete}>
-              Delete
-            </button>
-          </div>
-        </div>
+        <TradeExchangeSummary
+          friendshipLevel={friendshipLevel}
+          isLuckyTrade={Boolean(trade.is_lucky_trade)}
+          stardustCost={trade.trade_dust_cost}
+        >
+          <button className="delete-button" onClick={handleCancel}>
+            Cancel proposal
+          </button>
+        </TradeExchangeSummary>
 
         {renderPokemonSection(
           partnerDetails,

@@ -1,5 +1,6 @@
 import React from 'react';
 import '@/components/modals/ModalStyles.css';
+import OverlayDismissButton from '@/components/OverlayDismissButton';
 import OverlayPortal from '@/components/OverlayPortal';
 import './FuseOverlay.css';
 import type { PokemonVariant } from '@/types/pokemonVariants';
@@ -77,7 +78,7 @@ const FuseOverlay: React.FC<FuseOverlayProps> = ({
   }
 
   return (
-    <OverlayPortal>
+    <OverlayPortal onClose={onClose} closeOnBackdrop>
       <div className="fuse-overlay modal-overlay caught-mode" onClick={onClose}>
       <div className="overlay-content modal" onClick={(event) => event.stopPropagation()}>
         <h3 className="fuse-overlay-title">Select Fusion Partner</h3>
@@ -136,9 +137,12 @@ const FuseOverlay: React.FC<FuseOverlayProps> = ({
         </div>
 
         <div className="fuse-overlay-actions modal-actions">
-          <button type="button" onClick={onClose} className="close-overlay btn btn-secondary">
+          <OverlayDismissButton
+            className="close-overlay btn btn-secondary"
+            onDismiss={onClose}
+          >
             Cancel
-          </button>
+          </OverlayDismissButton>
           <button
             type="button"
             onClick={handleFuse}

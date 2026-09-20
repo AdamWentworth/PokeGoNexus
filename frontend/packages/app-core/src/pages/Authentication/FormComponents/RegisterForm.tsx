@@ -146,12 +146,21 @@ const RegisterForm: FC<RegisterFormProps> = ({
         aria-labelledby="register-title"
       >
         <header className="register-header">
-          <div>
+          <div className="register-header-copy">
             <span className="register-eyebrow">TRAINER REGISTRATION</span>
             <h1 id="register-title">Create your account</h1>
-            <p>{step < steps.length - 1 ? 'A few quick steps, then your trainer journey begins.' : 'Make sure everything looks right.'}</p>
+            <p>
+              {!authMethod
+                ? 'Choose a trusted provider or continue with your email address.'
+                : step < steps.length - 1
+                  ? 'A few quick steps, then your trainer journey begins.'
+                  : 'Make sure everything looks right.'}
+            </p>
           </div>
-          <Link to="/login" className="register-login-link">Sign in</Link>
+          <div className="register-login-prompt">
+            <span>Already have an account?</span>
+            <Link to="/login" className="register-login-link">Sign in</Link>
+          </div>
         </header>
 
         {authMethod && <ol className="register-progress" aria-label="Registration progress">
@@ -178,12 +187,7 @@ const RegisterForm: FC<RegisterFormProps> = ({
           <div className="register-step" key={step}>
             {!authMethod && (
               <>
-                <div className="register-method-intro">
-                  <span>Choose a sign-up method</span>
-                  <h2>Start your trainer account</h2>
-                  <p>Use a trusted provider or your email address.</p>
-                </div>
-                <div className="register-method-grid">
+                <div className="register-method-grid" role="group" aria-label="Choose a sign-up method">
                   <button type="button" className="google-auth-button" onClick={onGoogleClick}>
                     <FcGoogle aria-hidden="true" />
                     Sign up with Google
@@ -206,7 +210,7 @@ const RegisterForm: FC<RegisterFormProps> = ({
                   </button>
                 </div>
                 <p className="register-method-note">
-                  Your provider verifies your email. You will still choose a PokeGoNexus username.
+                  Your provider verifies your email. You will still choose a Pokémon Go Nexus username.
                 </p>
               </>
             )}
@@ -336,7 +340,7 @@ const RegisterForm: FC<RegisterFormProps> = ({
                   />
                   <span>
                     <strong>Use {values.username || 'my username'} as my Pokémon GO name</strong>
-                    <small>One name across PokeGoNexus and Pokémon GO.</small>
+                    <small>One name across Pokémon Go Nexus and Pokémon GO.</small>
                   </span>
                 </label>
                 <div className="register-field">

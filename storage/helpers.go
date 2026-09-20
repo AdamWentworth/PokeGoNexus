@@ -210,6 +210,22 @@ func safeJSON(value interface{}) *string {
 	return &str
 }
 
+// addOptionalJSONUpdate preserves existing database values when older clients
+// omit a newly introduced JSON field, while still allowing an explicit empty
+// value to clear it.
+func addOptionalJSONUpdate(
+	updates map[string]interface{},
+	payload map[string]interface{},
+	key string,
+) {
+	value, provided := payload[key]
+	if !provided {
+		return
+	}
+	normalized := safeJSON(value)
+	updates[key] = *normalized
+}
+
 // safeJSONArray stores an empty JSON array when the input is missing/invalid
 // or not an array-shaped payload.
 func safeJSONArray(value interface{}) *string {

@@ -91,7 +91,7 @@ describe('PokemonViewSlider', () => {
     const slider = document.querySelector('.view-slider') as HTMLDivElement | null;
     expect(slider).not.toBeNull();
     expect(slider?.style.transform).toBe('translate3d(-1000px,0,0)');
-    expect(slider?.style.transition).toContain('transform 0.3s');
+    expect(slider?.style.transition).toContain('--motion-page-duration');
 
     rerender(<PokemonViewSlider {...makeProps({ isDragging: true })} />);
     const draggingSlider = document.querySelector('.view-slider') as HTMLDivElement | null;

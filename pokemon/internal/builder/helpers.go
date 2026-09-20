@@ -1,6 +1,12 @@
 package builder
 
-import "strconv"
+import (
+	"math"
+	"strconv"
+)
+
+const maxIntValue = int(^uint(0) >> 1)
+const minIntValue = -maxIntValue - 1
 
 // --- helpers ---
 
@@ -23,9 +29,19 @@ func asIntOK(v any) (int, bool) {
 	case int:
 		return t, true
 	case int64:
+		if t < int64(minIntValue) || t > int64(maxIntValue) {
+			return 0, false
+		}
 		return int(t), true
 	case float64:
-		return int(t), true
+		if math.IsNaN(t) || math.IsInf(t, 0) || math.Trunc(t) != t {
+			return 0, false
+		}
+		i, err := strconv.Atoi(strconv.FormatFloat(t, 'f', -1, 64))
+		if err != nil {
+			return 0, false
+		}
+		return i, true
 	case []byte:
 		i, err := strconv.Atoi(string(t))
 		return i, err == nil

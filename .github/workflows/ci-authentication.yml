@@ -57,7 +57,11 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Build Container Image
-        run: docker build -t authentication:ci-${{ github.sha }} ./authentication
+        run: >-
+          docker build
+          --build-arg POKEGONEXUS_BUILD_SHA=${{ github.sha }}
+          -t authentication:ci-${{ github.sha }}
+          ./authentication
 
       - name: Trivy Filesystem Scan
         shell: bash

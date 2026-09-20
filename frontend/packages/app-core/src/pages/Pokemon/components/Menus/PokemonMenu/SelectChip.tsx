@@ -27,10 +27,9 @@ const SelectChip: React.FC<SelectChipProps> = ({
   const style: CSSVars = { ['--reveal-delay']: `${delayMs}ms` };
 
   return (
-    <button
+    <span
       className={`select-chip ${selected ? 'selected' : ''} ${className}`}
-      aria-pressed={selected}
-      aria-label={selected ? 'Deselect for tagging' : 'Select for tagging'}
+      aria-hidden="true"
       // prevent mouse clicks from leaving focus (so chip won’t “stick” via focus)
       onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => {
@@ -43,7 +42,7 @@ const SelectChip: React.FC<SelectChipProps> = ({
       <span className="select-chip-text">
         {selected ? labelSelected : labelUnselected}
       </span>
-    </button>
+    </span>
   );
 };
 

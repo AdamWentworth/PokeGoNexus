@@ -2,6 +2,7 @@
 import './MegaPokemonSelection.css';
 import CaughtInstance from '../../instances/CaughtInstance';
 import CloseButton from '@/components/CloseButton';
+import OverlayPortal from '@/components/OverlayPortal';
 import { useMegaPokemonSelection } from '../hooks/useMegaPokemonSelection';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { PokemonVariant } from '@/types/pokemonVariants';
@@ -11,7 +12,7 @@ interface Props {
   variantKey : string | undefined;
   megaForm   : string | undefined;
   onAssignExisting: (id: string) => void;
-  onCreateNew    : () => void;
+  onCreateNew    : (id: string) => void;
   onCancel       : () => void;
 }
 
@@ -27,7 +28,8 @@ export default function MegaPokemonSelection({
     useMegaPokemonSelection(variantKey, megaForm, onAssignExisting, onCreateNew);
 
   return (
-    <div className="mega-pokemon-selection-overlay" role="dialog" aria-modal="true">
+    <OverlayPortal onClose={onCancel} closeOnBackdrop>
+      <div className="mega-pokemon-selection-overlay" role="dialog" aria-modal="true">
       <div className="mega-modal-content">
         <h2>Mega Evolve Pokémon</h2>
 
@@ -61,6 +63,7 @@ export default function MegaPokemonSelection({
       </div>
 
       <CloseButton onClick={onCancel} />
-    </div>
+      </div>
+    </OverlayPortal>
   );
 }

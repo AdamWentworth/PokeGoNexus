@@ -409,12 +409,15 @@ func GetPreferencesHandler(c fiber.Ctx) error {
 }
 
 type UpdatePreferencesRequest struct {
-	ProfileVisibility       string `json:"profile_visibility"`
-	CollectionVisibility    string `json:"collection_visibility"`
-	FriendRequestPermission string `json:"friend_request_permission"`
-	TrainerCodeVisibility   string `json:"trainer_code_visibility"`
-	ShowLocation            bool   `json:"show_location"`
-	ShowPokemonGoName       bool   `json:"show_pokemon_go_name"`
+	ProfileVisibility       string  `json:"profile_visibility"`
+	CollectionVisibility    string  `json:"collection_visibility"`
+	FriendRequestPermission string  `json:"friend_request_permission"`
+	TrainerCodeVisibility   string  `json:"trainer_code_visibility"`
+	CoordinationMethod      string  `json:"coordination_method"`
+	CoordinationHandle      *string `json:"coordination_handle"`
+	ShareTradeContact       bool    `json:"share_trade_contact"`
+	ShowLocation            bool    `json:"show_location"`
+	ShowPokemonGoName       bool    `json:"show_pokemon_go_name"`
 }
 
 func oneOf(value string, allowed ...string) bool {
@@ -434,14 +437,41 @@ func UpdatePreferencesHandler(c fiber.Ctx) error {
 	if !oneOf(request.ProfileVisibility, "public", "friends", "private") ||
 		!oneOf(request.CollectionVisibility, "public", "friends", "private") ||
 		!oneOf(request.FriendRequestPermission, "everyone", "nobody") ||
-		!oneOf(request.TrainerCodeVisibility, "public", "friends", "private") {
+		!oneOf(request.TrainerCodeVisibility, "public", "friends", "private") ||
+		!oneOf(request.CoordinationMethod, "campfire", "discord", "other", "none") {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid privacy setting"})
+	}
+	var coordinationHandle *string
+	if request.CoordinationHandle != nil {
+		handle := strings.TrimSpace(*request.CoordinationHandle)
+		handle = strings.TrimPrefix(handle, "@")
+		if len(handle) > 80 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Coordination handle must be 80 characters or fewer"})
+		}
+		if handle != "" {
+			coordinationHandle = &handle
+		}
+	}
+	if request.CoordinationMethod == "none" {
+		coordinationHandle = nil
+		request.ShareTradeContact = false
+	}
+	if coordinationHandle != nil && (strings.Contains(*coordinationHandle, "://") || strings.Contains(*coordinationHandle, "@")) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Use a platform username, not an email address or link"})
+	}
+	if request.ShareTradeContact &&
+		(request.CoordinationMethod == "discord" || request.CoordinationMethod == "other") &&
+		coordinationHandle == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Add a coordination handle or choose Campfire"})
 	}
 	profile := defaultUserProfile(viewerID(c))
 	profile.ProfileVisibility = request.ProfileVisibility
 	profile.CollectionVisibility = request.CollectionVisibility
 	profile.FriendRequestPermission = request.FriendRequestPermission
 	profile.TrainerCodeVisibility = request.TrainerCodeVisibility
+	profile.CoordinationMethod = request.CoordinationMethod
+	profile.CoordinationHandle = coordinationHandle
+	profile.ShareTradeContact = request.ShareTradeContact
 	profile.ShowLocation = request.ShowLocation
 	profile.ShowPokemonGoName = request.ShowPokemonGoName
 	if err := db.Transaction(func(tx *gorm.DB) error {

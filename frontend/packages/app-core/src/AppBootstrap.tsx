@@ -9,11 +9,13 @@ import { useBootstrapVariants } from '@/features/variants/hooks/useBootstrapVari
 import { useBootstrapTags } from '@/features/tags/hooks/useBootstrapTags';
 import { useBootstrapTrades } from '@/features/trades/hooks/useBootstrapTrades';
 import { useInitLocation } from '@/features/location/hooks/useInitLocation';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { isAuthRoute } from '@/utils/routes/isAuthRoute';
 
 /** Runs one-off bootstrapping side-effects. Mount once at app start. */
 const AppBootstrap = () => {
   const location = useLocation();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const enabled =
     !isAuthRoute(location.pathname) &&
     location.pathname !== '/max' &&
@@ -23,7 +25,10 @@ const AppBootstrap = () => {
   useBootstrapInstances(enabled);
   useInstanceReconciliation(enabled);
   useBootstrapTags(enabled);
-  useBootstrapTrades(enabled);
+  // Trade reconciliation calls the authenticated users API. Public routes
+  // still bootstrap shared catalog data, but must not issue trade requests
+  // for a signed-out visitor.
+  useBootstrapTrades(enabled && isLoggedIn);
   useInitLocation(enabled);
 
   useEffect(() => {

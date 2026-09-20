@@ -35,7 +35,7 @@ const VerifyEmailChange = () => {
   return (
     <div className="password-reset-page">
       <section className="password-reset-card" aria-live="polite">
-        <div className="password-reset-brand">PokeGoNexus</div>
+        <div className="password-reset-brand">Pokémon Go Nexus</div>
         <div className="password-reset-success">
           {status === 'success' ? <FaCheckCircle /> : <FaEnvelope />}
           <h1>

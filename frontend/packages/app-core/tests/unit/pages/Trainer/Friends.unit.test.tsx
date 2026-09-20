@@ -56,13 +56,14 @@ describe('Friends page', () => {
   });
 
   it('surfaces incoming requests and accepts them in place', async () => {
-    render(
+    const { container } = render(
       <MemoryRouter>
         <Friends />
       </MemoryRouter>,
     );
 
     fireEvent.click(await screen.findByRole('button', { name: /requests/i }));
+    await expect(container).toHaveNoViolations();
     fireEvent.click(
       await screen.findByRole('button', { name: /accept brock/i }),
     );

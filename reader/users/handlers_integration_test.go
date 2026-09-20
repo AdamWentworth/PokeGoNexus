@@ -57,6 +57,7 @@ func newHandlerTestApp(authUserID string) *fiber.App {
 	app.Put("/api/update-user/:user_id", UpdateUserHandler)
 	app.Put("/api/users/update-user/:user_id", UpdateUserHandler)
 	app.Get("/api/users/:user_id/overview", GetUserOverviewHandler)
+	app.Get("/api/collection/summary", GetOwnCollectionSummaryHandler)
 	app.Get("/api/instances/by-username/:username", GetInstancesByUsername)
 	app.Get("/api/users/instances/by-username/:username", GetInstancesByUsername)
 	app.Get("/api/profiles/:username", GetProfileHandler)
@@ -64,6 +65,11 @@ func newHandlerTestApp(authUserID string) *fiber.App {
 	app.Put("/api/profile", UpdateProfileHandler)
 	app.Get("/api/preferences", GetPreferencesHandler)
 	app.Put("/api/preferences", UpdatePreferencesHandler)
+	app.Get("/api/tags", GetTagsHandler)
+	app.Post("/api/tags", CreateTagHandler)
+	app.Put("/api/tags/order", UpdateTagOrderHandler)
+	app.Put("/api/tags/:tag_id", UpdateTagHandler)
+	app.Delete("/api/tags/:tag_id", DeleteTagHandler)
 	app.Get("/api/autocomplete-trainers", AutocompleteTrainersHandler)
 	app.Get("/api/friends", GetFriendsHandler)
 	app.Post("/api/friends/requests", CreateFriendRequestHandler)
@@ -112,6 +118,12 @@ func TestDeleteUserHandler_DeletesAccountGraphInTransaction(t *testing.T) {
 		WithArgs("user-123", "user-123").WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("DELETE FROM `user_blocks` WHERE blocker_user_id = \\? OR blocked_user_id = \\?").
 		WithArgs("user-123", "user-123").WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("DELETE FROM `instance_tags` WHERE user_id = \\?").
+		WithArgs("user-123").WillReturnResult(sqlmock.NewResult(0, 4))
+	mock.ExpectExec("DELETE FROM `tag_orders` WHERE user_id = \\?").
+		WithArgs("user-123").WillReturnResult(sqlmock.NewResult(0, 2))
+	mock.ExpectExec("DELETE FROM `tags` WHERE user_id = \\?").
+		WithArgs("user-123").WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectExec("DELETE FROM `registrations` WHERE user_id = \\?").
 		WithArgs("user-123").WillReturnResult(sqlmock.NewResult(0, 3))
 	mock.ExpectExec("DELETE FROM `instances` WHERE user_id = \\?").
@@ -206,6 +218,71 @@ func TestAcceptTradeHandler_RejectsDuplicateTransition(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusConflict {
 		t.Fatalf("unexpected status: got %d, want %d", resp.StatusCode, http.StatusConflict)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet DB expectations: %v", err)
+	}
+}
+
+func TestCancelTradeHandler_AllowsProposerToWithdrawProposal(t *testing.T) {
+	mock, cleanup := setupMockDB(t)
+	defer cleanup()
+
+	mock.ExpectBegin()
+	mock.ExpectQuery("SELECT \\* FROM `trades` WHERE trade_id = \\?").
+		WithArgs("trade-1", 1).
+		WillReturnRows(tradeMockRows("proposed", false, false))
+	mock.ExpectExec("UPDATE `trades` SET").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("INSERT INTO `application_outbox`").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	app := newHandlerTestApp("user-1")
+	resp, err := app.Test(
+		makeJSONRequest(t, http.MethodPost, "/api/trades/trade-1/cancel", nil),
+		fiber.TestConfig{Timeout: 0},
+	)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: got %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+	var body TradeEnvelope
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Trade.TradeStatus != "cancelled" ||
+		body.Trade.TradeCancelledBy == nil ||
+		*body.Trade.TradeCancelledBy != "ash" {
+		t.Fatalf("unexpected cancelled trade response: %#v", body)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet DB expectations: %v", err)
+	}
+}
+
+func TestCancelTradeHandler_RejectsAccepterWithdrawingProposal(t *testing.T) {
+	mock, cleanup := setupMockDB(t)
+	defer cleanup()
+
+	mock.ExpectBegin()
+	mock.ExpectQuery("SELECT \\* FROM `trades` WHERE trade_id = \\?").
+		WithArgs("trade-1", 1).
+		WillReturnRows(tradeMockRows("proposed", false, false))
+	mock.ExpectRollback()
+
+	app := newHandlerTestApp("user-2")
+	resp, err := app.Test(
+		makeJSONRequest(t, http.MethodPost, "/api/trades/trade-1/cancel", nil),
+		fiber.TestConfig{Timeout: 0},
+	)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("unexpected status: got %d, want %d", resp.StatusCode, http.StatusForbidden)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet DB expectations: %v", err)
@@ -366,7 +443,7 @@ func TestUpdateUserHandler_UpdatesExistingUser(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE `users` SET")).
+	mock.ExpectExec("INSERT INTO `users` .* ON DUPLICATE KEY UPDATE").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
@@ -403,12 +480,7 @@ func TestUpdateUserHandler_InsertsWhenNoExistingRow(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE `users` SET")).
-		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectCommit()
-
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `users`")).
+	mock.ExpectExec("INSERT INTO `users` .* ON DUPLICATE KEY UPDATE").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -419,6 +491,45 @@ func TestUpdateUserHandler_InsertsWhenNoExistingRow(t *testing.T) {
 
 	req := makeJSONRequest(t, http.MethodPut, "/api/users/update-user/user-999", map[string]any{
 		"username": "new_user",
+	})
+
+	resp, err := app.Test(req, fiber.TestConfig{Timeout: 0})
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: got %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sqlmock expectations: %v", err)
+	}
+}
+
+func TestUpdateUserHandler_SucceedsWhenUpsertChangesNoValues(t *testing.T) {
+	mock, cleanup := setupMockDB(t)
+	defer cleanup()
+
+	app := newHandlerTestApp("user-123")
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `users` WHERE username = ? AND user_id <> ? ORDER BY `users`.`user_id` LIMIT ?")).
+		WithArgs("adam", "user-123", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
+
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO `users` .* ON DUPLICATE KEY UPDATE").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectCommit()
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `users` WHERE user_id = ? ORDER BY `users`.`user_id` LIMIT ?")).
+		WithArgs("user-123", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "username", "allow_location", "app_joined_at"}).
+			AddRow("user-123", "adam", false, time.Now()))
+
+	req := makeJSONRequest(t, http.MethodPut, "/api/users/update-user/user-123", map[string]any{
+		"username":  "adam",
+		"latitude":  49.2327643,
+		"longitude": -123.0092935,
 	})
 
 	resp, err := app.Test(req, fiber.TestConfig{Timeout: 0})
@@ -945,12 +1056,93 @@ func TestGetPreferencesHandler_ReturnsStableDefaultsBeforeFirstSave(t *testing.T
 	}
 	if body.ProfileVisibility != "public" ||
 		body.CollectionVisibility != "public" ||
-		body.TrainerCodeVisibility != "friends" {
+		body.TrainerCodeVisibility != "friends" ||
+		body.CoordinationMethod != "campfire" ||
+		!body.ShareTradeContact {
 		t.Fatalf("unexpected defaults: %#v", body)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sqlmock expectations: %v", err)
+	}
+}
+
+func TestUpdatePreferencesHandler_RejectsUnsafeOrMissingCoordinationHandle(t *testing.T) {
+	tests := []struct {
+		name   string
+		method string
+		handle any
+	}{
+		{name: "email address", method: "discord", handle: "trainer@example.com"},
+		{name: "external link", method: "other", handle: "https://example.com/trainer"},
+		{name: "missing discord username", method: "discord", handle: nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, cleanup := setupMockDB(t)
+			defer cleanup()
+
+			response := executeTradeRequest(
+				t, newHandlerTestApp("user-1"), http.MethodPut,
+				"/api/preferences", map[string]any{
+					"profile_visibility":        "public",
+					"collection_visibility":     "public",
+					"friend_request_permission": "everyone",
+					"trainer_code_visibility":   "friends",
+					"coordination_method":       test.method,
+					"coordination_handle":       test.handle,
+					"share_trade_contact":       true,
+					"show_location":             false,
+					"show_pokemon_go_name":      true,
+				},
+			)
+			if response.StatusCode != http.StatusBadRequest {
+				t.Fatalf("unexpected status: got %d, want %d", response.StatusCode, http.StatusBadRequest)
+			}
+		})
+	}
+}
+
+func TestUpdatePreferencesHandler_SavesNormalizedTradeCoordination(t *testing.T) {
+	mock, cleanup := setupMockDB(t)
+	defer cleanup()
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `user_profiles` WHERE user_id = ? AND `user_profiles`.`user_id` = ? ORDER BY `user_profiles`.`user_id` LIMIT ?")).
+		WithArgs("user-1", "user-1", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
+	mock.ExpectExec("INSERT INTO `user_profiles`").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	expectProfileInvalidationOutbox(mock, "user-1", "ash")
+	mock.ExpectCommit()
+
+	response := executeTradeRequest(
+		t, newHandlerTestApp("user-1"), http.MethodPut,
+		"/api/preferences", map[string]any{
+			"profile_visibility":        "public",
+			"collection_visibility":     "friends",
+			"friend_request_permission": "everyone",
+			"trainer_code_visibility":   "friends",
+			"coordination_method":       "discord",
+			"coordination_handle":       "  @MistyTrades  ",
+			"share_trade_contact":       true,
+			"show_location":             false,
+			"show_pokemon_go_name":      true,
+		},
+	)
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: got %d, want %d", response.StatusCode, http.StatusOK)
+	}
+	var body UserProfile
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.CoordinationMethod != "discord" || body.CoordinationHandle == nil ||
+		*body.CoordinationHandle != "MistyTrades" || !body.ShareTradeContact {
+		t.Fatalf("unexpected saved coordination preferences: %#v", body)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet DB expectations: %v", err)
 	}
 }
 

@@ -1,5 +1,5 @@
-import type { PokemonVariant } from "@/types/pokemonVariants";
-import type { Move } from "@/types/pokemonSubTypes";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
+import type { Move } from "../../../types/pokemonSubTypes";
 import { TYPE_MAPPING } from "./constants";
 import { expandHiddenPowerFastMoves } from "./hiddenPower";
 import {

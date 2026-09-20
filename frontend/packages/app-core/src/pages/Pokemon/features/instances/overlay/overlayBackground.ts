@@ -84,7 +84,10 @@ export const getBackgroundImageSrc = (pokemon: OverlayPokemon | null): string =>
 
   const isPurified = Boolean(pokemon.instanceData?.purified);
   const isShadow = Boolean(pokemon.instanceData?.shadow) && !isPurified;
-  const isLucky = Boolean(pokemon.instanceData?.lucky);
+  const isLucky = Boolean(
+    pokemon.instanceData?.lucky ||
+      (pokemon.instanceData?.is_wanted && pokemon.instanceData?.pref_lucky),
+  );
 
   if (isShadow) return '/images/backgrounds/bg_shadow.png';
   if (isLucky) return '/images/backgrounds/bg_lucky.png';

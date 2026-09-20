@@ -1,4 +1,7 @@
 .register-form {
+  --register-control-surface: var(--color-surface-1);
+  --register-soft-surface: color-mix(in srgb, var(--color-surface-1) 76%, transparent);
+
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -26,11 +29,21 @@
   min-height: auto;
 }
 
+.register-form.register-form--method form {
+  min-height: 0;
+}
+
 .register-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
+}
+
+.register-header-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
 }
 
 .register-eyebrow,
@@ -67,7 +80,7 @@
   flex: 0 0 auto;
   padding: 9px 15px;
   color: var(--color-text-primary);
-  background: color-mix(in srgb, var(--color-surface-1) 82%, transparent);
+  background: var(--register-soft-surface);
   border: 1px solid color-mix(in srgb, var(--color-text-primary) 38%, transparent);
   border-radius: 999px;
   font-weight: 800;
@@ -76,6 +89,19 @@
 
 .register-login-link:hover {
   border-color: var(--color-accent-primary);
+}
+
+.register-login-prompt {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.register-login-prompt > span {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .register-progress {
@@ -157,37 +183,9 @@
   align-items: center;
   gap: 16px;
   padding: 18px;
-  background: color-mix(in srgb, var(--color-surface-1) 72%, transparent);
+  background: var(--register-soft-surface);
   border: 1px solid var(--color-border-muted);
   border-radius: 16px;
-}
-
-.register-method-intro {
-  display: grid;
-  max-width: 560px;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.register-method-intro span {
-  color: var(--color-accent-primary);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.register-method-intro h2 {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  letter-spacing: -0.025em;
-}
-
-.register-method-intro p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-weight: 600;
 }
 
 .register-step-heading > svg {
@@ -216,6 +214,10 @@
   margin-top: 8px;
 }
 
+.register-form--method .register-method-grid {
+  margin-top: 28px;
+}
+
 .register-email-method,
 .google-auth-button,
 .discord-auth-button,
@@ -235,7 +237,7 @@
 
 .register-email-method {
   color: var(--color-text-primary);
-  background: var(--color-surface-1);
+  background: var(--register-control-surface);
   border: 1px solid var(--color-border-muted);
 }
 
@@ -274,7 +276,7 @@
 
 .facebook-auth-button {
   color: #fff;
-  background: #1877f2;
+  background: #1265d6;
   border: 1px solid #4d96f5;
 }
 
@@ -295,7 +297,7 @@
   min-height: 50px;
   padding: 0 15px;
   color: var(--color-text-primary);
-  background: var(--color-surface-1);
+  background: var(--register-control-surface);
   border: 1px solid var(--color-border-muted);
   border-radius: 12px;
   font: inherit;
@@ -371,7 +373,7 @@
   gap: 12px;
   padding: 13px;
   cursor: pointer;
-  background: var(--color-surface-1);
+  background: var(--register-control-surface);
   border: 1px solid var(--color-border-muted);
   border-radius: 12px;
 }
@@ -422,7 +424,7 @@
   left: 0;
   max-height: 190px;
   overflow-y: auto;
-  background: var(--color-surface-1);
+  background: var(--register-control-surface);
   border: 1px solid var(--color-border-muted);
   border-radius: 6px;
   box-shadow: 0 12px 30px rgb(0 0 0 / 25%);
@@ -465,7 +467,7 @@
   gap: 12px;
   padding: 13px;
   color: var(--color-text-primary);
-  background: var(--color-surface-1);
+  background: var(--register-control-surface);
   border: 1px solid var(--color-border-muted);
   border-radius: 12px;
   cursor: pointer;
@@ -544,9 +546,13 @@
 }
 
 :root[data-theme='light'] .register-header h1,
-:root[data-theme='light'] .register-step-heading h2,
-:root[data-theme='light'] .register-method-intro h2 {
+:root[data-theme='light'] .register-step-heading h2 {
   color: var(--light-text-heading);
+}
+
+:root[data-theme='light'] .register-form {
+  --register-control-surface: color-mix(in srgb, var(--light-surface-base) 90%, transparent);
+  --register-soft-surface: color-mix(in srgb, var(--light-surface-base) 68%, transparent);
 }
 
 :root[data-theme='light'] .register-progress .is-active,
@@ -577,6 +583,10 @@
 
   .register-header {
     align-items: center;
+  }
+
+  .register-login-prompt > span {
+    display: none;
   }
 
   .register-header p {

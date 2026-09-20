@@ -1,4 +1,4 @@
-import type { PokemonVariant } from "@/types/pokemonVariants";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
 import {
   getRaidAttackerIvs,
   resolveRaidAttackerLevel,

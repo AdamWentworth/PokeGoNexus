@@ -1,25 +1,27 @@
 .raid-methodology-page {
-  min-height: 100vh;
-  padding: clamp(1rem, 3vw, 2rem);
-  color: var(--color-text-primary, #f6ffff);
-  text-align: left;
-  background:
+  --app-page-shell-background:
     radial-gradient(circle at 12% 0%, rgba(47, 214, 208, 0.16), transparent 30rem),
     radial-gradient(circle at 90% 12%, rgba(255, 188, 69, 0.14), transparent 26rem),
     var(--color-background, #0d1011);
+  --app-page-shell-color: var(--color-text-primary, #f6ffff);
+
+  text-align: left;
 }
 
 .raid-methodology-shell {
-  width: min(100%, 960px);
-  margin: 0 auto;
+  max-width: 960px;
 }
 
-.raid-methodology-header {
-  padding: clamp(0.75rem, 3vw, 2rem) 0 clamp(1.5rem, 4vw, 2.75rem);
-  border-bottom: 1px solid rgba(102, 220, 220, 0.24);
+.raid-methodology-product-header {
+  --product-header-border: rgba(102, 220, 220, 0.24);
+  --product-header-label: #75e6df;
+
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--product-header-border);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
 }
 
-.raid-methodology-back,
 .raid-methodology-return {
   display: inline-flex;
   gap: 0.5rem;
@@ -37,8 +39,6 @@
   transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
-.raid-methodology-back:hover,
-.raid-methodology-back:focus-visible,
 .raid-methodology-return:hover,
 .raid-methodology-return:focus-visible {
   border-color: rgba(117, 230, 223, 0.68);
@@ -46,7 +46,6 @@
   background: rgba(65, 215, 207, 0.14);
 }
 
-.raid-methodology-eyebrow,
 .raid-methodology-kicker {
   margin: 2rem 0 0.35rem;
   color: #75e6df;
@@ -56,54 +55,16 @@
   text-transform: uppercase;
 }
 
-.raid-methodology-header h1 {
-  max-width: 18ch;
-  margin: 0;
-  font-size: clamp(2rem, 6vw, 4.25rem);
-  line-height: 0.98;
-}
-
-.raid-methodology-intro {
-  max-width: 66ch;
-  margin: 1rem 0 0;
-  color: rgba(224, 242, 243, 0.82);
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  line-height: 1.55;
-}
-
 .raid-methodology-nav {
-  position: sticky;
-  z-index: 4;
-  top: 0;
-  display: flex;
-  gap: 0.35rem;
-  overflow-x: auto;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(102, 220, 220, 0.18);
-  background: color-mix(in srgb, var(--color-background, #0d1011) 88%, transparent);
-  backdrop-filter: blur(14px);
-  scrollbar-width: none;
-}
-
-.raid-methodology-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.raid-methodology-nav a {
-  flex: 0 0 auto;
-  padding: 0.4rem 0.65rem;
-  border-radius: 999px;
-  color: rgba(224, 242, 243, 0.76);
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.raid-methodology-nav a:hover,
-.raid-methodology-nav a:focus-visible {
-  color: #071214;
-  background: #75e6df;
+  --in-page-navigation-accent: #75e6df;
+  --in-page-navigation-active-text: #071214;
+  --in-page-navigation-background: color-mix(
+    in srgb,
+    var(--color-background, #0d1011) 88%,
+    transparent
+  );
+  --in-page-navigation-border: rgba(102, 220, 220, 0.18);
+  --in-page-navigation-text: rgba(224, 242, 243, 0.76);
 }
 
 .raid-methodology-section {
@@ -219,6 +180,12 @@
   white-space: nowrap;
 }
 
+.raid-methodology-formulas code:focus-visible,
+.raid-methodology-damage-formula:focus-visible {
+  outline: 3px solid #75e6df;
+  outline-offset: 3px;
+}
+
 .raid-methodology-steps {
   display: grid;
   gap: 0;
@@ -308,14 +275,13 @@
 }
 
 :root[data-theme='light'] .raid-methodology-page {
-  color: #102a32;
-  background:
+  --app-page-shell-color: #102a32;
+  --app-page-shell-background:
     radial-gradient(circle at 12% 0%, rgba(47, 214, 208, 0.18), transparent 30rem),
     radial-gradient(circle at 90% 12%, rgba(255, 188, 69, 0.16), transparent 26rem),
     #edf7f6;
 }
 
-:root[data-theme='light'] .raid-methodology-intro,
 :root[data-theme='light'] .raid-methodology-section > p:not(.raid-methodology-kicker, .raid-methodology-validation),
 :root[data-theme='light'] .raid-methodology-mode-list p,
 :root[data-theme='light'] .raid-methodology-metrics p,
@@ -329,11 +295,8 @@
 }
 
 :root[data-theme='light'] .raid-methodology-nav {
-  background: rgba(237, 247, 246, 0.9);
-}
-
-:root[data-theme='light'] .raid-methodology-nav a {
-  color: rgba(20, 55, 63, 0.72);
+  --in-page-navigation-background: rgba(237, 247, 246, 0.9);
+  --in-page-navigation-text: rgba(20, 55, 63, 0.72);
 }
 
 :root[data-theme='light'] .raid-methodology-metrics article {
@@ -347,7 +310,6 @@
   background: rgba(54, 202, 199, 0.12);
 }
 
-:root[data-theme='light'] .raid-methodology-back,
 :root[data-theme='light'] .raid-methodology-return {
   color: #087d91;
   border-color: rgba(21, 139, 154, 0.2);
@@ -355,26 +317,6 @@
 }
 
 @media (max-width: 760px) {
-  .raid-methodology-page {
-    padding: 0.65rem;
-  }
-
-  .raid-methodology-header h1 {
-    max-width: 14ch;
-  }
-
-  .raid-methodology-nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    overflow: visible;
-    display: grid;
-  }
-
-  .raid-methodology-nav a {
-    min-width: 0;
-    padding-inline: 0.25rem;
-    text-align: center;
-  }
-
   .raid-methodology-section {
     scroll-margin-top: 6.5rem;
   }
@@ -413,7 +355,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .raid-methodology-back,
   .raid-methodology-return {
     transition: none;
   }

@@ -10,7 +10,7 @@ export function useMegaPokemonSelection(
   variantKey: string | undefined,
   megaForm: string | undefined,
   onAssignExisting: (id: string) => void,
-  onCreateNew: () => void,
+  onCreateNew: (id: string) => void,
 ) {
   const [error, setError] = useState<string | null>(null);
 
@@ -30,8 +30,8 @@ export function useMegaPokemonSelection(
   const createNew = useCallback(async () => {
     try {
       if (!variantKey) throw new Error('No variantKey');
-      await createNewMega(variantKey, megaForm);
-      onCreateNew();
+      const instanceId = await createNewMega(variantKey, megaForm);
+      onCreateNew(instanceId);
     } catch (e) {
       log.error('Failed to create new mega candidate:', e);
       setError('Failed to create a new Mega Pokemon.');

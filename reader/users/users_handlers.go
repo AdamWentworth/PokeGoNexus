@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // ---------- request / response DTOs ----------
@@ -58,6 +59,9 @@ func DeleteUserHandler(c fiber.Ctx) error {
 			{"user_id_proposed = ? OR user_id_accepting = ?", []interface{}{userID, userID}, &Trade{}},
 			{"user_id_low = ? OR user_id_high = ?", []interface{}{userID, userID}, &Friendship{}},
 			{"blocker_user_id = ? OR blocked_user_id = ?", []interface{}{userID, userID}, &UserBlock{}},
+			{"user_id = ?", []interface{}{userID}, &PokemonInstanceTag{}},
+			{"user_id = ?", []interface{}{userID}, &PokemonTagOrder{}},
+			{"user_id = ?", []interface{}{userID}, &PokemonTag{}},
 			{"user_id = ?", []interface{}{userID}, &Registration{}},
 			{"user_id = ?", []interface{}{userID}, &PokemonInstance{}},
 			{"user_id = ?", []interface{}{userID}, &UserProfile{}},
@@ -179,19 +183,22 @@ func UpdateUserHandler(c fiber.Ctx) error {
 	}
 
 	// ---------- upsert ----------
-	// try update; if no rows affected, insert
-	res := db.Model(&User{}).Where("user_id = ?", userID).Updates(update)
-	if res.Error != nil {
-		logrus.Errorf("update user: %v", res.Error)
-		return c.Status(500).JSON(UpdateUserResponse{Success: false, Message: "DB update failed"})
+	// MySQL reports zero affected rows when an UPDATE writes values that are
+	// already stored. Do not interpret that as a missing user: a follow-up
+	// INSERT would collide with the existing primary key. Use one atomic upsert
+	// so both first-time synchronization and no-op updates are safe.
+	insert := make(map[string]interface{}, len(update)+1)
+	for key, value := range update {
+		insert[key] = value
 	}
-	if res.RowsAffected == 0 {
-		// create new row with the same map + PK
-		update["user_id"] = userID
-		if err := db.Table("users").Create(update).Error; err != nil {
-			logrus.Errorf("insert user: %v", err)
-			return c.Status(500).JSON(UpdateUserResponse{Success: false, Message: "DB insert failed"})
-		}
+	insert["user_id"] = userID
+
+	if err := db.Table("users").Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}},
+		DoUpdates: clause.Assignments(update),
+	}).Create(insert).Error; err != nil {
+		logrus.Errorf("upsert user: %v", err)
+		return c.Status(500).JSON(UpdateUserResponse{Success: false, Message: "DB upsert failed"})
 	}
 
 	// fetch fresh copy

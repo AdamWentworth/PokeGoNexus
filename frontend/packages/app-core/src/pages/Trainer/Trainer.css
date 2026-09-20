@@ -6,6 +6,7 @@
   --trainer-border: #315052;
   --trainer-text: #f7fbfa;
   --trainer-muted: #9db5b4;
+  --trainer-label: #92c7cc;
   min-height: 100vh;
   padding: 18px 18px 110px;
   background:
@@ -15,40 +16,33 @@
   text-align: left;
 }
 
-.trainer-page-header,
+.trainer-product-header,
 .trainer-section-nav,
 .trainer-page-content {
   width: min(1060px, 100%);
   margin-inline: auto;
 }
 
-.trainer-page-header {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 66px;
-  border-bottom: 1px solid var(--trainer-border);
+.trainer-product-header {
+  --product-header-border: var(--trainer-border);
+  --product-header-label: var(--trainer-label);
+  --product-header-muted: var(--trainer-muted);
+  --product-header-text: var(--trainer-text);
+
+  padding-inline: 0;
 }
 
-.trainer-page-heading span,
 .trainer-section header span,
 .trainer-field > span,
 .trainer-card-label,
 .trainer-card-heading span,
 .trainer-card-titles-heading > span,
 .trainer-card-setup > div > span {
-  color: #92c7cc;
+  color: var(--trainer-label);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
-}
-
-.trainer-page-heading h1 {
-  margin: 2px 0 0;
-  font-size: clamp(1.55rem, 4vw, 2.15rem);
-  line-height: 1.05;
 }
 
 .trainer-page-actions {
@@ -1317,6 +1311,10 @@
   background: #0d1516;
 }
 
+.trainer-page-slider {
+  width: 100%;
+}
+
 .trainer-tabs button {
   display: flex;
   min-height: 44px;
@@ -1535,6 +1533,12 @@
   gap: 2px;
 }
 
+.trainer-sync-status {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
 .trainer-device-settings small {
   color: var(--trainer-muted);
 }
@@ -1554,6 +1558,30 @@
   line-height: 1.5;
 }
 
+.trainer-coordination-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--trainer-accent) 30%, var(--trainer-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--trainer-accent) 8%, transparent);
+}
+
+.trainer-coordination-summary > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--trainer-accent);
+}
+
+.trainer-coordination-summary p {
+  margin: 0;
+  color: var(--trainer-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .trainer-danger-section {
   border-color: #6c343b;
 }
@@ -1567,14 +1595,16 @@
   --trainer-surface-raised: #e3efe8;
   --trainer-border: #9bb8b1;
   --trainer-text: #2f4744;
-  --trainer-muted: #687f7b;
+  --trainer-muted: #4b625e;
+  --trainer-label: #28636a;
 }
 
 :root[data-theme="light"] .trainer-card-highlight-drag-preview {
   --trainer-surface: #f3faf5;
   --trainer-border: #9bb8b1;
   --trainer-text: #2f4744;
-  --trainer-muted: #687f7b;
+  --trainer-muted: #4b625e;
+  --trainer-label: #28636a;
 }
 
 :root[data-theme="light"] .trainer-section-nav,
@@ -1622,10 +1652,6 @@
 @media (max-width: 720px) {
   .trainer-page {
     padding: 10px 10px 96px;
-  }
-
-  .trainer-page-header {
-    grid-template-columns: 40px minmax(0, 1fr) auto;
   }
 
   .trainer-page-actions .trainer-button {

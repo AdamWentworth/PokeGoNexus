@@ -34,6 +34,11 @@ self.addEventListener('message', (event) => {
     return;
   }
 
+  if (type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
   // Auth state updates (explicit)
   // e.g., { type: 'AUTH_STATE', payload: { isLoggedIn: true/false } }
   if (type === 'AUTH_STATE' && payload) {
@@ -73,7 +78,9 @@ self.addEventListener('message', (event) => {
 });
 
 /* -------------------------- Lifecycle (no cache) ------------------------- */
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', () => {
+  log('install', { waitingForActivation: Boolean(self.registration.active) });
+});
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
@@ -81,6 +88,9 @@ self.addEventListener('activate', (event) => {
 /* ------------------------------ Fetch passthru --------------------------- */
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  // Leave APK streaming, completion, and resume to the browser's downloader.
+  // This also covers older pages that still link to the GitHub release asset.
+  if (url.pathname.startsWith('/downloads/') || /\.apk$/i.test(url.pathname)) return;
   if (url.origin === self.location.origin) {
     event.respondWith(
       fetch(event.request).catch((err) => {

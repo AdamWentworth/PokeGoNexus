@@ -53,10 +53,9 @@ docker compose -f monitoring/docker-compose.yml --env-file monitoring/.env up -d
   - Validates Alertmanager config syntax (`amtool`)
   - Validates compose rendering (`docker compose config`)
 
-- Manual prod deploy workflow: `.github/workflows/deploy-monitoring-prod.yml`
-  - Runs on your self-hosted prod runner
-  - Pulls latest repo changes on prod
-  - Ensures required Docker networks exist
+- Private HomeOps workflow: `manage-pokegonexus-infrastructure`
+  - Offers a read-only verification mode and an explicit deploy mode
+  - Owns digest-pinned production Compose and monitoring configuration
   - Deploys `prometheus` + `alertmanager` + `node_exporter` + `cadvisor` + `kafka_exporter` + `blackbox_exporter`
   - Checks health endpoints before success
 
@@ -95,4 +94,3 @@ Common quick PromQL checks:
   - `probe_success{job="frontend_probe_external"}`
 - Frontend probe duration:
   - `probe_duration_seconds{job="frontend_probe_external"}`
-

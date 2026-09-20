@@ -3,11 +3,14 @@ package main
 import (
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+var rankingsRefreshMu sync.Mutex
 
 type PokemonVariantRanking struct {
 	VariantID           string    `gorm:"column:variant_id;primaryKey"`
@@ -62,6 +65,9 @@ func refreshAllRankings(db *gorm.DB) error {
 }
 
 func refreshPokemonRankings(db *gorm.DB, variantIDs []string) error {
+	rankingsRefreshMu.Lock()
+	defer rankingsRefreshMu.Unlock()
+
 	now := time.Now().UTC()
 	return db.Transaction(func(tx *gorm.DB) error {
 		query := tx.

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   getPokemonCommunityRankings,
+  SEARCH_REQUEST_TIMEOUT_MS,
   searchPokemon,
 } from '@/services/searchService';
 
@@ -11,7 +12,8 @@ describe('searchService.searchPokemon', () => {
   });
 
   it('returns array payload from search endpoint', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+    const timeoutSpy = vi.spyOn(window, 'setTimeout');
+    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify([{ pokemon_id: 1 }, { pokemon_id: 2 }]), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -21,6 +23,18 @@ describe('searchService.searchPokemon', () => {
     const result = await searchPokemon({ ownership: 'caught' });
 
     expect(result).toEqual([{ pokemon_id: 1 }, { pokemon_id: 2 }]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/searchPokemon?ownership=caught'),
+      expect.objectContaining({
+        credentials: 'include',
+        method: 'GET',
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(timeoutSpy).toHaveBeenCalledWith(
+      expect.any(Function),
+      SEARCH_REQUEST_TIMEOUT_MS,
+    );
   });
 
   it('normalizes object payload into array rows', async () => {

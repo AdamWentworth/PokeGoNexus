@@ -1,11 +1,11 @@
 // MegaPokemonModal.tsx
 import MegaPokemonSelection from '../components/MegaPokemonSelection';
-import type { MegaSelectionData } from '../hooks/useMegaPokemonHandler';
+import type { MegaSelectionData, MegaSelectionResult } from '../hooks/useMegaPokemonHandler';
 
 interface Props {
   open: boolean;
   data: MegaSelectionData | null;
-  onResolve: (option: string) => void;
+  onResolve: (result: MegaSelectionResult) => void;
   onReject: (reason?: unknown) => void;
 }
 
@@ -22,8 +22,8 @@ export default function MegaPokemonModal({
       caughtPokemon={data.caughtPokemon}
       variantKey={data.variantKey}
       megaForm={data.megaForm}
-      onAssignExisting={() => onResolve('assignExisting')}
-      onCreateNew={() => onResolve('createNew')}
+      onAssignExisting={(instanceId) => onResolve({ action: 'assignExisting', instanceId })}
+      onCreateNew={(instanceId) => onResolve({ action: 'createNew', instanceId })}
       onCancel={() => onReject('User canceled')}
     />
   );

@@ -4,8 +4,10 @@ import { useState, FC, ChangeEvent, FormEvent } from 'react';
 import { FaEnvelope, FaKey } from 'react-icons/fa';
 import './ResetPasswordOverlay.css';
 import { resetPassword } from '../../services/authService';
-import { toast } from 'react-toastify';
+import { feedback } from '@/components/feedback';
 import { isApiError } from '../../utils/errors';
+import OverlayDismissButton from '../../components/OverlayDismissButton';
+import OverlayPortal from '../../components/OverlayPortal';
 
 interface ResetPasswordOverlayProps {
   onClose: () => void;
@@ -22,14 +24,14 @@ const ResetPasswordOverlay: FC<ResetPasswordOverlayProps> = ({ onClose }) => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!input) {
-      toast.error('Please enter your username or email.');
+      feedback.error('Please enter your username or email.');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await resetPassword({ identifier: input });
-      toast.success('If that account exists, reset instructions are on the way.');
+      feedback.success('If that account exists, reset instructions are on the way.');
       onClose();
     } catch (error: unknown) {
       let errorMessage = 'Failed to reset password. Please try again.';
@@ -38,14 +40,15 @@ const ResetPasswordOverlay: FC<ResetPasswordOverlayProps> = ({ onClose }) => {
         errorMessage = error.response.data.message;
       }
 
-      toast.error(errorMessage);
+      feedback.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="reset-password-overlay" role="presentation" onMouseDown={onClose}>
+    <OverlayPortal onClose={onClose} closeOnBackdrop>
+      <div className="reset-password-overlay" role="presentation">
       <section
         className="overlay-content"
         role="dialog"
@@ -53,9 +56,9 @@ const ResetPasswordOverlay: FC<ResetPasswordOverlayProps> = ({ onClose }) => {
         aria-labelledby="reset-password-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button type="button" className="close-button" aria-label="Close password reset" onClick={onClose}>
+        <OverlayDismissButton className="close-button" aria-label="Close password reset" onDismiss={onClose}>
           &times;
-        </button>
+        </OverlayDismissButton>
         <div className="reset-password-overlay__icon"><FaKey /></div>
         <span className="reset-password-overlay__eyebrow">Account recovery</span>
         <h2 id="reset-password-title">Reset your password</h2>
@@ -86,7 +89,8 @@ const ResetPasswordOverlay: FC<ResetPasswordOverlayProps> = ({ onClose }) => {
           account matches what you entered.
         </small>
       </section>
-    </div>
+      </div>
+    </OverlayPortal>
   );
 };
 

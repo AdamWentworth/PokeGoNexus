@@ -1,125 +1,41 @@
-/* HighlightActionButton.css */
-
 .highlight-action-container {
-    position: fixed;
-    bottom: 20px; /* Keep aligned with sort-overlay */
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    z-index: 1000; /* Ensure it overlays other content */
-  }
-  
-  .action-buttons {
-    display: flex;
-    flex-direction: column; /* Keep as column */
-    align-items: center;
-    width: 90%;
-    filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.2));
-  }
-  
-  .main-button {
-    background-color: #34807d;
-    color: white;
-    padding: 15px 30px;
-    font-size: 18px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px; /* Add margin-top for spacing */
-    width: 100%;
-  }
-  
-  .main-button:hover, .transfer-button:hover {
-    background-color: #3da395;
-  }
-  
-  .transfer-button {
-    background-color: white; /* Choose a distinct color */
-    color: #34807d;
-    padding: 15px 30px;
-    font-size: 18px;
-    border-radius: 25px;
-    cursor: pointer;
-    margin-top: 10px; /* Spacing above the button */
-    transition: background-color 0.3s ease;
-    width: 100%;
-  }
-  
-  .filter-buttons {
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s ease, max-height 0.3s ease;
-  }
-  
-  .action-buttons.expanded .filter-buttons {
-    opacity: 1;
-    max-height: 300px; /* Adjust as needed */
-    width: 100%;
-    align-items: center;
-  }
-  
-  .filter-button {
-    background-color: #f1f1f1;
-    color: black;
-    padding: 10px 20px;
-    margin: 5px 0;
-    font-size: 18px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    width: 80%;
-  }
-  
-  .filter-button.Caught {
-    background-color: #2196F3;
-    color: white;
-  }
-  
-  .filter-button.Trade {
-    background-color: #4CAF50;
-    color: white;
-  }
-  
-  .filter-button.Wanted {
-    background-color: #F44336;
-    color: white;
-  }
-
-@media (max-width: 480px) {
-  .filter-button {
-    width: 90%;
-  }
+  position: fixed;
+  z-index: 1000;
+  right: 0;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: 0;
+  display: flex;
+  justify-content: center;
+  padding-inline: 18px;
+  pointer-events: none;
 }
 
-@media (min-width: 480px)and (max-width: 767px) {
+.highlight-action-container .main-button {
+  display: inline-flex;
+  width: min(520px, 100%);
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 24px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 75%, white);
+  border-radius: 14px;
+  background: var(--color-accent-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 850;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 32%);
+  cursor: pointer;
+  pointer-events: auto;
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .main-button, .transfer-button {
-    width: 75%;
-  }
-  .filter-button {
-    width: 65%;
-  }
-}
+.highlight-action-container .main-button:hover { filter: brightness(1.08); }
+.highlight-action-container .main-button:disabled { cursor: wait; opacity: 0.7; }
 
-@media (min-width: 1024px) and (max-width: 1439px) {
-  .main-button, .transfer-button  {
-    width: 65%;
-  }
-  .filter-button {
-    width: 50%;
-  }
-}
-@media (min-width: 1440px) {
-  .main-button, .transfer-button  {
-    width: 50%;
-  }
-  .filter-button {
-    width: 40%;
+@media (max-width: 560px) {
+  .highlight-action-container {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    padding-inline: 20px;
   }
 }

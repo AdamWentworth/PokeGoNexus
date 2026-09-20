@@ -16,9 +16,7 @@ import {
   hasWantedAdditionalDetails,
   type MatchedPokemon,
   type WantedListItem,
-  type WantedTradeEntry,
 } from './wantedListViewHelpers';
-import './WantedListView.css';
 
 type WantedListViewProps = {
   item: WantedListItem;
@@ -28,20 +26,9 @@ type WantedListViewProps = {
   ) => MatchedPokemon | null;
 };
 
-type WantedTradeListProps = {
-  tradeList?: Record<string, WantedTradeEntry> | null;
-  findPokemonByKey: (
-    keyOrInstanceId?: string | null,
-    instanceLike?: Record<string, unknown> | null,
-  ) => MatchedPokemon | null;
-};
-
-const WantedTradeList: React.FC<WantedTradeListProps> = ({
-  tradeList,
-  findPokemonByKey,
-}) => {
-  const entries = useMemo<LinkedPokemonGridEntry[]>(() => {
-    return getWantedTradeEntries(tradeList).reduce<LinkedPokemonGridEntry[]>(
+const WantedListView: React.FC<WantedListViewProps> = ({ item, findPokemonByKey }) => {
+  const tradeEntries = useMemo<LinkedPokemonGridEntry[]>(() => {
+    return getWantedTradeEntries(item.trade_list).reduce<LinkedPokemonGridEntry[]>(
       (gridEntries, [tradeInstanceId, tradeListPokemon]) => {
         const matchedPokemon = findPokemonByKey(tradeInstanceId, tradeListPokemon);
         if (!matchedPokemon) return gridEntries;
@@ -58,22 +45,7 @@ const WantedTradeList: React.FC<WantedTradeListProps> = ({
       },
       [],
     );
-  }, [findPokemonByKey, tradeList]);
-
-  if (!entries.length) return null;
-  return (
-    <LinkedPokemonGrid
-      title="Trade Pokemon:"
-      sectionClassName="trade-list-section"
-      gridClassName="trade-list"
-      containerClassName="trade-pokemon-container"
-      imageClassName="trade-pokemon-image"
-      entries={entries}
-    />
-  );
-};
-
-const WantedListView: React.FC<WantedListViewProps> = ({ item, findPokemonByKey }) => {
+  }, [findPokemonByKey, item.trade_list]);
   const imageUrl = URLSelect(
     item.pokemonInfo as Parameters<typeof URLSelect>[0],
     item as Parameters<typeof URLSelect>[1],
@@ -91,40 +63,46 @@ const WantedListView: React.FC<WantedListViewProps> = ({ item, findPokemonByKey 
       username={item.username}
       instanceId={item.instance_id}
       distance={item.distance}
-      latitude={item.latitude}
-      longitude={item.longitude}
-      mapInstanceData="wanted"
       navigationInstanceData="Wanted"
       pokemonDisplayName={pokemonDisplayName}
       rightColumn={
-        <WantedTradeList tradeList={item.trade_list} findPokemonByKey={findPokemonByKey} />
+        tradeEntries.length > 0 ? (
+          <LinkedPokemonGrid
+            title="Trainer can offer"
+            sectionClassName="trade-list-section"
+            gridClassName="trade-list"
+            containerClassName="trade-pokemon-container"
+            imageClassName="trade-pokemon-image"
+            entries={tradeEntries}
+          />
+        ) : undefined
       }
     >
-      <div className="card">
-        <h3>{item.username}</h3>
+      <div className="card search-result-listing-summary">
+        <PokemonResultVisual
+          imageUrl={imageUrl}
+          pokemonDisplayName={pokemonDisplayName}
+          genderValue={genderValue}
+          lucky={item.pref_lucky}
+          dynamax={item.dynamax}
+          gigantamax={item.gigantamax}
+          wrapLuckyBackdrop
+          beforeImage={
+            typeof item.cp === 'number' && item.cp > 0 ? (
+              <CP cp={item.cp} editMode={false} onCPChange={onCPChange} />
+            ) : null
+          }
+        />
 
         {hasAdditionalDetails ? (
-          <div className="pokemon-columns">
-            <div className="pokemon-first-column">
-              {typeof item.cp === 'number' && item.cp > 0 && (
-                <CP cp={item.cp} editMode={false} onCPChange={onCPChange} />
-              )}
-              <PokemonResultVisual
-                imageUrl={imageUrl}
-                pokemonDisplayName={pokemonDisplayName}
-                genderValue={genderValue}
-                lucky={item.pref_lucky}
-                dynamax={item.dynamax}
-                gigantamax={item.gigantamax}
-                wrapLuckyBackdrop
-              />
-            </div>
-
+          <details className="search-result-details-disclosure">
+            <summary>Wanted conditions</summary>
             <PokemonResultDetails
               friendshipLevel={item.friendship_level}
               prefLucky={Boolean(item.pref_lucky)}
               weight={item.weight}
               height={item.height}
+              wantedSizePreferences={item.wanted_size_preferences}
               fastMoveId={item.fast_move_id}
               chargedMove1Id={item.charged_move1_id}
               chargedMove2Id={item.charged_move2_id}
@@ -133,23 +111,8 @@ const WantedListView: React.FC<WantedListViewProps> = ({ item, findPokemonByKey 
               dateCaught={item.date_caught}
               formatDate={formatWantedDate}
             />
-          </div>
-        ) : (
-          <div className="pokemon-single-column">
-            {typeof item.cp === 'number' && item.cp > 0 && (
-              <CP cp={item.cp} editMode={false} onCPChange={onCPChange} />
-            )}
-            <PokemonResultVisual
-              imageUrl={imageUrl}
-              pokemonDisplayName={pokemonDisplayName}
-              genderValue={genderValue}
-              lucky={item.pref_lucky}
-              dynamax={item.dynamax}
-              gigantamax={item.gigantamax}
-              wrapLuckyBackdrop={false}
-            />
-          </div>
-        )}
+          </details>
+        ) : null}
       </div>
     </SearchResultRow>
   );

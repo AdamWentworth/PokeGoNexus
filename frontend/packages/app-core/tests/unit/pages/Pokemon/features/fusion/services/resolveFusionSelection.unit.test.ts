@@ -36,7 +36,7 @@ describe('resolveFusionSelection', () => {
         disabled: true,
       },
     });
-    expect(resolve).toHaveBeenCalledWith('fuseThis');
+    expect(resolve).toHaveBeenCalledWith({ action: 'fuseThis', instanceId: 'left-1' });
   });
 
   it('resolves cancel and skips updates when choice is not confirmFuse', async () => {
@@ -54,6 +54,6 @@ describe('resolveFusionSelection', () => {
     });
 
     expect(updateDetails).not.toHaveBeenCalled();
-    expect(resolve).toHaveBeenCalledWith('cancel');
+    expect(resolve).toHaveBeenCalledWith({ action: 'cancel', instanceId: null });
   });
 });

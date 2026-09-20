@@ -1,6 +1,6 @@
 # 📍 Location Service (`location`)
 
-Geospatial lookup service for PokeGo Nexus.
+Geospatial lookup service for Pokémon Go Nexus.
 Provides autocomplete, geocode, reverse geocode, and city boundary lookups from PostGIS.
 
 ## ✅ What It Does
@@ -81,7 +81,7 @@ Python backup helpers in this folder read:
 ## 🔁 CI/CD
 
 - CI: `.github/workflows/ci-location.yml`
-- CD: `.github/workflows/deploy-location-prod.yml`
+- Production deployment: private HomeOps `deploy-pokegonexus-service`
 
 CD preflight checks:
 

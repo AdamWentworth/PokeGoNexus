@@ -3,12 +3,12 @@ import LoadingSpinner from '../../../components/LoadingSpinner';
 import MoveDisplay from '../../../components/pokemonComponents/MoveDisplay';
 import IV from '../../../components/pokemonComponents/IV';
 import Gender from '../../../components/pokemonComponents/Gender';
-import FriendshipLevel from '../../../components/pokemonComponents/FriendshipLevel';
 import { TRADE_FRIENDSHIP_LEVELS } from '../../../db/indexedDB';
 import { formatDate } from '../../../utils/formattingHelpers';
 import { hasDetails } from '../helpers/hasDetails';
 import type { TradeMove, TradePokemonDetails, TradeViewTrade } from './types';
 import { getStoredUsername } from '@/utils/storage';
+import TradeExchangeSummary from '@/pages/Trades/components/TradeExchangeSummary';
 import './CompletedTradeView.css';
 
 type DetailSection = 'left' | 'right';
@@ -178,7 +178,8 @@ const CompletedTradeView: React.FC<CompletedTradeViewProps> = ({
               <>
                 <div className="pokemon-image-container">
                   <div className="image-wrapper">
-                    {trade.is_lucky_trade ? (
+                    {trade.is_lucky_trade &&
+                    (details.currentImage || details.pokemon_image_url) ? (
                       <div className="lucky-backdrop-wrapper">
                         <img
                           src="/images/lucky.png"
@@ -279,18 +280,11 @@ const CompletedTradeView: React.FC<CompletedTradeViewProps> = ({
       <div className="trade-pokemon">
         {renderPokemonSection(leftDetails, 'left', leftHeading, leftUsername)}
 
-        <div className="center-column">
-          <FriendshipLevel level={friendshipLevel} prefLucky={Boolean(trade.is_lucky_trade)} />
-          <div className="trade-icon">
-            <img src="/images/pogo_trade_icon.png" alt="Trade Icon" />
-          </div>
-          <div className="stardust-display">
-            <img src="/images/stardust.png" alt="Stardust" className="stardust-icon" />
-            <span className="stardust-cost">
-              {trade.trade_dust_cost?.toLocaleString() || '0'}
-            </span>
-          </div>
-        </div>
+        <TradeExchangeSummary
+          friendshipLevel={friendshipLevel}
+          isLuckyTrade={Boolean(trade.is_lucky_trade)}
+          stardustCost={trade.trade_dust_cost}
+        />
 
         {renderPokemonSection(rightDetails, 'right', rightHeading, rightUsername)}
       </div>
@@ -303,7 +297,8 @@ const CompletedTradeView: React.FC<CompletedTradeViewProps> = ({
           className={`thumbs-up-button ${satisfactionStatus ? 'active' : ''}`}
           onClick={handleThumbsUp}
         >
-          ??
+          <span aria-hidden="true">👍</span>
+          <span>{satisfactionStatus ? 'Feedback saved' : 'Mark as satisfying'}</span>
         </button>
       </div>
     </div>

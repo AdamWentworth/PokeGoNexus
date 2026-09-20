@@ -1,4 +1,6 @@
 import React, { useId } from 'react';
+import OverlayDismissButton from '../OverlayDismissButton';
+import OverlayPortal from '../OverlayPortal';
 import './ModalStyles.css';
 
 type ConfirmDialogProps = {
@@ -13,7 +15,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ message, onConfirm, onCan
   const lines = message.split('\n');
 
   return (
-    <div className="modal-overlay confirm-modal-overlay">
+    <OverlayPortal onClose={onCancel} closeOnBackdrop>
+      <div className="modal-overlay confirm-modal-overlay">
       <div
         aria-describedby={descriptionId}
         aria-labelledby={titleId}
@@ -40,23 +43,22 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ message, onConfirm, onCan
         </div>
 
         <div className="modal-actions confirm-modal__actions">
-          <button
+          <OverlayDismissButton
             className="btn btn-secondary confirm-modal__button confirm-modal__button--secondary"
-            onClick={onCancel}
-            type="button"
+            onDismiss={onCancel}
           >
             Cancel
-          </button>
-          <button
+          </OverlayDismissButton>
+          <OverlayDismissButton
             className="btn btn-primary confirm-modal__button confirm-modal__button--primary"
-            onClick={onConfirm}
-            type="button"
+            onDismiss={onConfirm}
           >
             OK
-          </button>
+          </OverlayDismissButton>
         </div>
       </div>
-    </div>
+      </div>
+    </OverlayPortal>
   );
 };
 

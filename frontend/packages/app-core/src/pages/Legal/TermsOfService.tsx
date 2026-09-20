@@ -3,9 +3,9 @@ import LegalPage from './LegalPage';
 const TermsOfService = () => (
   <LegalPage eyebrow="Legal" title="Terms of Service" updated="July 28, 2026">
     <section>
-      <h2>Using PokeGoNexus</h2>
+      <h2>Using Pokémon Go Nexus</h2>
       <p>
-        You may use PokeGoNexus for lawful personal and community purposes. You are
+        You may use Pokémon Go Nexus for lawful personal and community purposes. You are
         responsible for the accuracy of information you submit and for protecting
         access to your account.
       </p>
@@ -15,13 +15,13 @@ const TermsOfService = () => (
       <p>
         Do not misuse the service, impersonate others, harass users, attempt
         unauthorized access, interfere with service operation, automate abusive
-        traffic, or use PokeGoNexus to facilitate unlawful activity.
+        traffic, or use Pokémon Go Nexus to facilitate unlawful activity.
       </p>
     </section>
     <section>
       <h2>Availability and changes</h2>
       <p>
-        PokeGoNexus is provided on an as-available basis. Features may change, be
+        Pokémon Go Nexus is provided on an as-available basis. Features may change, be
         interrupted, or be discontinued. We may restrict accounts that threaten
         users, data, or service integrity.
       </p>
@@ -30,16 +30,9 @@ const TermsOfService = () => (
       <h2>Third-party services</h2>
       <p>
         Pokémon GO, Pokémon, Google, Discord, Facebook, and related marks belong to
-        their respective owners. PokeGoNexus is an independent community service
+        their respective owners. Pokémon Go Nexus is an independent community service
         and is not endorsed by Niantic, The Pokémon Company, Nintendo, or the login
         providers.
-      </p>
-    </section>
-    <section>
-      <h2>Contact</h2>
-      <p>
-        Questions about these terms can be sent to{' '}
-        <a href="mailto:admin@pokegonexus.com">admin@pokegonexus.com</a>.
       </p>
     </section>
   </LegalPage>

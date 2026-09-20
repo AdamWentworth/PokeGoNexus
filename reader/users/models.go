@@ -145,6 +145,9 @@ type UserProfile struct {
 	CollectionVisibility    string           `gorm:"column:collection_visibility" json:"collection_visibility"`
 	FriendRequestPermission string           `gorm:"column:friend_request_permission" json:"friend_request_permission"`
 	TrainerCodeVisibility   string           `gorm:"column:trainer_code_visibility" json:"trainer_code_visibility"`
+	CoordinationMethod      string           `gorm:"column:coordination_method" json:"coordination_method"`
+	CoordinationHandle      *string          `gorm:"column:coordination_handle" json:"coordination_handle,omitempty"`
+	ShareTradeContact       bool             `gorm:"column:share_trade_contact" json:"share_trade_contact"`
 	ShowLocation            bool             `gorm:"column:show_location" json:"show_location"`
 	ShowPokemonGoName       bool             `gorm:"column:show_pokemon_go_name" json:"show_pokemon_go_name"`
 	UpdatedAt               time.Time        `gorm:"column:updated_at" json:"updated_at"`
@@ -172,6 +175,40 @@ type UserBlock struct {
 }
 
 func (UserBlock) TableName() string { return "user_blocks" }
+
+// ---------------- custom Pokemon tags ----------------
+
+type PokemonTag struct {
+	TagID     string     `gorm:"column:tag_id;primaryKey" json:"tag_id"`
+	UserID    string     `gorm:"column:user_id" json:"-"`
+	Parent    string     `gorm:"column:parent" json:"parent"`
+	Name      string     `gorm:"column:name" json:"name"`
+	Color     string     `gorm:"column:color" json:"color"`
+	Sort      int        `gorm:"column:sort" json:"sort"`
+	CreatedAt time.Time  `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt *time.Time `gorm:"column:updated_at" json:"updated_at,omitempty"`
+	DeletedAt *time.Time `gorm:"column:deleted_at" json:"-"`
+}
+
+func (PokemonTag) TableName() string { return "tags" }
+
+type PokemonTagOrder struct {
+	UserID    string    `gorm:"column:user_id;primaryKey" json:"-"`
+	Parent    string    `gorm:"column:parent;primaryKey" json:"parent"`
+	TagKeys   RawJSON   `gorm:"column:tag_keys;type:json" json:"tag_keys"`
+	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+}
+
+func (PokemonTagOrder) TableName() string { return "tag_orders" }
+
+type PokemonInstanceTag struct {
+	TagID      string    `gorm:"column:tag_id;primaryKey"`
+	InstanceID string    `gorm:"column:instance_id;primaryKey"`
+	UserID     string    `gorm:"column:user_id"`
+	CreatedAt  time.Time `gorm:"column:created_at"`
+}
+
+func (PokemonInstanceTag) TableName() string { return "instance_tags" }
 
 // ---------------- instances ----------------
 
@@ -250,6 +287,7 @@ type PokemonInstance struct {
 	NotWantedList RawJSON `gorm:"column:not_wanted_list;type:json" json:"not_wanted_list"`
 	TradeFilters  JSON    `gorm:"column:trade_filters;type:json"  json:"trade_filters"`
 	WantedFilters JSON    `gorm:"column:wanted_filters;type:json" json:"wanted_filters"`
+	WantedSizes   RawJSON `gorm:"column:wanted_size_preferences;type:json" json:"wanted_size_preferences"`
 
 	// Misc
 	FriendshipLevel *int    `gorm:"column:friendship_level" json:"friendship_level"`

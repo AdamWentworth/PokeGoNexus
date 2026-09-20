@@ -21,7 +21,6 @@ func TestRankingsAggregationCountsDistinctUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open test MySQL: %v", err)
 	}
-	defer sqlDB.Close()
 
 	for _, statement := range []string{
 		"DROP TABLE IF EXISTS pokemon_rankings_snapshot",
@@ -35,6 +34,8 @@ func TestRankingsAggregationCountsDistinctUsers(t *testing.T) {
 			is_wanted BOOLEAN NOT NULL DEFAULT FALSE,
 			most_wanted BOOLEAN NOT NULL DEFAULT FALSE,
 			is_caught BOOLEAN NOT NULL DEFAULT FALSE,
+			favorite BOOLEAN NOT NULL DEFAULT FALSE,
+			is_for_trade BOOLEAN NOT NULL DEFAULT FALSE,
 			registered BOOLEAN NOT NULL DEFAULT FALSE,
 			disabled BOOLEAN NOT NULL DEFAULT FALSE
 		) ENGINE=InnoDB`,
@@ -52,6 +53,7 @@ func TestRankingsAggregationCountsDistinctUsers(t *testing.T) {
 		} {
 			_, _ = sqlDB.Exec("DROP TABLE IF EXISTS " + table)
 		}
+		_ = sqlDB.Close()
 	})
 
 	if err := migrations.Apply(dsn); err != nil {

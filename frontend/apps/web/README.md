@@ -1,6 +1,6 @@
-# PokeGo Nexus Frontend
+# Pokémon Go Nexus Frontend
 
-This is the **React web frontend** for the PokeGo Nexus platform. It is the primary client for managing Pokémon ownership, proposing trades, maintaining wanted lists, browsing Pokédex data, searching trainers/Pokémon, and validating Safari/WebKit behavior before production deploys.
+This is the **React web frontend** for the Pokémon Go Nexus platform. It is the primary client for managing Pokémon ownership, proposing trades, maintaining wanted lists, browsing Pokédex data, searching trainers/Pokémon, and validating Safari/WebKit behavior before production deploys.
 
 ---
 
@@ -250,7 +250,7 @@ Current read-only video flows are `collection-overlay` and `search-results`. Cur
 This service now has dedicated frontend workflows:
 
 - `ci-frontend` (`.github/workflows/ci-frontend.yml`)
-- `deploy-frontend-prod` (`.github/workflows/deploy-frontend-prod.yml`)
+- private HomeOps `deploy-pokegonexus-frontend`
 
 ### What `ci-frontend` does
 
@@ -263,19 +263,13 @@ This service now has dedicated frontend workflows:
 - Runs Trivy scans and publishes an SBOM artifact.
 - Pushes `adamwentworth/frontend-nginx` tags (`sha-<commit>` + `latest`) when `DOCKERHUB_TOKEN` is set.
 
-### What `deploy-frontend-prod` does
+### What the private HomeOps deployment does
 
-- Manual trigger (`workflow_dispatch`) on your self-hosted prod runner.
-- Uses the workflow checkout for compose definitions and keeps prod state under `deploy_root`.
-- Runs the frontend image as a self-contained artifact; nginx config is not bind-mounted from the runner checkout.
-- Validates compose and required Docker networks (`kafka_default`, `pokemon_edge`).
-- Pulls requested image, deploys its resolved digest when available, and recreates `frontend_nginx` with rollback on failed health check.
-
-### Deploy input examples
-
-- `image_ref=latest`
-- `image_ref=sha-<commit>`
-- `image_ref=adamwentworth/frontend-nginx:sha-<commit>`
+- Accepts the current full PokeGoNexus `master` SHA.
+- Rejects images whose embedded source revision does not match.
+- Deploys the immutable SHA-tagged frontend image.
+- Validates Compose, Docker networks, TLS, Nginx, and external HTTPS health.
+- Rolls back a failed replacement without checking out public source on the production runner.
 
 ### Required repository secret
 

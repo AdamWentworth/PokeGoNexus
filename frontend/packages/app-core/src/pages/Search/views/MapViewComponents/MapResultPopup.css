@@ -1,0 +1,264 @@
+.map-result-popup {
+  --map-result-accent: #2196f3;
+
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  width: min(350px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 150px));
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--map-result-accent) 58%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-search-section-surface) 96%, transparent);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.36);
+  color: var(--color-text-primary);
+  text-align: left;
+  backdrop-filter: blur(16px);
+  scrollbar-width: thin;
+}
+
+.map-result-popup--trade {
+  --map-result-accent: #31b777;
+}
+
+.map-result-popup--wanted {
+  --map-result-accent: #ff5965;
+}
+
+.map-result-popup__close {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.map-result-popup__header {
+  display: flex;
+  min-width: 0;
+  padding-right: 42px;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.map-result-popup__header > span {
+  color: var(--map-result-accent);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.map-result-popup__header > strong {
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-result-popup__header > small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.map-result-popup__pokemon {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--map-result-accent) 28%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--map-result-accent) 8%, transparent);
+}
+
+.map-result-popup__image-frame {
+  display: grid;
+  width: 92px;
+  height: 92px;
+  place-items: center;
+}
+
+.map-result-popup__image-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.24));
+}
+
+.map-result-popup__image-frame span {
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.map-result-popup__pokemon h3 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.15rem;
+  line-height: 1.18;
+}
+
+.map-popup-linked {
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+.map-popup-linked__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.map-popup-linked__header h4 {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.map-popup-linked__header strong {
+  min-width: 26px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--map-result-accent) 20%, transparent);
+  color: var(--map-result-accent);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.map-popup-linked__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.map-popup-linked__item {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--color-text-secondary);
+  font-size: 0.65rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.map-popup-linked__item img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.map-popup-linked__item img.glowing-pokemon {
+  border-radius: 10px;
+  background: color-mix(in srgb, #ffd54a 13%, transparent);
+  filter: drop-shadow(0 0 5px rgba(255, 213, 74, 0.65));
+}
+
+.map-popup-linked__item span {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.map-popup-linked__more {
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.map-result-popup__details {
+  border-top: 1px solid color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  padding-top: 8px;
+}
+
+.map-result-popup__details summary {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.map-result-popup__details .moves-container,
+.map-result-popup__details .iv-display-container {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.map-result-popup__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 8px;
+}
+
+.map-result-popup__actions button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.map-result-popup__actions .map-result-popup__primary-action {
+  border-color: var(--map-result-accent);
+  background: var(--map-result-accent);
+  color: #fff;
+}
+
+.map-result-popup button:focus-visible,
+.map-result-popup summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--map-result-accent) 36%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .map-result-popup {
+    width: min(330px, calc(100vw - 24px));
+    max-height: min(390px, calc(100dvh - 230px));
+    padding: 12px;
+  }
+
+  .map-result-popup__pokemon {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+
+  .map-result-popup__image-frame {
+    width: 78px;
+    height: 78px;
+  }
+}

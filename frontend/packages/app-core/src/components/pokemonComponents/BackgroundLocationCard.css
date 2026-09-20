@@ -108,7 +108,8 @@
 }
 
 .background-card-subtitle,
-.background-card-date {
+.background-card-date,
+.background-card-costume {
     font-size: 11px;
     line-height: 1.3;
     font-family: var(--font-family-base);
@@ -122,6 +123,15 @@
 .background-card-date {
     color: #a1a9b6;
     letter-spacing: 0.03em;
+}
+
+.background-card-costume {
+    width: fit-content;
+    padding: 3px 7px;
+    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+    border-radius: 999px;
+    color: #d8dee8;
+    font-weight: 700;
 }
 
 .none-option {
@@ -193,6 +203,7 @@
 :root[data-theme='light'] .selected-background h4,
 :root[data-theme='light'] .background-card-subtitle,
 :root[data-theme='light'] .background-card-date,
+:root[data-theme='light'] .background-card-costume,
 :root[data-theme='light'] .background-selection-summary__label,
 :root[data-theme='light'] .background-selection-summary__meta {
     color: var(--light-text-primary);

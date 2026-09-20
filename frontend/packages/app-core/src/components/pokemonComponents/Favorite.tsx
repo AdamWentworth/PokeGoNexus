@@ -1,6 +1,7 @@
 // Favorite.tsx
 
 import React, { useState, useEffect } from 'react';
+import CollectionPriorityStar from './CollectionPriorityStar';
 import './Favorite.css';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 
@@ -15,10 +16,6 @@ type FavoriteProps = {
 const FavoriteComponent: React.FC<FavoriteProps> = ({ pokemon, editMode, onFavoriteChange }) => {
   const [isFavorite, setIsFavorite] = useState(pokemon.instanceData.favorite);
 
-  const favoriteImage = isFavorite
-    ? '/images/fav_pressed.png'
-    : '/images/fav_unpressed.png';
-
   const toggleFavorite = () => {
     if (editMode) {
       const newFavoriteStatus = !isFavorite;
@@ -32,14 +29,21 @@ const FavoriteComponent: React.FC<FavoriteProps> = ({ pokemon, editMode, onFavor
   }, [pokemon]);
 
   return (
-    <div
+    <button
+      type="button"
       className={`favorite-component ${editMode ? 'editable' : ''} ${
         isFavorite ? 'filled' : 'not-filled'
       }`}
       onClick={toggleFavorite}
+      disabled={!editMode}
+      aria-label={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+      aria-pressed={isFavorite}
     >
-      <img src={favoriteImage} alt={isFavorite ? 'Favorite' : 'Not Favorite'} />
-    </div>
+      <CollectionPriorityStar
+        filled={isFavorite}
+        tone={isFavorite ? 'favorite' : 'inherit'}
+      />
+    </button>
   );
 };
 

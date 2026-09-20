@@ -323,9 +323,10 @@ test.describe('Max Battles page', () => {
       expect(
         pokemonDataRequests.some((url) => url.includes('/pokemon/max-data')),
       ).toBe(true);
+      // Owned crowned Pokémon need their original species from the base catalog.
       expect(
         pokemonDataRequests.some((url) => url.includes('/pokemon/catalog')),
-      ).toBe(false);
+      ).toBe(true);
       await expect(page.getByText('CP 927 · Level 30 · 89% IV')).toBeVisible();
       await expect(page.locator('[data-roster-scope="owned"]')).toHaveClass(
         /max-scope-stage--forward/,

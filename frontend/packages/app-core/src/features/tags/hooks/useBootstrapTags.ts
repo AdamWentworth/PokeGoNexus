@@ -5,6 +5,7 @@ import { useInstancesStore } from '@/features/instances/store/useInstancesStore'
 import { useVariantsStore } from '@/features/variants/store/useVariantsStore';
 import { useTagsStore } from '../store/useTagsStore';
 import { createScopedLogger } from '@/utils/logger';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 const log = createScopedLogger('useBootstrapTags');
 
@@ -14,8 +15,12 @@ const log = createScopedLogger('useBootstrapTags');
  * 2. Rebuilds tags whenever both instances and variants are available.
  */
 export function useBootstrapTags(enabled = true) {
+  const isLoggedIn = useAuthStore(state => state.isLoggedIn);
   const hydrateFromCache = useTagsStore(state => state.hydrateFromCache);
   const buildTags        = useTagsStore(state => state.buildTags);
+  const refreshCustomTagDefinitions = useTagsStore(
+    state => state.refreshCustomTagDefinitions,
+  );
 
   const instances = useInstancesStore(state => state.instances);
   const variants  = useVariantsStore(state => state.variants);
@@ -26,7 +31,12 @@ export function useBootstrapTags(enabled = true) {
     hydrateFromCache().catch(error => {
       log.error('Hydration error:', error);
     });
-  }, [enabled, hydrateFromCache]);
+    if (isLoggedIn) {
+      refreshCustomTagDefinitions().catch(error => {
+        log.warn('Using cached custom tags because refresh failed:', error);
+      });
+    }
+  }, [enabled, hydrateFromCache, isLoggedIn, refreshCustomTagDefinitions]);
 
   // Whenever we have both instances and variants, rebuild the tags
   useEffect(() => {

@@ -7,7 +7,7 @@ import type {
 } from '@/types/pokemonSubTypes';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import { getCrownFormLabel, resolveActiveCrownForm } from '@/utils/crownHelpers';
-import { parseBackgroundId } from '@/features/instances/utils/instanceIdentity';
+import { parseBackgroundId } from '@pokemongonexus/shared-domain/instances';
 import {
   buildTypeIcon,
   normalizeTypeName,
@@ -25,7 +25,7 @@ export {
   findInstanceByRefs,
   normalizeInstanceToken,
   parseBackgroundId,
-} from '@/features/instances/utils/instanceIdentity';
+} from '@pokemongonexus/shared-domain/instances';
 
 export {
   resolvePokemonDisplayFusionBackgroundPool,
@@ -215,6 +215,7 @@ export const getPokemonDisplayOwnershipClass = (tagFilter: string): string => {
     case 'trade':
       return 'trade';
     case 'wanted':
+    case 'most wanted':
       return 'wanted';
     case 'missing':
       return 'missing';
@@ -228,7 +229,8 @@ export const shouldDisplayPokemonLuckyBackdrop = (
   instanceData: Partial<PokemonInstance> | undefined,
 ): boolean =>
   Boolean(
-    (tagFilter.toLowerCase() === 'wanted' && instanceData?.pref_lucky) ||
+    (['wanted', 'most wanted'].includes(tagFilter.toLowerCase()) &&
+      instanceData?.pref_lucky) ||
       instanceData?.lucky,
   );
 

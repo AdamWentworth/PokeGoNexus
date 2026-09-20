@@ -31,6 +31,7 @@ vi.mock('@/features/location/hooks/useInitLocation', () => ({
 }));
 
 import AppBootstrap from '@/AppBootstrap';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 function renderAt(pathname: string) {
   return render(
@@ -43,6 +44,7 @@ function renderAt(pathname: string) {
 describe('AppBootstrap', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({ isLoggedIn: false, user: null });
     localStorage.clear();
     delete document.documentElement.dataset.reducedMotion;
   });
@@ -57,14 +59,22 @@ describe('AppBootstrap', () => {
     expect(mockHooks.location).toHaveBeenCalledWith(false);
   });
 
-  it('enables bootstrap on non-auth routes', () => {
+  it('keeps authenticated trade hydration disabled for a signed-out public route', () => {
     renderAt('/pokemon');
 
     expect(mockHooks.variants).toHaveBeenCalledWith(true);
     expect(mockHooks.instances).toHaveBeenCalledWith(true);
     expect(mockHooks.tags).toHaveBeenCalledWith(true);
-    expect(mockHooks.trades).toHaveBeenCalledWith(true);
+    expect(mockHooks.trades).toHaveBeenCalledWith(false);
     expect(mockHooks.location).toHaveBeenCalledWith(true);
+  });
+
+  it('enables trade hydration for a signed-in non-auth route', () => {
+    useAuthStore.setState({ isLoggedIn: true });
+
+    renderAt('/pokemon');
+
+    expect(mockHooks.trades).toHaveBeenCalledWith(true);
   });
 
   it.each(['/max', '/pvp'])(

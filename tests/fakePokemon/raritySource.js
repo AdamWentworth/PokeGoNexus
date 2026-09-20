@@ -129,7 +129,7 @@ function parseCsvLine(line) {
 }
 
 function parsePercent(value) {
-  const normalized = String(value || '').replace(',', '.').replace('%', '').trim();
+  const normalized = String(value || '').replaceAll(',', '.').replaceAll('%', '').trim();
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }

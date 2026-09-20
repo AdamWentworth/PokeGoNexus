@@ -11,31 +11,6 @@
   color: #fff;
 }
 
-/* Toggle Button Row */
-.tag-toggle-row {
-  width: 100%;
-  text-align: center;
-  margin-bottom: 0.75rem;
-}
-
-/* Preview Toggle Button */
-.tags-menu .tag-preview-toggle-button {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background: #555;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-}
-.tags-menu .tag-preview-toggle-button .button-icon {
-  width: 1.2rem;
-  height: 1.2rem;
-  margin-right: 0.5rem;
-}
-
 /* TAG TREE (single column) */
 .tag-tree {
   width: 100%;
@@ -45,156 +20,110 @@
   gap: 0.75rem;
 }
 
-/* Tag-folder container */
-.tag-folder {
-  border: 1px solid #3a3a3a;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #222;
-}
-
-/* Tag-folder header */
-.tag-folder-header {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.65rem 0.9rem;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-}
-.tag-folder-header .tag-folder-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-.tag-folder-header .tag-folder-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.tag-count-badge {
-  background: rgba(255,255,255,0.2);
-  border: 1px solid rgba(255,255,255,0.35);
-  padding: 0.12rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-.tag-count-badge.light { background: rgba(255,255,255,0.22); }
-.tag-count-badge.dark  { background: rgba(0,0,0,0.35); color: #fff; border-color: rgba(0,0,0,0.45); }
-
-.tag-chev {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-right: 2px solid rgba(255,255,255,0.9);
-  border-bottom: 2px solid rgba(255,255,255,0.9);
-  transform: rotate(-45deg);
-  transition: transform 0.2s ease;
-  margin-left: 0.25rem;
-}
-.tag-chev.open { transform: rotate(45deg); }
-
-/* Folder header colors (hierarchy only) */
-.tag-folder-header.Caught  { background-color: #2196F3; }
-.tag-folder-header.Wanted  { background-color: #F44336; }
-.tag-folder-header.Missing { background-color: #777; color: #fff; }
-
-/* Tag-folder body */
-.tag-folder-body {
-  padding: 0.5rem 0.75rem 0.8rem;
-  background: var(--color-tag-folder-body-surface);
-}
-
 /* Sublist container */
 .tag-sublist {
   display: flex;
   flex-direction: column;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Collapsed peek row with colored child-tag buttons
-   ───────────────────────────────────────────────────────────── */
-.tag-peek-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.5rem;
-  border: 2px dashed #3a3a3a;
-  border-radius: 10px;
-  padding: 0.35rem;
-  background: #1a1a1a;
+.tag-order-section {
+  width: 100%;
 }
 
-/* Base peek button */
-.tag-peek-button {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 10px;
-  cursor: pointer;
+.tag-order-section + .tag-order-section {
+  margin-top: 1rem;
+}
 
-  /* content */
+.tag-order-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0 0.15rem;
+}
 
-  padding: 0.55rem 0.7rem;
-  background: #222; /* fallback */
-  color: #111;      /* better contrast on lightened gradients */
+.tag-order-toolbar h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1.05rem;
+}
+
+.tag-order-toolbar span {
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+.tag-order-toolbar button,
+.tag-order-actions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tag-order-toolbar button {
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 44px;
+  padding: 0.55rem 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 22%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.8rem;
   font-weight: 800;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
 }
 
-.tag-peek-button:focus-visible {
-  outline: 2px solid #fff;
+.tag-order-toolbar button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 38%, transparent);
   outline-offset: 2px;
-  border-color: rgba(255,255,255,0.7);
-}
-.tag-peek-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
 
-/* Gradient layer inside the button */
-.tag-peek-button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(180deg, #444, #222);
-}
-.tag-peek-button > * {
-  position: relative;
-  z-index: 1;
+.tag-order-actions {
+  gap: 0.35rem;
 }
 
-/* Title span (for potential future styling) */
-.tag-peek-title {}
-
-/* Use the same palettes you use on TagItems (lightest at bottom) */
-.tag-peek-button[data-tag="Favorites"]::before {
-  background: linear-gradient(180deg, #ffd77aff 0%, #fff1aaff 45%, #fff9dcff 100%);
-}
-.tag-peek-button[data-tag="Trade"]::before {
-  background: linear-gradient(180deg, #3aa85fff 0%, #7fdc9eff 45%, #eaf8f1ff 100%);
-}
-.tag-peek-button[data-tag="Caught"]::before {
-  background: linear-gradient(180deg, #3f89ffff 0%, #9bc5ffff 45%, #e6f1ffff 100%);
-}
-.tag-peek-button[data-tag="Most Wanted"]::before {
-  background: linear-gradient(180deg, #ff6f61ff 0%, #ff9b89ff 45%, #ffe4dcff 100%);
-}
-.tag-peek-button[data-tag="Wanted"]::before {
-  background: linear-gradient(180deg, #dd5260ff 0%, #fd9090ff 45%, #ffc5cc 100%);
+.tag-order-toolbar .tag-order-save {
+  border-color: color-mix(in srgb, #2fc17d 58%, transparent);
+  background: color-mix(in srgb, #2fc17d 18%, transparent);
 }
 
-/* Make the badge readable on colorful backgrounds */
-.tag-peek-button .tag-count-badge {
-  backdrop-filter: saturate(1.2) blur(0px);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25) inset;
+.tag-order-toolbar button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.tag-order-help {
+  margin: 0.25rem 0.2rem 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.tag-create-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px dashed color-mix(in srgb, #2196f3 60%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, #2196f3 10%, transparent);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tag-create-button-wanted {
+  border-color: color-mix(in srgb, #f44336 60%, transparent);
+  background: color-mix(in srgb, #f44336 10%, transparent);
+}
+
+.tag-create-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 32%, transparent);
+  outline-offset: 2px;
 }

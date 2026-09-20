@@ -153,16 +153,33 @@ func mergeUniqueTagIDs(tagSets ...[]string) []string {
 	return out
 }
 
-func filterValidUserTagIDs(db *gorm.DB, userID string, tagIDs []string) ([]string, error) {
+func builtInTagNamesForParent(parent string) []string {
+	switch parent {
+	case "caught":
+		return []string{"favorite"}
+	case "trade":
+		return []string{"for trade"}
+	case "wanted":
+		return []string{"wanted", "most wanted"}
+	default:
+		return nil
+	}
+}
+
+func filterValidUserTagIDsForParent(db *gorm.DB, userID, parent string, tagIDs []string) ([]string, error) {
 	userID = strings.TrimSpace(userID)
 	if userID == "" || len(tagIDs) == 0 {
 		return nil, nil
 	}
 
 	var valid []string
-	if err := db.
+	query := db.
 		Table("tags").
-		Where("user_id = ? AND tag_id IN ?", userID, tagIDs).
+		Where("user_id = ? AND parent = ? AND deleted_at IS NULL AND tag_id IN ?", userID, parent, tagIDs)
+	if builtIns := builtInTagNamesForParent(parent); len(builtIns) > 0 {
+		query = query.Where("LOWER(name) NOT IN ?", builtIns)
+	}
+	if err := query.
 		Pluck("tag_id", &valid).
 		Error; err != nil {
 		return nil, err
@@ -280,6 +297,7 @@ func syncInstanceTagsForInstance(
 	caughtTagsJSON string,
 	tradeTagsJSON string,
 	wantedTagsJSON string,
+	isCaught bool,
 	favorite bool,
 	isForTrade bool,
 	isWanted bool,
@@ -291,24 +309,42 @@ func syncInstanceTagsForInstance(
 		return nil
 	}
 
-	systemTagIDs, err := resolveSystemTagIDs(db, userID, favorite, isForTrade, isWanted, mostWanted)
-	if err != nil {
-		return err
-	}
-
-	tagIDs := mergeUniqueTagIDs(
-		extractTagIDsFromJSON(caughtTagsJSON),
-		extractTagIDsFromJSON(tradeTagsJSON),
-		extractTagIDsFromJSON(wantedTagsJSON),
-		systemTagIDs,
+	systemTagIDs, err := resolveSystemTagIDs(
+		db,
+		userID,
+		favorite && isCaught,
+		isForTrade && isCaught,
+		isWanted,
+		mostWanted && isWanted,
 	)
-	if len(tagIDs) == 0 {
-		return cleanupInstanceTags(db, instanceID)
-	}
-
-	validTagIDs, err := filterValidUserTagIDs(db, userID, tagIDs)
 	if err != nil {
 		return err
+	}
+
+	validTagIDs := append([]string{}, systemTagIDs...)
+	parentInputs := []struct {
+		parent  string
+		enabled bool
+		raw     string
+	}{
+		{parent: "caught", enabled: isCaught, raw: caughtTagsJSON},
+		{parent: "trade", enabled: isForTrade, raw: tradeTagsJSON},
+		{parent: "wanted", enabled: isWanted, raw: wantedTagsJSON},
+	}
+	for _, input := range parentInputs {
+		if !input.enabled {
+			continue
+		}
+		validForParent, filterErr := filterValidUserTagIDsForParent(
+			db,
+			userID,
+			input.parent,
+			extractTagIDsFromJSON(input.raw),
+		)
+		if filterErr != nil {
+			return filterErr
+		}
+		validTagIDs = mergeUniqueTagIDs(validTagIDs, validForParent)
 	}
 	if len(validTagIDs) == 0 {
 		return cleanupInstanceTags(db, instanceID)

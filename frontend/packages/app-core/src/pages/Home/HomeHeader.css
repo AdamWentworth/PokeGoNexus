@@ -1,59 +1,288 @@
-/* HomeHeader.css */
-
 .homeHeader {
-    background-color: #1a1a1a;
-    text-align: center;
-    margin-bottom: clamp(1rem, 2vw, 2rem);
-    width: 100%;
-  }
-  
-  .logoContainer {
-    padding-top: clamp(0.5rem, 2vw, 1rem);
-  }
-  
-  .logoContainer img {
-    max-width: clamp(100px, 20vw, 150px);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))
-            drop-shadow(0 2px 2px rgba(255, 255, 255, 0.2));
-  }
-  
-  .titleContainer h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
-    margin: 0;
-    font-weight: 800;
-    color: #ffffff;
-  }
-  
-  .titleContainer h2 {
-    font-size: clamp(1.8rem, 4vw, 2.5rem);
-    font-weight: bold;
-    margin: 0;
-    background: linear-gradient(to right, #c8fdf3, #42c9ff);
-    background-size: 100% 100%;
-    background-position: 0 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: none;
-    display: inline-block;
-  }
-  
-  .titleContainer p {
-    max-width: 50%;
-    margin: clamp(0.25rem, 1vw, 0.5rem) auto;
-    color: #bbb;
-    font-size: clamp(1rem, 2vw, 1.2rem);
-    font-weight: 400;
-    line-height: 1.5;
-  }
-  
-  .titleContainer p strong {
-    color: #c8fdf3;
-  }
-  
-  @media (max-width: 768px) {
-    .titleContainer p {
-      max-width: 85%;
-    }
-  }
-  
+  position: relative;
+  overflow: clip;
+  background:
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--home-blue) 19%, transparent), transparent 31rem),
+    radial-gradient(circle at 50% 88%, color-mix(in srgb, var(--home-green) 9%, transparent), transparent 28rem),
+    linear-gradient(160deg, color-mix(in srgb, var(--color-accent-primary) 9%, var(--color-app-surface)), var(--color-app-surface) 64%);
+}
+
+.homeHeader::after {
+  position: absolute;
+  inset: auto -14% -55% 32%;
+  height: 620px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.homeHeader__nav {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  box-sizing: border-box;
+  width: min(1180px, calc(100% - 32px));
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 auto;
+  padding: 16px 0;
+}
+
+.homeHeader__nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.homeHeader__nav-links > a {
+  display: inline-flex;
+  min-height: 42px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 13px;
+  border-radius: 11px;
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.homeHeader__nav-links > .homeHeader__login { border: 1px solid var(--home-border); }
+.homeHeader__nav-links > .homeHeader__register { border: 1px solid var(--home-blue); background: var(--home-blue); color: #05111d; }
+
+.homeHeader__hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 840px;
+  align-items: center;
+  flex-direction: column;
+  gap: 46px;
+  padding: 34px 0 88px;
+}
+
+.homeHeader__copy {
+  display: flex;
+  max-width: 940px;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.homeHeader__hero-logo {
+  width: clamp(360px, 42vw, 520px);
+  height: auto;
+  margin-bottom: 16px;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 16px 24px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 22px color-mix(in srgb, var(--home-blue) 20%, transparent));
+}
+
+.homeHeader__copy h1 {
+  max-width: 940px;
+  margin: 9px 0 20px;
+  font-size: clamp(3rem, 6vw, 5.35rem);
+  /* Keep gradient-text descenders (notably the g in "right") in the paint box. */
+  line-height: 1.04;
+  letter-spacing: -0.055em;
+}
+
+.homeHeader__copy h1 em {
+  display: inline-block;
+  background: linear-gradient(100deg, #c8fdf3 0%, #42c9ff 48%, #6d8cff 100%);
+  background-clip: text;
+  color: transparent;
+  font-style: normal;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.homeHeader__copy > p {
+  max-width: 660px;
+  margin: 0 auto;
+  color: var(--color-text-secondary);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.58;
+}
+
+.homeHeader__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+  justify-content: center;
+}
+
+.homeHeader__proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px 16px;
+  margin: 23px 0 0;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  list-style: none;
+  justify-content: center;
+}
+
+.homeHeader__proof li { display: inline-flex; align-items: center; gap: 5px; }
+.homeHeader__proof svg { flex: 0 0 auto; color: var(--home-blue); }
+
+.homeHeader__match-preview {
+  position: relative;
+  box-sizing: border-box;
+  width: min(840px, 100%);
+  padding: 18px;
+  border: 1px solid var(--home-border-strong);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--home-green) 10%, transparent), transparent 18rem),
+    color-mix(in srgb, var(--color-text-primary) 8%, var(--color-app-surface));
+  box-shadow: 0 30px 72px rgba(0, 0, 0, 0.28);
+}
+
+.homeHeader__match-preview::before {
+  position: absolute;
+  inset: -16px 28px auto;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--home-green) 32%, transparent);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: color-mix(in srgb, var(--home-green) 8%, transparent);
+  content: '';
+  opacity: 0.72;
+}
+
+.homeHeader__match-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 3px 3px 15px;
+  text-align: center;
+}
+
+.homeHeader__match-heading span {
+  color: var(--home-green);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.homeHeader__match-heading strong { font-size: 1.08rem; line-height: 1.25; }
+
+.homeHeader__exchange {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.homeHeader__exchange-pokemon {
+  display: flex;
+  min-width: 0;
+  min-height: 265px;
+  box-sizing: border-box;
+  align-items: center;
+  flex-direction: column;
+  padding: 13px 10px 14px;
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-app-surface) 74%, transparent);
+  text-align: center;
+}
+
+.homeHeader__exchange-pokemon--trade { border-color: color-mix(in srgb, var(--home-green) 42%, var(--home-border)); }
+.homeHeader__exchange-pokemon--wanted { border-color: color-mix(in srgb, var(--home-red) 38%, var(--home-border)); }
+
+.homeHeader__exchange-pokemon small {
+  color: var(--color-text-secondary);
+  font-size: 0.63rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.homeHeader__exchange-pokemon--trade small { color: var(--home-green); }
+.homeHeader__exchange-pokemon--wanted small { color: var(--home-red); }
+
+.homeHeader__exchange-artwork {
+  width: 148px;
+  height: 148px;
+  margin-block: 5px 2px;
+  filter: drop-shadow(0 14px 13px rgba(0, 0, 0, 0.3));
+  --pokemon-max-badge-size: 28%;
+  --pokemon-max-badge-inset-block: 4%;
+  --pokemon-max-badge-inset-inline: 4%;
+}
+
+.homeHeader__exchange-pokemon strong { max-width: 180px; font-size: 0.84rem; line-height: 1.2; }
+.homeHeader__exchange-pokemon > span { margin-top: 5px; color: var(--color-text-secondary); font-size: 0.62rem; }
+
+.homeHeader__exchange-icon {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  margin-inline: -1px;
+  border: 1px solid var(--home-border-strong);
+  border-radius: 50%;
+  background: var(--home-surface-raised);
+}
+
+.homeHeader__exchange-icon img { width: 36px; height: 36px; object-fit: contain; }
+
+.homeHeader__match-result {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  margin-top: 10px;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--home-green) 32%, var(--home-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--home-green) 8%, transparent);
+}
+
+.homeHeader__match-result > svg { color: var(--home-green); font-size: 1.1rem; }
+.homeHeader__match-result > span { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.homeHeader__match-result strong { font-size: 0.77rem; }
+.homeHeader__match-result small { color: var(--color-text-secondary); font-size: 0.63rem; line-height: 1.35; }
+
+@media (max-width: 900px) {
+  .homeHeader__hero { min-height: 0; padding-top: 48px; }
+  .homeHeader__match-preview { width: min(680px, 100%); }
+}
+
+@media (max-width: 600px) {
+  .homeHeader__nav { width: calc(100% - 20px); padding-top: 10px; }
+  .homeHeader__nav .home-brand img { width: 38px; height: 38px; }
+  .homeHeader__nav .home-brand span,
+  .homeHeader__nav-links > a:first-child { display: none; }
+  .homeHeader__nav-links > a { min-height: 40px; padding-inline: 11px; font-size: 0.74rem; }
+  .homeHeader__hero { gap: 34px; padding: 32px 0 58px; }
+  .homeHeader__hero-logo { width: min(350px, 94vw); margin-bottom: 12px; }
+  .homeHeader__copy h1 { font-size: clamp(2.75rem, 14vw, 4.1rem); }
+  .homeHeader__copy > p { font-size: 0.92rem; line-height: 1.5; }
+  .homeHeader__actions { flex-direction: column; }
+  .homeHeader__actions a { width: 100%; }
+  .homeHeader__proof { gap: 8px 12px; }
+  .homeHeader__match-preview { padding: 12px; border-radius: 21px; }
+  .homeHeader__match-heading { padding-bottom: 11px; }
+  .homeHeader__exchange { grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr); gap: 4px; }
+  .homeHeader__exchange-pokemon { min-height: 220px; padding-inline: 6px; border-radius: 14px; }
+  .homeHeader__exchange-artwork { width: min(31vw, 118px); height: min(31vw, 118px); }
+  .homeHeader__exchange-pokemon strong { font-size: 0.72rem; }
+  .homeHeader__exchange-pokemon > span { font-size: 0.56rem; }
+  .homeHeader__exchange-icon { width: 40px; height: 40px; }
+  .homeHeader__exchange-icon img { width: 29px; height: 29px; }
+}

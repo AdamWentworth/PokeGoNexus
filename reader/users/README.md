@@ -11,11 +11,14 @@ trainer snapshots.
   `GET /api/instances/sync`.
 - Upsert user profile fields in MySQL.
 - Manage privacy preferences, friendships, requests, and blocks.
+- Manage user-owned custom Pokémon tag definitions and colors.
 - Validate and execute trade proposals and state transitions.
 - Atomically transfer Pokémon only after both trade participants confirm.
 - Write participant-targeted trade events to a transactional MySQL outbox in
   the same commit as each command.
-- Reveal trade-partner details according to relationship/privacy rules.
+- Reveal opted-in trade-coordination details only to participants in an
+  accepted, active trade; blocks always deny access and precise coordinates are
+  never returned.
 - Serve public trainer snapshot data by username.
 - Provide autocomplete suggestions for trainer search.
 - Expose health and metrics endpoints for operations.
@@ -28,6 +31,26 @@ depends on live delivery, and reconnect reads remain authoritative.
 Profile, privacy, friendship, and block changes use that same transactional
 outbox. Other devices and affected friends invalidate their short-lived
 TanStack Query cache and refetch canonical state.
+
+## Custom Pokémon tags
+
+Authenticated tag-definition routes are available under `/api` and
+`/api/users`:
+
+- `GET /tags`
+- `POST /tags`
+- `PUT /tags/order`
+- `PUT /tags/:tag_id`
+- `DELETE /tags/:tag_id`
+
+The users service synchronously owns each custom tag's name, color, and
+Inventory/Wanted parent. Built-in tags are reserved and cannot be renamed or
+deleted. Built-in and custom tags can be freely interleaved within their parent;
+the complete account-synced order is stored in `tag_orders`. Applying a tag does
+not use these routes: membership remains in an instance's `caught_tags` or
+`wanted_tags` array and follows the normal receiver/Kafka Pokémon synchronization
+path. MySQL `tags` and `instance_tags` remain authoritative after that
+asynchronous write is consumed.
 
 ## Trade command routes
 
@@ -46,6 +69,13 @@ Authenticated routes are available under both `/api` and the nginx-compatible
 
 The JWT determines the acting user. Clients cannot choose proposer identity,
 status, timestamps, confirmations, or Pokémon ownership.
+
+The partner route is a post-acceptance handoff, not a directory or chat API. It
+returns only the partner's opted-in Pokémon GO name, Trainer Code, preferred
+external coordination method/handle, and optional broad saved location. It
+rejects proposed or terminal trades and blocked relationships. Pokémon Go Nexus
+does not store external messages or expose latitude/longitude through this
+route.
 
 `GET /trades` and `GET /friends` remain backward compatible when called without
 pagination parameters. New callers may pass `limit=1..100` and follow the opaque

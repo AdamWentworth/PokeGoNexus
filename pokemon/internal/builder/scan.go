@@ -73,7 +73,7 @@ func legacyScalarWireValue(column string, value any) (any, bool) {
 		// the established JSON number representation, while preserving blanks/None.
 		switch typed := value.(type) {
 		case string:
-			if integer, err := strconv.ParseInt(typed, 10, 64); err == nil {
+			if integer, err := strconv.Atoi(typed); err == nil {
 				return integer, true
 			}
 			return typed, true

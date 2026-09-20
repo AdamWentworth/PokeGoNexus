@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildClearActiveTagMessage } from '@pokemongonexus/shared-ui-tokens';
 
 import { AppLoadingProvider } from '@/contexts/AppLoadingContext';
+import { useTagsStore } from '@/features/tags/store/useTagsStore';
 import PokemonMenu from '@/pages/Pokemon/components/Menus/PokemonMenu/PokemonMenu';
 
 vi.mock('@/components/LoadingSpinner', () => ({
@@ -89,6 +91,7 @@ describe('PokemonMenu', () => {
   beforeEach(() => {
     confirmMock.mockClear();
     confirmMock.mockResolvedValue(true);
+    useTagsStore.setState({ customTags: { caught: {}, wanted: {} } });
   });
 
   it('uses the shared loading spinner for its loading fallback', () => {
@@ -127,9 +130,7 @@ describe('PokemonMenu', () => {
     );
 
     await waitFor(() => {
-      expect(confirmMock).toHaveBeenCalledWith(
-        expect.stringContaining('Clear the Caught tag?'),
-      );
+      expect(confirmMock).toHaveBeenCalledWith(buildClearActiveTagMessage('Caught'));
       expect(onClearTagFilter).toHaveBeenCalledTimes(1);
     });
   });
@@ -148,10 +149,62 @@ describe('PokemonMenu', () => {
     const chip = screen.getByText('Favorites').closest('.active-tag-filter-row');
     expect(chip).toHaveClass('active-tag-filter-favorites');
     expect(chip).toHaveClass('active-tag-filter-with-icon');
-    expect(chip?.querySelector('.active-tag-filter-icon')).toHaveAttribute(
-      'src',
-      '/images/fav_pressed.png',
+    expect(chip?.querySelector('.active-tag-filter-icon')).toHaveClass(
+      'collection-priority-star--favorite',
     );
+  });
+
+  it('uses the assigned color for a custom tag filter chip', () => {
+    useTagsStore.setState({
+      customTags: {
+        caught: {
+          'tag-shadow-shinies': {
+            tag: {
+              tag_id: 'tag-shadow-shinies',
+              parent: 'caught',
+              name: 'Shadow Shinies',
+              color: '#7C3AED',
+              sort: 10,
+            },
+            items: {},
+          },
+        },
+        wanted: {},
+      },
+    });
+
+    const { container } = render(
+      <AppLoadingProvider>
+        <PokemonMenu
+          {...makeProps({ tagFilter: 'custom:tag-shadow-shinies' })}
+        />
+      </AppLoadingProvider>,
+    );
+
+    const chip = container.querySelector('.active-tag-filter-row');
+    expect(chip?.querySelector('.active-tag-filter-name')).toHaveTextContent('Shadow Shinies');
+    expect(chip).toHaveAttribute('data-custom', 'true');
+    expect(chip).toHaveStyle({ '--active-custom-tag-color': '#7C3AED' });
+    expect(container.querySelector('.active-tag-filter-color')).not.toBeInTheDocument();
+  });
+
+  it('shows a required tag without a clear control for foreign catalogs', () => {
+    render(
+      <AppLoadingProvider>
+        <PokemonMenu
+          {...makeProps({
+            isEditable: false,
+            tagFilter: 'Caught',
+            onClearTagFilter: undefined,
+          })}
+        />
+      </AppLoadingProvider>,
+    );
+
+    expect(screen.getByText('Caught')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /clear caught tag filter/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('selects a catalog Pokemon instead of opening the legacy Pokedex overlay', () => {

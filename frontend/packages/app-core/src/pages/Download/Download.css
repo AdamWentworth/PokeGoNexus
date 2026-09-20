@@ -1,0 +1,51 @@
+.download-page {
+  text-align: left;
+}
+
+.download-release__version {
+  color: var(--color-text-primary);
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.download-release__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 18px;
+}
+
+.download-release__checksum {
+  margin-block: 18px;
+}
+
+.download-release__checksum summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--information-accent);
+  cursor: pointer;
+}
+
+.download-release__checksum summary:focus-visible {
+  outline: 3px solid var(--information-accent);
+  outline-offset: 3px;
+}
+
+.download-release__checksum code {
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+}
+
+.download-steps {
+  display: grid;
+  gap: 12px;
+  padding-left: 24px;
+  color: var(--information-muted);
+  line-height: 1.6;
+}
+
+.download-page .information-section > p {
+  color: var(--information-muted);
+  line-height: 1.6;
+}

@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+name: Native methodology references smoke
+---
+- openLink: "${APP_LINK_BASE}/native/raid-methodology"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "How raid rankings work"
+- assertVisible: "Ranking modes"
+- takeScreenshot: "native-raid-methodology"
+- tapOn: "Metrics"
+- assertVisible: "One table, several useful answers"
+- openLink: "${APP_LINK_BASE}/native/pvp-methodology"
+- waitForAnimationToEnd
+- assertVisible: "How PvP rankings work"
+- assertVisible: "Four tools"
+- takeScreenshot: "native-pvp-methodology"
+- tapOn: "Battle Lab"
+- assertVisible: "Focused matchups and switch-aware 3v3 battles"

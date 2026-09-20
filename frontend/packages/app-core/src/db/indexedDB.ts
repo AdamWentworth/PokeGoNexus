@@ -7,5 +7,4 @@ export * from './instancesDB';
 export * from './tagsDB';
 export * from './tradesDB';
 export * from './batchedUpdatesDB';
-export * from './pokedexDB';
 export * from './registrationsDB';

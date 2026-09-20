@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           # Pin patch to avoid govulncheck failing on older stdlib CVEs
-          go-version: "1.26.5"
+          go-version: "1.26.6"
           cache: true
           cache-dependency-path: receiver/go.sum
 
@@ -55,7 +55,11 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Build Container Image
-        run: docker build --pull -t receiver_service:ci-${{ github.sha }} ./receiver
+        run: >-
+          docker build --pull
+          --build-arg POKEGONEXUS_BUILD_SHA=${{ github.sha }}
+          -t receiver_service:ci-${{ github.sha }}
+          ./receiver
 
       - name: Trivy Filesystem Scan
         shell: bash

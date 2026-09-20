@@ -110,6 +110,121 @@ paths:
                   message:
                     type: string
 
+  /auth/mobile/login:
+    post:
+      summary: Create a bearer-token session for a native mobile client
+      description: Returns tokens in the JSON body and never sets authentication cookies.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, device_id]
+              properties:
+                username:
+                  type: string
+                  description: PokeGoNexus username or email address
+                password:
+                  type: string
+                  format: password
+                device_id:
+                  type: string
+      responses:
+        '200':
+          description: Mobile session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileSessionResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/mobile/refresh:
+    post:
+      summary: Rotate a native mobile session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Session rotated and the previous refresh token revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileSessionResponse'
+        '401':
+          description: Missing, invalid, expired, or previously used refresh token
+
+  /auth/mobile/logout:
+    post:
+      summary: Revoke a native mobile session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Session revoked or already absent
+
+  /auth/mobile/oauth/link/start:
+    post:
+      summary: Start an OAuth provider link from a native client
+      description: Creates a short-lived, device-bound link transaction and returns the provider authorization URL. Requires a recent bearer session.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider:
+                  type: string
+                  enum: [google, discord, facebook]
+      responses:
+        '201':
+          description: Native provider-link transaction created
+        '401':
+          description: Missing, invalid, or insufficiently recent bearer session
+
+  /auth/mobile/oauth/link/exchange:
+    post:
+      summary: Consume a native OAuth provider-link result
+      description: Exchanges the one-use callback result while proving the original user and device bearer session. No session token is carried in the browser redirect.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Canonical provider-link result
+        '409':
+          description: Result is invalid, expired, already used, or belongs to another device
+
   /auth/google:
     get:
       summary: Redirect to Google for authentication
@@ -179,6 +294,47 @@ components:
           type: string
         message:
           type: string
+
+    MobileSessionResponse:
+      type: object
+      required:
+        - user
+        - accessToken
+        - refreshToken
+        - accessTokenExpiry
+        - refreshTokenExpiry
+      properties:
+        user:
+          type: object
+          required: [user_id, username, email]
+          properties:
+            user_id:
+              type: string
+            username:
+              type: string
+            email:
+              type: string
+              format: email
+            pokemonGoName:
+              type: [string, 'null']
+            trainerCode:
+              type: [string, 'null']
+            allowLocation:
+              type: boolean
+            location:
+              type: [string, 'null']
+            coordinates:
+              type: [object, 'null']
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        accessTokenExpiry:
+          type: string
+          format: date-time
+        refreshTokenExpiry:
+          type: string
+          format: date-time
 
     ErrorResponse:
       type: object

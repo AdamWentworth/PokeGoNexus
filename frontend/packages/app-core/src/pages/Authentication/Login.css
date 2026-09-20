@@ -1,55 +1,17 @@
 .login-page {
-    height: calc(100vh);
-    width: 100vw;
-    overflow: hidden;
+    box-sizing: border-box;
     display: flex;
+    width: 100%;
+    min-height: 100dvh;
     justify-content: center;
     align-items: center;
-    padding: 0;
+    padding: 24px 16px max(88px, calc(72px + env(safe-area-inset-bottom)));
     background-color: var(--color-auth-page-surface);
 }
 
 @media (max-width: 480px) {
-    .login-page .login-form {
-        transform: scale(.85);
-    }
-    .login-form input {
-        font-size: .9rem;
-    }
-}
-
-@media (min-width: 481px) and (max-width: 767px) {
-    .login-page .login-form {
-        transform: scale(.85);
-    }
-    .login-form input {
-        font-size: 1rem;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-    .login-page .login-form {
-        transform: scale(1);
-    }
-    .login-form input {
-        font-size: 1rem;
-    }
-}
-
-@media (min-width: 1024px) and (max-width: 1439px) {
-    .login-page .login-form {
-        transform: scale(0.75);
-    }
-    .login-form input {
-        font-size: 1rem;
-    }
-}
-
-@media (min-width: 1440px) {
-    .login-page .login-form {
-        transform: scale(1);
-    }
-    .login-form input {
-        font-size: 1rem;
+    .login-page {
+        align-items: flex-start;
+        padding-top: max(20px, env(safe-area-inset-top));
     }
 }

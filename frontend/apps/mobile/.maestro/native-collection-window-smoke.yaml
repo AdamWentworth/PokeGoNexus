@@ -1,0 +1,15 @@
+appId: ${APP_ID}
+name: Native collection physical window smoke
+tags:
+  - android
+  - edge-to-edge
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 45000
+- takeScreenshot: collection-route-window

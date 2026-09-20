@@ -1,0 +1,163 @@
+.catalog-trade-launcher {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.85rem max(0.9rem, 2.5vw) 1rem;
+  border: 0;
+  border-top: 1px solid rgba(83, 211, 154, 0.3);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-primary, #fff);
+  box-shadow: none;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.catalog-trade-launcher__heading {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.catalog-trade-launcher__heading-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.catalog-trade-launcher__heading-meta > span {
+  color: #53d39a;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.catalog-trade-launcher__heading h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  line-height: 1.2;
+}
+
+.catalog-trade-launcher__count {
+  display: inline-grid;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  padding-inline: 0.38rem;
+  border-radius: 999px;
+  background: rgba(83, 211, 154, 0.12);
+  color: #bdf5d7;
+  font-size: 0.72rem;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.catalog-trade-launcher__primary {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.catalog-trade-launcher__primary {
+  border: 1px solid rgba(83, 211, 154, 0.35);
+  background: rgba(83, 211, 154, 0.12);
+  color: #dffbef;
+}
+
+.catalog-trade-launcher__picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
+  gap: 0.5rem;
+  min-height: min(28vh, 14rem);
+  max-height: min(56dvh, 34rem);
+  padding: 0.15rem;
+  overflow-y: auto;
+  align-content: start;
+  scrollbar-gutter: stable;
+}
+
+.catalog-trade-launcher__picker button {
+  min-width: 0;
+  min-height: 8.85rem;
+  display: grid;
+  grid-template-rows: 4.5rem minmax(3.4rem, auto);
+  place-items: center;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.55rem 0.5rem 0.8rem;
+  border: 1px solid rgba(151, 190, 190, 0.3);
+  border-radius: 0.65rem;
+  background: rgba(8, 22, 22, 0.6);
+  color: inherit;
+  cursor: pointer;
+}
+
+.catalog-trade-launcher__picker button.selected {
+  border-color: #53d39a;
+  box-shadow: inset 0 0 0 1px #53d39a;
+}
+
+.catalog-trade-launcher__media {
+  position: relative;
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.55rem;
+}
+
+.catalog-trade-launcher__picker .catalog-trade-launcher__media > img:not(.pokemon-location-background) {
+  position: relative;
+  z-index: 1;
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+}
+
+.catalog-trade-launcher__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  max-width: 100%;
+  min-height: 3.4rem;
+  padding-inline: 0.2rem;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.18;
+  overflow-wrap: break-word;
+  text-align: center;
+  text-wrap: balance;
+}
+
+@media (max-width: 767px) {
+  .catalog-trade-launcher {
+    padding: 0.75rem 0.7rem max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .catalog-trade-launcher__picker {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    min-height: min(32dvh, 14rem);
+    max-height: min(60dvh, 36rem);
+    padding-inline: 0;
+    scrollbar-gutter: auto;
+  }
+
+  .catalog-trade-launcher__picker button {
+    padding-inline: 0.45rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .catalog-trade-launcher__picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

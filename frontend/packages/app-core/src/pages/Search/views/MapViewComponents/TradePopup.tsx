@@ -1,57 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-import IV from '../../../../components/pokemonComponents/IV';
-import ConfirmationOverlay from '../ConfirmationOverlay';
-import MapPopupLinkedPokemonList, {
-  type MapPopupLinkedEntry,
-} from './MapPopupLinkedPokemonList';
-import MapPopupPokemonSummary from './MapPopupPokemonSummary';
+import MapResultPopup, { type MapResultPopupItem } from './MapResultPopup';
+import type { MapPopupLinkedEntry } from './MapPopupLinkedPokemonList';
 import {
   getMapPopupImageUrl,
   getMapPopupPokemonDisplayName,
 } from './mapPopupHelpers';
-import './TradePopup.css';
-
-type TradePopupItem = {
-  username: string;
-  instance_id: string;
-  shiny?: boolean;
-  shadow?: boolean;
-  costume_id?: number | string | null;
-  dynamax?: boolean;
-  gigantamax?: boolean;
-  gender?: string | null;
-  attack_iv?: number | string | null;
-  defense_iv?: number | string | null;
-  stamina_iv?: number | string | null;
-  fast_move_id?: number | null;
-  charged_move1_id?: number | null;
-  charged_move2_id?: number | null;
-  pokemonInfo?: {
-    name?: string | null;
-    form?: string | null;
-    costumes?: Array<{
-      costume_id?: number | string | null;
-      name?: string | null;
-      [key: string]: unknown;
-    }> | null;
-    moves?: Array<{
-      move_id: number;
-      name: string;
-      type: string;
-      type_name: string;
-      legacy?: boolean;
-    }> | null;
-    [key: string]: unknown;
-  } | null;
-  wanted_list?: Record<string, MapPopupLinkedEntry> | null;
-  [key: string]: unknown;
-};
 
 type MatchedPokemon = {
   currentImage?: string;
   name?: string;
   form?: string | null;
+};
+
+type TradePopupItem = MapResultPopupItem & {
+  wanted_list?: Record<string, MapPopupLinkedEntry> | null;
 };
 
 type TradePopupProps = {
@@ -61,82 +24,35 @@ type TradePopupProps = {
     instanceId: string,
     instanceData: string,
   ) => void;
+  navigateToUserProfile: (username: string) => void;
   findPokemonByKey: (
     keyOrInstanceId?: string | null,
     instanceLike?: Record<string, unknown> | null,
   ) => MatchedPokemon | null;
+  onClose: () => void;
 };
 
 const TradePopup: React.FC<TradePopupProps> = ({
   item,
   navigateToUserCatalog,
+  navigateToUserProfile,
   findPokemonByKey,
-}) => {
-  const {
-    username,
-    fast_move_id,
-    charged_move1_id,
-    charged_move2_id,
-    pokemonInfo,
-    instance_id,
-  } = item;
-
-  const pokemonDisplayName = getMapPopupPokemonDisplayName(item);
-  const imageUrl = getMapPopupImageUrl(item);
-
-  const [showConfirmation, setShowConfirmation] = useState(false);
-
-  const handlePopupClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    setShowConfirmation(true);
-  };
-
-  const handleConfirm = () => {
-    navigateToUserCatalog(username, instance_id, 'Trade');
-    setShowConfirmation(false);
-  };
-
-  const handleCloseConfirmation = () => {
-    setShowConfirmation(false);
-  };
-
-  return (
-    <div className="trade-popup-container">
-      <div className="trade-popup-header">
-        <strong>{username}</strong>
-      </div>
-      <MapPopupPokemonSummary
-        className="trade-popup-content"
-        imageUrl={imageUrl}
-        pokemonDisplayName={pokemonDisplayName}
-        fastMoveId={fast_move_id}
-        chargedMove1Id={charged_move1_id}
-        chargedMove2Id={charged_move2_id}
-        moves={pokemonInfo?.moves}
-        onClick={handlePopupClick}
-      />
-      <IV item={item} />
-
-      <MapPopupLinkedPokemonList
-        title="Wanted Pokemon:"
-        sectionClassName="wanted-list-section"
-        listClassName="wanted-list"
-        imageClassName="wanted-pokemon-image"
-        entries={item.wanted_list}
-        findPokemonByKey={findPokemonByKey}
-      />
-
-      {showConfirmation && (
-        <ConfirmationOverlay
-          username={username}
-          pokemonDisplayName={pokemonDisplayName}
-          instanceId={instance_id}
-          onConfirm={handleConfirm}
-          onClose={handleCloseConfirmation}
-        />
-      )}
-    </div>
-  );
-};
+  onClose,
+}) => (
+  <MapResultPopup
+    findPokemonByKey={findPokemonByKey}
+    imageUrl={getMapPopupImageUrl(item)}
+    item={item}
+    kind="trade"
+    onClose={onClose}
+    onViewListing={() =>
+      navigateToUserCatalog(item.username, item.instance_id, 'Trade')
+    }
+    onViewTrainer={() => navigateToUserProfile(item.username)}
+    pokemonDisplayName={getMapPopupPokemonDisplayName(item)}
+    relatedEntries={item.wanted_list}
+    relatedTitle="Trainer wants"
+  />
+);
 
 export default TradePopup;

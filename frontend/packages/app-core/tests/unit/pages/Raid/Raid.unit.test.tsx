@@ -1,6 +1,6 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import Raid from "@/pages/Raid/Raid";
@@ -314,7 +314,7 @@ describe("Raid page", () => {
     expect(within(dialog).getByLabelText("Trainers")).toHaveValue(3);
   });
 
-  it("records and clears a private observed raid result", () => {
+  it("records and clears a private observed raid result", async () => {
     renderRaid();
 
     fireEvent.click(screen.getByRole("button", { name: "Boss counters" }));
@@ -362,9 +362,11 @@ describe("Raid page", () => {
       }),
     );
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(
-      JSON.parse(localStorage.getItem("raidCalibrationObservations") ?? "[]"),
-    ).toEqual([]);
+    await waitFor(() => {
+      expect(
+        JSON.parse(localStorage.getItem("raidCalibrationObservations") ?? "[]"),
+      ).toEqual([]);
+    });
   });
 
   it("does not apply observations from an older simulation model", () => {

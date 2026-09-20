@@ -58,6 +58,7 @@ export function createNewInstanceData(variant: PokemonVariant): PokemonInstance 
     not_wanted_list: {},
     trade_filters  : {},
     wanted_filters : {},
+    wanted_size_preferences: null,
 
     mirror    : false,
     pref_lucky: false,

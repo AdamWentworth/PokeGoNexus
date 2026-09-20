@@ -15,9 +15,6 @@ type MatchedPokemon = {
 
 type MapPopupLinkedPokemonListProps = {
   title: string;
-  sectionClassName: string;
-  listClassName: string;
-  imageClassName: string;
   entries?: Record<string, MapPopupLinkedEntry> | null;
   findPokemonByKey: (
     keyOrInstanceId?: string | null,
@@ -27,36 +24,43 @@ type MapPopupLinkedPokemonListProps = {
 
 const MapPopupLinkedPokemonList: React.FC<MapPopupLinkedPokemonListProps> = ({
   title,
-  sectionClassName,
-  listClassName,
-  imageClassName,
   entries,
   findPokemonByKey,
 }) => {
   if (!entries) return null;
 
-  return (
-    <div className={sectionClassName}>
-      <h3>{title}</h3>
-      <div className={listClassName}>
-        {Object.keys(entries).map((entryId) => {
-          const entry = entries[entryId];
-          const matchedPokemon = findPokemonByKey(entryId, entry ?? null);
+  const resolvedEntries = Object.entries(entries).flatMap(([entryId, entry]) => {
+    const matchedPokemon = findPokemonByKey(entryId, entry ?? null);
+    return matchedPokemon ? [{ entryId, entry, matchedPokemon }] : [];
+  });
+  const visibleEntries = resolvedEntries.slice(0, 3);
+  const remainingCount = Math.max(0, resolvedEntries.length - visibleEntries.length);
 
-          return matchedPokemon ? (
+  if (resolvedEntries.length === 0) return null;
+
+  return (
+    <section className="map-popup-linked">
+      <header className="map-popup-linked__header">
+        <h4>{title}</h4>
+        <strong>{resolvedEntries.length}</strong>
+      </header>
+      <div className="map-popup-linked__list">
+        {visibleEntries.map(({ entryId, entry, matchedPokemon }) => (
+          <div className="map-popup-linked__item" key={entryId}>
             <img
-              key={entryId}
               src={matchedPokemon.currentImage}
               alt={matchedPokemon.name}
-              className={`${imageClassName} ${entry?.match ? 'glowing-pokemon' : ''}`}
+              className={entry?.match ? 'glowing-pokemon' : undefined}
               title={`${matchedPokemon.form ? `${matchedPokemon.form} ` : ''}${matchedPokemon.name ?? ''}`}
             />
-          ) : (
-            <p key={entryId}>No match found</p>
-          );
-        })}
+            <span>{matchedPokemon.name || 'Unknown Pokémon'}</span>
+          </div>
+        ))}
       </div>
-    </div>
+      {remainingCount > 0 ? (
+        <p className="map-popup-linked__more">+{remainingCount} more</p>
+      ) : null}
+    </section>
   );
 };
 

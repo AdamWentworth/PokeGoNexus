@@ -125,6 +125,7 @@ type BuildCostumeResetImageArgs = {
   selectedForm: string;
   selectedGender: string | null;
   dynamax: boolean;
+  gigantamax: boolean;
   updateImageFn?: typeof updateImage;
 };
 
@@ -185,6 +186,7 @@ export const runVariantValidation = ({
     state.selectedCostume,
     state.form,
     state.selectedGenderValue,
+    state.dynamaxEnabled,
     state.gigantamaxEnabled,
   );
 
@@ -220,7 +222,7 @@ export const evaluatePokemonInputChange = ({
   nextPokemon,
   pokemonData,
   minSuggestionChars = 3,
-  maxPokemonLength = 11,
+  maxPokemonLength = 64,
 }: EvaluatePokemonInputChangeArgs): PokemonInputChangeDecision => {
   if (nextPokemon.length > maxPokemonLength) {
     return {
@@ -321,6 +323,7 @@ export const buildCostumeResetImage = ({
   selectedForm,
   selectedGender,
   dynamax,
+  gigantamax,
   updateImageFn = updateImage,
 }: BuildCostumeResetImageArgs): string | null =>
   updateImageFn(
@@ -332,6 +335,7 @@ export const buildCostumeResetImage = ({
     selectedForm,
     selectedGender,
     dynamax,
+    gigantamax,
   );
 
 export const EMPTY_SELECTED_MOVES = {

@@ -16,8 +16,8 @@ const {
     sendEmailChangeVerification,
     sendEmailChangedNotice
 } = require('../services/emailChangeService');
+const isValidEmail = require('../utils/validateEmail');
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TRAINER_CODE_RE = /^\d{12}$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,128}$/;
 const RECENT_AUTH_SECONDS = 15 * 60;
@@ -64,7 +64,7 @@ const buildSafeUpdatePayload = (input) => {
     if (Object.prototype.hasOwnProperty.call(input, 'email')) {
         if (!isNonEmptyString(input.email, 6, 255)) return { ok: false, message: 'Invalid email' };
         const email = input.email.trim().toLowerCase();
-        if (!EMAIL_RE.test(email)) return { ok: false, message: 'Invalid email' };
+        if (!isValidEmail(email)) return { ok: false, message: 'Invalid email' };
         updates.email = email;
     }
 
@@ -164,7 +164,7 @@ router.post('/register', async (req, res, next) => {
         if (!isNonEmptyString(username, 3, 36)) {
             return res.status(400).json({ message: 'Invalid username' });
         }
-        if (!isNonEmptyString(email, 6, 255) || !EMAIL_RE.test(email)) {
+        if (!isNonEmptyString(email, 6, 255) || !isValidEmail(email)) {
             return res.status(400).json({ message: 'Invalid email' });
         }
         if (!isNonEmptyString(password, 6, 128)) {
@@ -474,7 +474,7 @@ router.post('/email-change', requireAuth, async (req, res) => {
         const email = typeof req.body?.email === 'string'
             ? req.body.email.trim().toLowerCase()
             : '';
-        if (!EMAIL_RE.test(email) || email.length > 255) {
+        if (!isValidEmail(email)) {
             return res.status(400).json({ message: 'Invalid email' });
         }
         const user = await User.findById(req.auth.userId);

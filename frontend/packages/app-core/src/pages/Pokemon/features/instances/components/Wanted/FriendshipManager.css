@@ -1,42 +1,99 @@
 /* FriendshipManager.css */
 
 .friendship-level-container {
+    width: 100%;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center items horizontally */
-    transform: scale(0.85);
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .friendship-level-container .hearts-lucky-container {
     display: flex;
+    flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
 }
 
+.friendship-level-container .heart-button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.friendship-level-container .heart-button:disabled {
+    cursor: default;
+}
+
+.friendship-level-container .heart-button:focus-visible {
+    outline: 2px solid #75d8cc;
+    outline-offset: 2px;
+}
+
 .friendship-level-container .hearts img {
-    width: 32px;
-    height: 32px;
-    align-items: center;
+    display: block;
+    width: 31px;
+    height: 31px;
 }
 
 .friendship-level-container .hearts {
     display: flex;
+    flex-flow: row nowrap;
+    flex: 0 0 auto;
     justify-content: center;
     align-items: center; /* Center items vertically */
 }
 
 .friendship-level-container .friendship-slider {
-    width: 100%;
+    width: min(100%, 280px);
+    touch-action: none;
+    accent-color: #58cfc1;
 }
 
-.friendship-level-container .lucky-icon {
-    width: 60px;
-    height: 60px;
-    margin-left: 10px; /* Add some space between the hearts and the icon */
+.friendship-level-container .lucky-icon,
+.friendship-level-container .remote-trade-icon {
+    width: 48px;
+    height: 48px;
+    margin-left: 5px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.friendship-level-container .remote-trade-icon {
+    width: 44px;
+    height: 44px;
+    filter: var(--filter-icon-from-white);
 }
 
 .friendship-level-container .grey-out {
     filter: grayscale(100%);
     opacity: 0.5;
+}
+
+.friendship-level-container .remote-trade-icon.grey-out {
+    filter: var(--filter-icon-from-white) grayscale(100%);
+}
+
+.friendship-status {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
+    color: var(--color-text-secondary, #b7c9c9);
+    font-size: 0.74rem;
+}
+
+.friendship-status span {
+    padding: 0.22rem 0.48rem;
+    border: 1px solid rgba(117, 216, 204, 0.22);
+    border-radius: 999px;
+    background: rgba(117, 216, 204, 0.08);
 }

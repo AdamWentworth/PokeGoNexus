@@ -1,0 +1,45 @@
+name: smoke-frontend-prod
+
+on:
+  schedule:
+    - cron: "17 10 * * *"
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "HTTPS origin to smoke test"
+        required: false
+        default: "https://pokegonexus.com"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-frontend-prod
+  cancel-in-progress: true
+
+jobs:
+  read-only-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PRODUCTION_SMOKE_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_SMOKE_BASE_URL || 'https://pokegonexus.com' }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: Smoke Public Routes And Assets
+        working-directory: frontend/apps/web
+        run: npm run smoke:production
+
+      - name: Upload Smoke Report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-production-smoke
+          path: frontend/apps/web/.artifacts/production-smoke/report.json
+          if-no-files-found: error

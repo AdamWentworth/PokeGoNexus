@@ -73,6 +73,10 @@
   display: block;
 }
 
+.instance-motion-shell--wanted {
+  display: block;
+}
+
 /* BACKGROUND LAYER */
 .io-bg {
   position: fixed;
@@ -85,7 +89,7 @@
   --bg-blur: 2.5px;      /* how out-of-focus */
   --bg-dim: 1;          /* keep at 1 = no dimming */
   --bg-saturate: 0.95;  /* optional pop control */
-  --bg-scale: 1.06;     /* counteract blur edge-crop */
+  --bg-scale: var(--io-bg-base-scale, 1.06); /* counteract blur edge-crop */
 }
 
 /* full-bleed background image, now filtered */
@@ -104,14 +108,14 @@
   transform-origin: center;
   will-change: transform, filter;
   transition:
-    opacity 220ms ease,
-    transform 280ms ease,
-    filter 280ms ease;
+    opacity var(--io-bg-opacity-transition-ms, 220ms) ease,
+    transform var(--io-bg-scale-transition-ms, 280ms) ease,
+    filter var(--io-bg-scale-transition-ms, 280ms) ease;
 }
 
 .io-bg-img.is-transitioning {
-  opacity: 0.58;
-  transform: scale(calc(var(--bg-scale) + 0.03));
+  opacity: var(--io-bg-transition-opacity, 0.58);
+  transform: scale(var(--io-bg-transition-scale, 1.09));
 }
 
 /* ensure all other overlay content sits above the background */
@@ -168,7 +172,7 @@
   cursor: default;
 }
 
-:is(.instance-overlay.caught-mode, .instance-overlay.trade-mode) {
+:is(.instance-overlay.caught-mode, .instance-overlay.trade-mode, .instance-overlay.wanted-mode) {
   --overlay-close-button-size: clamp(50px, 12vw, 80px);
   --overlay-close-button-bottom: 20px;
   --instance-nav-hit-size: 34px;
@@ -189,7 +193,7 @@
   --instance-shell-side-gap: 2.5vw;
 }
 
-.instance-overlay.trade-mode {
+:is(.instance-overlay.trade-mode, .instance-overlay.wanted-mode) {
   --trade-pane-max-width: 500px;
   --trade-shell-max-width: calc((var(--trade-pane-max-width) * 2) + clamp(12px, 2vw, 18px));
   --trade-shell-width: min(var(--trade-shell-max-width), 96vw);
@@ -203,7 +207,7 @@
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
-  :is(.instance-overlay.caught-mode, .instance-overlay.trade-mode) {
+  :is(.instance-overlay.caught-mode, .instance-overlay.trade-mode, .instance-overlay.wanted-mode) {
     --overlay-close-button-size: clamp(60px, 10vw, 90px);
   }
 
@@ -213,7 +217,7 @@
 }
 
 @media (min-width: 768px) {
-  :is(.instance-overlay.caught-mode, .instance-overlay.trade-mode) {
+  :is(.instance-overlay.caught-mode, .instance-overlay.trade-mode, .instance-overlay.wanted-mode) {
     --overlay-close-button-size: clamp(60px, 3.5vw, 80px);
   }
 
@@ -280,7 +284,7 @@
   overflow: visible;
 }
 
-/* draw the #333 panel starting lower down, exposing the image above */
+/* Draw the themed panel lower down, exposing the image above. */
 :is(.caught-column, .trade-pane-shell--offer)::before {
   content: "";
   position: absolute;
@@ -288,9 +292,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #333;
+  border: var(--border-instance-panel);
+  background: var(--background-instance-panel);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.35);
+  box-shadow: var(--shadow-instance-panel);
   z-index: 0;
 }
 
@@ -306,9 +311,13 @@
 }
 
 /* keep trade/wanted rules as-is... */
-.instance-overlay .trade-instance-overlay { margin: 0 auto; }
+.instance-overlay .trade-instance-overlay,
+.instance-overlay .wanted-instance-overlay {
+  margin: 0 auto;
+}
 
-.trade-instance-overlay {
+.trade-instance-overlay,
+.wanted-instance-overlay {
   width: var(--trade-shell-width);
   max-width: var(--trade-shell-max-width);
   margin: 0 auto;
@@ -317,7 +326,8 @@
   box-sizing: border-box;
 }
 
-.trade-instance-overlay .overlay-row.other-overlays-row {
+.trade-instance-overlay .overlay-row.other-overlays-row,
+.wanted-instance-overlay .overlay-row.other-overlays-row {
   width: 100%;
   max-width: var(--trade-shell-max-width);
   margin: 0 auto;
@@ -415,6 +425,75 @@
   touch-action: pan-y;
 }
 
+.overlay-content.trade-unified-window {
+  flex: 0 1 860px;
+  width: min(94vw, 860px);
+  max-width: 860px;
+  max-height: calc(
+    100dvh -
+    var(--overlay-close-button-size, 64px) -
+    var(--overlay-close-button-bottom, 20px) -
+    20px -
+    env(safe-area-inset-top) -
+    env(safe-area-inset-bottom)
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.trade-unified-window .trade-pane-scroll {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.trade-unified-window .trade-pane-shell {
+  min-height: 0;
+}
+
+.trade-pane-shell--catalog-view {
+  --panel-offset: 240px;
+}
+
+.trade-pane-shell--wanted {
+  --panel-offset: 286px;
+}
+
+.trade-pane-shell--wanted.trade-pane-shell--catalog-view {
+  --panel-offset: 245px;
+}
+
+@media (max-width: 767px) {
+  .overlay-content.trade-unified-window {
+    width: min(94vw, 720px);
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 520px) {
+  .trade-pane-shell--wanted {
+    --panel-offset: 286px;
+  }
+
+  .trade-pane-shell--catalog-view {
+    /*
+     * Keep the identity row inside the card as the image stage contracts.
+     * This belongs on the shell because the card background is its ::before.
+     */
+    --panel-offset: clamp(184px, 46vw, 206px);
+  }
+
+  .trade-pane-shell--wanted.trade-pane-shell--catalog-view {
+    --panel-offset: clamp(218px, 55vw, 245px);
+  }
+}
+
+@media (max-width: 370px) {
+  .trade-pane-shell--wanted:not(.trade-pane-shell--catalog-view) {
+    --panel-offset: 306px;
+  }
+}
+
 /* responsive rules (unchanged) */
 @media (max-width: 767px) {
   .instance-overlay .overlay-row {
@@ -433,6 +512,10 @@
   }
 
   .trade-instance-overlay {
+    width: min(96vw, 700px);
+  }
+
+  .wanted-instance-overlay {
     width: min(96vw, 700px);
   }
 
@@ -459,6 +542,12 @@
     overflow: visible;
     overscroll-behavior: auto;
   }
+
+  .overlay-content.trade-unified-window {
+    width: min(95vw, 680px);
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1023px),
@@ -474,7 +563,7 @@
     z-index: 1001;
     flex-direction: column;
   }
-  .instance-overlay.trade-mode {
+  :is(.instance-overlay.trade-mode, .instance-overlay.wanted-mode) {
     justify-content: flex-start;
     align-items: center;
     overflow: hidden;
@@ -492,20 +581,21 @@
     display: flex;
   }
 
-  .trade-instance-overlay {
+  .trade-instance-overlay,
+  .wanted-instance-overlay {
     padding-bottom: 0;
   }
 }
 
-:root[data-theme='light'] .instance-overlay.caught-mode {
+:root[data-theme='light'] :is(.instance-overlay.caught-mode, .instance-overlay.wanted-mode) {
   background-color: var(--light-caught-overlay-backdrop);
 }
 
-:root[data-theme='light'] .instance-overlay.caught-mode .io-bg {
+:root[data-theme='light'] :is(.instance-overlay.caught-mode, .instance-overlay.wanted-mode) .io-bg {
   background: var(--io-bg, var(--light-caught-surface));
 }
 
-:root[data-theme='light'] :is(.instance-overlay.caught-mode, .instance-overlay.trade-mode) .instance-nav-arrow {
+:root[data-theme='light'] :is(.instance-overlay.caught-mode, .instance-overlay.trade-mode, .instance-overlay.wanted-mode) .instance-nav-arrow {
   color: var(--light-text-primary);
   text-shadow: 0 0 4px rgba(248, 255, 249, 0.72);
 }
@@ -519,12 +609,6 @@
   border-color: transparent;
   box-shadow: none;
   color: var(--light-text-primary);
-}
-
-:root[data-theme='light'] :is(.instance-overlay.caught-mode .caught-column, .trade-pane-shell--offer)::before {
-  background: linear-gradient(180deg, rgba(248, 255, 249, 0.98) 0%, rgba(228, 241, 235, 0.96) 100%);
-  border: 1px solid rgba(157, 181, 173, 0.42);
-  box-shadow: var(--light-caught-shadow);
 }
 
 :root[data-theme='light'] .trade-pane-shell--targets {

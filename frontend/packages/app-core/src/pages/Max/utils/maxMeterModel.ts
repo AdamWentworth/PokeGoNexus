@@ -1,5 +1,5 @@
-import type { Move } from '@/types/pokemonSubTypes';
-import type { PokemonVariant } from '@/types/pokemonVariants';
+import type { Move } from '@pokemongonexus/shared-contracts/pokemon';
+import type { PokemonVariant } from '@pokemongonexus/shared-contracts/variants';
 
 import {
   calculateMaxBattleMoveDamage,

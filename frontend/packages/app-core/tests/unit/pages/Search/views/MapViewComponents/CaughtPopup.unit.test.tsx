@@ -25,6 +25,7 @@ vi.mock('@/pages/Search/utils/getPokemonDisplayName', () => ({
 const baseItem = {
   username: 'brock',
   instance_id: 'inst-3',
+  distance: 1.24,
   fast_move_id: 1,
   charged_move1Id: 11,
   charged_move2_id: 3,
@@ -33,79 +34,63 @@ const baseItem = {
 
 describe('CaughtPopup', () => {
   const navigateToUserCatalog = vi.fn();
+  const navigateToUserProfile = vi.fn();
+  const onClose = vi.fn();
 
   beforeEach(() => {
     navigateToUserCatalog.mockReset();
+    navigateToUserProfile.mockReset();
+    onClose.mockReset();
     moveDisplaySpy.mockClear();
   });
 
-  it('renders popup and supports legacy charged_move1Id key', () => {
+  const renderPopup = () =>
     render(
       <CaughtPopup
         item={baseItem}
         navigateToUserCatalog={navigateToUserCatalog}
+        navigateToUserProfile={navigateToUserProfile}
+        onClose={onClose}
       />,
     );
 
+  it('renders a concise caught result with distance and progressive details', () => {
+    renderPopup();
+
+    expect(screen.getByText('Caught')).toBeInTheDocument();
     expect(screen.getByText('brock')).toBeInTheDocument();
+    expect(screen.getByText('1.2 km away')).toBeInTheDocument();
+    expect(screen.getByAltText('Eevee')).toHaveAttribute('src', '/images/mock.png');
+    expect(screen.getByText('Pokémon details').closest('details')).not.toHaveAttribute(
+      'open',
+    );
+
+    fireEvent.click(screen.getByText('Pokémon details'));
+
+    expect(screen.getByText('Pokémon details').closest('details')).toHaveAttribute(
+      'open',
+    );
     expect(screen.getByTestId('move-display')).toBeInTheDocument();
     expect(screen.getByTestId('iv')).toBeInTheDocument();
-    expect(screen.getByAltText('Eevee Image')).toBeInTheDocument();
-
-    const moveDisplayProps = moveDisplaySpy.mock.calls[0]?.[0] as {
-      chargedMove1Id?: number | null;
-    };
-    expect(moveDisplayProps.chargedMove1Id).toBe(11);
+    expect(moveDisplaySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ chargedMove1Id: 11 }),
+    );
   });
 
-  it('opens confirmation and confirms navigation to caught catalog', () => {
-    const { container } = render(
-      <CaughtPopup
-        item={baseItem}
-        navigateToUserCatalog={navigateToUserCatalog}
-      />,
+  it('uses explicit listing, trainer, and close actions without a confirmation step', () => {
+    renderPopup();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View Pokémon' }));
+    expect(navigateToUserCatalog).toHaveBeenCalledWith(
+      'brock',
+      'inst-3',
+      'Caught',
     );
 
-    fireEvent.click(container.querySelector('.caught-popup-container') as Element);
-    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View trainer' }));
+    expect(navigateToUserProfile).toHaveBeenCalledWith('brock');
 
-    expect(navigateToUserCatalog).toHaveBeenCalledWith('brock', 'inst-3', 'Caught');
-  });
-
-  it('closes confirmation on No without navigating', () => {
-    const { container } = render(
-      <CaughtPopup
-        item={baseItem}
-        navigateToUserCatalog={navigateToUserCatalog}
-      />,
-    );
-
-    fireEvent.click(container.querySelector('.caught-popup-container') as Element);
-    expect(
-      screen.getByText(/Would you like to see brock's Eevee in their catalog/i),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'No' }));
-
-    expect(
-      screen.queryByText(/Would you like to see brock's Eevee in their catalog/i),
-    ).not.toBeInTheDocument();
-    expect(navigateToUserCatalog).not.toHaveBeenCalled();
-  });
-
-  it('does not bubble popup clicks to parent map handlers', () => {
-    const parentClick = vi.fn();
-    const { container } = render(
-      <div onClick={parentClick}>
-        <CaughtPopup
-          item={baseItem}
-          navigateToUserCatalog={navigateToUserCatalog}
-        />
-      </div>,
-    );
-
-    fireEvent.click(container.querySelector('.caught-popup-container') as Element);
-
-    expect(parentClick).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Close map result' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -9,6 +9,7 @@ export interface TagItem {
   mirror: boolean;
   pref_lucky: boolean;
   pokemon_id: number;
+  variant_id?: string;
   cp: number | null;
   hp: number;
   favorite: boolean;

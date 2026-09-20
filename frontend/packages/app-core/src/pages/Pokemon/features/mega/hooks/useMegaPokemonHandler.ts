@@ -10,8 +10,13 @@ export interface MegaSelectionData {
   caughtPokemon: (PokemonInstance & { variantData: PokemonVariant | null })[];
   variantKey: string; // kept prop name for now
   megaForm?: string;
-  resolve: (value: string) => void;
+  resolve: (value: MegaSelectionResult) => void;
   reject: (reason?: unknown) => void;
+}
+
+export interface MegaSelectionResult {
+  action: 'assignExisting' | 'createNew';
+  instanceId: string;
 }
 
 const log = createScopedLogger('useMegaPokemonHandler');
@@ -113,7 +118,7 @@ function useMegaPokemonHandler() {
     }
   };
 
-  const promptMegaPokemonSelection = (baseKey: string, megaForm?: string): Promise<string> => {
+  const promptMegaPokemonSelection = (baseKey: string, megaForm?: string): Promise<MegaSelectionResult> => {
     return new Promise((resolve, reject) => {
       void handleMegaPokemon(baseKey)
         .then((caughtPokemonWithVariants) => {
@@ -140,9 +145,9 @@ function useMegaPokemonHandler() {
     });
   };
 
-  const handleMegaSelectionResolve = (selectedOption: string) => {
+  const handleMegaSelectionResolve = (result: MegaSelectionResult) => {
     if (megaSelectionData && megaSelectionData.resolve) {
-      megaSelectionData.resolve(selectedOption);
+      megaSelectionData.resolve(result);
     }
     setIsMegaSelectionOpen(false);
     setMegaSelectionData(null);

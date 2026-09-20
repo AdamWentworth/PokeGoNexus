@@ -36,6 +36,28 @@ func TestMergeUniqueTagIDs(t *testing.T) {
 	}
 }
 
+func TestBuiltInTagNamesAreExcludedFromClientMembershipArrays(t *testing.T) {
+	testCases := map[string][]string{
+		"caught": {"favorite"},
+		"trade":  {"for trade"},
+		"wanted": {"wanted", "most wanted"},
+	}
+	for parent, expected := range testCases {
+		actual := builtInTagNamesForParent(parent)
+		if len(actual) != len(expected) {
+			t.Fatalf("%s built-ins = %#v, want %#v", parent, actual, expected)
+		}
+		for _, name := range expected {
+			if !containsString(actual, name) {
+				t.Fatalf("%s built-ins missing %q: %#v", parent, name, actual)
+			}
+		}
+	}
+	if actual := builtInTagNamesForParent("unknown"); actual != nil {
+		t.Fatalf("unknown parent built-ins = %#v, want nil", actual)
+	}
+}
+
 func containsString(values []string, target string) bool {
 	for _, v := range values {
 		if v == target {

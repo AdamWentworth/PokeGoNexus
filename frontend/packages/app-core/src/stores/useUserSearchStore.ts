@@ -27,7 +27,7 @@ function replaceAddressBar(oldName: string, newName: string) {
 			segments[segments.length - 1] = newName;
 			const nextPath = segments.join('/');
 			window.history.replaceState(
-				{},
+				window.history.state,
 				'',
 				`${nextPath}${window.location.search}${window.location.hash}`
 			);

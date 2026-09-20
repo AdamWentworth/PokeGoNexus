@@ -3,7 +3,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1 - Build
-FROM golang:1.26.5-alpine3.23 AS builder
+FROM golang:1.26.6-alpine3.23 AS builder
 
 WORKDIR /app
 
@@ -22,9 +22,14 @@ RUN go build -trimpath -ldflags="-s -w" -o /out/users_service .
 # Stage 2 - Runtime
 FROM alpine:3.23
 
+ARG POKEGONEXUS_BUILD_SHA=unknown
+LABEL org.opencontainers.image.source="https://github.com/AdamWentworth/PokeGoNexus" \
+      org.opencontainers.image.revision="${POKEGONEXUS_BUILD_SHA}"
+
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache ca-certificates tzdata \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates tzdata \
     && addgroup -S app \
     && adduser -S -G app app
 

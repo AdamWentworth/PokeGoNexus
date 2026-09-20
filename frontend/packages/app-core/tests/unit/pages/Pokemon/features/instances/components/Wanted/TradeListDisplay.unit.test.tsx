@@ -45,7 +45,7 @@ describe('TradeListDisplay', () => {
     const props = buildProps();
     render(<TradeListDisplay {...props} />);
 
-    fireEvent.click(screen.getByAltText('Trade Pokemon Charmander'));
+    fireEvent.click(screen.getByRole('button', { name: /Charmander/ }));
 
     expect(props.onPokemonClick).toHaveBeenCalledWith('variant-2_uuid-1');
     expect(useSortManagerMock.mock.calls[0]).toHaveLength(3);
@@ -83,15 +83,15 @@ describe('TradeListDisplay', () => {
 
     render(<TradeListDisplay {...props} />);
 
-    expect(screen.getByAltText('Trade Pokemon Bulbasaur')).toBeInTheDocument();
-    expect(screen.queryByAltText('Trade Pokemon Charmander')).not.toBeInTheDocument();
+    expect(screen.getByAltText('Bulbasaur')).toBeInTheDocument();
+    expect(screen.queryByAltText('Charmander')).not.toBeInTheDocument();
   });
 
   it('allows toggle updates in edit mode', () => {
     const props = buildProps({ editMode: true });
     render(<TradeListDisplay {...props} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'X' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Charmander' }));
 
     expect(props.setLocalNotTradeList).toHaveBeenCalled();
     expect(props.toggleReciprocalUpdates).toHaveBeenCalledWith(
@@ -99,4 +99,35 @@ describe('TradeListDisplay', () => {
       true,
     );
   });
+
+  it('renders compact summary offers as read-only cards', () => {
+    render(
+      <TradeListDisplay
+        {...buildProps({ onPokemonClick: undefined })}
+        compact
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /Charmander/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Charmander')).toBeInTheDocument();
+  });
+
+  it('supports candidate search and bulk selection while editing', () => {
+    const props = buildProps({ editMode: true });
+    render(<TradeListDisplay {...props} />);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search offered Pokémon' }), {
+      target: { value: 'bulbasaur' },
+    });
+    expect(screen.getByText('No Pokémon match this view.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Allow all' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(props.setLocalNotTradeList).toHaveBeenNthCalledWith(1, {});
+    expect(props.setLocalNotTradeList).toHaveBeenNthCalledWith(2, {
+      'variant-2_uuid-1': true,
+    });
+  });
+
 });

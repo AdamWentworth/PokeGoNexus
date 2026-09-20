@@ -11,10 +11,8 @@
   --pokedex-control-active: var(--pokedex-category-accent);
   --pokedex-control-border: var(--color-pokemon-header-toggle-inactive);
 
-  min-height: 100vh;
-  width: 100%;
-  background: var(--pokedex-page-bg);
-  color: var(--pokedex-text-primary);
+  --app-page-shell-background: var(--pokedex-page-bg);
+  --app-page-shell-color: var(--pokedex-text-primary);
 }
 
 :root[data-theme='light'] .pokedex-page {
@@ -27,7 +25,7 @@
   --pokedex-text-strong: var(--light-text-heading);
   --pokedex-control-border: var(--light-caught-soft-border);
 
-  background:
+  --app-page-shell-background:
     linear-gradient(
       135deg,
       color-mix(in srgb, var(--light-surface-base), var(--light-gradient-accent) 6%),
@@ -37,9 +35,7 @@
 }
 
 .pokedex-page__shell {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 24px 0 44px;
+  position: relative;
 }
 
 .pokedex-page--detail .pokedex-page__shell {
@@ -50,32 +46,19 @@
   min-height: 100vh;
 }
 
-.pokedex-page__header {
-  display: grid;
-  gap: 12px;
+.pokedex-product-header {
+  --product-header-border: var(--pokedex-control-border);
+  --product-header-label: var(--pokedex-category-accent);
+  --product-header-muted: var(--pokedex-text-secondary);
+  --product-header-text: var(--pokedex-text-strong);
+
   margin-bottom: 18px;
-}
-
-.pokedex-page__title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.pokedex-page__title {
-  margin: 0;
-  color: var(--pokedex-text-strong);
-  font-size: clamp(2rem, 4.2vw, 3.4rem);
-  font-weight: 900;
-  line-height: 0.95;
-  text-transform: uppercase;
 }
 
 .pokedex-page__registration-total {
   margin: 0;
   color: var(--pokedex-text-strong);
-  font-size: clamp(1.15rem, 2.4vw, 2rem);
+  font-size: 0.82rem;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
@@ -1172,11 +1155,9 @@
 
 @media (max-width: 720px) {
   .pokedex-page__shell {
-    width: min(100% - 18px, 720px);
-    padding-top: 14px;
+    width: 100%;
   }
 
-  .pokedex-page__title-row,
   .pokedex-region-detail__toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -1197,8 +1178,9 @@
   }
 
   .pokedex-page__header-tools {
-    align-items: flex-start;
-    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
     gap: 10px;
   }
 

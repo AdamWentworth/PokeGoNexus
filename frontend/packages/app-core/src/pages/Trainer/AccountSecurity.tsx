@@ -11,7 +11,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 import { useNavigate, useSearchParams } from "react-router";
-import { toast } from "react-toastify";
+import { feedback } from '@/components/feedback';
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
@@ -55,14 +55,14 @@ const AccountSecurity = () => {
     if (!user) return;
     void fetchAccountSecurity()
       .then(setSecurity)
-      .catch(() => toast.error("Could not load account security details."));
+      .catch(() => feedback.error("Could not load account security details."));
   }, [user]);
 
   useEffect(() => {
     const oauth = searchParams.get("oauth");
-    if (oauth === "linked") toast.success("Sign-in method connected");
+    if (oauth === "linked") feedback.success("Sign-in method connected");
     if (oauth === "link-conflict") {
-      toast.error("That provider account is already connected elsewhere.");
+      feedback.error("That provider account is already connected elsewhere.");
     }
   }, [searchParams]);
 
@@ -70,7 +70,7 @@ const AccountSecurity = () => {
 
   const saveAccount = async () => {
     if (password && password !== confirmPassword) {
-      toast.error("Passwords do not match.");
+      feedback.error("Passwords do not match.");
       return;
     }
     const requestedEmail = email.trim().toLowerCase();
@@ -86,7 +86,7 @@ const AccountSecurity = () => {
     });
     if (!result.success) {
       setSaving(false);
-      toast.error(
+      feedback.error(
         typeof result.error === "string"
           ? result.error
           : "Could not update account.",
@@ -96,10 +96,10 @@ const AccountSecurity = () => {
     if (emailChanged) {
       try {
         await requestEmailChange(requestedEmail, currentPassword || undefined);
-        toast.success(`Verification sent to ${requestedEmail}`);
+        feedback.success(`Verification sent to ${requestedEmail}`);
       } catch (error) {
         setSaving(false);
-        toast.error(
+        feedback.error(
           error instanceof Error
             ? error.message
             : "Could not send email verification.",
@@ -111,7 +111,7 @@ const AccountSecurity = () => {
     setPassword("");
     setConfirmPassword("");
     setCurrentPassword("");
-    if (!emailChanged) toast.success("Account updated");
+    if (!emailChanged) feedback.success("Account updated");
   };
 
   const signOut = async () => {
@@ -126,9 +126,9 @@ const AccountSecurity = () => {
     if (!approved) return;
     try {
       await deleteAccount(user.user_id, currentPassword || undefined);
-      toast.success("Account deleted");
+      feedback.success("Account deleted");
     } catch (error) {
-      toast.error(
+      feedback.error(
         error instanceof Error ? error.message : "Could not delete account.",
       );
     }
@@ -142,11 +142,11 @@ const AccountSecurity = () => {
     setRevoking(true);
     try {
       await revokeAllSessions(currentPassword || undefined);
-      toast.success("All devices signed out");
+      feedback.success("All devices signed out");
       await logout();
       navigate("/login", { replace: true });
     } catch (error) {
-      toast.error(
+      feedback.error(
         error instanceof Error ? error.message : "Could not revoke sessions.",
       );
     } finally {
@@ -175,9 +175,9 @@ const AccountSecurity = () => {
     try {
       await unlinkProvider(provider, currentPassword || undefined);
       setSecurity(await fetchAccountSecurity());
-      toast.success(`${provider[0].toUpperCase() + provider.slice(1)} disconnected`);
+      feedback.success(`${provider[0].toUpperCase() + provider.slice(1)} disconnected`);
     } catch (error) {
-      toast.error(
+      feedback.error(
         error instanceof Error ? error.message : "Could not disconnect provider.",
       );
     } finally {
@@ -275,7 +275,7 @@ const AccountSecurity = () => {
           <FaKey />
         </header>
         <p className="trainer-section-copy">
-          These verified providers currently open this same PokeGoNexus account.
+          These verified providers currently open this same Pokémon Go Nexus account.
         </p>
         <div className="trainer-connected-accounts">
           {(["google", "discord", "facebook"] as OAuthProvider[]).map(

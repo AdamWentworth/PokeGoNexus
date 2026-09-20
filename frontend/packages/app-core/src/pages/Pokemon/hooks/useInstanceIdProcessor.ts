@@ -11,6 +11,7 @@ import { useUserSearchStore } from '@/stores/useUserSearchStore';
 import { getEntityKeyFrom } from '@/utils/PokemonIDUtils';
 
 import type { PokemonVariant  } from '@/types/pokemonVariants';
+import type { Instances } from '@/types/instances';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -23,6 +24,7 @@ interface LocationState {
 interface AppLocation {
   state?: LocationState;
   pathname: string;
+  search?: string;
 }
 
 export type PokemonOverlaySelection =
@@ -36,6 +38,9 @@ export interface UseInstanceIdProcessorProps {
 
   /** List already filtered/search‑sorted by the parent */
   filteredVariants: PokemonVariant[];
+
+  /** Canonical instance map for the catalog currently being viewed. */
+  instances: Instances;
 
   /* router bits */
   location: AppLocation;
@@ -57,6 +62,7 @@ export interface UseInstanceIdProcessorProps {
 export default function useInstanceIdProcessor({
   variantsLoading,
   filteredVariants,
+  instances,
   location,
   navigate,
   selectedPokemon,
@@ -66,18 +72,29 @@ export default function useInstanceIdProcessor({
   isOwnCollection,
 }: UseInstanceIdProcessorProps): void {
   const [retryCounter, setRetryCounter] = useState(0);
+  const [pendingSelection, setPendingSelection] = useState<PokemonVariant | null>(null);
 
   // 🔎  Pull loader state straight from the stores (no prop‑drilling)
   const { foreignInstancesLoading, viewedInstances } = useUserSearchStore.getState();
   const searchInstances = viewedInstances;
 
-  useEffect(() => {
-    if (variantsLoading || foreignInstancesLoading) return;
-    if (!searchInstances || filteredVariants.length === 0) return;
-    if (isOwnCollection || hasProcessedInstanceId) return;
+  const queryInstanceId = new URLSearchParams(location.search ?? '').get('instanceId');
+  const requestedInstanceId = location.state?.instanceId ?? queryInstanceId;
 
-    const instanceId = location.state?.instanceId;
+  useEffect(() => {
+    if (!pendingSelection || requestedInstanceId || selectedPokemon) return;
+    setSelectedPokemon({ pokemon: pendingSelection, overlayType: 'instance' });
+    setPendingSelection(null);
+  }, [pendingSelection, requestedInstanceId, selectedPokemon, setSelectedPokemon]);
+
+  useEffect(() => {
+    if (variantsLoading || (!isOwnCollection && foreignInstancesLoading)) return;
+    if (filteredVariants.length === 0 || hasProcessedInstanceId) return;
+
+    const instanceId = requestedInstanceId;
     if (!instanceId || selectedPokemon) return;
+    const availableInstances = isOwnCollection ? instances : searchInstances;
+    if (!availableInstances) return;
 
     /* -------------------------------------------------------------- */
     /* 1) Try to find it in the already‑filtered list                 */
@@ -91,7 +108,7 @@ export default function useInstanceIdProcessor({
     /* 2) Fallback: enrich base variant with raw instance data        */
     /* -------------------------------------------------------------- */
     if (!combined) {
-      const raw = searchInstances[instanceId];
+      const raw = availableInstances[instanceId];
       if (raw) {
         const variant = filteredVariants.find(
           (p) => p.pokemon_id === raw.pokemon_id,
@@ -110,16 +127,19 @@ export default function useInstanceIdProcessor({
     /* 3) Open overlay if we found something                          */
     /* -------------------------------------------------------------- */
     if (combined) {
-      setSelectedPokemon({ pokemon: combined, overlayType: 'instance' });
       setHasProcessedInstanceId(true);
+      setPendingSelection(combined);
 
-      // Clean the param to avoid reopening on navigation/back‑button
-      setTimeout(() => {
-        void navigate(location.pathname, {
-          replace: true,
-          state: { ...location.state, instanceId: null },
-        });
-      }, 100);
+      // Commit the one-shot deep-link cleanup before mounting the overlay.
+      // Otherwise the replace can erase the overlay's browser-Back guard and
+      // leave a duplicate catalog entry behind in history.
+      const cleanQuery = new URLSearchParams(location.search ?? '');
+      cleanQuery.delete('instanceId');
+      const cleanSearch = cleanQuery.toString();
+      void navigate(`${location.pathname}${cleanSearch ? `?${cleanSearch}` : ''}`, {
+        replace: true,
+        state: { ...location.state, instanceId: null },
+      });
     } else {
       // Still missing — try again shortly (rare race condition)
       setTimeout(() => setRetryCounter(c => c + 1), 500);
@@ -127,9 +147,11 @@ export default function useInstanceIdProcessor({
   }, [
     variantsLoading,
     foreignInstancesLoading,
+    instances,
     searchInstances,
     filteredVariants,
     location,
+    requestedInstanceId,
     selectedPokemon,
     isOwnCollection,
     hasProcessedInstanceId,

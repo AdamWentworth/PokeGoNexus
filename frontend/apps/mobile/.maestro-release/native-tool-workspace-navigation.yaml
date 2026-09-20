@@ -1,0 +1,106 @@
+appId: com.pokegonexus.app
+name: Tool workspaces slide and retain content on the signed-in APK
+tags:
+  - android
+  - native-navigation
+---
+# Safe on a normal signed-in build: no fixtures, collection writes, or resets.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: Open action menu
+    timeout: 45000
+# Start with public PvP so Raid cannot warm its move cache.
+- openLink: pokegonexus://native/pvp
+- extendedWaitUntil:
+    visible:
+      id: native-pvp-stationary-header
+    timeout: 45000
+# A non-adjacent jump must populate the intermediate tools and keep Battle Lab usable.
+- tapOn: IV Rank
+- assertVisible: Find the strongest IV spread for this league
+- tapOn: Battle Lab
+- extendedWaitUntil:
+    visible: Simulate a focused matchup
+    timeout: 45000
+- tapOn: Rankings
+- repeat:
+    times: 3
+    commands:
+      - tapOn: Team Builder
+      - assertVisible: THREE-POKÉMON TEAM
+      - tapOn: Battle Lab
+      - assertVisible: Simulate a focused matchup
+      - tapOn: IV Rank
+      - assertVisible: Find the strongest IV spread for this league
+      - tapOn: Rankings
+      - assertVisible:
+          id: native-pvp-stationary-header
+- takeScreenshot: pvp-retained-workspace
+- openLink: pokegonexus://native/raid
+- extendedWaitUntil:
+    visible:
+      id: native-raid-stationary-header
+    timeout: 45000
+- repeat:
+    times: 3
+    commands:
+      - tapOn: Boss counters
+      - assertVisible: Find boss
+      - tapOn: Attacker rankings
+      - assertVisible:
+          id: native-raid-stationary-header
+- takeScreenshot: raid-retained-workspace
+- openLink: pokegonexus://native/rankings
+- extendedWaitUntil:
+    visible:
+      id: native-rankings-stationary-header
+    timeout: 45000
+- repeat:
+    times: 3
+    commands:
+      - tapOn: Rarest owned
+      - assertVisible:
+          id: native-rankings-panel-rarest
+      - tapOn: Most wanted
+      - assertVisible:
+          id: native-rankings-panel-wanted
+- takeScreenshot: rankings-retained-workspace
+- openLink: pokegonexus://native/max
+- extendedWaitUntil:
+    visible:
+      id: native-max-stationary-header
+    timeout: 45000
+- repeat:
+    times: 3
+    commands:
+      - tapOn: Boss teams
+      - assertVisible: Max Battle boss
+      - tapOn: Max rankings
+      - assertVisible:
+          id: native-max-stationary-header
+- takeScreenshot: max-retained-workspace
+- openLink: pokegonexus://native/pokedex/0006-default
+- extendedWaitUntil:
+    visible:
+      id: native-pokedex-detail-screen
+    timeout: 45000
+- scrollUntilVisible:
+    element:
+      text: "^More$"
+    direction: DOWN
+    timeout: 15000
+- repeat:
+    times: 3
+    commands:
+      - tapOn: Info
+      - assertVisible: Base stats
+      - tapOn: Battle
+      - assertVisible: Type effectiveness
+      - tapOn: More
+      - assertVisible: Variant combinations
+      - tapOn:
+          text: "^Registered$"
+          index: 1
+      - assertVisible: Register all
+- takeScreenshot: pokedex-retained-workspace

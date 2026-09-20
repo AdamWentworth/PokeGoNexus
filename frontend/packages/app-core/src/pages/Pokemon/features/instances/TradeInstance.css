@@ -32,6 +32,35 @@
   font-size: clamp(26px, 3vw, 40px);
 }
 
+.trade-instance--catalog-view {
+  --caught-image-stage-size: 220px;
+  --caught-stage-lift: 24px;
+}
+
+.trade-instance--catalog-view > .instance-details-body {
+  padding-bottom: 8px;
+}
+
+.trade-instance--catalog-view .purify-name-shadow-container {
+  min-height: 2.5rem;
+}
+
+.trade-instance--catalog-view .identity-name-slot .name-editable-content {
+  font-size: clamp(25px, 4vw, 34px);
+}
+
+@media (max-width: 520px) {
+  .trade-instance--catalog-view {
+    --caught-image-stage-size: 168px;
+    --caught-stage-lift: 12px;
+  }
+
+  .trade-instance--catalog-view > .instance-details-body {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
 :root[data-theme='light'] .trade-instance--caught-layout {
   color: var(--light-text-primary);
   --caught-divider-color: var(--light-caught-divider);

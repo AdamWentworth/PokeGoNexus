@@ -6,8 +6,15 @@ import { putBatchedPokemonUpdates, putInstancesBulk } from '@/db/indexedDB';
 import { createScopedLogger } from '@/utils/logger';
 import { setStorageNumber, STORAGE_KEYS } from '@/utils/storage';
 import type { PokemonInstance } from '@/types/pokemonInstance';
-import type { InstanceStatus, Instances } from '@/types/instances';
+import type {
+  InstanceStatus,
+  Instances,
+  InstanceStatusMutationOperation,
+  InstanceStatusMutationOutcome,
+  InstanceStatusResultPatch,
+} from '@/types/instances';
 import { PokemonVariant } from '@/types/pokemonVariants';
+import { enforceFavoriteTradeInvariant } from '@pokemongonexus/shared-domain/instances';
 
 type AppState = {
   variants: PokemonVariant[];
@@ -59,6 +66,52 @@ function buildPrunedPlaceholderPayload(
   };
 }
 
+function resolveSourceInstanceId(instances: Instances, target: string): string | null {
+  if (instances[target]) return target;
+  for (const [instanceId, instance] of Object.entries(instances)) {
+    if (instance.instance_id === target) return instanceId;
+  }
+  return null;
+}
+
+function describeOperation({
+  sourceKey,
+  sourceInstanceId,
+  resultingInstanceId,
+  targetStatus,
+  source,
+  changed,
+}: {
+  sourceKey: string;
+  sourceInstanceId: string | null;
+  resultingInstanceId: string;
+  targetStatus: InstanceStatus;
+  source: PokemonInstance | undefined;
+  changed: boolean;
+}): InstanceStatusMutationOperation {
+  if (!changed) return 'unchanged';
+  if (sourceInstanceId && sourceInstanceId !== resultingInstanceId) return 'cloned';
+  if (!sourceInstanceId || sourceKey !== resultingInstanceId) return 'created';
+  if (source?.is_wanted && (targetStatus === 'Caught' || targetStatus === 'Trade')) {
+    return 'converted';
+  }
+  return 'updated';
+}
+
+function hasTargetStatus(instance: PokemonInstance | undefined, status: InstanceStatus): boolean {
+  if (!instance) return false;
+  switch (status) {
+    case 'Caught':
+      return instance.is_caught && !instance.is_for_trade && !instance.is_wanted;
+    case 'Trade':
+      return instance.is_caught && instance.is_for_trade && !instance.is_wanted;
+    case 'Wanted':
+      return instance.is_wanted && !instance.is_caught && !instance.is_for_trade;
+    case 'Missing':
+      return !instance.is_caught && !instance.is_for_trade && !instance.is_wanted;
+  }
+}
+
 export const updateInstanceStatus =
   (
     data: AppState,
@@ -69,15 +122,19 @@ export const updateInstanceStatus =
     instanceIds: string | string[],
     newStatus: InstanceStatus,
     onAlert?: (message: string) => void,
-  ): Promise<void> => {
+    resultPatch?: InstanceStatusResultPatch,
+  ): Promise<InstanceStatusMutationOutcome[]> => {
     const keys = Array.isArray(instanceIds) ? instanceIds : [instanceIds];
     const timestamp = Date.now();
     const currentInstances = instancesDataRef.current ?? {};
 
     const changedKeys = new Set<string>();
+    const outcomes: InstanceStatusMutationOutcome[] = [];
 
     const tempData = produce(currentInstances, (draft: Instances) => {
       for (const target of keys) {
+        const sourceInstanceId = resolveSourceInstanceId(currentInstances, target);
+        const source = sourceInstanceId ? currentInstances[sourceInstanceId] : undefined;
         const resolvedId = updatePokemonInstanceStatus(
           target,
           newStatus,
@@ -89,7 +146,47 @@ export const updateInstanceStatus =
 
         const original = currentInstances[resolvedId];
         const updated = draft[resolvedId];
-        if (hasInstanceChanges(original, updated)) changedKeys.add(resolvedId);
+        const statusChanged = hasInstanceChanges(original, updated);
+        const reachedTargetStatus = hasTargetStatus(updated, newStatus);
+        const initialOperation = describeOperation({
+          sourceKey: target,
+          sourceInstanceId,
+          resultingInstanceId: resolvedId,
+          targetStatus: newStatus,
+          source,
+          changed: statusChanged && reachedTargetStatus,
+        });
+        if (updated && reachedTargetStatus && resultPatch) {
+          const patch = typeof resultPatch === 'function'
+            ? resultPatch({
+                sourceKey: target,
+                sourceInstanceId,
+                resultingInstanceId: resolvedId,
+                targetStatus: newStatus,
+                operation: initialOperation,
+              }, updated)
+            : resultPatch;
+          if (Object.keys(patch).length > 0) Object.assign(updated, patch);
+        }
+        if (updated) enforceFavoriteTradeInvariant(updated, 'trade');
+        const persistedChange = hasInstanceChanges(original, updated);
+        const changed = persistedChange && hasTargetStatus(updated, newStatus);
+        if (persistedChange) changedKeys.add(resolvedId);
+        outcomes.push({
+          sourceKey: target,
+          sourceInstanceId,
+          resultingInstanceId: resolvedId,
+          targetStatus: newStatus,
+          operation: describeOperation({
+            sourceKey: target,
+            sourceInstanceId,
+            resultingInstanceId: resolvedId,
+            targetStatus: newStatus,
+            source,
+            changed,
+          }),
+          changed,
+        });
       }
     });
 
@@ -173,4 +270,6 @@ export const updateInstanceStatus =
     } catch (err) {
       log.error('updatesDB write failed:', err);
     }
+
+    return outcomes;
   };

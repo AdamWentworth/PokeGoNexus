@@ -12,6 +12,8 @@ import {
   getWishlistSubLabel,
 } from './utils/pokemonPageHelpers';
 import usePokemonPageController from './hooks/usePokemonPageController';
+import { useTagsStore } from '@/features/tags/store/useTagsStore';
+import { fromCustomTagFilter } from '@/features/tags/utils/customTagSelectors';
 
 interface PokemonProps {
   isOwnCollection: boolean;
@@ -29,6 +31,13 @@ function Pokemon({ isOwnCollection }: PokemonProps) {
     location,
     navigate,
   });
+  const activeCustomTagId = fromCustomTagFilter(controller.sidePanelTagFilter);
+  const activeCustomTag = useTagsStore((state) => {
+    if (!activeCustomTagId) return null;
+    return state.customTags.caught[activeCustomTagId]?.tag
+      ?? state.customTags.wanted[activeCustomTagId]?.tag
+      ?? null;
+  });
 
   if (controller.isPageLoading) {
     return <AppLoadingFallback source="pokemon-page" />;
@@ -42,19 +51,23 @@ function Pokemon({ isOwnCollection }: PokemonProps) {
         activeView={controller.activeView}
         onWishlistClick={controller.handleListsButtonClick}
         onHaveTagsClick={() =>
-          controller.setActiveView((prev) => (prev === 'pokedex' ? 'pokemon' : 'pokedex'))
+          controller.setActiveView((prev) => (prev === 'inventory' ? 'pokemon' : 'inventory'))
         }
         onPokemonClick={() => controller.setActiveView('pokemon')}
-        contextText={controller.contextText}
+        catalogOwner={controller.isEditable ? undefined : controller.displayUsername}
+        onReturnToContext={controller.returnToContext}
         totalPokemon={controller.sortedPokemons.length}
         highlightedCards={controller.highlightedCards}
         onClearSelection={controller.handleClearSelection}
         onSelectAll={controller.handleSelectAll}
         haveTagsSubLabel={getHaveTagsSubLabel(
-          controller.lastMenu,
           controller.sidePanelTagFilter,
+          activeCustomTag,
         )}
-        wishlistSubLabel={getWishlistSubLabel(controller.lastMenu, controller.sidePanelTagFilter)}
+        wishlistSubLabel={getWishlistSubLabel(
+          controller.sidePanelTagFilter,
+          activeCustomTag,
+        )}
       />
 
       <PokemonViewSlider
@@ -73,7 +86,9 @@ function Pokemon({ isOwnCollection }: PokemonProps) {
         highlightedCards={controller.highlightedCards}
         tagFilter={controller.tagFilter}
         sidePanelTagFilter={controller.sidePanelTagFilter}
-        onClearTagFilter={controller.handleClearTagFilter}
+        onClearTagFilter={
+          controller.isUsernamePath ? undefined : controller.handleClearTagFilter
+        }
         activeTags={controller.activeTags}
         instances={controller.instances}
         sortType={controller.sortType}
@@ -94,7 +109,7 @@ function Pokemon({ isOwnCollection }: PokemonProps) {
         isEditable={controller.isEditable}
         highlightedCards={controller.highlightedCards}
         onConfirmChangeTags={controller.handleConfirmChangeTags}
-        activeStatusFilter={controller.activeStatusFilter}
+        onClearSelection={controller.handleClearSelection}
         isUpdating={controller.isUpdating}
         isMegaSelectionOpen={controller.isMegaSelectionOpen}
         megaSelectionData={controller.megaSelectionData}

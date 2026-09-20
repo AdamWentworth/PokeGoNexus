@@ -49,10 +49,6 @@ vi.mock('@/components/EditSaveComponent', () => ({
   ),
 }));
 
-vi.mock('@/pages/Pokemon/features/instances/FilterImages', () => ({
-  default: () => <div data-testid="filter-images" />,
-}));
-
 vi.mock('@/pages/Pokemon/features/instances/components/Wanted/TradeListDisplay', () => ({
   default: (props: {
     onPokemonClick: (instanceId: string) => void;
@@ -212,12 +208,19 @@ describe('WantedDetails', () => {
 
     expect(screen.getByTestId('not-trade-count')).toHaveTextContent('1');
 
-    fireEvent.click(screen.getByAltText('Reset Filters'));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(screen.getByTestId('not-trade-count')).toHaveTextContent('1');
 
-    fireEvent.click(screen.getByTestId('toggle-edit-mode'));
-    fireEvent.click(screen.getByAltText('Reset Filters'));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit preferences' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
 
     expect(screen.getByTestId('not-trade-count')).toHaveTextContent('0');
+  });
+
+  it('labels the summary as Pokémon available for this wanted listing', () => {
+    render(<WantedDetails {...makeProps({ summaryMode: true })} />);
+
+    expect(screen.getByText('For Trade Pokémon')).toBeInTheDocument();
+    expect(screen.queryByText('Acceptable offers')).not.toBeInTheDocument();
   });
 });

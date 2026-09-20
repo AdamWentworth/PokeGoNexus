@@ -220,16 +220,10 @@ govulncheck ./...
 Workflows:
 
 - CI: `.github/workflows/ci-receiver.yml`
-- Deploy: `.github/workflows/deploy-receiver-prod.yml`
+- Production deployment: private HomeOps `deploy-pokegonexus-service`
 
-Deploy workflow behavior:
-
-- syncs prod repo to selected branch
-- validates `receiver/.env` (`JWT_SECRET` required)
-- pulls selected image
-- recreates `receiver_service`
-- verifies `GET /readyz` on `127.0.0.1:3003`
-- rolls back to previous image on failure (if available)
+HomeOps validates the current public `master` SHA and embedded image revision,
+deploys the immutable digest, verifies readiness, and rolls back on failure.
 
 ## 📈 Fiber Decision
 

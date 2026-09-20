@@ -1,0 +1,101 @@
+appId: ${APP_ID}
+name: Native trainer profile parity smoke
+tags:
+  - android
+  - native-profile
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/profile
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: YOUR TRAINER CARD
+    timeout: 45000
+- assertVisible: NexusDemo
+- assertVisible: "@NexusDemo"
+- assertVisible: League Ace
+- assertVisible: Mewtwo
+- takeScreenshot: native-trainer-profile-initial
+- tapOn: Edit
+- scrollUntilVisible:
+    element:
+      text: Pokemon GO name
+    direction: DOWN
+    timeout: 10000
+- tapOn: Pokemon GO name
+- eraseText: 20
+- inputText: NexusGoUpdated
+- hideKeyboard
+- takeScreenshot: native-trainer-profile-editor
+- scrollUntilVisible:
+    element:
+      id: native-profile-showcase-slot-1
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- swipe:
+    from:
+      id: native-profile-showcase-drag-slot-1
+    direction: RIGHT
+    duration: 700
+- assertVisible: "Night shift, edit showcase slot 1"
+- assertVisible: "League Ace, edit showcase slot 3"
+- tapOn:
+    id: native-profile-showcase-slot-1
+- assertVisible: Choose a caught Pokémon
+- tapOn: Search caught Pokémon
+- inputText: meta
+- hideKeyboard
+- assertVisible: Shiny Metagross
+- takeScreenshot: native-trainer-showcase-picker
+- tapOn: Shiny Metagross
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 82%
+          end: 92%, 28%
+          duration: 450
+- scrollUntilVisible:
+    element:
+      text: Save profile
+    direction: DOWN
+    speed: 80
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Save profile
+- assertVisible: Profile updated.
+- scrollUntilVisible:
+    element:
+      text: NexusGoUpdated
+    direction: UP
+    timeout: 10000
+- assertVisible: NexusGoUpdated
+- scrollUntilVisible:
+    element:
+      text: Lucky Trader
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Lucky Trader
+- assertVisible: Kanto Collector
+- scrollUntilVisible:
+    element:
+      text: View Pokémon
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 10000
+- assertVisible: View Pokémon
+- takeScreenshot: native-trainer-profile

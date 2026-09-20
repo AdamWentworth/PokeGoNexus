@@ -17,7 +17,7 @@ import {
   refreshTokenService,
   updateUserInSecondaryDB,
 } from '../services/authService';
-import { toast } from 'react-toastify';
+import { feedback } from '@/components/feedback';
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
 import { useTagsStore } from '@/features/tags/store/useTagsStore';
 import { useTradeStore } from '@/features/trades/store/useTradeStore';
@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     navigate('/login', { replace: true });
     if (forced) {
-      setTimeout(() => toast.info('Your session has expired, please log in again.'), 1_000);
+      setTimeout(() => feedback.info('Your session has expired, please log in again.'), 1_000);
     }
   }, [navigate, resetInstances, resetTags, resetTradeData, setIsLoggedIn, setUser]);
 
@@ -240,7 +240,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await logoutUser();
     } catch (err: unknown) {
       if ((err as { response?: { status: number } }).response?.status !== 404) {
-        toast.error('An error occurred during logout. Please try again.');
+        feedback.error('An error occurred during logout. Please try again.');
         return;
       }
     } finally {
@@ -304,7 +304,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (!secondary.success) {
-          toast.error(
+          feedback.error(
             'User updated in main DB, but failed to sync secondary DB.',
           );
         }
@@ -314,7 +314,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: true, data: updated };
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      toast.error(`Failed to update account details: ${msg}`);
+      feedback.error(`Failed to update account details: ${msg}`);
       return { success: false, error: msg };
     }
   };

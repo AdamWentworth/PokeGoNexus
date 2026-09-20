@@ -2,6 +2,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -13,17 +15,30 @@ type AccessTokenClaims struct {
 	jwt.RegisteredClaims
 }
 
+func readAccessToken(c fiber.Ctx) string {
+	if token := strings.TrimSpace(c.Cookies("accessToken")); token != "" {
+		return token
+	}
+
+	authorization := strings.TrimSpace(c.Get("Authorization"))
+	parts := strings.SplitN(authorization, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return ""
+	}
+	return strings.TrimSpace(parts[1])
+}
+
 func verifyAccessToken(c fiber.Ctx) (string, string, string, error) {
-	cookie := c.Cookies("accessToken")
-	if cookie == "" {
-		logger.Warn("Access token cookie not found")
+	tokenString := readAccessToken(c)
+	if tokenString == "" {
+		logger.Warn("Access token not found")
 		return "", "", "", fiber.ErrUnauthorized
 	}
 
 	claims := &AccessTokenClaims{}
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 
-	token, err := parser.ParseWithClaims(cookie, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := parser.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecret), nil
 	})
 	if err != nil {

@@ -1,0 +1,67 @@
+appId: com.pokegonexus.app
+name: Instance swipes preserve the collection and keep detail controls usable
+tags:
+  - android
+  - native-navigation
+---
+# Requires at least seven Favorites. Never saves, resets, or changes favorites.
+- openLink: pokegonexus://native/collection
+- extendedWaitUntil:
+    visible:
+      id: native-collection-hub
+    timeout: 45000
+- runFlow:
+    when:
+      visible: Clear Pokémon search
+    commands:
+      - tapOn: Clear Pokémon search
+      - hideKeyboard
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: "Open Favorites, .* Pokémon"
+    timeout: 15000
+- tapOn: "Open Favorites, .* Pokémon"
+- extendedWaitUntil:
+    visible: Sort by FAVORITE descending
+    timeout: 15000
+- tapOn:
+    id: "parity-card-.*"
+    index: 0
+- extendedWaitUntil:
+    visible: Next Pokémon
+    timeout: 15000
+- repeat:
+    times: 6
+    commands:
+      - tapOn: Next Pokémon
+      - assertVisible: Edit Pokémon
+      - assertNotVisible: Loading Pokémon details…
+- takeScreenshot: instance-after-next-buttons
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 20%, 37%
+          end: 80%, 37%
+          duration: 280
+      - waitForAnimationToEnd
+      - assertVisible: Edit Pokémon
+- assertNotVisible: Previous Pokémon
+- assertVisible: Next Pokémon
+- tapOn: TRAINER BATTLES
+- tapOn: Next Pokémon
+- assertVisible: TRAINER BATTLES
+- swipe:
+    start: 50%, 77%
+    end: 50%, 34%
+    duration: 450
+- waitForAnimationToEnd
+- tapOn: Next Pokémon
+- assertVisible: Next Pokémon
+- takeScreenshot: instance-after-scrolled-swipe
+- tapOn: Close
+- extendedWaitUntil:
+    visible: Sort by FAVORITE descending
+    timeout: 15000
+- assertNotVisible: Collection sync needs attention
+- takeScreenshot: instance-returned-to-favorites

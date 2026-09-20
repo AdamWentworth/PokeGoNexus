@@ -1,0 +1,39 @@
+appId: ${APP_ID}
+name: Native OAuth-only account disconnect smoke
+tags:
+  - android
+  - native-account
+  - oauth
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/account?oauthOnly=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: LOGIN IDENTITY
+    timeout: 45000
+- assertVisible: Your recent provider sign-in confirms sensitive actions because this account has no password.
+- scrollUntilVisible:
+    element:
+      text: Disconnect Google
+    direction: DOWN
+    timeout: 10000
+- tapOn: Disconnect Google
+- assertVisible: Disconnect Google?
+- assertVisible: Your recent provider sign-in confirms this change. You do not need a separate password.
+- assertNotVisible: Enter your account password
+- tapOn: Disconnect
+- assertVisible: Google disconnected.
+- assertVisible: Connect Google
+- takeScreenshot: native-account-oauth-only-disconnect

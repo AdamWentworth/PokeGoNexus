@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FaChartBar, FaChevronDown, FaCrosshairs, FaSearch } from 'react-icons/fa';
 import { useSearchParams } from 'react-router';
 
+import ProductPageHeader from '@/components/layout/ProductPageHeader';
+import SegmentedControl from '@/components/layout/SegmentedControl';
 import { AppLoadingFallback } from '@/contexts/AppLoadingContext';
 import { useAuthStore } from '@/stores/useAuthStore';
 
@@ -33,6 +35,19 @@ import {
 import './Max.css';
 
 type MaxView = 'rankings' | 'bosses';
+
+const MAX_VIEW_ITEMS = [
+  {
+    icon: <FaChartBar />,
+    label: 'Max rankings',
+    value: 'rankings',
+  },
+  {
+    icon: <FaCrosshairs />,
+    label: 'Boss teams',
+    value: 'bosses',
+  },
+] as const;
 
 const MAX_RESULTS_PAGE_SIZE = 18;
 const MAX_BOSS_RESULTS_INITIAL_SIZE = 3;
@@ -231,37 +246,25 @@ const Max = () => {
   return (
     <main className="max-page">
       <div className="max-page-inner">
-        <header className="max-page-header">
-          <img className="max-page-mark" src="/images/dynamax.png" alt="" />
-          <div className="max-page-heading">
-            <span>Power Spot strategy</span>
-            <h1>Max Battles</h1>
-          </div>
-          <strong className="max-page-count">
-            {maxCatalog.length} Max-ready Pokémon
-          </strong>
-        </header>
+        <ProductPageHeader
+          className="max-product-header"
+          eyebrow="Power Spot strategy"
+          icon={<img src="/images/dynamax.png" alt="" />}
+          meta={
+            <strong className="max-page-count">
+              {maxCatalog.length} Max-ready Pokémon
+            </strong>
+          }
+          title="Max Battles"
+        />
 
-        <nav className="max-view-tabs" aria-label="Max Battle tools">
-          <button
-            aria-pressed={view === 'rankings'}
-            className={view === 'rankings' ? 'active' : ''}
-            onClick={() => changeView('rankings')}
-            type="button"
-          >
-            <FaChartBar aria-hidden="true" />
-            <span>Max rankings</span>
-          </button>
-          <button
-            aria-pressed={view === 'bosses'}
-            className={view === 'bosses' ? 'active' : ''}
-            onClick={() => changeView('bosses')}
-            type="button"
-          >
-            <FaCrosshairs aria-hidden="true" />
-            <span>Boss teams</span>
-          </button>
-        </nav>
+        <SegmentedControl
+          ariaLabel="Max Battle tools"
+          className="max-view-switcher"
+          items={MAX_VIEW_ITEMS}
+          onChange={changeView}
+          value={view}
+        />
 
         <MaxRosterScope
           scope={rosterScope}

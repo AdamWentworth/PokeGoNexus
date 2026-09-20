@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { FaSave, FaTimes } from "react-icons/fa";
-import { useContextBackHandler } from "@/contexts/ContextBackContext";
+import OverlayDismissButton from "@/components/OverlayDismissButton";
+import OverlayPortal from "@/components/OverlayPortal";
 import type { RaidObservationActual } from "../utils/raidCalibration";
 
 type RaidObservationDialogProps = {
@@ -43,8 +44,6 @@ const RaidObservationDialog = ({
     remainingBossHpPercent: "",
   });
   const [error, setError] = useState("");
-
-  useContextBackHandler(true, onCancel, "raid-observation");
 
   const setField = (field: keyof ObservationForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -111,7 +110,8 @@ const RaidObservationDialog = ({
   };
 
   return (
-    <div className="raid-observation-overlay">
+    <OverlayPortal onClose={onCancel} closeOnBackdrop>
+      <div className="raid-observation-overlay">
       <form
         aria-label={`Log ${bossName} raid`}
         aria-modal="true"
@@ -124,9 +124,9 @@ const RaidObservationDialog = ({
             <span>Observed battle</span>
             <h2>{bossName}</h2>
           </div>
-          <button aria-label="Close raid log" onClick={onCancel} type="button">
+          <OverlayDismissButton aria-label="Close raid log" onDismiss={onCancel}>
             <FaTimes aria-hidden="true" />
-          </button>
+          </OverlayDismissButton>
         </header>
 
         <div className="raid-observation-outcome" aria-label="Raid outcome">
@@ -261,7 +261,8 @@ const RaidObservationDialog = ({
           </button>
         </footer>
       </form>
-    </div>
+      </div>
+    </OverlayPortal>
   );
 };
 

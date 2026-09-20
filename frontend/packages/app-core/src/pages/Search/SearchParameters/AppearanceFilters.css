@@ -1,0 +1,482 @@
+.search-filter-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.search-filter-panel__intro {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.search-filter-panel__intro > div:first-child {
+  min-width: 0;
+}
+
+.search-filter-panel__intro > div:first-child > span,
+.search-filter-card__heading > div > span {
+  color: var(--color-accent-primary);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.search-filter-panel__intro h3,
+.search-filter-card h4 {
+  margin: 2px 0 0;
+  color: var(--color-text-primary);
+}
+
+.search-filter-panel__intro h3 {
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+}
+
+.search-filter-panel__intro p,
+.search-filter-card__heading p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.search-filter-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--color-search-section-surface) 88%,
+    var(--color-text-primary) 12%
+  );
+}
+
+.search-filter-card__heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+
+.search-filter-card__heading > div {
+  min-width: 0;
+}
+
+.search-filter-card h4 {
+  font-size: 1rem;
+}
+
+.appearance-preview {
+  position: relative;
+  display: grid;
+  width: 104px;
+  height: 104px;
+  flex: 0 0 104px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+  background-position: center;
+  background-size: cover;
+}
+
+.appearance-preview::before {
+  position: absolute;
+  z-index: 0;
+  background: color-mix(in srgb, var(--color-search-section-surface) 38%, transparent);
+  content: '';
+  inset: 0;
+}
+
+.appearance-preview__artwork {
+  z-index: 1;
+  --pokemon-artwork-width: 94px;
+  --pokemon-artwork-height: 94px;
+  --pokemon-max-badge-size: 28%;
+}
+
+.appearance-preview__pokemon {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.34));
+}
+
+.appearance-preview > span {
+  z-index: 1;
+  padding: 8px;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.appearance-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.appearance-choice {
+  display: flex;
+  min-width: 0;
+  min-height: 58px;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.appearance-choice[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--color-accent-primary) 70%, transparent);
+  background: color-mix(in srgb, var(--color-accent-primary) 18%, transparent);
+}
+
+.appearance-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.appearance-choice > img {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  object-fit: contain;
+}
+
+.appearance-choice > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.appearance-choice strong {
+  font-size: 0.82rem;
+}
+
+.appearance-choice small {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appearance-select-grid,
+.appearance-move-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.appearance-move-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.in-frame-select {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.in-frame-select.is-open {
+  z-index: 30;
+}
+
+.in-frame-select__trigger {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  border-radius: 9px;
+  background: var(--color-search-section-input-bg);
+  color: var(--color-search-section-input-text);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.in-frame-select__trigger > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.in-frame-select__trigger > svg {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.in-frame-select.is-open .in-frame-select__trigger > svg {
+  transform: rotate(180deg);
+}
+
+.in-frame-select__trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.in-frame-select__menu {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  left: 0;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 42%, transparent);
+  border-radius: 10px;
+  background: var(--color-search-section-surface);
+  box-shadow: 0 14px 30px rgb(0 0 0 / 34%);
+  scrollbar-color: color-mix(in srgb, var(--color-accent-primary) 52%, transparent)
+    transparent;
+  scrollbar-width: thin;
+}
+
+.in-frame-select__menu--below {
+  top: calc(100% + 5px);
+}
+
+.in-frame-select__menu--above {
+  bottom: calc(100% + 5px);
+}
+
+.in-frame-select__menu button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.in-frame-select__menu button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.in-frame-select__menu button:hover,
+.in-frame-select__menu button.is-active,
+.in-frame-select__menu button[aria-selected='true'] {
+  border-color: color-mix(in srgb, var(--color-accent-primary) 36%, transparent);
+  background: color-mix(in srgb, var(--color-accent-primary) 15%, transparent);
+}
+
+.in-frame-select__menu button > svg {
+  flex: 0 0 auto;
+  color: var(--color-accent-primary);
+}
+
+.search-segmented-control {
+  display: grid;
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  border: 0;
+}
+
+.search-segmented-control legend {
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.search-segmented-control button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.search-segmented-control button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--color-accent-primary) 65%, transparent);
+  background: color-mix(in srgb, var(--color-accent-primary) 17%, transparent);
+  color: var(--color-text-primary);
+}
+
+.search-segmented-control button img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.appearance-background-card .search-filter-card__heading {
+  margin-bottom: 10px;
+}
+
+.appearance-background-card .search-filter-card__heading > button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 48%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.appearance-background-card .search-filter-card__heading > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
+.appearance-background-summary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.appearance-background-summary strong {
+  color: var(--color-text-primary);
+}
+
+.appearance-background-summary__costume {
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  border-radius: 999px;
+  color: var(--color-text-primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.appearance-background-summary button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.appearance-choice:focus-visible,
+.in-frame-select__trigger:focus-visible,
+.in-frame-select__menu button:focus-visible,
+.search-segmented-control button:focus-visible,
+.appearance-background-card button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 34%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .appearance-filters__intro {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .appearance-preview {
+    width: 100%;
+    height: 168px;
+    flex-basis: auto;
+    border-radius: 15px;
+  }
+
+  .appearance-preview__artwork {
+    --pokemon-artwork-width: 156px;
+    --pokemon-artwork-height: 156px;
+
+    max-width: calc(100% - 12px);
+    max-height: calc(100% - 12px);
+  }
+
+  .search-filter-card {
+    padding: 12px;
+  }
+
+  .appearance-choice {
+    min-height: 64px;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .appearance-choice > span {
+    align-items: center;
+  }
+
+  .appearance-choice small {
+    max-width: 88px;
+  }
+
+  .appearance-select-grid,
+  .appearance-move-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appearance-gender-control {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .appearance-background-summary {
+    flex-wrap: wrap;
+  }
+}

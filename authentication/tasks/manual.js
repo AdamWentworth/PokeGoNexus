@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -24,14 +24,18 @@ const createBackup = () => {
     // Log the backup path to verify
     console.log(`Backup path: ${backupPath}`);
 
-    // Construct the mongodump command to output a single archive file
-    const command = `mongodump --uri="${DATABASE_URL}" --db=${DATABASE_NAME} --collection=${COLLECTION_NAME} --archive=${backupPath} --gzip`;
+    const args = [
+        `--uri=${DATABASE_URL}`,
+        `--db=${DATABASE_NAME}`,
+        `--collection=${COLLECTION_NAME}`,
+        `--archive=${backupPath}`,
+        '--gzip'
+    ];
 
-    // Log the command to verify
-    console.log(`Executing command: ${command}`);
+    console.log('Executing mongodump backup');
 
-    // Execute the mongodump command
-    exec(command, (error, stdout, stderr) => {
+    // Avoid a shell so configuration values cannot become shell syntax.
+    execFile('mongodump', args, (error, stdout, stderr) => {
         if (error) {
             console.error(`Backup failed: ${error.message}`);
             return;

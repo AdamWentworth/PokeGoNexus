@@ -3,7 +3,7 @@ import CloseButton from '@/components/CloseButton';
 import OverlayPortal from '@/components/OverlayPortal';
 import { useModal } from '@/contexts/ModalContext';
 import CaughtInstance from '../../instances/CaughtInstance';
-import '../../instances/sections/Modals.css';
+import '@/components/pokemonComponents/BackgroundLocationOverlay.css';
 import './FusionPokemonSelection.css';
 
 import { Fusion } from '@/types/pokemonSubTypes';
@@ -48,7 +48,7 @@ const FusionPokemonSelection: React.FC<FusionPokemonSelectionProps> = ({
   };
 
   return (
-    <OverlayPortal>
+    <OverlayPortal onClose={onCancel} closeOnBackdrop>
       <div className="background-overlay fusion-pokemon-selection-overlay" onClick={onCancel}>
         <div
           className="background-overlay-content fusion-modal-content"

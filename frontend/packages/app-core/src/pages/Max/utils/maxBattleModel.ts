@@ -1,23 +1,20 @@
-import type { Move } from '@/types/pokemonSubTypes';
-import type { PokemonVariant } from '@/types/pokemonVariants';
-
+import type { Move } from '@pokemongonexus/shared-contracts/pokemon';
+import type { PokemonVariant } from '@pokemongonexus/shared-contracts/variants';
 import {
   getSpecialMaxAttacker,
   type SpecialMaxAttacker,
-} from '@/features/max/specialMaxPokemon';
-import { cpMultipliers } from '@/pages/Raid/utils/constants';
+} from '@pokemongonexus/shared-domain/special-max-pokemon';
+import { cpMultipliers } from '@pokemongonexus/shared-domain/combat-power';
 import {
-  buildRaidIncomingPressureScenarios,
-  calculateRaidIncomingPressure,
-} from '@/pages/Raid/utils/raidCombat';
-import {
-  calculateRaidAttackerCp,
-  getRaidAttackerIvPercent,
-  getRaidAttackerIvs,
-  getRaidAttackerLevelLabel,
-  resolveRaidAttackerLevel,
-} from '@/pages/Raid/utils/raidAttackerModel';
-import { getTypeEffectivenessMultiplier } from '@/pages/Raid/utils/typeEffectiveness';
+  buildSharedRaidIncomingPressureScenarios as buildRaidIncomingPressureScenarios,
+  calculateSharedRaidAttackerCp as calculateRaidAttackerCp,
+  calculateSharedRaidIncomingPressure as calculateRaidIncomingPressure,
+  getSharedRaidAttackerIvPercent as getRaidAttackerIvPercent,
+  getSharedRaidAttackerIvs as getRaidAttackerIvs,
+  getSharedRaidAttackerLevelLabel as getRaidAttackerLevelLabel,
+  resolveSharedRaidAttackerLevel as resolveRaidAttackerLevel,
+} from '@pokemongonexus/shared-domain/raid-combat';
+import { getTypeEffectivenessMultiplier } from '@pokemongonexus/shared-domain/type-effectiveness';
 
 export type MaxRole = 'damage' | 'tank' | 'healing';
 export type MaxMoveLevel = 0 | 1 | 2 | 3;

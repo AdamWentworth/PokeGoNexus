@@ -1,8 +1,9 @@
 # Production Deploy State
 
-GitHub workflows use fresh checkouts for deployment definitions. Durable state
-lives outside the checkout under `/srv/pokegonexus` and in named Docker
-volumes.
+The private HomeOps repository owns production deployment definitions. The
+public PokeGoNexus repository tests source and publishes immutable application
+images, but it does not schedule work on the production runner. Durable state
+lives under `/srv/pokegonexus` and in named Docker volumes.
 
 Host-local state includes:
 
@@ -19,6 +20,6 @@ The Pokemon API's `pokemon_cache` Redis container is disposable acceleration,
 not durable state. It intentionally has no named volume and is excluded from
 backup and restore procedures.
 
-The old checkout-to-runtime state migration is retired. New hosts should be
-provisioned using each service's current Compose file and runbook, then restore
-private database backups where required.
+The old public-checkout-to-runtime path is retired. New hosts should be
+provisioned from private HomeOps controls, then restore private environment
+files and database backups where required.

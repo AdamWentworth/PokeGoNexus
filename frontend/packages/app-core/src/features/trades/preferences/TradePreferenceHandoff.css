@@ -1,0 +1,70 @@
+.trade-preference-handoff {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--trade-theme, #31b777) 48%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--trade-theme, #31b777) 8%, var(--color-surface, #111));
+}
+
+.trade-preference-handoff--wanted {
+  --trade-theme: #ef5b71;
+}
+
+.trade-preference-handoff > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.trade-preference-handoff strong {
+  color: var(--color-text-primary, #fff);
+}
+
+.trade-preference-handoff span {
+  color: var(--color-text-secondary, #b7c9c9);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.trade-preference-handoff a {
+  flex: 0 0 auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.65rem;
+  background: var(--trade-theme, #31b777);
+  color: #07130e;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.trade-preference-handoff--compact {
+  justify-content: center;
+  margin: -0.25rem 0.75rem 0;
+  padding: 0 0 0.75rem;
+  border: 0;
+  background: transparent;
+}
+
+.trade-preference-handoff--compact a {
+  width: min(100%, 24rem);
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 560px) {
+  .trade-preference-handoff {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .trade-preference-handoff a {
+    width: 100%;
+  }
+}

@@ -21,17 +21,24 @@ func TestProtectedSocialRoutesExposeCanonicalAndPrefixedPaths(t *testing.T) {
 	}
 	registerProtectedSocialRoutes(app, "/api", passthrough)
 	registerProtectedSocialRoutes(app, "/api/users", passthrough)
-	app.Put("/api/users/:user_id", verifyJWT, passthrough, UpdateUserHandler)
+	registerProtectedAccountRoutes(app, passthrough)
 
 	requests := []struct {
 		method string
 		path   string
 	}{
 		{method: http.MethodGet, path: "/api/profile"},
+		{method: http.MethodGet, path: "/api/tags"},
+		{method: http.MethodPost, path: "/api/tags"},
+		{method: http.MethodPut, path: "/api/tags/order"},
+		{method: http.MethodPut, path: "/api/tags/tag-1"},
+		{method: http.MethodDelete, path: "/api/tags/tag-1"},
 		{method: http.MethodPut, path: "/api/profile"},
 		{method: http.MethodGet, path: "/api/friends"},
 		{method: http.MethodGet, path: "/api/preferences"},
 		{method: http.MethodGet, path: "/api/users/profile"},
+		{method: http.MethodGet, path: "/api/users/tags"},
+		{method: http.MethodPut, path: "/api/users/tags/order"},
 		{method: http.MethodPut, path: "/api/users/profile"},
 		{method: http.MethodGet, path: "/api/users/friends"},
 		{method: http.MethodGet, path: "/api/users/preferences"},
@@ -39,6 +46,11 @@ func TestProtectedSocialRoutesExposeCanonicalAndPrefixedPaths(t *testing.T) {
 		{method: http.MethodPost, path: "/api/trades/trade-1/accept"},
 		{method: http.MethodGet, path: "/api/users/trades"},
 		{method: http.MethodPost, path: "/api/users/trades/trade-1/complete-confirmation"},
+		{method: http.MethodPut, path: "/api/users/user-1"},
+		{method: http.MethodDelete, path: "/api/users/user-1"},
+		{method: http.MethodGet, path: "/api/user-1/overview"},
+		{method: http.MethodPut, path: "/api/user-1"},
+		{method: http.MethodDelete, path: "/api/user-1"},
 	}
 
 	for _, request := range requests {

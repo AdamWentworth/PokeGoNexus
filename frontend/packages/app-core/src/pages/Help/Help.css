@@ -1,0 +1,184 @@
+.help-page {
+  --help-accent: var(--color-accent-primary);
+  --help-border: var(--color-ui-border);
+  --help-muted: var(--color-text-secondary);
+  --help-surface: color-mix(in srgb, var(--color-text-primary) 4%, var(--color-app-surface));
+
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--help-accent) 10%, transparent), transparent 34rem),
+    var(--color-app-surface);
+}
+
+.help-page__shell {
+  overflow: hidden;
+  border: 1px solid var(--help-border);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-app-surface) 94%, transparent);
+  box-shadow: var(--shadow-elevated);
+}
+
+.help-page .product-page-header__icon {
+  width: 58px;
+  height: 58px;
+  border: 1px solid color-mix(in srgb, var(--help-accent) 34%, var(--help-border));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--help-accent) 10%, transparent);
+  color: var(--help-accent);
+}
+
+.help-page .product-page-header__icon > svg {
+  width: 28px;
+  height: 28px;
+}
+
+.help-page__directory {
+  display: grid;
+  gap: clamp(18px, 3vw, 30px);
+  padding: clamp(18px, 3.5vw, 36px);
+}
+
+.help-section {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.58fr) minmax(0, 1.42fr);
+  gap: clamp(18px, 4vw, 48px);
+  padding-bottom: clamp(18px, 3vw, 30px);
+  border-bottom: 1px solid var(--help-border);
+  text-align: left;
+}
+
+.help-section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.help-section > header {
+  align-self: start;
+}
+
+.help-section > header h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  line-height: 1.2;
+}
+
+.help-section > header p {
+  margin: 7px 0 0;
+  color: var(--help-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.help-section__links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.help-link {
+  display: grid;
+  min-width: 0;
+  min-height: 108px;
+  box-sizing: border-box;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--radius-panel);
+  background: var(--help-surface);
+  color: var(--color-text-primary);
+  text-align: left;
+  text-decoration: none;
+  transition:
+    border-color var(--motion-fast),
+    background var(--motion-fast),
+    transform var(--motion-fast);
+}
+
+.help-link:hover {
+  border-color: color-mix(in srgb, var(--help-accent) 58%, var(--help-border));
+  background: color-mix(in srgb, var(--help-accent) 8%, var(--help-surface));
+  transform: translateY(-2px);
+}
+
+.help-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--help-accent) 44%, transparent);
+  outline-offset: 2px;
+}
+
+.help-link__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--help-accent) 30%, var(--help-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--help-accent) 10%, transparent);
+  color: var(--help-accent);
+}
+
+.help-link__icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.help-link__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.help-link__copy strong {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.help-link__copy small {
+  color: var(--help-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.help-link > svg {
+  flex: none;
+  color: var(--help-muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 760px) {
+  .help-page__shell {
+    border-radius: 18px;
+  }
+
+  .help-section {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .help-section > header {
+    text-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .help-page__directory {
+    padding: 16px 12px 20px;
+  }
+
+  .help-section__links {
+    grid-template-columns: 1fr;
+  }
+
+  .help-link {
+    min-height: 94px;
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-link {
+    transition-duration: 1ms;
+  }
+}

@@ -13,6 +13,7 @@ interface HeaderRowProps {
   onCPChange: (value: string) => void;
   onFavoriteChange: (value: boolean) => void;
   showFavorite?: boolean;
+  showCP?: boolean;
   rightSlot?: React.ReactNode;
 }
 
@@ -25,6 +26,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
   onCPChange,
   onFavoriteChange,
   showFavorite = true,
+  showCP = true,
   rightSlot,
 }) => (
   <div className="top-row">
@@ -34,9 +36,11 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
       isEditable={isEditable}
     />
 
-    <div className="cp-component-container">
-      <CP editMode={editMode} onCPChange={onCPChange} cp={cp} />
-    </div>
+    {showCP ? (
+      <div className="cp-component-container">
+        <CP editMode={editMode} onCPChange={onCPChange} cp={cp} />
+      </div>
+    ) : null}
 
     {rightSlot ?? (showFavorite ? (
       <FavoriteComponent

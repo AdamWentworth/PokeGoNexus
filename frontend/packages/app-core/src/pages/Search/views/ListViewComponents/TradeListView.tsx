@@ -11,7 +11,6 @@ import PokemonResultVisual, {
 import PokemonResultDetails from './PokemonResultDetails';
 import SearchResultRow from './SearchResultRow';
 import { formatDateOnlySafe } from './wantedListViewHelpers';
-import './TradeListView.css';
 
 type TradeListWantedEntry = {
   dynamax?: boolean;
@@ -80,14 +79,15 @@ const TradeListView: React.FC<TradeListViewProps> = ({ item, findPokemonByKey })
   const onCPChange = () => {};
   const genderValue = toPokemonResultGender(item.gender);
 
-  const hasAdditionalDetails =
+  const hasAdditionalDetails = Boolean(
     item.weight ||
     item.height ||
     item.fast_move_id ||
     item.charged_move1_id ||
     item.charged_move2_id ||
     item.location_caught ||
-    item.date_caught;
+    item.date_caught,
+  );
 
   const wantedEntries = useMemo<LinkedPokemonGridEntry[]>(() => {
     return Object.entries(item.wanted_list ?? {}).reduce<LinkedPokemonGridEntry[]>(
@@ -116,46 +116,39 @@ const TradeListView: React.FC<TradeListViewProps> = ({ item, findPokemonByKey })
       username={item.username}
       instanceId={item.instance_id}
       distance={item.distance}
-      latitude={item.latitude}
-      longitude={item.longitude}
-      mapInstanceData="trade"
       navigationInstanceData="Trade"
       pokemonDisplayName={pokemonDisplayName}
       rightColumn={
-        item.wanted_list && (
+        wantedEntries.length > 0 ? (
           <LinkedPokemonGrid
-            title="Wanted Pokemon:"
+            title="Trainer wants"
             sectionClassName="wanted-list-section"
             gridClassName="wanted-list"
             containerClassName="wanted-pokemon-container"
             imageClassName="wanted-pokemon-image"
             entries={wantedEntries}
           />
-        )
+        ) : undefined
       }
     >
-      <div className="card">
-        <h3>{item.username}</h3>
+      <div className="card search-result-listing-summary">
+        <PokemonResultVisual
+          imageUrl={imageUrl}
+          pokemonDisplayName={pokemonDisplayName}
+          genderValue={genderValue}
+          lucky={item.lucky}
+          dynamax={item.dynamax}
+          gigantamax={item.gigantamax}
+          beforeImage={
+            typeof item.cp === 'number' && item.cp > 0 ? (
+              <CP cp={item.cp} editMode={false} onCPChange={onCPChange} />
+            ) : null
+          }
+        />
 
         {hasAdditionalDetails ? (
-          <div className="pokemon-columns">
-            <div className="pokemon-first-column">
-              <PokemonResultVisual
-                imageUrl={imageUrl}
-                pokemonDisplayName={pokemonDisplayName}
-                genderValue={genderValue}
-                lucky={item.lucky}
-                dynamax={item.dynamax}
-                gigantamax={item.gigantamax}
-                nameLayout="stacked"
-                beforeImage={
-                  item.cp != null && (
-                    <CP cp={item.cp} editMode={false} onCPChange={onCPChange} />
-                  )
-                }
-              />
-            </div>
-
+          <details className="search-result-details-disclosure">
+            <summary>Listing details</summary>
             <PokemonResultDetails
               weight={item.weight}
               height={item.height}
@@ -167,22 +160,8 @@ const TradeListView: React.FC<TradeListViewProps> = ({ item, findPokemonByKey })
               dateCaught={item.date_caught}
               formatDate={formatDateOnlySafe}
             />
-          </div>
-        ) : (
-          <div className="pokemon-single-column">
-            {typeof item.cp === 'number' && item.cp > 0 && (
-              <CP cp={item.cp} editMode={false} onCPChange={onCPChange} />
-            )}
-            <PokemonResultVisual
-              imageUrl={imageUrl}
-              pokemonDisplayName={pokemonDisplayName}
-              genderValue={genderValue}
-              lucky={item.lucky}
-              dynamax={item.dynamax}
-              gigantamax={item.gigantamax}
-            />
-          </div>
-        )}
+          </details>
+        ) : null}
       </div>
     </SearchResultRow>
   );

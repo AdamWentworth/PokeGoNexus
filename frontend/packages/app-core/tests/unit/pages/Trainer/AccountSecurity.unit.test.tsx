@@ -102,11 +102,12 @@ describe('AccountSecurity', () => {
     );
 
   it('shows connected identities and protects password changes with the current password', async () => {
-    renderPage();
+    const { container } = renderPage();
 
     expect(await screen.findByRole('button', { name: 'Disconnect' }))
       .toBeInTheDocument();
     expect(screen.getByText('2 active sessions')).toBeInTheDocument();
+    await expect(container).toHaveNoViolations();
 
     fireEvent.change(screen.getByLabelText(/^new password$/i), {
       target: { value: 'Different_valid_42!' },

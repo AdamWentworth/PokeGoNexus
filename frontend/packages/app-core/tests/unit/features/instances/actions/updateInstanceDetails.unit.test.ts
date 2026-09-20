@@ -200,6 +200,32 @@ describe('updateInstanceDetails', () => {
     );
   });
 
+  it('rejects marking a For Trade Pokémon as Favorite', async () => {
+    const { updater, getInstances, setData } = createHarness({
+      trade: { is_caught: true, is_for_trade: true, favorite: false, last_update: 1 },
+    });
+
+    await expect(updater('trade', { favorite: true })).rejects.toThrow(
+      'For Trade Pokémon cannot be marked as Favorite',
+    );
+    expect(getInstances().trade).toMatchObject({ is_for_trade: true, favorite: false });
+    expect(setData).not.toHaveBeenCalled();
+    expect(db.putBatchedPokemonUpdates).not.toHaveBeenCalled();
+  });
+
+  it('rejects listing a Favorite Pokémon For Trade', async () => {
+    const { updater, getInstances, setData } = createHarness({
+      favorite: { is_caught: true, is_for_trade: false, favorite: true, last_update: 1 },
+    });
+
+    await expect(updater('favorite', { is_for_trade: true })).rejects.toThrow(
+      'Favorite Pokémon cannot be listed For Trade',
+    );
+    expect(getInstances().favorite).toMatchObject({ is_for_trade: false, favorite: true });
+    expect(setData).not.toHaveBeenCalled();
+    expect(db.putBatchedPokemonUpdates).not.toHaveBeenCalled();
+  });
+
   it('no-ops for empty patch payloads', async () => {
     const { updater, setData } = createHarness({
       a: { cp: 10, last_update: 1 },

@@ -1,6 +1,6 @@
 # Pokemon Catalog Service
 
-This Go service publishes the PokeGo Nexus reference catalog. PostgreSQL is
+This Go service publishes the Pokémon Go Nexus reference catalog. PostgreSQL is
 the sole catalog store. The API builds a complete browser payload from the
 dedicated `pokemon_catalog_db` container, keeps the hot serialized result in
 each API process, and optionally shares immutable JSON/gzip payloads through

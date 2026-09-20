@@ -1,0 +1,36 @@
+appId: ${APP_ID}
+name: Native action-menu and theme performance contract
+tags:
+  - android
+  - performance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?performance=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: POKÉMON
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 45000
+- tapOn:
+    point: 50%, 94%
+    waitToSettleTimeoutMs: 100
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- tapOn: Use light theme
+- extendedWaitUntil:
+    visible: Use dark theme
+    timeout: 10000

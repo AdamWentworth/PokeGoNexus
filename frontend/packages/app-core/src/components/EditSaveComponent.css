@@ -16,9 +16,5 @@
     width: 28px; /* Adequate size for easy clicking */
     height: 28px;
     display: block; /* Ensures the image is treated as a block element, making it easier to manage */
-    filter: invert(1); /* Apply a white overlay effect */
-}
-
-:root[data-theme='light'] .instance-overlay.caught-mode .edit-save-container .icon-button img {
-    filter: var(--light-filter-invert);
+    filter: var(--filter-icon-from-black);
 }

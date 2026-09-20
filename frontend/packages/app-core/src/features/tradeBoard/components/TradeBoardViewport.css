@@ -1,0 +1,14 @@
+.trade-board-viewport {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.trade-board-viewport__scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1200px;
+  transform-origin: top left;
+}

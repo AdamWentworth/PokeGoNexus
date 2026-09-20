@@ -71,8 +71,10 @@ describe('PendingTradeView', () => {
 
   it('reveals partner info and forwards data to partner modal', async () => {
     mocks.revealPartnerInfoMock.mockResolvedValue({
+      sharingEnabled: true,
       trainerCode: '123456789012',
       pokemonGoName: 'Misty',
+      coordinationMethod: 'campfire',
       location: 'Cerulean City',
     });
 
@@ -87,11 +89,14 @@ describe('PendingTradeView', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /reveal trade partner info/i }));
+    fireEvent.click(screen.getByRole('button', { name: /coordinate trade/i }));
 
     await waitFor(() => {
       expect(mocks.revealPartnerInfoMock).toHaveBeenCalledWith(baseTrade);
       expect(screen.getByText('123456789012')).toBeInTheDocument();
+      expect(mocks.partnerInfoModalProps.at(-1)).toEqual(expect.objectContaining({
+        partnerUsername: 'misty',
+      }));
     });
   });
 

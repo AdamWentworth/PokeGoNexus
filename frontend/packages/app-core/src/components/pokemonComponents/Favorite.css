@@ -1,26 +1,41 @@
 /* Favorite.css */
 
 .favorite-component {
+    appearance: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-primary, #fff);
     display: flex;
     justify-content: flex-end; /* Align the image to the right */
     align-items: center; /* Center the image vertically */
 }
 
-.favorite-component img {
+.favorite-component .collection-priority-star {
     width: 32px;
     height: 32px;
     cursor: default; /* Default cursor for image outside edit mode */
 }
 
 /* Only change cursor to pointer when the component is in editable mode */
-.favorite-component.editable img {
+.favorite-component.editable .collection-priority-star {
     cursor: pointer; /* Pointer cursor for image when component is editable */
+}
+
+.favorite-component:disabled {
+    opacity: 1;
+}
+
+.favorite-component:focus-visible {
+    border-radius: 6px;
+    outline: 2px solid var(--color-primary, #3ba7ff);
+    outline-offset: 3px;
 }
 
 :root[data-theme='light'] .favorite-component {
     color: var(--light-text-primary);
 }
 
-:root[data-theme='light'] .favorite-component.not-filled img {
-    filter: var(--light-filter-invert);
+.favorite-component.not-filled .collection-priority-star {
+    filter: none;
 }

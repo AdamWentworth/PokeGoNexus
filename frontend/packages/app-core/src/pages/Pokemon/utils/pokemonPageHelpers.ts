@@ -1,12 +1,17 @@
 import type { InstanceStatus } from '@/types/instances';
 import type { PokemonVariant } from '@/types/pokemonVariants';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
-export type ActiveView = 'pokedex' | 'pokemon' | 'tags';
-export type LastMenu = 'pokedex' | 'ownership';
+export type ActiveView = 'inventory' | 'pokemon' | 'wishlist';
 
-const ACTIVE_VIEW_SEQUENCE: ActiveView[] = ['pokedex', 'pokemon', 'tags'];
+const ACTIVE_VIEW_SEQUENCE: readonly ActiveView[] = collectionExperienceParityContract.viewOrder;
 const HAVE_TAG_FILTERS = new Set(['Favorites', 'Trade', 'Caught']);
 const WISHLIST_TAG_FILTERS = new Set(['Most Wanted', 'Wanted']);
+
+type CustomTagHeader = {
+  name: string;
+  parent: string;
+};
 
 export const isActiveView = (value: string): value is ActiveView =>
   ACTIVE_VIEW_SEQUENCE.includes(value as ActiveView);
@@ -45,21 +50,31 @@ export const buildSliderTransform = (
 
 const getOwnershipSubLabel = (
   filters: Set<string>,
-  lastMenu: LastMenu,
   tagFilter: string,
+  customTag: CustomTagHeader | null | undefined,
+  customParent: 'caught' | 'wanted',
 ): string | undefined => {
-  if (lastMenu !== 'ownership' || !tagFilter || !filters.has(tagFilter)) {
+  if (!tagFilter) {
     return undefined;
   }
-  return `(${tagFilter.toUpperCase()})`;
+
+  const label = filters.has(tagFilter)
+    ? tagFilter
+    : customTag?.parent === customParent
+      ? customTag.name
+      : null;
+
+  return label ? `(${label.toUpperCase()})` : undefined;
 };
 
 export const getHaveTagsSubLabel = (
-  lastMenu: LastMenu,
   tagFilter: string,
-): string | undefined => getOwnershipSubLabel(HAVE_TAG_FILTERS, lastMenu, tagFilter);
+  customTag?: CustomTagHeader | null,
+): string | undefined =>
+  getOwnershipSubLabel(HAVE_TAG_FILTERS, tagFilter, customTag, 'caught');
 
 export const getWishlistSubLabel = (
-  lastMenu: LastMenu,
   tagFilter: string,
-): string | undefined => getOwnershipSubLabel(WISHLIST_TAG_FILTERS, lastMenu, tagFilter);
+  customTag?: CustomTagHeader | null,
+): string | undefined =>
+  getOwnershipSubLabel(WISHLIST_TAG_FILTERS, tagFilter, customTag, 'wanted');

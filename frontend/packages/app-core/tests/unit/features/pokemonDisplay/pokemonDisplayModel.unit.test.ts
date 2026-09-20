@@ -321,10 +321,14 @@ describe('pokemonDisplayModel', () => {
     expect(getPokemonDisplayHighlightKey(makePokemon({ instanceData: {} }))).toBe('0001-default');
 
     expect(getPokemonDisplayOwnershipClass('Caught')).toBe('caught');
+    expect(getPokemonDisplayOwnershipClass('Most Wanted')).toBe('wanted');
     expect(getPokemonDisplayOwnershipClass('unknown')).toBe('');
 
     expect(
       shouldDisplayPokemonLuckyBackdrop('wanted', { pref_lucky: true }),
+    ).toBe(true);
+    expect(
+      shouldDisplayPokemonLuckyBackdrop('Most Wanted', { pref_lucky: true }),
     ).toBe(true);
     expect(shouldDisplayPokemonLuckyBackdrop('caught', { lucky: true })).toBe(true);
     expect(shouldDisplayPokemonLuckyBackdrop('caught', { pref_lucky: true })).toBe(false);

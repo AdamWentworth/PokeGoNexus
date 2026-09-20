@@ -34,7 +34,7 @@ interface PokemonMenuProps {
   toggleCardHighlight: (key: string) => void;
   highlightedCards: Set<string>;
   tagFilter: string;
-  onClearTagFilter: () => void;
+  onClearTagFilter?: () => void;
   lists: Record<string, Record<string, unknown>>;
   instances: Record<string, PokemonInstance>;
   sortType: SortType;
@@ -193,6 +193,7 @@ const PokemonMenu: React.FC<PokemonMenuProps> = ({
       searchAreaRef.current?.querySelector('input')?.blur();
     },
     'pokemon-search-menu',
+    'mobile',
   );
 
   if (loading) return <AppLoadingFallback source="pokemon-menu" />;
@@ -222,7 +223,6 @@ const PokemonMenu: React.FC<PokemonMenuProps> = ({
           <ActiveTagFilterChip
             tagFilter={tagFilter}
             onClearTagFilter={onClearTagFilter}
-            placement="search"
           />
         )}
         {isMenuVisible && (

@@ -1,0 +1,48 @@
+appId: ${APP_ID}
+name: Native authoritative trade-proposal smoke
+tags:
+  - android
+  - native-trades
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/trade-proposal
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Review the exchange
+    timeout: 45000
+- assertVisible: YOU OFFER
+- assertVisible: OTHERTRAINER OFFERS
+- assertVisible: Gigantamax Charizard
+- assertVisible: Shiny Mewtwo
+- assertVisible: Remote trade available
+- assertNotVisible: Lucky trade requested
+- takeScreenshot: 01-remote-proposal
+- tapOn: Request Lucky trade
+- assertVisible: Lucky trade requested
+- takeScreenshot: 02-lucky-remote-independent
+- scrollUntilVisible:
+    element:
+      text: Propose trade
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Propose trade
+- extendedWaitUntil:
+    visible: Proposal committed
+    timeout: 10000
+- assertVisible: TRADE PROPOSAL SENT
+- assertVisible: OtherTrainer can now review your offer.*
+- takeScreenshot: 03-committed-success

@@ -1,14 +1,146 @@
-/* MapView.css */
+.search-map-shell {
+  position: relative;
+  box-sizing: border-box;
+  width: min(calc(100% - 28px), 1180px);
+  min-width: 0;
+  margin: 8px auto max(88px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 16%, transparent);
+  border-radius: 18px;
+  background: var(--color-search-section-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.search-map-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 13%, transparent);
+}
+
+.search-map-header > div {
+  min-width: 0;
+}
+
+.search-map-header span {
+  color: color-mix(in srgb, var(--color-accent-primary) 80%, var(--color-text-primary));
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.search-map-header h2 {
+  margin: 1px 0 0;
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+.search-map-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.search-map-canvas {
+  width: 100%;
+  height: clamp(430px, 64dvh, 720px);
+  background: color-mix(in srgb, var(--color-search-section-surface) 86%, #6e90a3 14%);
+}
+
+.search-map-canvas:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent-primary) 45%, transparent);
+  outline-offset: -3px;
+}
+
+.search-map-shell--empty {
+  display: grid;
+  min-height: min(460px, 55dvh);
+  place-items: center;
+  border-style: dashed;
+}
+
+.search-map-empty {
+  width: min(100% - 32px, 420px);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.search-map-empty > span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 10px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+  color: var(--color-accent-primary);
+  font-size: 1.5rem;
+}
+
+.search-map-empty h2 {
+  margin: 0 0 5px;
+  color: var(--color-text-primary);
+  font-size: 1.15rem;
+}
+
+.search-map-empty p {
+  margin: 0;
+  line-height: 1.45;
+}
 
 .ol-popup {
-  background-color: var(--color-map-popup-surface);
-  color: var(--color-map-popup-text);
-  border: 1px solid #666; /* Lighter border */
-  padding: 8px; /* Reduced padding for compactness */
-  border-radius: 5px;
-  font-size: 12px; /* Smaller font size */
-  max-width: 225px; /* Set maximum width to control popup size */
-  box-sizing: border-box; /* Ensures padding is included within width */
-  width: auto; /* Allow natural width */
-  text-align: center; /* Center align text within */
+  width: auto;
+  max-width: none;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: initial;
+}
+
+.search-map-shell .ol-control button {
+  background-color: color-mix(in srgb, var(--color-search-section-surface) 90%, transparent);
+  color: var(--color-text-primary);
+}
+
+.search-map-shell .ol-attribution {
+  max-width: calc(100% - 12px);
+  background: color-mix(in srgb, var(--color-search-section-surface) 84%, transparent);
+  color: var(--color-text-secondary);
+}
+
+.search-map-shell .ol-attribution a {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 620px) {
+  .search-map-shell {
+    width: calc(100% - 20px);
+    margin-top: 4px;
+    border-radius: 15px;
+  }
+
+  .search-map-header {
+    align-items: flex-start;
+    padding: 11px 12px;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .search-map-header p {
+    text-align: left;
+  }
+
+  .search-map-canvas {
+    height: clamp(410px, 61dvh, 620px);
+  }
+
+  .search-map-shell--empty {
+    min-height: min(410px, 52dvh);
+  }
 }

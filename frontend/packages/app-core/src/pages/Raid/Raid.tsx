@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import "./Raid.css";
+import PageState from '@/components/layout/PageState';
+import ProductPageHeader from '@/components/layout/ProductPageHeader';
 import { useInstancesStore } from "@/features/instances/store/useInstancesStore";
 import { useVariantsStore } from "@/features/variants/store/useVariantsStore";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -582,20 +584,31 @@ const Raid: React.FC = () => {
   if (catalogAttackers.length === 0) {
     return (
       <div className="raid-page">
-        <section className="raid-empty-state">
-          <p className="raid-eyebrow">Raid planner</p>
-          <h1>No raid-ready attacker data yet.</h1>
-          <p>
-            Once the Pokédex data finishes loading, the planner can rank raid
-            attackers.
-          </p>
-        </section>
+        <ProductPageHeader
+          className="raid-product-header"
+          description="Rank attackers, prepare counters, and build teams for current raid bosses."
+          eyebrow="Battle planning"
+          icon={<img src="/images/btn_raid.png" alt="" />}
+          title="Raid Planner"
+        />
+        <PageState
+          className="raid-empty-state"
+          description="Once the Pokédex data finishes loading, the planner can rank raid attackers."
+          title="No raid-ready attacker data yet."
+        />
       </div>
     );
   }
 
   return (
     <div className="raid-page">
+      <ProductPageHeader
+        className="raid-product-header"
+        description="Rank attackers, prepare counters, and build teams for current raid bosses."
+        eyebrow="Battle planning"
+        icon={<img src="/images/btn_raid.png" alt="" />}
+        title="Raid Planner"
+      />
       <RaidModeTabs viewMode={viewMode} onChange={setViewMode} />
       <RaidRosterScope
         scope={rosterScope}

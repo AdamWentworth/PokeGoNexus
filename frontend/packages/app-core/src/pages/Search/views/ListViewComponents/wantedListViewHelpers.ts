@@ -1,3 +1,5 @@
+import type { WantedSizePreferences } from '@/types/pokemonInstance';
+
 export type WantedTradeEntry = {
   dynamax?: boolean;
   gigantamax?: boolean;
@@ -21,6 +23,7 @@ export type WantedListItem = {
   friendship_level?: number | null;
   weight?: number | null;
   height?: number | null;
+  wanted_size_preferences?: WantedSizePreferences | null;
   fast_move_id?: number | null;
   charged_move1_id?: number | null;
   charged_move2_id?: number | null;
@@ -78,8 +81,12 @@ export const formatWantedDate = (dateString?: string): string => {
 
 export const hasWantedAdditionalDetails = (item: WantedListItem): boolean =>
   Boolean(
-    item.weight ||
+    item.friendship_level ||
+      item.pref_lucky ||
+      item.weight ||
       item.height ||
+      item.wanted_size_preferences?.weight ||
+      item.wanted_size_preferences?.height ||
       item.fast_move_id ||
       item.charged_move1_id ||
       item.charged_move2_id ||

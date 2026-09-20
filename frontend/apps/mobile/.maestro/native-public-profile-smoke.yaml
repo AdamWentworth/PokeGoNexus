@@ -1,0 +1,45 @@
+appId: ${APP_ID}
+name: Native signed-out public trainer profile smoke
+tags:
+  - android
+  - native-profile
+  - public
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public-profile
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: TRAINER PROFILE
+    timeout: 45000
+- assertVisible: CeruleanLeader
+- assertVisible: Shiny Gigantamax Charizard
+- assertVisible: Shiny Hunter
+- assertVisible: Lucky Trader
+- assertVisible: Profile
+- assertVisible: Friends
+- assertNotVisible: Add friend
+- assertNotVisible: Block trainer
+- assertNotVisible: Edit
+- tapOn: "View Misty's caught Pokémon"
+- assertVisible: "Open Misty collection: caught"
+- tapOn:
+    point: 50%, 94%
+    waitToSettleTimeoutMs: 100
+- extendedWaitUntil:
+    visible: Quick navigation
+    timeout: 10000
+- assertVisible: Login
+- assertVisible: Register
+- takeScreenshot: native-public-trainer-profile

@@ -9,14 +9,13 @@ import {
 import {
   DB_VERSION,
   VARIANTS_DB_NAME, INSTANCES_DB_NAME, TAGS_DB_NAME,
-  TRADES_DB_NAME,   UPDATES_DB_NAME,   POKEDEX_DB_NAME,
+  TRADES_DB_NAME,   UPDATES_DB_NAME,
   REGISTRATIONS_DB_NAME,
   VARIANTS_STORE, INSTANCES_STORE,
   POKEMON_TRADES_STORE, RELATED_INSTANCES_STORE,
   REGISTRATIONS_STORE, MANUAL_POKEDEX_REGISTRATIONS_STORE,
   BATCHED_POKEMON_UPDATES_STORE,
   ACKNOWLEDGED_POKEMON_UPDATES_STORE,
-  POKEDEX_STORES,
   TAG_DEFS_STORE, INSTANCE_TAGS_STORE,
   SYSTEM_CHILDREN_STORE,
 } from './constants';
@@ -146,14 +145,6 @@ export const initUpdatesDB = makeInit(UPDATES_DB_NAME, (db, _oldV, _newV, tx) =>
   if (db.objectStoreNames.contains('batchedTradeUpdates')) {
     db.deleteObjectStore('batchedTradeUpdates');
   }
-});
-
-export const initPokedexDB = makeInit(POKEDEX_DB_NAME, (db) => {
-  POKEDEX_STORES.forEach((s) => {
-    if (!db.objectStoreNames.contains(s)) {
-      db.createObjectStore(s, { keyPath: 'variant_id' });
-    }
-  });
 });
 
 export const initRegistrationsDB = makeInit(REGISTRATIONS_DB_NAME, (db) => {

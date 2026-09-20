@@ -59,9 +59,7 @@ const allowedOrigins = Array.from(
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://pokegonexus.com',
-    'https://www.pokegonexus.com',
-    'https://pokemongonexus.com',
-    'https://www.pokemongonexus.com'
+    'https://www.pokegonexus.com'
   ])
 );
 
@@ -128,7 +126,7 @@ const limiter = rateLimit({
 });
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: process.env.NODE_ENV === 'test' ? 1000 : 20,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -146,6 +144,7 @@ const passwordResetLimiter = rateLimit({
 });
 app.use('/auth', limiter);
 app.use('/auth/login', loginLimiter);
+app.use('/auth/mobile/login', loginLimiter);
 app.use('/auth/register', registerLimiter);
 app.use('/auth/google/complete-registration', registerLimiter);
 app.use('/auth/discord/complete-registration', registerLimiter);
@@ -154,6 +153,8 @@ app.use('/auth/reset-password', passwordResetLimiter);
 app.use('/auth', csrfOriginGuard(allowedOrigins));
 
 app.use('/auth', require('./routes/authRoute'));
+app.use('/auth', require('./routes/mobileSessionRoutes'));
+app.use('/auth', require('./routes/nativeOAuthLinkRoutes'));
 app.use('/auth', require('./routes/passportRoutes'));
 
 function startServer() {

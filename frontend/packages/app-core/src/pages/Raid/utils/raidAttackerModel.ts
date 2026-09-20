@@ -1,4 +1,4 @@
-import type { PokemonVariant } from "@/types/pokemonVariants";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
 import { cpMultipliers } from "./constants";
 import type { RaidCounterSettings } from "./raidTypes";
 

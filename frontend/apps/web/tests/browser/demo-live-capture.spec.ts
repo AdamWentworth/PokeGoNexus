@@ -35,12 +35,12 @@ type WorkflowVideoFlow =
 
 type DisposableAuthAccount = {
   username: string;
+  updatedUsername: string;
   email: string;
   password: string;
   pokemonGoName: string;
   location: string;
   trainerCode: string;
-  updatedTrainerCode: string;
   userId?: string;
   deleted?: boolean;
 };
@@ -409,6 +409,10 @@ function isAllowedAuthCaptureMutation(method: string, rawUrl: string) {
     }
 
     if (method === 'DELETE' && /\/api\/auth\/delete\/[^/]+\/?$/.test(pathname)) {
+      return true;
+    }
+
+    if (method === 'DELETE' && /\/api\/users\/[^/]+\/?$/.test(pathname)) {
       return true;
     }
 
@@ -1515,19 +1519,15 @@ async function prepareMediaFrame(page: Page) {
 function generateDisposableAuthAccount(): DisposableAuthAccount {
   const suffix = crypto.randomBytes(4).toString('hex');
   const trainerCode = generateTrainerCode();
-  let updatedTrainerCode = generateTrainerCode();
-  while (updatedTrainerCode === trainerCode) {
-    updatedTrainerCode = generateTrainerCode();
-  }
 
   return {
     username: `demo_${suffix}`,
+    updatedUsername: `demo_${suffix}_updated`,
     email: `pokegonexus-demo-${Date.now().toString(36)}-${suffix}@example.com`,
     password: `DemoAuth1!${suffix}`,
     pokemonGoName: `pg_${suffix}`,
     location: 'Vancouver, British Columbia, Canada',
     trainerCode,
-    updatedTrainerCode,
   };
 }
 
@@ -1584,7 +1584,9 @@ async function cleanupDisposableAuthAccount(
   if (account.deleted) return;
 
   const deleteById = async (userId: string) =>
-    await context.request.delete(authApiUrl(`/delete/${encodeURIComponent(userId)}`));
+    await context.request.delete(authApiUrl(`/delete/${encodeURIComponent(userId)}`), {
+      data: { currentPassword: account.password },
+    });
 
   if (account.userId) {
     const deleteResponse = await deleteById(account.userId);
@@ -1646,10 +1648,12 @@ async function cleanupDisposableAuthAccountFromPage(
   account.userId = account.userId || (await readStoredAuthUserId(page));
   if (!account.userId) return false;
 
-  const result = await page.evaluate(async (deleteUrl) => {
+  const result = await page.evaluate(async ({ deleteUrl, currentPassword }) => {
     const response = await fetch(deleteUrl, {
       method: 'DELETE',
       credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword }),
     });
 
     return {
@@ -1657,7 +1661,10 @@ async function cleanupDisposableAuthAccountFromPage(
       status: response.status,
       body: await response.text().catch(() => ''),
     };
-  }, authApiUrl(`/delete/${encodeURIComponent(account.userId)}`));
+  }, {
+    deleteUrl: authApiUrl(`/delete/${encodeURIComponent(account.userId)}`),
+    currentPassword: account.password,
+  });
 
   if (result.ok || result.status === 404) {
     account.deleted = true;
@@ -1697,7 +1704,10 @@ async function fillRegisterFormForVideo(page: Page, account: DisposableAuthAccou
   await page.waitForTimeout(authVideoActionPauseMs);
   await clickForVideo(page.getByTestId('register-button'), 10_000);
 
-  const pokemonGoNameInput = page.getByLabel('Pokémon GO name');
+  const pokemonGoNameInput = page.getByRole('textbox', {
+    name: 'Pokémon GO name',
+    exact: true,
+  });
   await clickForVideo(pokemonGoNameInput, 10_000);
   await pokemonGoNameInput.fill(account.pokemonGoName);
   await page.waitForTimeout(authVideoActionPauseMs);
@@ -1782,7 +1792,10 @@ async function openRegisterFromHomeForVideo(page: Page, recordingStartedAt: numb
   const trimStartMs = videoTrimStart(recordingStartedAt);
   await pauseForVideo(page, 600);
   await navigateFromActionMenuForVideo(page, 'Register', '/register');
-  await expect(page.getByPlaceholder('Username (must be unique)')).toBeVisible({
+  const emailMethodButton = page.getByRole('button', { name: 'Continue with email' });
+  await expect(emailMethodButton).toBeVisible({ timeout: 30_000 });
+  await clickForVideo(emailMethodButton, 10_000);
+  await expect(page.getByPlaceholder('Choose a unique username')).toBeVisible({
     timeout: 30_000,
   });
 
@@ -1790,8 +1803,18 @@ async function openRegisterFromHomeForVideo(page: Page, recordingStartedAt: numb
 }
 
 async function openAccountDetailsFromActionMenuForVideo(page: Page) {
-  await navigateFromActionMenuForVideo(page, 'Account', '/account', true);
-  await expect(page.getByRole('heading', { name: 'Account Details' })).toBeVisible({
+  await page.waitForFunction(() => Boolean(window.localStorage.getItem('user')), null, {
+    timeout: 15_000,
+  });
+  await clickForVideo(page.getByRole('button', { name: /Action Menu/i }), 10_000);
+  const actionMenu = page.locator('.action-menu-overlay.active');
+  await expect(actionMenu).toBeVisible({ timeout: 10_000 });
+  await clickForVideo(actionMenu.locator('.settings-button'), 10_000);
+  await expect(page.getByRole('navigation', { name: 'Settings pages' })).toBeVisible({
+    timeout: 30_000,
+  });
+  await clickForVideo(page.getByRole('link', { name: 'Account', exact: true }), 10_000);
+  await expect(page.getByRole('heading', { name: 'Account details' })).toBeVisible({
     timeout: 45_000,
   });
 }
@@ -1800,13 +1823,12 @@ async function editDisposableAccountDetailsForVideo(
   page: Page,
   account: DisposableAuthAccount,
 ) {
-  await clickForVideo(page.getByRole('button', { name: 'Edit Details' }), 10_000);
-  const trainerCodeInput = page.locator('.account-form input[name="trainerCode"]');
-  await expect(trainerCodeInput).toBeEnabled({ timeout: 10_000 });
+  const usernameInput = page.getByRole('textbox', { name: 'Username', exact: true });
+  await expect(usernameInput).toBeEnabled({ timeout: 10_000 });
   await page.waitForTimeout(200);
 
-  await clickForVideo(trainerCodeInput, 10_000);
-  await trainerCodeInput.fill(account.updatedTrainerCode);
+  await clickForVideo(usernameInput, 10_000);
+  await usernameInput.fill(account.updatedUsername);
   await page.waitForTimeout(250);
 
   const updateResponse = page.waitForResponse(
@@ -1815,11 +1837,11 @@ async function editDisposableAccountDetailsForVideo(
       /\/api\/auth\/update\/[^/]+\/?$/.test(new URL(response.url()).pathname),
     { timeout: 30_000 },
   );
-  await clickForVideo(page.getByRole('button', { name: 'Save Changes' }), 10_000);
+  await clickForVideo(page.getByRole('button', { name: 'Update account' }), 10_000);
   const update = await updateResponse;
   expect(update.ok(), `disposable account update failed with ${update.status()}`).toBe(true);
-  account.trainerCode = account.updatedTrainerCode;
-  await expect(page.getByRole('button', { name: 'Edit Details' })).toBeVisible({
+  account.username = account.updatedUsername;
+  await expect(page.getByRole('button', { name: 'Update account' })).toBeVisible({
     timeout: 30_000,
   });
   await pauseForVideo(page, 550);
@@ -1873,7 +1895,7 @@ async function performAuthLifecycleVideoFlow(
   await editDisposableAccountDetailsForVideo(page, account);
 
   if (authIncludeExplicitLogin) {
-    await clickForVideo(page.getByRole('button', { name: 'Logout' }), 10_000);
+    await clickForVideo(page.getByRole('button', { name: 'Sign out', exact: true }), 10_000);
     await expect(page.getByPlaceholder('Username or Email')).toBeVisible({ timeout: 30_000 });
     await pauseForVideo(page, 350);
 
@@ -1911,20 +1933,41 @@ async function performAuthLifecycleVideoFlow(
     await pauseForVideo(page, 500);
   }
 
-  const deleteResponse = page.waitForResponse(
+  const currentPasswordInput = page.getByPlaceholder('Required for security changes');
+  if (await currentPasswordInput.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await clickForVideo(currentPasswordInput, 10_000);
+    await currentPasswordInput.fill(account.password);
+    await pauseForVideo(page, 250);
+  }
+
+  const userDataDeleteResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'DELETE' &&
+      /\/api\/users\/[^/]+\/?$/.test(new URL(response.url()).pathname),
+    { timeout: 30_000 },
+  );
+  const authDeleteResponse = page.waitForResponse(
     (response) =>
       response.request().method() === 'DELETE' &&
       /\/api\/auth\/delete\/[^/]+\/?$/.test(new URL(response.url()).pathname),
     { timeout: 30_000 },
   );
-  await clickForVideo(page.getByRole('button', { name: 'Delete Account and Data' }), 10_000);
-  await expect(page.getByText(/delete your account and all its data/i)).toBeVisible({
+  await clickForVideo(page.getByRole('button', { name: 'Delete account', exact: true }), 10_000);
+  await expect(page.getByText(/Permanently delete your account/i)).toBeVisible({
     timeout: 10_000,
   });
   await pauseForVideo(page, 300);
   await clickForVideo(page.getByRole('button', { name: 'OK' }), 10_000);
-  const deletion = await deleteResponse;
-  expect(deletion.ok(), `disposable account deletion failed with ${deletion.status()}`).toBe(true);
+  const userDataDeletion = await userDataDeleteResponse;
+  expect(
+    userDataDeletion.ok(),
+    `disposable user-data deletion failed with ${userDataDeletion.status()}`,
+  ).toBe(true);
+  const authDeletion = await authDeleteResponse;
+  expect(
+    authDeletion.ok(),
+    `disposable authentication deletion failed with ${authDeletion.status()}`,
+  ).toBe(true);
   account.deleted = true;
 
   await expect(page.getByPlaceholder('Username or Email')).toBeVisible({ timeout: 30_000 });
@@ -3414,7 +3457,7 @@ test.describe('live demo media capture', () => {
     'Set POKEGONEXUS_DEMO_USERNAME and POKEGONEXUS_DEMO_PASSWORD to capture live media',
   );
 
-  test('captures PokeGo Nexus surfaces with a real read-only demo account', async ({ page }, testInfo) => {
+  test('captures Pokémon Go Nexus surfaces with a real read-only demo account', async ({ page }, testInfo) => {
     fs.rmSync(liveDemoMediaDir, { recursive: true, force: true });
     fs.mkdirSync(liveDemoMediaDir, { recursive: true });
     const diagnostics = attachBrowserDiagnostics(page, testInfo);
@@ -3460,7 +3503,7 @@ test.describe('live demo video capture', () => {
   );
 
   test(
-    'records PokeGo Nexus demo flows with a real read-only demo account',
+    'records Pokémon Go Nexus demo flows with a real read-only demo account',
     async ({ browser }, testInfo) => {
       fs.mkdirSync(liveDemoVideoDir, { recursive: true });
       removeRawPlaywrightVideos();

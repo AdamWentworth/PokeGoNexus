@@ -15,7 +15,11 @@ const useSortManager = (
   sortMode: SortMode
 ): PokemonVariant[] => {
   // Hooks must run in a stable order; compute each candidate once and select below.
-  const recentSorted = useRecentPokemons(displayedPokemons, sortMode);
+  const recentSorted = useRecentPokemons(
+    displayedPokemons,
+    sortMode,
+    sortType === 'releaseDate',
+  );
   const numberSorted = useNumberPokemons(displayedPokemons, sortMode);
   const hpSorted = useHPPokemons(displayedPokemons, sortMode);
   const nameSorted = useNamePokemons(displayedPokemons, sortMode);

@@ -33,7 +33,7 @@
   flex: 0 0 auto;
   background: none;
   border: 0;
-  color: #96a29d;
+  color: var(--color-text-secondary, #96a29d);
   font-size: 10px;
   font-family: var(--font-family-base);
   font-weight: 600;
@@ -46,7 +46,7 @@
 }
 
 .moves-mode-button.active {
-  color: #e0f0e5;
+  color: var(--color-text-primary, #e0f0e5);
 }
 
 .moves-mode-underline {

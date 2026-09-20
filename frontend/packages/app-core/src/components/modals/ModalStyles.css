@@ -14,11 +14,16 @@
 }
 
 .confirm-modal-overlay {
+  inset: 0;
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
   padding: 1rem;
   background:
     radial-gradient(circle at 50% 35%, rgba(44, 210, 220, 0.18), transparent 38%),
     rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(5px);
+  z-index: 14000;
 }
 
 .modal {

@@ -1,6 +1,6 @@
 # Frontend Workspace
 
-This folder is the frontend monorepo workspace for PokeGo Nexus.
+This folder is the frontend monorepo workspace for Pokémon Go Nexus.
 
 The workspace contains the production web app, the Expo mobile shell, and shared packages that keep API contracts and UI tokens consistent across clients.
 
@@ -31,6 +31,7 @@ Run workspace-level CI parity:
 
 ```bash
 npm run lint
+npm run lint:dead-code
 npm run typecheck
 npm run test
 ```
@@ -42,6 +43,7 @@ npm --workspace apps/web run dev
 npm --workspace apps/web run build
 npm --workspace apps/web run test
 npm --workspace apps/web run test:browsers
+npm --workspace apps/web run smoke:production
 ```
 
 Run just the mobile app:

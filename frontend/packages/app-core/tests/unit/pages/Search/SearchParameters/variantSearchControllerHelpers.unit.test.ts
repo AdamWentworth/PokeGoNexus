@@ -113,7 +113,7 @@ describe('variantSearchControllerHelpers', () => {
   it('evaluates pokemon input changes for ignore/reset/suggestion outcomes', () => {
     expect(
       evaluatePokemonInputChange({
-        nextPokemon: 'Bulbasaur1234',
+        nextPokemon: 'A'.repeat(65),
         pokemonData,
       }),
     ).toEqual({
@@ -154,6 +154,17 @@ describe('variantSearchControllerHelpers', () => {
       shouldResetDerivedState: false,
       suggestions: ['Bulbasaur'],
     });
+
+    expect(
+      evaluatePokemonInputChange({
+        nextPokemon: 'Bulbasaur',
+        pokemonData,
+      }),
+    ).toEqual({
+      shouldIgnore: false,
+      shouldResetDerivedState: false,
+      suggestions: [],
+    });
   });
 
   it('evaluates pokemon input focus suggestions', () => {
@@ -177,6 +188,13 @@ describe('variantSearchControllerHelpers', () => {
         pokemonData,
       }),
     ).toEqual(['Bulbasaur']);
+
+    expect(
+      evaluatePokemonInputFocus({
+        pokemon: 'Bulbasaur',
+        pokemonData,
+      }),
+    ).toEqual([]);
   });
 
   it('evaluates costume toggle open/close decisions', () => {
@@ -252,6 +270,7 @@ describe('variantSearchControllerHelpers', () => {
       selectedForm: 'None',
       selectedGender: 'Any',
       dynamax: true,
+      gigantamax: false,
       updateImageFn,
     });
 
@@ -265,6 +284,7 @@ describe('variantSearchControllerHelpers', () => {
       'None',
       'Any',
       true,
+      false,
     );
   });
 

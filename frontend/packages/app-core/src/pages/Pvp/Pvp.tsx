@@ -20,6 +20,8 @@ import {
 import type { IconType } from 'react-icons';
 import { Link } from 'react-router';
 
+import ProductPageHeader from '@/components/layout/ProductPageHeader';
+import SegmentedControl from '@/components/layout/SegmentedControl';
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
 import { useBootstrapInstances } from '@/features/instances/hooks/useBootstrapInstances';
 import { useBootstrapVariants } from '@/features/variants/hooks/useBootstrapVariants';
@@ -89,6 +91,13 @@ type PvPRoleKey =
   | 'consistency';
 
 type PvPWorkspace = 'rankings' | 'team' | 'battle' | 'iv-rank';
+const PVP_WORKSPACE_ITEMS = [
+  { icon: <FaListOl />, label: 'Rankings', value: 'rankings' },
+  { icon: <FaUsers />, label: 'Team Builder', value: 'team' },
+  { icon: <FaFlask />, label: 'Battle Lab', value: 'battle' },
+  { icon: <FaCalculator />, label: 'IV Rank', value: 'iv-rank' },
+] as const;
+
 type PvPBattleSeed = {
   mode?: 'single' | 'team';
   leftKey: string;
@@ -124,7 +133,7 @@ const formatLevel = (level: number): string =>
 
 function TypeIcons({ types }: { types: string[] }) {
   return (
-    <span className="pvp-types" aria-label={types.join(' and ')}>
+    <span className="pvp-types" role="img" aria-label={types.join(' and ')}>
       {types.map((type) => (
         <img
           key={type}
@@ -605,82 +614,52 @@ const Pvp = () => {
       : '',
   ].filter(Boolean).join(' · ');
 
+  const changeWorkspace = (nextWorkspace: PvPWorkspace) => {
+    if (nextWorkspace === 'battle') setBattleSeed(null);
+    if (nextWorkspace === 'iv-rank') setFormatKey(activeLeagueKey);
+    setWorkspace(nextWorkspace);
+  };
+
   return (
     <div className="pvp-page">
       <div className="pvp-page-inner">
-        <header className="pvp-header">
-          <img src="/images/btn_pvp.png" alt="" draggable={false} />
-          <div>
-            <span>Trainer Battles</span>
-            <h1>
-              {workspace === 'rankings'
-                ? 'PvP Rankings'
-                : workspace === 'team'
-                  ? 'PvP Team Builder'
-                  : workspace === 'battle'
-                    ? 'PvP Battle Lab'
-                    : 'PvP IV Rank'}
-            </h1>
-          </div>
-          <div className="pvp-header-actions">
-            <Link to="/pvp/methodology">
-              <FaInfoCircle aria-hidden="true" />
-              <span>Method</span>
-            </Link>
-            <strong>
-              {workspace === 'iv-rank'
-                ? '4,096 spreads'
-                : rosterScope === 'owned'
-                ? `${ownedRoster.eligibleCount} ready`
-                : `${entries.length || '---'} ranked`}
-            </strong>
-          </div>
-        </header>
+        <ProductPageHeader
+          actions={
+            <div className="pvp-header-actions">
+              <Link to="/pvp/methodology">
+                <FaInfoCircle aria-hidden="true" />
+                <span>Method</span>
+              </Link>
+              <strong>
+                {workspace === 'iv-rank'
+                  ? '4,096 spreads'
+                  : rosterScope === 'owned'
+                    ? `${ownedRoster.eligibleCount} ready`
+                    : `${entries.length || '---'} ranked`}
+              </strong>
+            </div>
+          }
+          className="pvp-product-header"
+          eyebrow="Trainer Battles"
+          icon={<img src="/images/btn_pvp.png" alt="" draggable={false} />}
+          title={
+            workspace === 'rankings'
+              ? 'PvP Rankings'
+              : workspace === 'team'
+                ? 'PvP Team Builder'
+                : workspace === 'battle'
+                  ? 'PvP Battle Lab'
+                  : 'PvP IV Rank'
+          }
+        />
 
-        <nav className="pvp-workspace-tabs" aria-label="PvP workspace">
-          <button
-            type="button"
-            className={workspace === 'rankings' ? 'active' : ''}
-            aria-pressed={workspace === 'rankings'}
-            onClick={() => setWorkspace('rankings')}
-          >
-            <FaListOl aria-hidden="true" />
-            Rankings
-          </button>
-          <button
-            type="button"
-            className={workspace === 'team' ? 'active' : ''}
-            aria-pressed={workspace === 'team'}
-            onClick={() => setWorkspace('team')}
-          >
-            <FaUsers aria-hidden="true" />
-            Team Builder
-          </button>
-          <button
-            type="button"
-            className={workspace === 'battle' ? 'active' : ''}
-            aria-pressed={workspace === 'battle'}
-            onClick={() => {
-              setBattleSeed(null);
-              setWorkspace('battle');
-            }}
-          >
-            <FaFlask aria-hidden="true" />
-            Battle Lab
-          </button>
-          <button
-            type="button"
-            className={workspace === 'iv-rank' ? 'active' : ''}
-            aria-pressed={workspace === 'iv-rank'}
-            onClick={() => {
-              setWorkspace('iv-rank');
-              setFormatKey(activeLeagueKey);
-            }}
-          >
-            <FaCalculator aria-hidden="true" />
-            IV Rank
-          </button>
-        </nav>
+        <SegmentedControl
+          ariaLabel="PvP workspace"
+          className="pvp-workspace-switcher"
+          items={PVP_WORKSPACE_ITEMS}
+          onChange={changeWorkspace}
+          value={workspace}
+        />
 
         <section
           className={`pvp-format-controls${
@@ -987,7 +966,7 @@ const Pvp = () => {
               <a href={data.source.url} target="_blank" rel="noreferrer">
                 {data.source.name}
               </a>
-              ; filtered to the current PokeGoNexus catalog.
+              ; filtered to the current Pokémon Go Nexus catalog.
             </span>
             <small>
               {rosterScope === 'owned'

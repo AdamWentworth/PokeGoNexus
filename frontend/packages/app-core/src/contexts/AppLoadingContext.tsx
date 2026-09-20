@@ -104,3 +104,6 @@ export const AppLoadingFallback: React.FC<{ source: LoadingSource }> = ({
 
   return null;
 };
+
+export const useAppLoading = (): AppLoadingContextValue =>
+  useContext(AppLoadingContext);

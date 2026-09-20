@@ -1,6 +1,6 @@
-# 🌐 PokeGo Nexus — Full Stack Monorepo
+# 🌐 Pokémon Go Nexus — Full Stack Monorepo
 
-Welcome to the **PokeGo Nexus** — a full-stack web application and data ecosystem for tracking, managing, and trading Pokémon Go collections. This monorepo includes all services required for the platform: from a React frontend and Express/Go backends, to Kafka-based event syncing, to location intelligence and database editors.
+Welcome to **Pokémon Go Nexus** — a full-stack web application and data ecosystem for tracking, managing, and trading Pokémon Go collections. This monorepo includes all services required for the platform: from a React frontend and Express/Go backends, to Kafka-based event syncing, to location intelligence and database editors.
 
 ---
 
@@ -268,9 +268,12 @@ Events Service → Notifies connected clients via SSE
 
 ## 🌐 Production Deployment
 
-- Served via **NGINX on Windows**
-- TLS certs via **Certbot**
-- Frontend build output in `/build`
+- Served by **NGINX containers on Ubuntu**
+- TLS certificates are renewed by **Certbot** on the production host
+- GitHub-hosted CI tests the public repository and publishes immutable images tagged by commit
+- The private **HomeOps** repository owns frontend, backend, database, Kafka, and monitoring production controls
+- HomeOps accepts only the current `master` SHA, verifies each application image's embedded source revision, deploys its immutable digest, health-checks it, and rolls back failed replacements
+- The production runner does not check out or execute deployment code from this public repository
 - Reverse proxy maps `/api/*` routes to correct services
 - SSE and CORS handled in proxy config
 
@@ -323,3 +326,12 @@ If you're contributing:
 This monorepo is built by a passionate trainer/dev and is not affiliated with Niantic or Pokémon.
 
 **Gotta catch 'em all!** 🧢✨
+
+---
+
+## License
+
+Original source code and text documentation are licensed under the
+[Apache License 2.0](LICENSE). Pokémon imagery, game data, project branding,
+and other third-party materials retain their respective rights; see
+[NOTICE.md](NOTICE.md).

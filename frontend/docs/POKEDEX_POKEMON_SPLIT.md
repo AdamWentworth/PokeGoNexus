@@ -63,10 +63,10 @@ Pokemon GO already separates these ideas:
 
 ## Product Principle
 
-PokeGoNexus should support a stricter collector model than Pokemon GO.
+Pokémon Go Nexus should support a stricter collector model than Pokemon GO.
 
 Pokemon GO may consider "XXL Bulbasaur" registered once the trainer catches any
-XXL Bulbasaur. PokeGoNexus users want the expanded collector view:
+XXL Bulbasaur. Pokémon Go Nexus users want the expanded collector view:
 
 - XXL default Bulbasaur
 - XXL shiny Bulbasaur
@@ -156,7 +156,7 @@ be top-level cards in the normal Pokemon inventory catalog.
 - Lucky: obtained through trade and visible in the Pokedex/summary.
 - Purified: purified state is a real Pokemon GO inventory/search category. It
   should become registration-worthy even though it is not currently a generated
-  catalog variant in PokeGoNexus.
+  catalog variant in Pokémon Go Nexus.
 - Gender: especially for species with distinct male/female visual data.
 - Appraisal: 0*, 1*, 2*, 3*, 4*, plus optional nundo/hundo-style collector
   shortcuts derived from IVs.

@@ -1,0 +1,35 @@
+appId: ${APP_ID}
+name: Native caught level and CP parity smoke
+tags:
+  - android
+  - native-instance
+  - combat-power
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-metagross
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Shiny Metagross
+    timeout: 45000
+- tapOn: Edit Pokémon
+- tapOn: Pokémon level
+- eraseText: 2
+- inputText: "40.5"
+- assertVisible: "3773"
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor
+- assertVisible: "CP3773"
+- assertVisible: "LEVEL: 40.5"
+- takeScreenshot: combat-power-saved

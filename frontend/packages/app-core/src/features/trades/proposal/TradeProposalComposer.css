@@ -1,0 +1,377 @@
+.trade-proposal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: grid;
+  place-items: center;
+  padding:
+    max(0.75rem, env(safe-area-inset-top))
+    max(0.75rem, env(safe-area-inset-right))
+    calc(var(--overlay-close-button-size, 64px) + 2rem + env(safe-area-inset-bottom))
+    max(0.75rem, env(safe-area-inset-left));
+  background: rgba(3, 12, 15, 0.78);
+  box-sizing: border-box;
+}
+
+.trade-proposal-container {
+  display: grid;
+  gap: 0.85rem;
+  width: min(94vw, 760px);
+  max-height: calc(
+    100dvh -
+    var(--overlay-close-button-size, 64px) -
+    3rem -
+    env(safe-area-inset-top) -
+    env(safe-area-inset-bottom)
+  );
+  padding: clamp(0.85rem, 2vw, 1.25rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid rgba(112, 191, 174, 0.32);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgba(49, 183, 119, 0.08), transparent 42%),
+    var(--color-modal-panel-surface, #202c2c);
+  color: var(--color-text-primary, #f4fbf8);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.48);
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+.trade-proposal-header {
+  display: grid;
+  gap: 0.16rem;
+  text-align: center;
+}
+
+.trade-proposal-header > span,
+.trade-proposal-friendship > div:first-child > span,
+.trade-proposal-party > span,
+.trade-proposal-stardust > span {
+  color: #63d6a1;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.trade-proposal-header h2,
+.trade-proposal-header p {
+  margin: 0;
+}
+
+.trade-proposal-header h2 {
+  font-size: clamp(1.35rem, 4vw, 1.8rem);
+  line-height: 1.15;
+}
+
+.trade-proposal-header p {
+  color: var(--color-text-secondary, #b7c9c9);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.trade-proposal-friendship {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(112, 191, 174, 0.22);
+  border-radius: 0.8rem;
+  background: rgba(4, 19, 20, 0.4);
+}
+
+.trade-proposal-friendship > div:first-child {
+  display: grid;
+}
+
+.trade-proposal-friendship > div:first-child strong {
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.trade-proposal-friendship .friendship-level-container {
+  min-width: 0;
+}
+
+.trade-proposal-exchange {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5rem minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.trade-proposal-party {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(151, 190, 190, 0.24);
+  border-radius: 0.8rem;
+  background: rgba(5, 18, 19, 0.48);
+}
+
+.trade-proposal-image-container {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  justify-items: center;
+  gap: 0.2rem;
+}
+
+.trade-proposal-overlay .image-wrapper {
+  position: relative;
+  width: clamp(7rem, 19vw, 10rem);
+  aspect-ratio: 1;
+}
+
+.trade-proposal-pokemon-img,
+.trade-proposal-overlay .lucky-backdrop {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.trade-proposal-pokemon-img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
+}
+
+.trade-proposal-overlay .lucky-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.trade-proposal-overlay .max-icon {
+  position: absolute;
+  top: 0;
+  right: 2%;
+  z-index: 2;
+  width: 27%;
+  height: auto;
+}
+
+.trade-proposal-name {
+  max-width: 100%;
+  margin: 0;
+  font-size: clamp(1rem, 3vw, 1.3rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.trade-proposal-arrow {
+  display: grid;
+  place-items: center;
+}
+
+.trade-proposal-arrow-image {
+  display: block;
+  width: 3rem;
+  height: auto;
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
+}
+
+.trade-proposal-details {
+  width: 100%;
+  min-width: 0;
+  color: inherit;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.trade-proposal-details p {
+  margin: 0.25rem 0 0;
+}
+
+.trade-instance-picker {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.trade-instance-picker select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(151, 190, 190, 0.34);
+  border-radius: 0.55rem;
+  background: var(--color-modal-item-surface, #172626);
+  color: inherit;
+}
+
+.trade-proposal-row-middle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(151, 190, 190, 0.2);
+}
+
+.trade-proposal-coordination-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(83, 177, 237, 0.22);
+  border-radius: 0.7rem;
+  background: rgba(44, 133, 188, 0.09);
+  color: var(--color-text-secondary, #b7c9c9);
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+.trade-proposal-coordination-note svg {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  color: #7bd8ff;
+}
+
+.trade-proposal-coordination-note p {
+  margin: 0;
+}
+
+.trade-proposal-stardust {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.2rem 0.45rem;
+}
+
+.trade-proposal-stardust > span {
+  grid-column: 1 / -1;
+}
+
+.trade-proposal-stardust > strong {
+  font-size: 1rem;
+}
+
+.trade-proposal-stardust .stardust-icon {
+  width: 1.35rem;
+  height: auto;
+}
+
+.trade-proposal-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.trade-proposal-flags span {
+  padding: 0.2rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.special-trade-warning {
+  background: rgba(238, 170, 71, 0.14);
+  color: #ffd18a;
+}
+
+.remote-trade-status {
+  background: rgba(83, 177, 237, 0.14);
+  color: #9edcff;
+}
+
+.trade-proposal-propose-button {
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: #31b777;
+  color: #06140d;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.trade-proposal-propose-button:disabled {
+  background: rgba(151, 170, 166, 0.35);
+  color: rgba(239, 247, 245, 0.6);
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .trade-proposal-overlay {
+    padding-inline: 0.4rem;
+  }
+
+  .trade-proposal-container {
+    width: 100%;
+    gap: 0.65rem;
+    padding: 0.7rem;
+    border-radius: 0.8rem;
+  }
+
+  .trade-proposal-header p {
+    display: none;
+  }
+
+  .trade-proposal-friendship {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+    padding: 0.55rem;
+  }
+
+  .trade-proposal-friendship > div:first-child {
+    display: none;
+  }
+
+  .trade-proposal-exchange {
+    grid-template-columns: minmax(0, 1fr) 2rem minmax(0, 1fr);
+    gap: 0.3rem;
+  }
+
+  .trade-proposal-party {
+    padding: 0.45rem 0.3rem;
+  }
+
+  .trade-proposal-overlay .image-wrapper {
+    width: min(30vw, 7.5rem);
+  }
+
+  .trade-proposal-arrow-image {
+    width: 1.8rem;
+  }
+
+  .trade-proposal-row-middle {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.6rem 0 0;
+    background: var(--color-modal-panel-surface, #202c2c);
+  }
+
+  .trade-proposal-stardust {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .trade-proposal-propose-button {
+    width: 100%;
+  }
+}
+
+:root[data-theme='light'] .trade-proposal-container {
+  background:
+    linear-gradient(145deg, rgba(35, 164, 108, 0.08), transparent 42%),
+    var(--light-surface-base, #f5faf7);
+  color: var(--light-text-primary, #18302a);
+}
+
+:root[data-theme='light'] .trade-proposal-party,
+:root[data-theme='light'] .trade-proposal-friendship {
+  background: rgba(229, 241, 235, 0.8);
+}
+
+:root[data-theme='light'] .trade-proposal-coordination-note {
+  background: rgba(215, 237, 248, 0.72);
+  color: #385864;
+}

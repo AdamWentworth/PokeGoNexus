@@ -3,7 +3,10 @@ import { produce } from 'immer';
 import { putBatchedPokemonUpdates, putInstancesBulk } from '@/db/indexedDB';
 import { createScopedLogger } from '@/utils/logger';
 import { setStorageNumber, STORAGE_KEYS } from '@/utils/storage';
-import { resolveInstanceCollectionKey } from '@/features/instances/utils/instanceIdentity';
+import {
+  getFavoriteTradeConflict,
+  resolveInstanceCollectionKey,
+} from '@pokemongonexus/shared-domain/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { MutableInstances, SetInstancesFn } from '@/types/instances';
 
@@ -51,6 +54,8 @@ export function updateInstanceDetails(
         }
 
         const current = draft[resolvedKey] ?? {};
+        const conflict = getFavoriteTradeConflict(current, patch);
+        if (conflict) throw new Error(conflict);
         const hasActualChange = Object.entries(patch).some(
           ([field, value]) => !Object.is(current[field], value)
         );

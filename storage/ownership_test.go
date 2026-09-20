@@ -104,3 +104,24 @@ func TestNormalizeVariantOwnershipState_ShadowCannotBeWantedOrTraded(t *testing.
 		)
 	}
 }
+
+func TestNormalizeFavoriteTradeStatePreservesExistingFavorite(t *testing.T) {
+	favorite, forTrade := normalizeFavoriteTradeState(true, true, true, true, false)
+	if !favorite || forTrade {
+		t.Fatalf("expected existing Favorite to win, got favorite=%t forTrade=%t", favorite, forTrade)
+	}
+}
+
+func TestNormalizeFavoriteTradeStatePreservesExistingTradeListing(t *testing.T) {
+	favorite, forTrade := normalizeFavoriteTradeState(true, true, true, false, true)
+	if favorite || !forTrade {
+		t.Fatalf("expected existing For Trade state to win, got favorite=%t forTrade=%t", favorite, forTrade)
+	}
+}
+
+func TestNormalizeFavoriteTradeStateClearsAmbiguousNewSnapshot(t *testing.T) {
+	favorite, forTrade := normalizeFavoriteTradeState(true, true, false, false, false)
+	if favorite || forTrade {
+		t.Fatalf("expected ambiguous new snapshot to clear both flags, got favorite=%t forTrade=%t", favorite, forTrade)
+	}
+}

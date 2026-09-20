@@ -7,7 +7,6 @@ export const INSTANCES_DB_NAME     = 'instancesDB';
 export const TAGS_DB_NAME          = 'tagsDB';
 export const TRADES_DB_NAME        = 'tradesDB';
 export const UPDATES_DB_NAME       = 'updatesDB';
-export const POKEDEX_DB_NAME       = 'pokedexDB';
 export const REGISTRATIONS_DB_NAME = 'registrationsDB';
 
 /** bump for object store/index changes */
@@ -31,13 +30,6 @@ export const MANUAL_POKEDEX_REGISTRATIONS_STORE = 'manualPokedexRegistrations';
 export const BATCHED_POKEMON_UPDATES_STORE = 'batchedPokemonUpdates';
 export const ACKNOWLEDGED_POKEMON_UPDATES_STORE = 'acknowledgedPokemonUpdates';
 
-/* Pokédex categories */
-export const POKEDEX_STORES = [
-  'default','shiny','costume','shadow','shiny costume','shiny shadow',
-  'shadow costume','mega','shiny mega','dynamax','shiny dynamax',
-  'gigantamax','shiny gigantamax','fusion','shiny fusion',
-] as const;
-
 export const TRADE_STATUSES = {
   PROPOSED: 'proposed',
   ACCEPTED: 'accepted',
@@ -52,4 +44,5 @@ export const TRADE_FRIENDSHIP_LEVELS: { [key: number]: string } = {
   2: 'Great',
   3: 'Ultra',
   4: 'Best',
+  5: 'Forever',
 };

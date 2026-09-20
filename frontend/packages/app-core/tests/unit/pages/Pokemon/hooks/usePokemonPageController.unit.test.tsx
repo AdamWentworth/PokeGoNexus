@@ -39,7 +39,6 @@ const usePokemonProcessingMock = vi.fn((..._args: UsePokemonProcessingArgs) => (
 const baseVariant = { variant_id: '0001-default', pokemon_id: 1 } as PokemonVariant;
 const variantsStoreState = {
   variants: [baseVariant],
-  pokedexLists: { default: [baseVariant] },
   variantsLoading: false,
 };
 const instancesStoreState = {
@@ -49,6 +48,7 @@ const instancesStoreState = {
 };
 const tagsStoreState = {
   tags: {} as TagBuckets,
+  customTags: { caught: {}, wanted: {} },
   foreignTags: null,
 };
 const userSearchStoreState = {
@@ -85,21 +85,16 @@ vi.mock('@/contexts/ModalContext', () => ({
   }),
 }));
 
-vi.mock('@/pages/Pokemon/hooks/useUIControls', () => ({
-  default: () => ({
-    showEvolutionaryLine: false,
-    toggleEvolutionaryLine: vi.fn(),
-    isFastSelectEnabled: false,
-    setIsFastSelectEnabled: setIsFastSelectEnabledMock,
-    sortType: 'number',
-    setSortType: vi.fn(),
-    sortMode: 'ascending',
-    setSortMode: vi.fn(),
-    highlightedCards: new Set<string>(),
-    setHighlightedCards: setHighlightedCardsMock,
-    toggleCardHighlight: vi.fn(),
-  }),
-}));
+vi.mock('@/pages/Pokemon/hooks/useUIControls', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/pages/Pokemon/hooks/useUIControls')>();
+  return {
+    default: (settings: Parameters<typeof actual.default>[0]) => ({
+      ...actual.default(settings),
+      setIsFastSelectEnabled: setIsFastSelectEnabledMock,
+      setHighlightedCards: setHighlightedCardsMock,
+    }),
+  };
+});
 
 vi.mock('@/pages/Pokemon/hooks/usePokemonProcessing', () => ({
   default: (...args: UsePokemonProcessingArgs) => usePokemonProcessingMock(...args),
@@ -148,6 +143,36 @@ vi.mock('@/pages/Pokemon/hooks/useSwipeHandler', () => ({
 describe('usePokemonPageController', () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('selects Favorite descending on every Favorites tap and lets other tags keep the chosen sort', () => {
+    const { result } = renderHook(() => usePokemonPageController({
+      isOwnCollection: true,
+      location: { pathname: '/pokemon', state: null } as any,
+      navigate: vi.fn() as unknown as NavigateFunction,
+    }));
+    expect(result.current.sortType).toBe('number');
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortType).toBe('favorite');
+    expect(result.current.sortMode).toBe('descending');
+    expect(usePokemonProcessingMock.mock.calls.at(-1)?.slice(6)).toEqual(['favorite', 'descending']);
+
+    act(() => {
+      result.current.setSortType('name');
+      result.current.setSortMode('ascending');
+    });
+    act(() => result.current.handleTagSelect('Trade'));
+    expect(result.current.sortType).toBe('name');
+    expect(result.current.sortMode).toBe('ascending');
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortType).toBe('favorite');
+    expect(result.current.sortMode).toBe('descending');
+
+    act(() => result.current.setSortMode('ascending'));
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortMode).toBe('descending');
+    act(() => result.current.handleTagSelect('Favorites'));
+    expect(result.current.sortMode).toBe('descending');
   });
 
   it('forwards derived tag filters like Favorites into pokemon processing', async () => {
@@ -228,12 +253,111 @@ describe('usePokemonPageController', () => {
     expect(loadForeignProfileMock).toHaveBeenCalledWith('ash', expect.any(Function));
   });
 
+  it('returns a viewed listing to its originating Search page', async () => {
+    const navigate = vi.fn() as unknown as NavigateFunction;
+    const location = {
+      pathname: '/pokemon/ash',
+      search: '',
+      state: { contextBackTo: '/search' },
+    } as any;
+
+    const { result } = renderHook(() =>
+      usePokemonPageController({
+        isOwnCollection: false,
+        urlUsername: 'ash',
+        location,
+        navigate,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.returnToContext).toBeTypeOf('function');
+    });
+
+    act(() => {
+      result.current.returnToContext?.();
+    });
+    expect(navigate).toHaveBeenCalledWith(-1);
+  });
+
   it('preserves a requested filter after loading a foreign collection', async () => {
     const navigate = vi.fn() as unknown as NavigateFunction;
     const location = {
       pathname: '/pokemon/ash',
       search: '?filter=trade',
       state: null,
+    } as any;
+
+    const { result } = renderHook(() =>
+      usePokemonPageController({
+        isOwnCollection: false,
+        urlUsername: 'ash',
+        location,
+        navigate,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(loadForeignProfileMock).toHaveBeenCalledWith('ash', expect.any(Function));
+    });
+
+    const callback = loadForeignProfileMock.mock.calls.at(-1)?.[1] as
+      | (() => void)
+      | undefined;
+    act(() => {
+      callback?.();
+    });
+
+    expect(result.current.tagFilter).toBe('Trade');
+    expect(result.current.sidePanelTagFilter).toBe('Trade');
+  });
+
+  it('always retains a tag while viewing another trainer catalog', async () => {
+    const navigate = vi.fn() as unknown as NavigateFunction;
+    const location = {
+      pathname: '/pokemon/ash',
+      search: '',
+      state: null,
+    } as any;
+
+    const { result } = renderHook(() =>
+      usePokemonPageController({
+        isOwnCollection: false,
+        urlUsername: 'ash',
+        location,
+        navigate,
+      }),
+    );
+
+    expect(result.current.tagFilter).toBe('Caught');
+    expect(result.current.sidePanelTagFilter).toBe('Caught');
+
+    act(() => {
+      result.current.handleTagSelect('Wanted');
+    });
+    expect(result.current.tagFilter).toBe('Wanted');
+
+    act(() => {
+      result.current.handleClearTagFilter();
+    });
+
+    expect(result.current.tagFilter).toBe('Wanted');
+    expect(result.current.sidePanelTagFilter).toBe('Wanted');
+
+    act(() => {
+      result.current.handleTagSelect('');
+    });
+
+    expect(result.current.tagFilter).toBe('Caught');
+    expect(result.current.sidePanelTagFilter).toBe('Caught');
+  });
+
+  it('opens a foreign trade listing under the Trade tag from router state', async () => {
+    const navigate = vi.fn() as unknown as NavigateFunction;
+    const location = {
+      pathname: '/pokemon/ash',
+      search: '',
+      state: { instanceId: 'inst-1', instanceData: 'Trade' },
     } as any;
 
     const { result } = renderHook(() =>
@@ -286,7 +410,7 @@ describe('usePokemonPageController', () => {
     expect(setIsFastSelectEnabledMock).toHaveBeenCalledWith(true);
   });
 
-  it('updates local tag/menu/view state when selecting a tag from tags panel', async () => {
+  it('updates local tag and view state when selecting a tag from a tag panel', async () => {
     const navigate = vi.fn() as unknown as NavigateFunction;
     const location = { pathname: '/pokemon', state: null } as any;
 
@@ -308,7 +432,6 @@ describe('usePokemonPageController', () => {
 
     expect(result.current.tagFilter).toBe('Trade');
     expect(result.current.sidePanelTagFilter).toBe('Trade');
-    expect(result.current.lastMenu).toBe('ownership');
     expect(result.current.activeView).toBe('pokemon');
   });
 
@@ -329,7 +452,7 @@ describe('usePokemonPageController', () => {
     });
 
     act(() => {
-      result.current.setActiveView('pokedex');
+      result.current.setActiveView('inventory');
     });
 
     vi.useFakeTimers();

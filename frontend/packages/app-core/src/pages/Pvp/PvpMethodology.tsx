@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import {
   FaArrowLeft,
   FaBolt,
@@ -7,10 +6,23 @@ import {
   FaShieldAlt,
   FaUsers,
 } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 
-import { useContextBackHandler } from '@/contexts/ContextBackContext';
+import AppPageShell from '@/components/layout/AppPageShell';
+import InPageNavigation from '@/components/layout/InPageNavigation';
+import ProductPageHeader from '@/components/layout/ProductPageHeader';
+
 import './PvpMethodology.css';
+
+const methodologyNavigation = [
+  { href: '#tools', label: 'Four tools' },
+  { href: '#rankings', label: 'Rankings' },
+  { href: '#iv-rank', label: 'IV Rank' },
+  { href: '#owned', label: 'My Pokémon' },
+  { href: '#cups', label: 'Cups' },
+  { href: '#battle-lab', label: 'Battle Lab' },
+  { href: '#limits', label: 'Limits' },
+] as const;
 
 const rankingViews = [
   {
@@ -44,44 +56,33 @@ const rankingViews = [
 ];
 
 const PvpMethodology = () => {
-  const navigate = useNavigate();
-
-  const returnToPvp = useCallback(() => {
-    navigate('/pvp');
-    return true;
-  }, [navigate]);
-
-  useContextBackHandler(true, returnToPvp, 'pvp-methodology');
-
   return (
-    <article className="pvp-methodology-page">
-      <div className="pvp-methodology-shell">
-        <header className="pvp-methodology-header">
-          <Link className="pvp-methodology-back" to="/pvp">
+    <AppPageShell
+      className="pvp-methodology-page"
+      contentClassName="pvp-methodology-shell"
+      maxWidth="workspace"
+    >
+      <ProductPageHeader
+        actions={(
+          <Link className="product-page-header__action pvp-methodology-back" to="/pvp">
             <FaArrowLeft aria-hidden="true" />
             <span>PvP tools</span>
           </Link>
+        )}
+        className="pvp-methodology-product-header"
+        description="Pokémon Go Nexus keeps published rankings, caught-build context, team coverage, and direct battle simulation separate so each answer says exactly what it measures."
+        eyebrow="Trainer Battle documentation"
+        icon={<img alt="" draggable={false} src="/images/btn_pvp.png" />}
+        title="How PvP rankings work"
+      />
 
-          <p className="pvp-methodology-eyebrow">Trainer Battle documentation</p>
-          <h1>How PvP rankings work</h1>
-          <p className="pvp-methodology-intro">
-            PokeGo Nexus keeps published rankings, caught-build context, team
-            coverage, and direct battle simulation separate so each answer
-            says exactly what it measures.
-          </p>
-        </header>
+      <InPageNavigation
+        ariaLabel="Methodology sections"
+        className="pvp-methodology-nav"
+        items={methodologyNavigation}
+      />
 
-        <nav className="pvp-methodology-nav" aria-label="Methodology sections">
-          <a href="#tools">Four tools</a>
-          <a href="#rankings">Rankings</a>
-          <a href="#iv-rank">IV Rank</a>
-          <a href="#owned">My Pokémon</a>
-          <a href="#cups">Cups</a>
-          <a href="#battle-lab">Battle Lab</a>
-          <a href="#limits">Limits</a>
-        </nav>
-
-        <main className="pvp-methodology-content">
+      <div className="pvp-methodology-content">
           <section id="tools" className="pvp-methodology-section">
             <p className="pvp-methodology-kicker">Choose the right question</p>
             <h2>One workspace, four different jobs</h2>
@@ -104,7 +105,7 @@ const PvpMethodology = () => {
             <h2>A pinned simulation snapshot</h2>
             <p>
               League and cup rankings are imported from a pinned, attributable
-              PvPoke source snapshot. PokeGo Nexus maps released forms to its
+              PvPoke source snapshot. Pokémon Go Nexus maps released forms to its
               own catalog and presents the source&apos;s recommended level, IVs,
               moves, overall score, role scores, matchups, and counters.
             </p>
@@ -307,7 +308,7 @@ const PvpMethodology = () => {
               </li>
               <li>
                 Rankings and current cups change only when the pinned source
-                and PokeGo Nexus catalog are refreshed and republished.
+                and Pokémon Go Nexus catalog are refreshed and republished.
               </li>
               <li>
                 IV Rank measures stat product. Breakpoints, specific matchups,
@@ -315,7 +316,7 @@ const PvpMethodology = () => {
                 lower-ranked spread preferable in practice.
               </li>
               <li>
-                Only catalog forms that PokeGo Nexus can identify and display
+                Only catalog forms that Pokémon Go Nexus can identify and display
                 are published. Unmatched or unreleased entries are omitted.
               </li>
             </ul>
@@ -325,39 +326,38 @@ const PvpMethodology = () => {
               browser checks guard this workflow.
             </p>
           </section>
-        </main>
+        </div>
 
-        <footer className="pvp-methodology-footer">
-          <Link className="pvp-methodology-return" to="/pvp">
-            <FaArrowLeft aria-hidden="true" />
-            Return to PvP tools
-          </Link>
-          <p>
-            Ranking data is attributed to PvPoke under its published license.
-            IV Rank follows the established same-species stat-product model
-            used by tools such as Stadium Gaming. Local timing follows the
-            official{' '}
-            <a
-              href="https://pokemongo.com/news/pvp-updates2026?hl=en"
-              target="_blank"
-              rel="noreferrer"
-            >
-              June 2026 Trainer Battle update
-            </a>
-            , including the published{' '}
-            <a
-              href="https://pokemongo.com/en/news/pvp-updates-competitors-cup-2026"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Competitors Cup transition
-            </a>
-            .{' '}
-            Pokémon and Pokémon GO are trademarks of their respective owners.
-          </p>
-        </footer>
-      </div>
-    </article>
+      <footer className="pvp-methodology-footer">
+        <Link className="pvp-methodology-return" to="/pvp">
+          <FaArrowLeft aria-hidden="true" />
+          Return to PvP tools
+        </Link>
+        <p>
+          Ranking data is attributed to PvPoke under its published license.
+          IV Rank follows the established same-species stat-product model
+          used by tools such as Stadium Gaming. Local timing follows the
+          official{' '}
+          <a
+            href="https://pokemongo.com/news/pvp-updates2026?hl=en"
+            target="_blank"
+            rel="noreferrer"
+          >
+            June 2026 Trainer Battle update
+          </a>
+          , including the published{' '}
+          <a
+            href="https://pokemongo.com/en/news/pvp-updates-competitors-cup-2026"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Competitors Cup transition
+          </a>
+          .{' '}
+          Pokémon and Pokémon GO are trademarks of their respective owners.
+        </p>
+      </footer>
+    </AppPageShell>
   );
 };
 

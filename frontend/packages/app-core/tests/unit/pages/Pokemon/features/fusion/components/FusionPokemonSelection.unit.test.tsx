@@ -1,6 +1,8 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { OVERLAY_MOTION_DURATION_MS } from '@/components/OverlayPortal';
 
 import FusionPokemonSelection from '@/pages/Pokemon/features/fusion/components/FusionPokemonSelection';
 
@@ -23,6 +25,10 @@ vi.mock('@/components/CloseButton', () => ({
 }));
 
 describe('FusionPokemonSelection', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders inside a full-screen overlay portal', () => {
     render(
       <FusionPokemonSelection
@@ -41,6 +47,7 @@ describe('FusionPokemonSelection', () => {
   });
 
   it('closes when the backdrop is clicked', () => {
+    vi.useFakeTimers();
     const onCancel = vi.fn();
 
     render(
@@ -60,6 +67,9 @@ describe('FusionPokemonSelection', () => {
 
     fireEvent.click(overlay!);
 
+    expect(overlay).toHaveAttribute('data-overlay-motion', 'exiting');
+    expect(onCancel).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(OVERLAY_MOTION_DURATION_MS);
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

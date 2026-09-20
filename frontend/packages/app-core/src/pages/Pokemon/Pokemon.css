@@ -12,6 +12,7 @@
 /* Container for the horizontal slider */
 .view-slider-container {
   flex: 1;             /* fill remaining space below header (if your header is inside pokemon-page) */
+  min-height: 0;
   width: 100%;
   overflow: hidden;    /* hide the horizontal scrollbar */
   position: relative;  

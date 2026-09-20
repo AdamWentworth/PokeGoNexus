@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Location, NavigateFunction } from 'react-router';
 
 import { useVariantsStore } from '@/features/variants/store/useVariantsStore';
@@ -10,17 +10,27 @@ import { useModal } from '@/contexts/ModalContext';
 import { useContextBackHandler } from '@/contexts/ContextBackContext';
 
 import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { InstanceStatus, Instances } from '@/types/instances';
+import type {
+  InstanceStatus,
+  Instances,
+  InstanceStatusMutationOutcome,
+  InstanceStatusResultPatch,
+} from '@/types/instances';
 import type { TagBuckets } from '@/types/tags';
 import type { SortMode, SortType } from '@/types/sort';
 import type { SwipeHandlers } from './useSwipeHandler';
 import type { PokemonOverlaySelection } from './useInstanceIdProcessor';
-import type { MegaSelectionData } from '../features/mega/hooks/useMegaPokemonHandler';
+import type {
+  MegaSelectionData,
+  MegaSelectionResult,
+} from '../features/mega/hooks/useMegaPokemonHandler';
 import type { FusionSelectionData } from '@/types/fusion';
 
 import useInstanceIdProcessor from './useInstanceIdProcessor';
 import useUIControls from './useUIControls';
-import useHandleChangeTags from '../services/changeInstanceTag/hooks/useHandleChangeTags';
+import useHandleChangeTags, {
+  type ConfirmInstanceStatusOptions,
+} from '../services/changeInstanceTag/hooks/useHandleChangeTags';
 import usePokemonProcessing from './usePokemonProcessing';
 import useMegaPokemonHandler from '../features/mega/hooks/useMegaPokemonHandler';
 import useFusionPokemonHandler from '../features/fusion/hooks/useFusionPokemonHandler';
@@ -32,16 +42,18 @@ import {
   clampDragOffset,
   toInstanceStatus,
   type ActiveView,
-  type LastMenu,
 } from '../utils/pokemonPageHelpers';
 import {
   readPokemonCatalogFilter,
   readPokemonCatalogSearch,
+  readPokemonCatalogStateFilter,
 } from '../utils/pokemonCatalogNavigation';
 import { createScopedLogger } from '@/utils/logger';
+import { toCustomTagFilter } from '@/features/tags/utils/customTagSelectors';
 
 const log = createScopedLogger('PokemonPage');
 const SIDE_PANEL_TAG_FILTER_SYNC_DELAY_MS = 300;
+const DEFAULT_FOREIGN_CATALOG_TAG = 'Caught';
 
 type UsePokemonPageControllerArgs = {
   isOwnCollection: boolean;
@@ -58,19 +70,16 @@ type UsePokemonPageControllerResult = {
   setActiveView: React.Dispatch<React.SetStateAction<ActiveView>>;
   handleListsButtonClick: () => void;
   handleClearTagFilter: () => void;
-  contextText: React.ReactNode;
   sortedPokemons: PokemonVariant[];
   highlightedCards: Set<string>;
   handleClearSelection: () => void;
   handleSelectAll: () => void;
-  lastMenu: LastMenu;
   tagFilter: string;
   sidePanelTagFilter: string;
   containerRef: React.RefObject<HTMLDivElement | null>;
   swipeHandlers: SwipeHandlers;
   transform: string;
   isDragging: boolean;
-  setTagFilter: React.Dispatch<React.SetStateAction<string>>;
   variants: PokemonVariant[];
   isEditable: boolean;
   selectedPokemon: PokemonOverlaySelection;
@@ -90,12 +99,15 @@ type UsePokemonPageControllerResult = {
   showEvolutionaryLine: boolean;
   toggleEvolutionaryLine: () => void;
   handleTagSelect: (filter: string) => void;
-  handleConfirmChangeTags: (filter: InstanceStatus) => Promise<void>;
+  handleConfirmChangeTags: (
+    filter: InstanceStatus,
+    options?: ConfirmInstanceStatusOptions,
+  ) => Promise<InstanceStatusMutationOutcome[]>;
   activeStatusFilter: InstanceStatus | null;
   isUpdating: boolean;
   isMegaSelectionOpen: boolean;
   megaSelectionData: MegaSelectionData | null;
-  handleMegaSelectionResolve: (selectedOption: string) => void;
+  handleMegaSelectionResolve: (result: MegaSelectionResult) => void;
   handleMegaSelectionReject: (error: unknown) => void;
   isFusionSelectionOpen: boolean;
   fusionSelectionData: FusionSelectionData | null;
@@ -107,6 +119,7 @@ type UsePokemonPageControllerResult = {
   closeFusionSelection: () => void;
   handleCreateNewLeft: () => Promise<void>;
   handleCreateNewRight: () => Promise<void>;
+  returnToContext?: () => void;
 };
 
 export default function usePokemonPageController({
@@ -126,26 +139,39 @@ export default function usePokemonPageController({
   const variants = useVariantsStore((s) => s.variants);
   const loading = useVariantsStore((s) => s.variantsLoading);
   const updateInstanceStatus = useInstancesStore((s) => s.updateInstanceStatus);
+  const updateInstanceDetails = useInstancesStore((s) => s.updateInstanceDetails);
   const { alert } = useModal();
   const contextInstanceData = useInstancesStore((s) => s.instances);
 
   const tags = useTagsStore((s) => s.tags);
+  const customTags = useTagsStore((s) => s.customTags);
   const foreignTags = useTagsStore((s) => s.foreignTags);
-  const requestedTagFilter = readPokemonCatalogFilter(location.search ?? '');
+  const requestedTagFilter =
+    readPokemonCatalogFilter(location.search ?? '') ??
+    readPokemonCatalogStateFilter(location.state);
   const requestedSearchTerm = readPokemonCatalogSearch(location.search ?? '');
+  const contextBackTo =
+    location.state &&
+    typeof location.state === 'object' &&
+    'contextBackTo' in location.state &&
+    typeof location.state.contextBackTo === 'string' &&
+    location.state.contextBackTo.startsWith('/')
+      ? location.state.contextBackTo
+      : null;
 
   const instances = (isOwnCollection
     ? contextInstanceData
     : foreignInstances || contextInstanceData) as Instances;
 
-  const [tagFilter, setTagFilter] = useState<string>(requestedTagFilter ?? '');
+  const initialTagFilter =
+    requestedTagFilter ?? (isUsernamePath ? DEFAULT_FOREIGN_CATALOG_TAG : '');
+  const [tagFilter, setTagFilter] = useState<string>(initialTagFilter);
   const [sidePanelTagFilter, setSidePanelTagFilter] = useState<string>(
-    requestedTagFilter ?? '',
+    initialTagFilter,
   );
   const [selectedPokemon, setSelectedPokemon] = useState<PokemonOverlaySelection>(null);
   const [hasProcessedInstanceId, setHasProcessedInstanceId] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
-  const [lastMenu, setLastMenu] = useState<LastMenu>('ownership');
   const [searchTerm, setSearchTerm] = useState<string>(requestedSearchTerm);
   const [activeView, setActiveView] = useState<ActiveView>('pokemon');
   const [dragOffset, setDragOffset] = useState<number>(0);
@@ -216,7 +242,7 @@ export default function usePokemonPageController({
   useEffect(() => {
     if (!isUsernamePath || !urlUsername) return;
     void loadForeignProfile(urlUsername, () => {
-      const initialFilter = requestedTagFilter ?? 'Caught';
+      const initialFilter = requestedTagFilter ?? DEFAULT_FOREIGN_CATALOG_TAG;
       setTagFilter(initialFilter);
       syncSidePanelTagFilter(initialFilter, false);
     });
@@ -229,10 +255,15 @@ export default function usePokemonPageController({
   ]);
 
   useEffect(() => {
+    if (!isUsernamePath || tagFilter.trim()) return;
+    setTagFilter(DEFAULT_FOREIGN_CATALOG_TAG);
+    syncSidePanelTagFilter(DEFAULT_FOREIGN_CATALOG_TAG, false);
+  }, [isUsernamePath, tagFilter, syncSidePanelTagFilter]);
+
+  useEffect(() => {
     if (!requestedTagFilter) return;
     setHighlightedCards(new Set());
     setTagFilter(requestedTagFilter);
-    setLastMenu('ownership');
     setActiveView('pokemon');
     syncSidePanelTagFilter(requestedTagFilter, false);
   }, [
@@ -241,9 +272,16 @@ export default function usePokemonPageController({
     syncSidePanelTagFilter,
   ]);
 
-  const activeTags: TagBuckets = (
-    isUsernamePath ? foreignTags ?? (emptyTagBuckets as TagBuckets) : tags
-  ) as TagBuckets;
+  const activeTags = useMemo<TagBuckets>(() => {
+    if (isUsernamePath) return foreignTags ?? (emptyTagBuckets as TagBuckets);
+    const merged: TagBuckets = { ...tags };
+    for (const parent of [customTags.caught, customTags.wanted]) {
+      for (const bucket of Object.values(parent)) {
+        merged[toCustomTagFilter(bucket.tag.tag_id)] = bucket.items;
+      }
+    }
+    return merged;
+  }, [customTags, foreignTags, isUsernamePath, tags]);
 
   const baseVariants = variants;
   const activeStatusFilter = toInstanceStatus(tagFilter);
@@ -262,6 +300,7 @@ export default function usePokemonPageController({
   useInstanceIdProcessor({
     variantsLoading: loading,
     filteredVariants,
+    instances,
     location: location as unknown as Parameters<typeof useInstanceIdProcessor>[0]['location'],
     selectedPokemon,
     isOwnCollection,
@@ -282,39 +321,57 @@ export default function usePokemonPageController({
   }, [sortedPokemons, setHighlightedCards, setIsFastSelectEnabled]);
 
   const handleListsButtonClick = useCallback(() => {
-    setActiveView((prev) => (prev === 'tags' ? 'pokemon' : 'tags'));
+    setActiveView((prev) => (prev === 'wishlist' ? 'pokemon' : 'wishlist'));
   }, []);
 
   const handleClearTagFilter = useCallback(() => {
     const shouldDelaySidePanelUpdate = activeView !== 'pokemon';
+    const nextFilter = isUsernamePath
+      ? tagFilter.trim() || DEFAULT_FOREIGN_CATALOG_TAG
+      : '';
     setHighlightedCards(new Set());
-    setTagFilter('');
+    setTagFilter(nextFilter);
     setActiveView('pokemon');
-    syncSidePanelTagFilter('', shouldDelaySidePanelUpdate);
-  }, [activeView, setHighlightedCards, syncSidePanelTagFilter]);
+    syncSidePanelTagFilter(nextFilter, shouldDelaySidePanelUpdate);
+  }, [
+    activeView,
+    isUsernamePath,
+    setHighlightedCards,
+    syncSidePanelTagFilter,
+    tagFilter,
+  ]);
 
   const handleTagSelect = useCallback(
     (filter: string) => {
       const shouldDelaySidePanelUpdate = activeView !== 'pokemon';
+      const nextFilter =
+        filter.trim() || (isUsernamePath ? DEFAULT_FOREIGN_CATALOG_TAG : '');
       setHighlightedCards(new Set());
-      setTagFilter(filter);
-      setLastMenu('ownership');
+      if (nextFilter.toLowerCase() === 'favorites') {
+        setSortType('favorite');
+        setSortMode('descending');
+      }
+      setTagFilter(nextFilter);
       setActiveView('pokemon');
-      syncSidePanelTagFilter(filter, shouldDelaySidePanelUpdate);
+      syncSidePanelTagFilter(nextFilter, shouldDelaySidePanelUpdate);
     },
-    [activeView, setHighlightedCards, syncSidePanelTagFilter],
+    [activeView, isUsernamePath, setHighlightedCards, setSortMode, setSortType, syncSidePanelTagFilter],
   );
 
-  const setStatusFilter = useCallback((filter: InstanceStatus) => {
+  const setStatusFilter = useCallback((filter: string) => {
     setTagFilter(filter);
     syncSidePanelTagFilter(filter, false);
   }, [syncSidePanelTagFilter]);
 
   const updateInstanceStatusBatch = useCallback(
-    (keys: string[], filter: InstanceStatus) =>
+    (
+      keys: string[],
+      filter: InstanceStatus,
+      resultPatch?: InstanceStatusResultPatch,
+    ) =>
       updateInstanceStatus(keys, filter, (message) => {
         void alert(message);
-      }),
+      }, resultPatch),
     [alert, updateInstanceStatus],
   );
 
@@ -337,35 +394,29 @@ export default function usePokemonPageController({
 
   const { handleConfirmChangeTags } = useHandleChangeTags({
     setTagFilter: setStatusFilter,
-    setLastMenu,
     setHighlightedCards,
     highlightedCards,
     updateInstanceStatus: updateInstanceStatusBatch,
     variants,
     instances,
+    updateInstanceDetails,
     setIsUpdating,
     promptMegaPokemonSelection,
     promptFusionPokemonSelection,
     setIsFastSelectEnabled,
   });
 
-  const closeSelectedPokemon = useCallback(() => {
-    setSelectedPokemon(null);
-  }, []);
+  const returnToContext = useCallback(() => {
+    if (!contextBackTo) return;
+    void navigate(-1);
+  }, [contextBackTo, navigate]);
 
-  const closeMegaSelectionFromBack = useCallback(() => {
-    handleMegaSelectionReject('User canceled');
-  }, [handleMegaSelectionReject]);
-
-  const returnToPokemonView = useCallback(() => {
-    setActiveView('pokemon');
-  }, []);
-
-  useContextBackHandler(activeView !== 'pokemon', returnToPokemonView, 'pokemon-view');
-  useContextBackHandler(highlightedCards.size > 0, handleClearSelection, 'pokemon-selection');
-  useContextBackHandler(selectedPokemon !== null, closeSelectedPokemon, 'pokemon-overlay');
-  useContextBackHandler(isMegaSelectionOpen, closeMegaSelectionFromBack, 'mega-selection');
-  useContextBackHandler(isFusionSelectionOpen, closeFusionSelection, 'fusion-selection');
+  useContextBackHandler(
+    highlightedCards.size > 0,
+    handleClearSelection,
+    'pokemon-selection',
+    'mobile',
+  );
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const maxPeekDistance = 0.3;
@@ -397,16 +448,6 @@ export default function usePokemonPageController({
 
   const displayUsername = canonicalUsername || urlUsername || '';
   const isEditable = isOwnCollection;
-  const contextText: React.ReactNode =
-    tagFilter === ''
-      ? 'Catalog View'
-      : isEditable
-      ? 'Editing your Collection'
-      : (
-          <>
-            Viewing <span className="username"><strong>{displayUsername}</strong></span>'s Collection
-          </>
-        );
 
   const isPageLoading = loading || viewedLoading || isUpdating;
 
@@ -418,19 +459,16 @@ export default function usePokemonPageController({
     setActiveView,
     handleListsButtonClick,
     handleClearTagFilter,
-    contextText,
     sortedPokemons,
     highlightedCards,
     handleClearSelection,
     handleSelectAll,
-    lastMenu,
     tagFilter,
     sidePanelTagFilter,
     containerRef,
     swipeHandlers,
     transform,
     isDragging,
-    setTagFilter,
     variants,
     isEditable,
     selectedPokemon,
@@ -463,5 +501,6 @@ export default function usePokemonPageController({
     closeFusionSelection,
     handleCreateNewLeft,
     handleCreateNewRight,
+    returnToContext: contextBackTo ? returnToContext : undefined,
   };
 }

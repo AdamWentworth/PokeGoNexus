@@ -8,7 +8,7 @@ import { initPerfPaintObservers } from './utils/perfTelemetry';
 import { createScopedLogger } from './utils/logger';
 import { hasActiveStoredSession } from './utils/storage';
 import { applyStoredThemePreferenceToDocument } from './utils/theme';
-import { buildServiceWorkerScriptUrl } from './utils/serviceWorker';
+import { registerAppServiceWorker } from './utils/serviceWorker';
 import { receiverContract } from '@shared-contracts/receiver';
 import './styles/tokens.css';
 import './index.css';
@@ -31,12 +31,12 @@ const shouldDisableServiceWorker =
 
 if (shouldRegisterServiceWorker) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register(
-        buildServiceWorkerScriptUrl(
-          import.meta.env.VITE_SERVICE_WORKER_VERSION,
-        ),
-      )
+    registerAppServiceWorker({
+      version: import.meta.env.VITE_SERVICE_WORKER_VERSION,
+      receiverApiUrl: import.meta.env.VITE_RECEIVER_API_URL,
+      receiverBatchedUpdatesPath: receiverContract.endpoints.batchedUpdates,
+      isLoggedIn: hasActiveStoredSession(),
+    })
       .then((registration) => {
         if (!registration) {
           log.debug('Service Worker registration skipped by browser');
@@ -44,20 +44,6 @@ if (shouldRegisterServiceWorker) {
         }
 
         log.debug('Service Worker registered with scope:', registration.scope);
-
-        navigator.serviceWorker.ready.then((registration) => {
-          if (registration.active) {
-            registration.active.postMessage({
-              type: 'SET_CONFIG',
-              payload: {
-                RECEIVER_API_URL: import.meta.env.VITE_RECEIVER_API_URL,
-                RECEIVER_BATCHED_UPDATES_PATH:
-                  receiverContract.endpoints.batchedUpdates,
-                IS_LOGGED_IN: hasActiveStoredSession(),
-              },
-            });
-          }
-        });
       })
       .catch((error) => {
         log.error('Service Worker registration failed:', error);

@@ -7,6 +7,8 @@
   --pvp-text: #f5ffff;
   --pvp-muted: #9db6b8;
   --pvp-teal: #42d5c2;
+  --pvp-label: #8fc6cb;
+  --pvp-accent-text: var(--pvp-teal);
   --pvp-blue: #54a9ef;
   --pvp-pink: #ed6fa5;
   --pvp-gold: #f2ca58;
@@ -27,35 +29,18 @@
   letter-spacing: 0;
 }
 
-.pvp-header {
-  display: grid;
-  grid-template-columns: 3.1rem minmax(0, 1fr) auto;
-  gap: 0.7rem;
-  align-items: center;
-  min-height: 4.25rem;
-  padding: 0.55rem 0.75rem;
-  border-bottom: 1px solid var(--pvp-line);
-  text-align: left;
-}
-
-.pvp-header > img {
-  width: 3.1rem;
-  height: 3.1rem;
-  object-fit: contain;
-}
-
-.pvp-header span,
 .pvp-toolbar span {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.7rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.pvp-header h1 {
-  margin: 0.05rem 0 0;
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  line-height: 1;
+.pvp-product-header {
+  --product-header-border: var(--pvp-line);
+  --product-header-label: var(--pvp-label);
+  --product-header-muted: var(--pvp-muted);
+  --product-header-text: var(--pvp-text);
 }
 
 .pvp-header-actions {
@@ -73,7 +58,7 @@
   padding: 0.3rem 0.55rem;
   border: 1px solid var(--pvp-line-strong);
   border-radius: 999px;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   background: rgba(66, 213, 194, 0.06);
   font-size: 0.68rem;
   font-weight: 900;
@@ -98,36 +83,14 @@
   white-space: nowrap;
 }
 
-.pvp-workspace-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.4rem;
+.pvp-workspace-switcher {
+  --segmented-accent: var(--pvp-teal);
+  --segmented-active-text: #071313;
+  --segmented-border: var(--pvp-line);
+  --segmented-surface: #101516;
+  --segmented-text: var(--pvp-muted);
+
   margin-top: 0.7rem;
-  padding: 0.3rem;
-  border: 1px solid var(--pvp-line);
-  border-radius: 8px;
-  background: #101516;
-}
-
-.pvp-workspace-tabs button {
-  display: inline-flex;
-  gap: 0.45rem;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.65rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--pvp-muted);
-  background: transparent;
-  font-size: 0.76rem;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.pvp-workspace-tabs button.active {
-  border-color: var(--pvp-teal);
-  color: #071313;
-  background: var(--pvp-teal);
 }
 
 .pvp-format-controls {
@@ -187,7 +150,7 @@
   padding: 0.35rem 0.55rem;
   border: 1px solid var(--pvp-line);
   border-radius: 8px;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   background: #101516;
   text-align: left;
 }
@@ -198,7 +161,7 @@
 }
 
 .pvp-cup-picker small {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.62rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -245,7 +208,7 @@
 }
 
 .pvp-format-rules summary {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-weight: 900;
   cursor: pointer;
 }
@@ -421,7 +384,7 @@
 
 .pvp-ranking-head {
   padding: 0.42rem 0.75rem;
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.67rem;
   font-weight: 900;
   text-align: left;
@@ -565,7 +528,7 @@
 }
 
 .pvp-score strong {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-size: 1.1rem;
 }
 
@@ -637,7 +600,7 @@
 
 .pvp-ranking-details h3 {
   margin: 0;
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.7rem;
   text-align: left;
   text-transform: uppercase;
@@ -824,7 +787,7 @@
 
 .pvp-team-builder > header svg,
 .pvp-team-analysis > header svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-size: 1.2rem;
 }
 
@@ -833,7 +796,7 @@
 }
 
 .pvp-team-builder header small {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.64rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -857,7 +820,7 @@
   padding: 0.3rem 0.55rem;
   border: 1px solid var(--pvp-line-strong);
   border-radius: 999px;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-size: 0.72rem;
 }
 
@@ -912,12 +875,12 @@
   gap: 0.4rem;
   align-items: center;
   min-width: 0;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-role > svg {
   width: 1rem;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-role > span,
@@ -987,7 +950,7 @@
 }
 
 .pvp-team-slot--empty > svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-slot--empty > strong {
@@ -1039,7 +1002,7 @@
 }
 
 .pvp-team-field-summary strong {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-size: 0.9rem;
 }
 
@@ -1062,7 +1025,7 @@
 }
 
 .pvp-team-role-results > span > svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-role-results > span > span {
@@ -1093,7 +1056,7 @@
 
 .pvp-team-field-losses > strong,
 .pvp-team-evidence summary {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.66rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -1212,7 +1175,7 @@
   padding: 0;
   border: 1px solid var(--pvp-line-strong);
   border-radius: 50%;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   background: transparent;
   cursor: pointer;
 }
@@ -1243,7 +1206,7 @@
 }
 
 .pvp-team-suggestions > strong {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.66rem;
   text-transform: uppercase;
 }
@@ -1293,7 +1256,7 @@
 }
 
 .pvp-team-suggestions button > svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-picks {
@@ -1466,7 +1429,7 @@
 }
 
 .pvp-battle-lab > header svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-battle-lab > header small,
@@ -1542,7 +1505,7 @@
 }
 
 .pvp-battle-picker > header span {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.66rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -1649,7 +1612,7 @@
   padding: 0;
   border: 1px solid var(--pvp-teal);
   border-radius: 50%;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   background: var(--pvp-panel);
   cursor: pointer;
 }
@@ -1678,7 +1641,7 @@
 }
 
 .pvp-team-lineup-editor > header svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-lineup-editor > header span {
@@ -1720,7 +1683,7 @@
 }
 
 .pvp-team-lineup-slots button small {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.55rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -1772,7 +1735,7 @@
 
 .pvp-team-switch-policy > header svg {
   flex: 0 0 auto;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-switch-policy > header span,
@@ -1920,7 +1883,7 @@
 
 .pvp-battle-shields legend,
 .pvp-battle-energy > span {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.62rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -1929,7 +1892,7 @@
 .pvp-battle-shields legend svg,
 .pvp-battle-energy svg {
   margin-right: 0.2rem;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-battle-shields > div {
@@ -2011,7 +1974,7 @@
   padding-inline: 0.7rem;
   border: 1px solid var(--pvp-teal);
   border-radius: 7px;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   background: transparent;
   font-weight: 950;
   cursor: pointer;
@@ -2040,7 +2003,7 @@
 }
 
 .pvp-battle-result > header > svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-size: 1.2rem;
 }
 
@@ -2062,7 +2025,7 @@
 }
 
 .pvp-battle-result > header > strong {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-battle-result-sides {
@@ -2132,7 +2095,7 @@
 }
 
 .pvp-battle-flow > strong {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.68rem;
   text-transform: uppercase;
 }
@@ -2158,7 +2121,7 @@
 }
 
 .pvp-battle-flow time {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-weight: 900;
 }
 
@@ -2186,7 +2149,7 @@
 }
 
 .pvp-team-battle-result > header > svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-size: 1.2rem;
 }
 
@@ -2212,7 +2175,7 @@
 }
 
 .pvp-team-battle-result > header > strong {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-battle-summary {
@@ -2243,7 +2206,7 @@
   grid-row: span 2;
   grid-column: 2;
   align-self: center;
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-team-battle-sides {
@@ -2260,7 +2223,7 @@
 
 .pvp-team-battle-sides > section > header,
 .pvp-team-battle-sequence > strong {
-  color: #8fc6cb;
+  color: var(--pvp-label);
   font-size: 0.65rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -2357,7 +2320,7 @@
 }
 
 .pvp-team-battle-sequence li > span {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-weight: 900;
   text-align: center;
 }
@@ -2462,7 +2425,7 @@
 }
 
 .pvp-meta-gauntlet-result article.win > svg {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
 }
 
 .pvp-meta-gauntlet-result article.loss > svg {
@@ -2566,12 +2529,12 @@
 }
 
 .pvp-source a {
-  color: var(--pvp-teal);
+  color: var(--pvp-accent-text);
   font-weight: 850;
 }
 
 .pvp-source small {
-  color: #829697;
+  color: var(--pvp-muted);
 }
 
 :root[data-theme='light'] .pvp-page {
@@ -2581,12 +2544,14 @@
   --pvp-line: rgba(31, 111, 117, 0.24);
   --pvp-line-strong: rgba(31, 111, 117, 0.46);
   --pvp-text: #102b2e;
-  --pvp-muted: #557073;
+  --pvp-muted: #405b56;
+  --pvp-label: #28636a;
+  --pvp-accent-text: #08766b;
   background: var(--pvp-bg);
 }
 
 :root[data-theme='light'] .pvp-league-tabs,
-:root[data-theme='light'] .pvp-workspace-tabs,
+:root[data-theme='light'] .pvp-workspace-switcher,
 :root[data-theme='light'] .pvp-cup-picker,
 :root[data-theme='light'] .pvp-search,
 :root[data-theme='light'] .pvp-roster-scope,
@@ -2630,16 +2595,6 @@
     padding: 0.35rem 0.35rem 6.5rem;
   }
 
-  .pvp-header {
-    grid-template-columns: 2.65rem minmax(0, 1fr) auto;
-    padding-inline: 0.45rem;
-  }
-
-  .pvp-header > img {
-    width: 2.65rem;
-    height: 2.65rem;
-  }
-
   .pvp-header-actions > strong {
     padding-inline: 0.45rem;
     font-size: 0.66rem;
@@ -2666,11 +2621,11 @@
     margin-top: -0.15rem;
   }
 
-  .pvp-workspace-tabs {
+  .pvp-workspace-switcher {
     margin-top: 0.45rem;
   }
 
-  .pvp-workspace-tabs button {
+  .pvp-workspace-switcher > button {
     gap: 0.28rem;
     min-height: 2.45rem;
     padding-inline: 0.2rem;
@@ -2933,10 +2888,6 @@
 }
 
 @media (max-width: 420px) {
-  .pvp-header h1 {
-    font-size: 1.25rem;
-  }
-
   .pvp-header-actions > strong {
     max-width: 4.5rem;
     overflow: hidden;

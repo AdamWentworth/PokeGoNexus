@@ -6,6 +6,7 @@ import { updateRegistrationStatus } from '../utils/updateRegistrationStatus';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import type { InstanceStatus, Instances } from '@/types/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
+import { FAVORITE_TO_TRADE_ERROR } from '@pokemongonexus/shared-domain/instances';
 
 const log = createScopedLogger('updatePokemonInstanceStatus');
 
@@ -99,11 +100,20 @@ export function updatePokemonInstanceStatus(
     }
   }
 
+  if (newStatus === 'Trade' && instance.favorite) {
+    onAlert?.(FAVORITE_TO_TRADE_ERROR);
+    log.debug('Update blocked because favorite Pokémon cannot be listed For Trade');
+    return instanceId;
+  }
+
   switch (newStatus) {
     case 'Caught':
       instance.is_caught = true;
       instance.is_for_trade = false;
       instance.is_wanted = false;
+      instance.most_wanted = false;
+      instance.wanted_tags = [];
+      instance.trade_tags = [];
       instance.registered = true;
       break;
 
@@ -111,6 +121,8 @@ export function updatePokemonInstanceStatus(
       instance.is_caught = true; // caught but flagged for trade
       instance.is_for_trade = true;
       instance.is_wanted = false;
+      instance.most_wanted = false;
+      instance.wanted_tags = [];
       instance.registered = true;
       break;
 
@@ -123,6 +135,11 @@ export function updatePokemonInstanceStatus(
           is_wanted: true,
           is_caught: false,
           is_for_trade: false,
+          caught_tags: [],
+          trade_tags: [],
+          wanted_tags: [],
+          favorite: false,
+          most_wanted: false,
           registered: true, // wanted entries are considered registered for tags logic
           last_update: Date.now(),
         };
@@ -133,6 +150,11 @@ export function updatePokemonInstanceStatus(
       }
 
       instance.is_wanted = true;
+      instance.is_caught = false;
+      instance.is_for_trade = false;
+      instance.caught_tags = [];
+      instance.trade_tags = [];
+      instance.favorite = false;
       {
         const anyCaught = Object.values(instances).some(
           (d) => d.variant_id === variantKey && d.is_caught,
@@ -146,6 +168,11 @@ export function updatePokemonInstanceStatus(
       instance.is_caught = false;
       instance.is_for_trade = false;
       instance.is_wanted = false;
+      instance.most_wanted = false;
+      instance.favorite = false;
+      instance.caught_tags = [];
+      instance.trade_tags = [];
+      instance.wanted_tags = [];
       instance.registered = false;
       break;
   }

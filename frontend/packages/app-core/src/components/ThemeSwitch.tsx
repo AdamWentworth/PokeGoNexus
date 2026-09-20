@@ -10,6 +10,7 @@ const ThemeSwitch: React.FC = () => {
   return (
     <label className="switch">
       <input 
+        aria-label={isLightMode ? 'Use dark theme' : 'Use light theme'}
         className="theme-input" 
         type="checkbox" 
         checked={!isLightMode} 

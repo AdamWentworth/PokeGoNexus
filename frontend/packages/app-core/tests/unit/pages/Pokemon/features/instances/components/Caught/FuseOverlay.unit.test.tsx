@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import FuseOverlay from '@/pages/Pokemon/features/instances/components/Caught/FuseOverlay';
 
 describe('FuseOverlay', () => {
@@ -77,7 +77,7 @@ describe('FuseOverlay', () => {
     expect(screen.getByAltText('Fusion Snow background')).toBeInTheDocument();
   });
 
-  it('calls fuse and close handlers from footer actions', () => {
+  it('calls fuse and close handlers from footer actions', async () => {
     const onFuse = vi.fn();
     const onClose = vi.fn();
 
@@ -95,6 +95,6 @@ describe('FuseOverlay', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onFuse).toHaveBeenCalledTimes(1);
-    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });

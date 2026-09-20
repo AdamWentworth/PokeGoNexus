@@ -1,15 +1,15 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import TradeCard from '@/pages/Trades/TradeCard';
 
 const mocks = vi.hoisted(() => ({
   confirmMock: vi.fn(),
+  alertMock: vi.fn(),
   usePokemonDetailsMock: vi.fn(),
   handleAcceptTradeMock: vi.fn(),
   handleDenyTradeMock: vi.fn(),
-  handleDeleteTradeMock: vi.fn(),
   handleCancelTradeMock: vi.fn(),
   handleReProposeTradeMock: vi.fn(),
   handleCompleteTradeMock: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('@/features/trades/store/useTradeStore', () => ({
 }));
 
 vi.mock('@/contexts/ModalContext', () => ({
-  useModal: () => ({ confirm: mocks.confirmMock }),
+  useModal: () => ({ confirm: mocks.confirmMock, alert: mocks.alertMock }),
 }));
 
 vi.mock('@/pages/Trades/hooks/usePokemonDetails', () => ({
@@ -42,10 +42,6 @@ vi.mock('@/pages/Trades/handlers/handleAcceptTrade', () => ({
 
 vi.mock('@/pages/Trades/handlers/handleDenyTrade', () => ({
   handleDenyTrade: (...args: unknown[]) => mocks.handleDenyTradeMock(...args),
-}));
-
-vi.mock('@/pages/Trades/handlers/handleDeleteTrade', () => ({
-  handleDeleteTrade: (...args: unknown[]) => mocks.handleDeleteTradeMock(...args),
 }));
 
 vi.mock('@/pages/Trades/handlers/handleCancelTrade', () => ({
@@ -75,10 +71,10 @@ vi.mock('@/pages/Trades/views/OffersTradeView', () => ({
 }));
 
 vi.mock('@/pages/Trades/views/ProposedTradeView', () => ({
-  default: (props: { handleDelete: () => void }) => (
+  default: (props: { handleCancel: () => void }) => (
     <div>
       <div data-testid="proposed-view" />
-      <button onClick={props.handleDelete}>delete</button>
+      <button onClick={props.handleCancel}>cancel proposal</button>
     </div>
   ),
 }));
@@ -144,6 +140,8 @@ describe('TradeCard', () => {
     render(<TradeCard {...baseProps} selectedStatus="Accepting" />);
 
     expect(screen.getByTestId('offers-view')).toBeInTheDocument();
+    expect(screen.getByText('Needs your response')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Offer from misty' })).toBeInTheDocument();
 
     await fireEvent.click(screen.getByRole('button', { name: 'accept' }));
 
@@ -162,6 +160,34 @@ describe('TradeCard', () => {
     expect(mocks.handleDenyTradeMock).not.toHaveBeenCalled();
   });
 
+  it('cancels a sent proposal through the cancel command', async () => {
+    render(<TradeCard {...baseProps} selectedStatus="Proposed" />);
+
+    await fireEvent.click(screen.getByRole('button', { name: 'cancel proposal' }));
+
+    expect(mocks.confirmMock).toHaveBeenCalledWith(
+      'Are you sure you want to cancel this trade?',
+    );
+    expect(mocks.handleCancelTradeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('makes a rejected cancellation explicit and leaves the proposal active', async () => {
+    mocks.handleCancelTradeMock.mockRejectedValueOnce(
+      new Error('trade state has changed'),
+    );
+
+    render(<TradeCard {...baseProps} selectedStatus="Proposed" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'cancel proposal' }));
+
+    await waitFor(() => {
+      expect(mocks.alertMock).toHaveBeenCalledWith(
+        'Cancellation failed. This proposal is still active. trade state has changed',
+      );
+    });
+    expect(mocks.tradeStoreState.setTradeData).not.toHaveBeenCalled();
+  });
+
   it('routes to status-specific views and fallback', () => {
     const { rerender } = render(<TradeCard {...baseProps} selectedStatus="Proposed" />);
     expect(screen.getByTestId('proposed-view')).toBeInTheDocument();
@@ -175,7 +201,7 @@ describe('TradeCard', () => {
     rerender(<TradeCard {...baseProps} selectedStatus="Completed" />);
     expect(screen.getByTestId('completed-view')).toBeInTheDocument();
 
-    rerender(<TradeCard {...baseProps} selectedStatus={'Unknown' as any} />);
+    rerender(<TradeCard {...baseProps} selectedStatus={'Unknown' as never} />);
     expect(screen.getByText(/unknown trade status/i)).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import { FaCheckCircle, FaSearch } from 'react-icons/fa';
 import './ListView.base.css';
-import './ListView.responsive.css';
 import CaughtListView from './ListViewComponents/CaughtListView';
 import TradeListView from './ListViewComponents/TradeListView';
 import WantedListView from './ListViewComponents/WantedListView';
@@ -53,7 +53,12 @@ const ListView: React.FC<ListViewProps> = ({
   if (!hasSearched && data.length === 0) {
     return (
       <div className="no-data-container">
-        <p>Use the Toolbar above to Discover Pokemon near you and Around the World!</p>
+        <span className="no-data-container__icon" aria-hidden="true">
+          <FaSearch />
+        </span>
+        <span>Community listings</span>
+        <h2>Find your next Pokémon</h2>
+        <p>Choose a Pokémon and listing type above to discover nearby trainers.</p>
       </div>
     );
   }
@@ -61,42 +66,69 @@ const ListView: React.FC<ListViewProps> = ({
   if (hasSearched && data.length === 0) {
     return (
       <div className="no-data-container">
-        <p>No Pokemon found matching your criteria.</p>
+        <span className="no-data-container__icon" aria-hidden="true">
+          <FaSearch />
+        </span>
+        <span>No matches yet</span>
+        <h2>No listings fit these filters</h2>
+        <p>Try a larger distance, fewer variant details, or another listing type.</p>
       </div>
     );
   }
 
+  const resultTypeLabel =
+    ownershipMode === 'trade'
+      ? 'For Trade listings'
+      : ownershipMode === 'wanted'
+        ? 'Wanted listings'
+        : 'Caught Pokémon';
+
   return (
-    <div className="list-view-container" ref={listViewRef}>
-      {data.map((item, index) => {
-        const instanceId =
-          typeof item.instance_id === 'string' && item.instance_id
-            ? item.instance_id
-            : `${ownershipMode}-${index}`;
-        if (ownershipMode === 'caught') {
-          return (
-            <RenderProfiler key={instanceId} id="Search.CaughtListRow">
-              <CaughtListView item={item} />
-            </RenderProfiler>
-          );
-        }
-        if (ownershipMode === 'trade') {
-          return (
-            <RenderProfiler key={instanceId} id="Search.TradeListRow">
-              <TradeListView item={item} findPokemonByKey={findPokemonByKey} />
-            </RenderProfiler>
-          );
-        }
-        if (ownershipMode === 'wanted') {
-          return (
-            <RenderProfiler key={instanceId} id="Search.WantedListRow">
-              <WantedListView item={item} findPokemonByKey={findPokemonByKey} />
-            </RenderProfiler>
-          );
-        }
-        return null;
-      })}
-    </div>
+    <section aria-label="Pokémon search results" className="search-results-region">
+      <header className="search-results-heading">
+        <div>
+          <span className="search-results-heading__complete">
+            <FaCheckCircle aria-hidden="true" />
+            Search complete
+          </span>
+          <h2>{resultTypeLabel}</h2>
+        </div>
+        <strong>
+          {data.length} {data.length === 1 ? 'result' : 'results'}
+        </strong>
+      </header>
+
+      <div className="list-view-container" ref={listViewRef}>
+        {data.map((item, index) => {
+          const instanceId =
+            typeof item.instance_id === 'string' && item.instance_id
+              ? item.instance_id
+              : `${ownershipMode}-${index}`;
+          if (ownershipMode === 'caught') {
+            return (
+              <RenderProfiler key={instanceId} id="Search.CaughtListRow">
+                <CaughtListView item={item} />
+              </RenderProfiler>
+            );
+          }
+          if (ownershipMode === 'trade') {
+            return (
+              <RenderProfiler key={instanceId} id="Search.TradeListRow">
+                <TradeListView item={item} findPokemonByKey={findPokemonByKey} />
+              </RenderProfiler>
+            );
+          }
+          if (ownershipMode === 'wanted') {
+            return (
+              <RenderProfiler key={instanceId} id="Search.WantedListRow">
+                <WantedListView item={item} findPokemonByKey={findPokemonByKey} />
+              </RenderProfiler>
+            );
+          }
+          return null;
+        })}
+      </div>
+    </section>
   );
 };
 

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const parsedPort = Number(process.env.E2E_PORT ?? 3000);
-const port = Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : 3000;
+const parsedPort = Number(process.env.E2E_PORT ?? 3100);
+const port = Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : 3100;
 const rawBaseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
 const baseURL = rawBaseURL.replace(/\/+$/, '');
 const useRealApis = process.env.E2E_USE_REAL_APIS === '1';
@@ -47,7 +47,7 @@ const e2eApiEnv = useRealApis
 const e2eServerEnv = {
   ...inheritedEnv,
   ...e2eApiEnv,
-  VITE_ASSET_ORIGIN: 'https://pokegonexus.com',
+  VITE_ASSET_ORIGIN: process.env.E2E_ASSET_ORIGIN ?? 'https://pokegonexus.com',
   VITE_FORCED_REFRESH_TIMESTAMP: '0',
   VITE_DISABLE_SERVICE_WORKER: 'true',
   VITE_LOG_LEVEL: 'warn',
@@ -55,13 +55,13 @@ const e2eServerEnv = {
 
 const devServerCommand = `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort --mode ${viteMode}`;
 const previewServerCommand = [
-  'npm run build -- --mode e2e',
+  `npm run build -- --mode ${viteMode}`,
   `npm run preview -- --host 127.0.0.1 --port ${port} --strictPort`,
 ].join(' && ');
 
 const webServerCommand =
   process.env.E2E_WEB_SERVER_COMMAND ??
-  (process.env.CI ? previewServerCommand : devServerCommand);
+  (process.env.E2E_USE_DEV_SERVER === '1' ? devServerCommand : previewServerCommand);
 
 export default defineConfig({
   testDir: './tests/browser',
@@ -98,6 +98,9 @@ export default defineConfig({
     navigationTimeout: 30_000,
     launchOptions: {
       env: inheritedEnv,
+      ...(process.env.E2E_CHROMIUM_EXECUTABLE_PATH
+        ? { executablePath: process.env.E2E_CHROMIUM_EXECUTABLE_PATH }
+        : {}),
     },
   },
   webServer: shouldStartWebServer
@@ -105,7 +108,7 @@ export default defineConfig({
         command: webServerCommand,
         env: e2eServerEnv,
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: process.env.E2E_REUSE_EXISTING_SERVER === '1',
         timeout: 120_000,
       }
     : undefined,

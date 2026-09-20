@@ -23,9 +23,6 @@ vi.mock('@/pages/Search/utils/getPokemonDisplayName', () => ({
 const baseItem = {
   username: 'ash',
   instance_id: 'inst-1',
-  fast_move_id: 1,
-  charged_move1_id: 2,
-  charged_move2_id: 3,
   pokemonInfo: { moves: [] },
   trade_list: {
     'variant-1_uuid-1': { match: true },
@@ -34,107 +31,56 @@ const baseItem = {
 
 describe('WantedPopup', () => {
   const navigateToUserCatalog = vi.fn();
+  const navigateToUserProfile = vi.fn();
   const findPokemonByKey = vi.fn();
   const onClose = vi.fn();
 
   beforeEach(() => {
     navigateToUserCatalog.mockReset();
+    navigateToUserProfile.mockReset();
     findPokemonByKey.mockReset();
     onClose.mockReset();
-  });
-
-  it('renders popup content and trade list match image', () => {
     findPokemonByKey.mockReturnValue({
-      currentImage: '/images/variant.png',
-      name: 'Bulbasaur',
+      currentImage: '/images/charmander.png',
+      name: 'Charmander',
       form: null,
     });
+  });
 
+  const renderPopup = () =>
     render(
       <WantedPopup
+        findPokemonByKey={findPokemonByKey}
         item={baseItem}
         navigateToUserCatalog={navigateToUserCatalog}
-        findPokemonByKey={findPokemonByKey}
+        navigateToUserProfile={navigateToUserProfile}
         onClose={onClose}
       />,
     );
 
-    expect(screen.getByText('ash')).toBeInTheDocument();
-    expect(screen.getByTestId('move-display')).toBeInTheDocument();
-    expect(screen.getByTestId('iv')).toBeInTheDocument();
-    expect(screen.getByAltText('Bulbasaur Image')).toBeInTheDocument();
-    const tradeImage = screen.getByAltText('Bulbasaur');
-    expect(tradeImage).toBeInTheDocument();
-    expect(tradeImage).toHaveClass('trade-pokemon-image');
-    expect(tradeImage).toHaveClass('glowing-pokemon');
-    expect(tradeImage).toHaveAttribute('title', 'Bulbasaur');
-    expect(findPokemonByKey).toHaveBeenCalledWith(
-      'variant-1_uuid-1',
-      baseItem.trade_list['variant-1_uuid-1'],
-    );
+  it('shows the wanted listing and representative available trade Pokémon', () => {
+    renderPopup();
+
+    expect(screen.getByText('Wanted')).toBeInTheDocument();
+    expect(screen.getByText('Trainer can offer')).toBeInTheDocument();
+    expect(screen.getByAltText('Charmander')).toBeInTheDocument();
   });
 
-  it('opens confirmation and confirms navigation to wanted catalog', () => {
-    findPokemonByKey.mockReturnValue(null);
+  it('uses direct actions and closes only when explicitly requested', () => {
+    renderPopup();
 
-    const { container } = render(
-      <WantedPopup
-        item={baseItem}
-        navigateToUserCatalog={navigateToUserCatalog}
-        findPokemonByKey={findPokemonByKey}
-        onClose={onClose}
-      />,
+    fireEvent.click(screen.getByRole('button', { name: 'Open listing' }));
+    expect(navigateToUserCatalog).toHaveBeenCalledWith(
+      'ash',
+      'inst-1',
+      'Wanted',
     );
+    expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.click(container.querySelector('.wanted-popup-content') as Element);
-    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View trainer' }));
+    expect(navigateToUserProfile).toHaveBeenCalledWith('ash');
 
-    expect(navigateToUserCatalog).toHaveBeenCalledWith('ash', 'inst-1', 'Wanted');
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('closes popup when clicking wrapper outside content', () => {
-    findPokemonByKey.mockReturnValue(null);
-
-    const { container } = render(
-      <WantedPopup
-        item={baseItem}
-        navigateToUserCatalog={navigateToUserCatalog}
-        findPokemonByKey={findPokemonByKey}
-        onClose={onClose}
-      />,
-    );
-
-    fireEvent.click(container.querySelector('.wanted-popup-wrapper') as Element);
+    fireEvent.click(screen.getByRole('button', { name: 'Close map result' }));
     expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('opens confirmation from content without closing the wrapper and cancels cleanly', () => {
-    findPokemonByKey.mockReturnValue(null);
-
-    const { container } = render(
-      <WantedPopup
-        item={baseItem}
-        navigateToUserCatalog={navigateToUserCatalog}
-        findPokemonByKey={findPokemonByKey}
-        onClose={onClose}
-      />,
-    );
-
-    fireEvent.click(container.querySelector('.wanted-popup-content') as Element);
-
-    expect(onClose).not.toHaveBeenCalled();
-    expect(
-      screen.getByText(/Would you like to see ash's Bulbasaur in their catalog/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText('No match found')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'No' }));
-
-    expect(
-      screen.queryByText(/Would you like to see ash's Bulbasaur in their catalog/i),
-    ).not.toBeInTheDocument();
-    expect(navigateToUserCatalog).not.toHaveBeenCalled();
-    expect(onClose).not.toHaveBeenCalled();
   });
 });

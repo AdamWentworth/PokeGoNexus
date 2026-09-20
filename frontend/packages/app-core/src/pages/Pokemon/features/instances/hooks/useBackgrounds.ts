@@ -1,6 +1,7 @@
 // hooks/useBackgrounds.ts
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import type { VariantBackground } from '@/types/pokemonSubTypes';
+import { backgroundMatchesVariant } from '@/utils/backgroundCostume';
 
 export function useBackgrounds(
   backgrounds: VariantBackground[],
@@ -10,32 +11,36 @@ export function useBackgrounds(
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [selectedBackground, setSelectedBackground] = useState<VariantBackground | null>(null);
 
-  useEffect(() => {
-    if (locationCard !== null && locationCard !== undefined) {
-      const id = parseInt(String(locationCard), 10);
-      const bg = backgrounds.find((b) => b.background_id === id);
-      if (bg) setSelectedBackground(bg);
-    }
-  }, [backgrounds, locationCard]);
-
   const selectableBackgrounds = useMemo(() => {
-    const normalizedVariantType = (variantType ?? '').toLowerCase();
-    const isFusionVariant =
-      normalizedVariantType.startsWith('fusion_') ||
-      normalizedVariantType.startsWith('shiny_fusion_');
-
-    return backgrounds.filter((background) => {
-      if (isFusionVariant) return true;
-      if (!background.costume_id) return true;
-      const variantTypeId = variantType?.split('_')[1];
-      return Number(background.costume_id) === Number(variantTypeId);
-    });
+    return backgrounds.filter((background) =>
+      backgroundMatchesVariant(background, variantType),
+    );
   }, [backgrounds, variantType]);
 
-  const handleBackgroundSelect = useCallback((bg: VariantBackground | null) => {
-    setSelectedBackground(bg);
-    setShowBackgrounds(false);
-  }, []);
+  useEffect(() => {
+    if (locationCard === null || locationCard === undefined) {
+      setSelectedBackground(null);
+      return;
+    }
+
+    const id = parseInt(String(locationCard), 10);
+    const background = selectableBackgrounds.find(
+      (candidate) => candidate.background_id === id,
+    );
+    setSelectedBackground(background ?? null);
+  }, [locationCard, selectableBackgrounds]);
+
+  const handleBackgroundSelect = useCallback(
+    (background: VariantBackground | null) => {
+      const validBackground =
+        background && backgroundMatchesVariant(background, variantType)
+          ? background
+          : null;
+      setSelectedBackground(validBackground);
+      setShowBackgrounds(false);
+    },
+    [variantType],
+  );
 
   return {
     showBackgrounds,

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -17,12 +18,25 @@ type AccessTokenClaims struct {
 	jwt.RegisteredClaims
 }
 
+func readAccessToken(c fiber.Ctx) string {
+	if token := strings.TrimSpace(c.Cookies("accessToken")); token != "" {
+		return token
+	}
+
+	authorization := strings.TrimSpace(c.Get("Authorization"))
+	parts := strings.SplitN(authorization, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return ""
+	}
+	return strings.TrimSpace(parts[1])
+}
+
 func accessTokenClaims(c fiber.Ctx) (*AccessTokenClaims, bool) {
 	if len(jwtSecret) == 0 {
 		return nil, false
 	}
 
-	tokenString := c.Cookies("accessToken")
+	tokenString := readAccessToken(c)
 	if tokenString == "" || len(tokenString) > 8192 {
 		return nil, false
 	}

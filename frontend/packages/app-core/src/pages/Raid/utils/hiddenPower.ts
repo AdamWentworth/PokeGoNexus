@@ -1,4 +1,4 @@
-import type { Move } from "@/types/pokemonSubTypes";
+import type { Move } from "../../../types/pokemonSubTypes";
 
 export const HIDDEN_POWER_TYPES = [
   { name: "bug", typeId: 1 },

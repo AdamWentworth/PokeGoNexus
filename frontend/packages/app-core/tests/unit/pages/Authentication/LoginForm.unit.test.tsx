@@ -20,6 +20,46 @@ vi.mock('@/services/authService', () => ({
 }));
 
 describe('LoginForm', () => {
+  it('labels the credentials and lets the user reveal the password', () => {
+    render(
+      <LoginForm
+        values={{ username: '', password: 'trainer-password' }}
+        errors={{}}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText(/username or email/i)).toHaveAttribute('autocomplete', 'username');
+
+    const password = screen.getByLabelText('Password');
+    expect(password).toHaveAttribute('type', 'password');
+    expect(password).toHaveAttribute('autocomplete', 'current-password');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('associates validation feedback with the corresponding fields', () => {
+    render(
+      <LoginForm
+        values={{ username: '', password: '' }}
+        errors={{ username: 'Username is required.', password: 'Password is required.' }}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText(/username or email/i)).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
+  });
+
   it('renders consistently sized provider buttons and starts each login flow', () => {
     render(
       <LoginForm

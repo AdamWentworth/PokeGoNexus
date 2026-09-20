@@ -42,6 +42,78 @@ async function getElementTop(page: Page, selector: string) {
 }
 
 test.describe('pokemon app browser regressions', () => {
+  test('settles a touch tag drag into an exact slot after release', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openPokemonPage(page);
+    await page.getByText('TAGS', { exact: true }).click();
+    await expectActivePokemonView(page, 'TAGS');
+
+    await page.getByRole('button', { name: 'Arrange', exact: true }).click();
+    const sourceHandle = page.getByRole('button', {
+      name: /press and drag for trade to reorder/i,
+    });
+    const targetCard = page.locator('.tag-item[data-tag="Caught"]');
+    await expect(sourceHandle).toBeVisible();
+    await expect(targetCard).toBeVisible();
+
+    const sourceBounds = await sourceHandle.boundingBox();
+    const targetBounds = await targetCard.boundingBox();
+    expect(sourceBounds).not.toBeNull();
+    expect(targetBounds).not.toBeNull();
+    const pointerId = 41;
+    const targetPoint = {
+      x: (targetBounds?.x ?? 0) + (targetBounds?.width ?? 0) / 2,
+      y: (targetBounds?.y ?? 0) + 4,
+    };
+
+    await sourceHandle.dispatchEvent('pointerdown', {
+      bubbles: true,
+      button: 0,
+      cancelable: true,
+      clientX: (sourceBounds?.x ?? 0) + (sourceBounds?.width ?? 0) / 2,
+      clientY: (sourceBounds?.y ?? 0) + (sourceBounds?.height ?? 0) / 2,
+      isPrimary: true,
+      pointerId,
+      pointerType: 'touch',
+    });
+    await expect(page.locator('.tag-item-drag-preview')).toBeVisible();
+
+    await page.evaluate(({ id, point }) => {
+      document.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        clientX: point.x,
+        clientY: point.y,
+        isPrimary: true,
+        pointerId: id,
+        pointerType: 'touch',
+      }));
+    }, { id: pointerId, point: targetPoint });
+    await expect(targetCard).toHaveAttribute('data-drop-position', 'before');
+
+    await page.evaluate(({ id, point }) => {
+      document.dispatchEvent(new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+        clientX: point.x,
+        clientY: point.y,
+        isPrimary: true,
+        pointerId: id,
+        pointerType: 'touch',
+      }));
+    }, { id: pointerId, point: targetPoint });
+
+    await expect(page.locator('.tag-item-drag-preview')).toHaveCount(0);
+    await expect(page.locator('body')).not.toHaveClass(/tag-drag-active/);
+    await expect
+      .poll(() => page
+        .locator('section[aria-label="Inventory tags"] .tag-item')
+        .evaluateAll((cards) => cards.map((card) => card.getAttribute('data-tag'))))
+      .toEqual(['Trade', 'Caught', 'Favorites']);
+  });
+
   test('loads theme loading spinner WebM assets from shared media in every browser project', async ({
     page,
   }, testInfo) => {
@@ -99,6 +171,12 @@ test.describe('pokemon app browser regressions', () => {
             video.muted = true;
             video.playsInline = true;
             video.preload = 'auto';
+            // WebKit can report HAVE_ENOUGH_DATA for a detached video without
+            // advancing or painting a frame. Exercise playback in the document,
+            // just as the application's spinner does.
+            video.width = 100;
+            video.height = 100;
+            document.body.append(video);
 
             let isDone = false;
             let timeoutId: number | undefined;
@@ -112,6 +190,7 @@ test.describe('pokemon app browser regressions', () => {
                 window.clearTimeout(timeoutId);
               }
               video.pause();
+              video.remove();
               resolve(result);
             };
 
@@ -124,6 +203,7 @@ test.describe('pokemon app browser regressions', () => {
                 window.clearTimeout(timeoutId);
               }
               video.pause();
+              video.remove();
               reject(error);
             };
 
@@ -800,9 +880,10 @@ test.describe('pokemon app browser regressions', () => {
     ).toEqual([]);
   });
 
-  test('uses browser back to close the action menu without leaving the current URL', async ({
+  test('uses mobile Back to close the action menu without leaving the current URL', async ({
     page,
   }, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith('mobile'), 'mobile back behavior');
     const diagnostics = attachBrowserDiagnostics(page, testInfo);
 
     try {
@@ -922,7 +1003,7 @@ test.describe('pokemon app browser regressions', () => {
     ).toEqual([]);
   });
 
-  test('keeps browser back from navigating to a previous app URL', async ({
+  test('uses browser back to return to the previous app route', async ({
     page,
   }, testInfo) => {
     const diagnostics = attachBrowserDiagnostics(page, testInfo);
@@ -937,12 +1018,13 @@ test.describe('pokemon app browser regressions', () => {
         .getByRole('button', { name: /Search/i })
         .click();
       await expect(page).toHaveURL(/\/search$/);
-      await expect(page.getByText('Which type of search would you like?')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Search', level: 1 })).toBeVisible();
+      await expect(page.getByRole('tab', { name: 'Pokémon' })).toBeVisible();
 
       await triggerBrowserBack(page);
 
-      await expect(page).toHaveURL(/\/search$/);
-      await expect(page.getByText('Which type of search would you like?')).toBeVisible();
+      await expect(page).toHaveURL(/\/pokemon$/);
+      await expect(page.getByRole('button', { name: 'Action Menu' })).toBeVisible();
     } finally {
       await diagnostics.flush();
     }

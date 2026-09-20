@@ -167,4 +167,42 @@ describe('useTrainerLookupField', () => {
     expect(onOriginalTrainerNameChange).toHaveBeenCalledWith('Ash');
     expect(onOriginalTrainerIdChange).toHaveBeenCalledWith(null);
   });
+
+  it('cancels delayed suggestion cleanup and ignores an in-flight lookup after unmount', async () => {
+    vi.useFakeTimers();
+    let resolveLookup: ((value: { type: 'success'; username: string; userId: string }) => void) | null =
+      null;
+    fetchPublicUserByUsernameMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveLookup = resolve;
+        }),
+    );
+    const onOriginalTrainerIdChange = vi.fn();
+    const { result, unmount } = renderHook(() =>
+      useTrainerLookupFieldHarness({
+        onOriginalTrainerIdChange,
+        suggestionClearDelayMs: 120,
+      }),
+    );
+
+    act(() => {
+      result.current.handleTrainerNameFocus();
+      result.current.handleTrainerNameChange('Ash');
+    });
+    act(() => {
+      result.current.handleTrainerNameBlur();
+    });
+
+    expect(fetchPublicUserByUsernameMock).toHaveBeenCalledWith('Ash');
+    unmount();
+
+    await act(async () => {
+      resolveLookup?.({ type: 'success', username: 'Ash', userId: 'user-1' });
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(120);
+    });
+
+    expect(onOriginalTrainerIdChange).not.toHaveBeenCalledWith('user-1');
+  });
 });

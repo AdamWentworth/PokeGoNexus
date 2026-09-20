@@ -1,7 +1,7 @@
 // useFusionSelectionState.ts
 import { useState } from 'react';
 import { resolveFusionDetails } from '../services/resolveFusionDetails';
-import type { FusionSelectionData } from '@/types/fusion';
+import type { FusionSelectionData, FusionSelectionResult } from '@/types/fusion';
 import { createScopedLogger } from '@/utils/logger';
 
 const log = createScopedLogger('useFusionSelectionState');
@@ -10,7 +10,7 @@ export function useFusionSelectionState() {
   const [isFusionSelectionOpen, setIsFusionSelectionOpen] = useState(false);
   const [fusionSelectionData, setFusionSelectionData] = useState<FusionSelectionData | null>(null);
 
-  async function promptFusionPokemonSelection(baseKey: string): Promise<string> {
+  async function promptFusionPokemonSelection(baseKey: string): Promise<FusionSelectionResult> {
     return new Promise((resolve, reject) => {
       void resolveFusionDetails(baseKey)
         .then((fusionDetails) => {

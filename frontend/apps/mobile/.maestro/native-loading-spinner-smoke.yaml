@@ -1,0 +1,19 @@
+appId: ${APP_ID}
+name: Native loading spinner retained-playback smoke
+tags:
+  - android
+  - native-loading-spinner
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/loading-spinner
+- extendedWaitUntil:
+    visible: Block JavaScript for 1 second
+    timeout: 15000
+- takeScreenshot: loading-spinner-native-decoder
+- tapOn:
+    id: device-smoke-loading-spinner-block-js
+    waitToSettleTimeoutMs: 100
+- extendedWaitUntil:
+    visible: Block JavaScript for 1 second
+    timeout: 5000
+- takeScreenshot: loading-spinner-after-js-stress

@@ -5,13 +5,11 @@ on:
     paths:
       - "monitoring/**"
       - ".github/workflows/ci-monitoring.yml"
-      - ".github/workflows/deploy-monitoring-prod.yml"
   push:
     branches: ["main", "master"]
     paths:
       - "monitoring/**"
       - ".github/workflows/ci-monitoring.yml"
-      - ".github/workflows/deploy-monitoring-prod.yml"
   workflow_dispatch: {}
 
 permissions:

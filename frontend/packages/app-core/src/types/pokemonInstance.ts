@@ -1,3 +1,9 @@
 // src/types/pokemonInstance.ts
 
-export type { PokemonInstance, InstancesMap } from '@shared-contracts/instances';
+export type {
+  PokemonInstance,
+  InstancesMap,
+  PokemonSizeClass,
+  WantedSizePreferences,
+  WantedSizeRange,
+} from '@pokemongonexus/shared-contracts/instances';

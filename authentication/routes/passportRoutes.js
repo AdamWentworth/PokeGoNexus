@@ -10,6 +10,14 @@ const discordOAuth = require('../services/discordOAuthService');
 const facebookOAuth = require('../services/facebookOAuthService');
 const { createSession } = require('../services/sessionService');
 const tokenService = require('../services/tokenService');
+const {
+  claimNativeOAuthLink,
+  completeNativeOAuthAuthentication,
+  completeNativeOAuthLink,
+  isNativeOAuthState,
+  redirectNativeOAuthError,
+  redirectNativeOAuthResult
+} = require('../services/nativeOAuthLinkService');
 
 const router = express.Router();
 const FLOW_TTL = '10m';
@@ -65,9 +73,6 @@ const verifyDiscordFlow = (token) => jwt.verify(token, secret(), {
   algorithms: ['HS256'],
   issuer: 'pokemongonexus-discord-oauth'
 });
-const discordCookieOptions = {
-  ...cookieOptions
-};
 const signFacebookFlow = (payload) => jwt.sign(payload, secret(), {
   expiresIn: FLOW_TTL,
   algorithm: 'HS256',
@@ -77,9 +82,6 @@ const verifyFacebookFlow = (token) => jwt.verify(token, secret(), {
   algorithms: ['HS256'],
   issuer: 'pokemongonexus-facebook-oauth'
 });
-const facebookCookieOptions = {
-  ...cookieOptions
-};
 const safeFrontendOrigin = (candidate) =>
   allowedFrontendOrigins.has(candidate) ? candidate : fallbackFrontendOrigin;
 const redirectWithStatus = (res, origin, path, status) =>
@@ -142,6 +144,63 @@ const linkProviderIdentity = async ({ provider, identity, flow }) => {
   return { status: 'linked' };
 };
 
+const handleNativeProviderCallback = async ({
+  provider,
+  transaction,
+  exchangeIdentity,
+  res
+}) => {
+  try {
+    const identity = await exchangeIdentity();
+    if (transaction.intent !== 'link') {
+      const identityOwner = await User.findOne({
+        identities: { $elemMatch: { provider, subject: identity.subject } }
+      });
+      const emailOwner = identityOwner || await User.findOne({
+        email: String(identity.email || '').trim().toLowerCase()
+      });
+
+      let result;
+      if (transaction.intent === 'register') {
+        result = emailOwner
+          ? { status: 'account-exists' }
+          : { status: 'registration-required', identity };
+      } else if (!emailOwner) {
+        result = { status: 'account-not-found' };
+      } else {
+        if (!identityOwner) {
+          emailOwner[`${provider}Id`] = identity.subject;
+          emailOwner.identities.push({
+            provider,
+            subject: identity.subject,
+            email: identity.email,
+            emailVerified: identity.emailVerified === true
+          });
+          await emailOwner.save({ writeConcern: { w: 'majority' } });
+        }
+        result = { status: 'authenticated', userId: emailOwner._id };
+      }
+      const resultCode = await completeNativeOAuthAuthentication(transaction, result);
+      return redirectNativeOAuthResult(res, resultCode);
+    }
+    const linked = await linkProviderIdentity({
+      provider,
+      identity,
+      flow: { linkUserId: String(transaction.userId) }
+    });
+    const resultCode = await completeNativeOAuthLink(transaction, linked.status);
+    return redirectNativeOAuthResult(res, resultCode);
+  } catch (error) {
+    logger.warn(`${provider} native OAuth callback failed: ${error.message}`);
+    try {
+      const resultCode = await completeNativeOAuthLink(transaction, 'failed');
+      return redirectNativeOAuthResult(res, resultCode);
+    } catch {
+      return redirectNativeOAuthError(res, 'failed');
+    }
+  }
+};
+
 router.get('/google', (req, res) => {
   try {
     const deviceId = typeof req.query.device_id === 'string' ? req.query.device_id.trim() : '';
@@ -164,6 +223,20 @@ router.get('/google/callback', async (req, res) => {
   let flow;
   try {
     const state = typeof req.query.state === 'string' ? req.query.state : '';
+    const nativeTransaction = await claimNativeOAuthLink({ provider: 'google', state });
+    if (nativeTransaction) {
+      if (typeof req.query.code !== 'string') {
+        const resultCode = await completeNativeOAuthLink(nativeTransaction, 'failed');
+        return redirectNativeOAuthResult(res, resultCode);
+      }
+      return handleNativeProviderCallback({
+        provider: 'google',
+        transaction: nativeTransaction,
+        exchangeIdentity: () => googleOAuth.exchangeCode(req.query.code, nativeTransaction.nonce),
+        res
+      });
+    }
+    if (isNativeOAuthState(state)) return redirectNativeOAuthError(res);
     if (!state || state !== req.cookies[STATE_COOKIE]) throw new Error('OAuth state mismatch.');
     flow = verifyFlow(state);
     res.clearCookie(STATE_COOKIE, { ...cookieOptions, maxAge: undefined });
@@ -347,7 +420,7 @@ router.get('/discord', (req, res) => {
       ...flowIdentity,
       nonce: crypto.randomBytes(24).toString('base64url')
     });
-    res.cookie(DISCORD_STATE_COOKIE, state, discordCookieOptions);
+    res.cookie(DISCORD_STATE_COOKIE, state, cookieOptions);
     return res.redirect(302, discordOAuth.createAuthorizationUrl({ state }));
   } catch (error) {
     return res.status(error.status || 500).json({
@@ -360,11 +433,25 @@ router.get('/discord/callback', async (req, res) => {
   let flow;
   try {
     const state = typeof req.query.state === 'string' ? req.query.state : '';
+    const nativeTransaction = await claimNativeOAuthLink({ provider: 'discord', state });
+    if (nativeTransaction) {
+      if (typeof req.query.code !== 'string') {
+        const resultCode = await completeNativeOAuthLink(nativeTransaction, 'failed');
+        return redirectNativeOAuthResult(res, resultCode);
+      }
+      return handleNativeProviderCallback({
+        provider: 'discord',
+        transaction: nativeTransaction,
+        exchangeIdentity: () => discordOAuth.exchangeCode(req.query.code),
+        res
+      });
+    }
+    if (isNativeOAuthState(state)) return redirectNativeOAuthError(res);
     if (!state || state !== req.cookies[DISCORD_STATE_COOKIE]) {
       throw new Error('OAuth state mismatch.');
     }
     flow = verifyDiscordFlow(state);
-    res.clearCookie(DISCORD_STATE_COOKIE, { ...discordCookieOptions, maxAge: undefined });
+    res.clearCookie(DISCORD_STATE_COOKIE, { ...cookieOptions, maxAge: undefined });
 
     if (typeof req.query.code !== 'string') {
       throw new Error('Discord authorization was not completed.');
@@ -429,7 +516,7 @@ router.get('/discord/callback', async (req, res) => {
       email: discordIdentity.email,
       emailVerified: true,
       deviceId: flow.deviceId
-    }), discordCookieOptions);
+    }), cookieOptions);
     return redirectWithStatus(res, flow.returnOrigin, '/register', 'discord');
   } catch (error) {
     logger.warn(`Discord OAuth callback failed: ${error.message}`);
@@ -518,7 +605,7 @@ router.post('/discord/complete-registration', async (req, res, next) => {
     res.locals.user = user;
     res.locals.tokens = tokens;
     res.clearCookie(DISCORD_PENDING_COOKIE, {
-      ...discordCookieOptions,
+      ...cookieOptions,
       maxAge: undefined
     });
     next();
@@ -565,7 +652,7 @@ router.get('/facebook', (req, res) => {
       ...flowIdentity,
       nonce: crypto.randomBytes(24).toString('base64url')
     });
-    res.cookie(FACEBOOK_STATE_COOKIE, state, facebookCookieOptions);
+    res.cookie(FACEBOOK_STATE_COOKIE, state, cookieOptions);
     const authorizationUrl = facebookOAuth.createAuthorizationUrl({ state });
     if (req.query.response_mode === 'json') {
       return res.json({ authorizationUrl });
@@ -582,12 +669,26 @@ router.get('/facebook/callback', async (req, res) => {
   let flow;
   try {
     const state = typeof req.query.state === 'string' ? req.query.state : '';
+    const nativeTransaction = await claimNativeOAuthLink({ provider: 'facebook', state });
+    if (nativeTransaction) {
+      if (typeof req.query.code !== 'string') {
+        const resultCode = await completeNativeOAuthLink(nativeTransaction, 'failed');
+        return redirectNativeOAuthResult(res, resultCode);
+      }
+      return handleNativeProviderCallback({
+        provider: 'facebook',
+        transaction: nativeTransaction,
+        exchangeIdentity: () => facebookOAuth.exchangeCode(req.query.code),
+        res
+      });
+    }
+    if (isNativeOAuthState(state)) return redirectNativeOAuthError(res);
     if (!state || state !== req.cookies[FACEBOOK_STATE_COOKIE]) {
       throw new Error('OAuth state mismatch.');
     }
     flow = verifyFacebookFlow(state);
     res.clearCookie(FACEBOOK_STATE_COOKIE, {
-      ...facebookCookieOptions,
+      ...cookieOptions,
       maxAge: undefined
     });
 
@@ -654,7 +755,7 @@ router.get('/facebook/callback', async (req, res) => {
       email: identity.email,
       emailVerified: true,
       deviceId: flow.deviceId
-    }), facebookCookieOptions);
+    }), cookieOptions);
     return redirectWithStatus(res, flow.returnOrigin, '/register', 'facebook');
   } catch (error) {
     logger.warn(`Facebook OAuth callback failed: ${error.message}`);
@@ -747,7 +848,7 @@ router.post('/facebook/complete-registration', async (req, res, next) => {
     res.locals.user = user;
     res.locals.tokens = tokens;
     res.clearCookie(FACEBOOK_PENDING_COOKIE, {
-      ...facebookCookieOptions,
+      ...cookieOptions,
       maxAge: undefined
     });
     next();

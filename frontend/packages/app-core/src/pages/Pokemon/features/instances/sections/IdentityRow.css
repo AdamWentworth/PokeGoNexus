@@ -19,9 +19,20 @@
 }
 
 .identity-name-slot {
+  display: grid;
   justify-self: center;
+  gap: 0.15rem;
   text-align: center;
   white-space: nowrap;
+}
+
+.identity-name-eyebrow {
+  color: #53d39a;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .identity-name-slot .pokemon-name-container {

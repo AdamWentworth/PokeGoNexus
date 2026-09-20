@@ -45,6 +45,20 @@ describe('validatePokemon', () => {
     expect(result.error).toBe('Shadow not available for Dynamax/Gigantamax.');
   });
 
+  it('rejects costume selections for dynamax/gigantamax', () => {
+    const result = validatePokemon(
+      pokemonData as any,
+      'Pikachu',
+      false,
+      false,
+      'party_hat',
+      'Normal',
+      true,
+      false,
+    );
+    expect(result.error).toBe('Costumes not available for Dynamax/Gigantamax.');
+  });
+
   it('returns no-match error for unknown pokemon/form pairs', () => {
     const result = validatePokemon(
       pokemonData as any,

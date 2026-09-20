@@ -1,6 +1,7 @@
 // usePokemonCardTouchHandlers.ts
 
 import { useRef } from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 interface UseTouchHandlersProps {
   onSelect: () => void;
@@ -13,7 +14,7 @@ interface UseTouchHandlersProps {
   selectKey: string;
 }
 
-const LONG_PRESS_MS = 300;
+const LONG_PRESS_MS = collectionExperienceParityContract.cardLongPressMs;
 const SWIPE_THRESHOLD = 50;
 const MOVE_CANCEL_THRESHOLD = 10;
 

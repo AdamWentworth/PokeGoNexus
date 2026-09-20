@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWantedOverlayPokemon,
   buildMatchedInstancesPayload,
+  canMarkInstanceForTrade,
   countVisibleWantedItems,
   extractBaseKey,
   findAvailableTradeInstances,
@@ -100,36 +101,44 @@ describe('tradeTargetsHelpers', () => {
 
   it('findCaughtInstancesForBaseKey filters by parsed base key and caught state', () => {
     const instances = [
-      makeInstance({ instance_id: '0001-default_uuid-a', is_caught: true }),
-      makeInstance({ instance_id: '0001-default_uuid-b', is_caught: false }),
-      makeInstance({ instance_id: '0002-default_uuid-c', is_caught: true }),
+      makeInstance({ instance_id: 'uuid-a', variant_id: '0001-default', is_caught: true }),
+      makeInstance({ instance_id: 'uuid-b', variant_id: '0001-default', is_caught: false }),
+      makeInstance({ instance_id: 'uuid-c', variant_id: '0002-default', is_caught: true }),
     ];
 
     const parse = (input: string) => ({ baseKey: input.split('_')[0] });
     const result = findCaughtInstancesForBaseKey(instances, '0001-default', parse);
     expect(result).toHaveLength(1);
-    expect(result[0].instance_id).toBe('0001-default_uuid-a');
+    expect(result[0].instance_id).toBe('uuid-a');
   });
 
   it('findTradeableInstances keeps only trade-eligible caught instances', () => {
     const caughtInstances = [
       makeInstance({ instance_id: 'a', is_for_trade: true }),
       makeInstance({ instance_id: 'b', is_for_trade: false }),
+      makeInstance({ instance_id: 'lucky', is_for_trade: true, lucky: true }),
     ];
     const result = findTradeableInstances(caughtInstances);
     expect(result.map((r) => r.instance_id)).toEqual(['a']);
   });
 
-  it('findAvailableTradeInstances excludes instances in pending trades only', () => {
+  it('never allows a caught lucky instance to be marked For Trade', () => {
+    expect(canMarkInstanceForTrade(makeInstance({ is_caught: true, lucky: false }))).toBe(true);
+    expect(canMarkInstanceForTrade(makeInstance({ is_caught: true, lucky: true }))).toBe(false);
+  });
+
+  it('findAvailableTradeInstances excludes instances in proposed and pending trades', () => {
     const tradeableInstances = [
       makeInstance({ instance_id: 'a', is_for_trade: true }),
       makeInstance({ instance_id: 'b', is_for_trade: true }),
       makeInstance({ instance_id: 'c', is_for_trade: true }),
+      makeInstance({ instance_id: 'd', is_for_trade: true }),
     ];
     const trades = [
       { trade_status: 'pending', pokemon_instance_id_user_proposed: 'a' },
       { trade_status: 'completed', pokemon_instance_id_user_proposed: 'b' },
       { trade_status: 'pending', pokemon_instance_id_user_accepting: 'c' },
+      { trade_status: 'proposed', pokemon_instance_id_user_proposed: 'd' },
     ];
 
     const result = findAvailableTradeInstances(tradeableInstances, trades);
@@ -226,11 +235,14 @@ describe('tradeTargetsHelpers', () => {
   });
 
   it('prepareTradeCandidateSets computes base key, instance map, caught and tradeable sets', () => {
-    const selectedPokemon: SelectedPokemon = { key: '0001-default_user-click' };
+    const selectedPokemon: SelectedPokemon = {
+      key: 'remote-wanted-instance-id',
+      variant_id: '0001-default',
+    };
     const userInstances = [
-      makeInstance({ instance_id: '0001-default_uuid-a', is_caught: true, is_for_trade: true }),
-      makeInstance({ instance_id: '0001-default_uuid-b', is_caught: true, is_for_trade: false }),
-      makeInstance({ instance_id: '0002-default_uuid-c', is_caught: true, is_for_trade: true }),
+      makeInstance({ instance_id: 'uuid-a', variant_id: '0001-default', is_caught: true, is_for_trade: true }),
+      makeInstance({ instance_id: 'uuid-b', variant_id: '0001-default', is_caught: true, is_for_trade: false }),
+      makeInstance({ instance_id: 'uuid-c', variant_id: '0002-default', is_caught: true, is_for_trade: true }),
     ];
     const parse = (input: string) => ({ baseKey: input.split('_')[0] });
 
@@ -238,15 +250,15 @@ describe('tradeTargetsHelpers', () => {
 
     expect(result.selectedBaseKey).toBe('0001-default');
     expect(Object.keys(result.hashedInstances)).toEqual([
-      '0001-default_uuid-a',
-      '0001-default_uuid-b',
-      '0002-default_uuid-c',
+      'uuid-a',
+      'uuid-b',
+      'uuid-c',
     ]);
     expect(result.caughtInstances.map((item) => item.instance_id)).toEqual([
-      '0001-default_uuid-a',
-      '0001-default_uuid-b',
+      'uuid-a',
+      'uuid-b',
     ]);
-    expect(result.tradeableInstances.map((item) => item.instance_id)).toEqual(['0001-default_uuid-a']);
+    expect(result.tradeableInstances.map((item) => item.instance_id)).toEqual(['uuid-a']);
   });
 
   it('resolveTradeProposalDecision returns noCaught when user has no caught instances', () => {
@@ -258,6 +270,25 @@ describe('tradeTargetsHelpers', () => {
       [],
     );
     expect(decision).toEqual({ kind: 'noCaught' });
+  });
+
+  it('returns onlyTradeLocked when every caught instance is Lucky', () => {
+    const lucky = makeInstance({
+      instance_id: 'lucky',
+      is_caught: true,
+      is_for_trade: false,
+      lucky: true,
+    });
+
+    expect(
+      resolveTradeProposalDecision(
+        { key: '0001-default' },
+        '0001-default',
+        [lucky],
+        [],
+        [],
+      ),
+    ).toEqual({ kind: 'onlyTradeLocked' });
   });
 
   it('resolveTradeProposalDecision returns needsTradeSelection when nothing is flagged for trade', () => {
@@ -317,5 +348,30 @@ describe('tradeTargetsHelpers', () => {
         }),
       );
     }
+  });
+
+  it('treats an existing proposal as active when choosing an offered copy', () => {
+    const caught = [
+      makeInstance({
+        instance_id: 'already-proposed',
+        is_caught: true,
+        is_for_trade: true,
+      }),
+    ];
+
+    expect(
+      resolveTradeProposalDecision(
+        { key: '0001-default', name: 'Bulbasaur' },
+        '0001-default',
+        caught,
+        caught,
+        [
+          {
+            trade_status: 'proposed',
+            pokemon_instance_id_user_proposed: 'already-proposed',
+          },
+        ],
+      ),
+    ).toEqual({ kind: 'noAvailableTradeable' });
   });
 });

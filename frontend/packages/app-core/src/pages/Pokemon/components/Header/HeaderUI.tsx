@@ -1,18 +1,21 @@
 // HeaderUI.tsx
 
 import React, { useRef, useState, useEffect } from 'react';
+import { FaArrowLeft } from 'react-icons/fa';
 import './HeaderUI.css';
+import type { ActiveView } from '../../utils/pokemonPageHelpers';
 
 export interface HeaderUIProps {
   onWishlistClick: () => void;
   onHaveTagsClick: () => void;
   onPokemonClick: () => void;
-  contextText: React.ReactNode;
+  catalogOwner?: string;
+  onReturnToContext?: () => void;
   totalPokemon: number;
   highlightedCards?: Set<string | number>;
   onClearSelection: () => void;
   onSelectAll: () => void;
-  activeView: 'pokedex' | 'pokemon' | 'tags';
+  activeView: ActiveView;
   haveTagsSubLabel?: string;
   wishlistSubLabel?: string;
 }
@@ -21,7 +24,8 @@ const HeaderUI: React.FC<HeaderUIProps> = ({
   onWishlistClick,
   onHaveTagsClick,
   onPokemonClick,
-  contextText,
+  catalogOwner,
+  onReturnToContext,
   totalPokemon,
   highlightedCards,
   onClearSelection,
@@ -31,8 +35,6 @@ const HeaderUI: React.FC<HeaderUIProps> = ({
   wishlistSubLabel,
 }) => {
   const hasSelection = Boolean(highlightedCards && highlightedCards.size > 0);
-  const isCustomContext = React.isValidElement(contextText);
-  const attachHaveTagsClick = !isCustomContext;
 
   // Refs for header and each column
   const headerRef = useRef<HTMLElement>(null);         // ← use HTMLElement here
@@ -42,9 +44,9 @@ const HeaderUI: React.FC<HeaderUIProps> = ({
 
   const [underlineLeft, setUnderlineLeft] = useState(0);
 
-  const isHaveTagsActive = activeView === 'pokedex';
+  const isHaveTagsActive = activeView === 'inventory';
   const isPokemonActive = activeView === 'pokemon';
-  const isWishlistActive = activeView === 'tags';
+  const isWishlistActive = activeView === 'wishlist';
   const activeIndex = isHaveTagsActive ? 0 : isPokemonActive ? 1 : 2;
 
   useEffect(() => {
@@ -76,24 +78,14 @@ const HeaderUI: React.FC<HeaderUIProps> = ({
       );
     }
 
-    const btnClass = isCustomContext
-      ? 'toggle-button custom-context-button'
-      : 'toggle-button';
-    const textClass = isCustomContext
-      ? 'toggle-text custom-context'
-      : 'toggle-text';
-
     return (
-      <div
-        className={btnClass}
-        onClick={attachHaveTagsClick ? onHaveTagsClick : undefined}
-      >
-        <span className={`${textClass} ${isHaveTagsActive ? 'active' : ''}`}>
-          {isCustomContext ? contextText : 'TAGS'}
+      <div className="toggle-button" onClick={onHaveTagsClick}>
+        <span className={`toggle-text ${isHaveTagsActive ? 'active' : ''}`}>
+          TAGS
         </span>
 
-        {!isCustomContext && haveTagsSubLabel && (
-          <span className={`${textClass} ${isHaveTagsActive ? 'active' : ''}`}>
+        {haveTagsSubLabel && (
+          <span className={`toggle-text toggle-subtext ${isHaveTagsActive ? 'active' : ''}`}>
             {haveTagsSubLabel}
           </span>
         )}
@@ -115,7 +107,7 @@ const HeaderUI: React.FC<HeaderUIProps> = ({
           WISHLIST
         </span>
         {wishlistSubLabel && (
-          <span className={`toggle-text ${isWishlistActive ? 'active' : ''}`}>
+          <span className={`toggle-text toggle-subtext ${isWishlistActive ? 'active' : ''}`}>
             {wishlistSubLabel}
           </span>
         )}
@@ -125,6 +117,29 @@ const HeaderUI: React.FC<HeaderUIProps> = ({
 
   return (
     <header className={headerClassName} ref={headerRef}>
+      {!hasSelection && catalogOwner && (
+        <div className="catalog-context">
+          {onReturnToContext ? (
+            <button
+              className="catalog-context-back"
+              onClick={onReturnToContext}
+              type="button"
+            >
+              <FaArrowLeft aria-hidden="true" />
+              <span>Back to results</span>
+            </button>
+          ) : null}
+          <div
+            className="catalog-owner"
+            role="status"
+            aria-label={`Viewing ${catalogOwner}'s catalog`}
+          >
+            <span className="catalog-owner-label">Viewing catalog</span>
+            <strong className="catalog-owner-username">{catalogOwner}</strong>
+          </div>
+        </div>
+      )}
+
       <div className="controls-row">
         <div className="toggle-col" ref={colRef0}>
           {renderHaveTagsToggle()}

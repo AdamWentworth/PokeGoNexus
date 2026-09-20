@@ -1,6 +1,7 @@
 // Gender.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import './Gender.css';
+import { getPokemonGenders } from '@pokemongonexus/shared-domain/pokemon-gender';
 
 type GenderOption = 'Male' | 'Female' | 'Both' | 'Any' | 'Genderless' | null;
 
@@ -24,22 +25,6 @@ const toGenderOption = (value: unknown): GenderOption => {
   return null;
 };
 
-const parseGenderRate = (
-  rateStr: string | undefined,
-  searchMode: boolean,
-): GenderOption[] => {
-  if (!rateStr) return [];
-  const [maleRate, femaleRate, genderlessRate] = rateStr
-    .split('_')
-    .map(rate => parseInt(rate, 10) || 0);
-  if (genderlessRate === 100) return ['Genderless'];
-  if (maleRate > 0 && femaleRate > 0) {
-    return searchMode ? ['Any', 'Male', 'Female'] : ['Both', 'Male', 'Female'];
-  }
-  if (maleRate > 0) return ['Male'];
-  if (femaleRate > 0) return ['Female'];
-  return [];
-};
 
 type Props = {
   pokemon?: PokemonWithGender;
@@ -67,7 +52,7 @@ const Gender: React.FC<Props> = ({
 
   useEffect(() => {
     if (genderRate) {
-      const genders = parseGenderRate(genderRate, searchMode);
+      const genders = getPokemonGenders(genderRate, searchMode);
       setAvailableGenders(genders);
 
       if (!didMount.current) {

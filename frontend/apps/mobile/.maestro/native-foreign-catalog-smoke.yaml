@@ -1,0 +1,64 @@
+appId: ${APP_ID}
+name: Native foreign catalog context smoke
+tags:
+  - android
+  - native-collection
+  - foreign-catalog
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?foreign=1&tag=trade
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Viewing catalog
+    timeout: 45000
+- assertVisible: OtherTrainer
+- assertVisible: (TRADE)
+- assertVisible: Shiny Gigantamax Charizard
+- assertNotVisible: Gigantamax Blastoise
+- assertNotVisible: Clear Trade tag filter
+- takeScreenshot: 01-foreign-trade-context
+- tapOn: "View Shiny Gigantamax Charizard"
+- extendedWaitUntil:
+    visible: FOR TRADE
+    timeout: 10000
+- assertVisible: Wanted Pokémon
+- assertNotVisible: Edit Pokémon
+- assertNotVisible: Edit preferences
+- takeScreenshot: 01b-foreign-trade-read-only
+- tapOn: Close
+- tapOn: TAGS
+- extendedWaitUntil:
+    visible: Inventory tags
+    timeout: 10000
+- tapOn: "Open All Caught, 9 Pokémon"
+- extendedWaitUntil:
+    visible: (CAUGHT)
+    timeout: 10000
+- assertVisible: Shiny Shadow Venusaur
+- assertNotVisible: Gigantamax Blastoise
+- assertNotVisible: Clear Caught tag filter
+- takeScreenshot: 02-foreign-required-tag
+- tapOn: WISHLIST
+- extendedWaitUntil:
+    visible: Wanted tags
+    timeout: 10000
+- tapOn: "Open All Wanted, 3 Pokémon"
+- extendedWaitUntil:
+    visible: (WANTED)
+    timeout: 10000
+- assertVisible: Gigantamax Blastoise
+- assertNotVisible: Shiny Shadow Venusaur
+- assertNotVisible: Clear Wanted tag filter
+- takeScreenshot: 03-foreign-wanted-context

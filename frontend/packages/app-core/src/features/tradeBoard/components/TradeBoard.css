@@ -1,0 +1,390 @@
+.trade-board {
+  --board-bg: #071316;
+  --board-panel: #102126;
+  --board-panel-raised: #172a2f;
+  --board-text: #f4fbf8;
+  --board-muted: #a8c0ba;
+  --board-border: rgba(138, 190, 178, 0.28);
+  --board-trade: #35d488;
+  --board-wanted: #ff5f74;
+  --board-most-wanted: #ff794d;
+  --board-trade-glow: rgba(53, 212, 136, 0.16);
+  --board-wanted-glow: rgba(255, 95, 116, 0.14);
+  --board-trade-border: rgba(53, 212, 136, 0.52);
+  --board-wanted-border: rgba(255, 95, 116, 0.52);
+  --board-most-wanted-border: rgba(255, 121, 77, 0.72);
+  --board-most-wanted-tint: rgba(255, 121, 77, 0.11);
+
+  box-sizing: border-box;
+  width: 1200px;
+  overflow: hidden;
+  border: 1px solid var(--board-border);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 8% 4%, var(--board-trade-glow), transparent 26%),
+    radial-gradient(circle at 92% 16%, var(--board-wanted-glow), transparent 28%),
+    var(--board-bg);
+  color: var(--board-text);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  text-align: left;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.32);
+}
+
+.trade-board[data-theme="brand-light"] {
+  --board-bg: #eef7f4;
+  --board-panel: #ffffff;
+  --board-panel-raised: #e2efeb;
+  --board-text: #10201d;
+  --board-muted: #5a716b;
+  --board-border: rgba(32, 87, 73, 0.2);
+  --board-trade-glow: rgba(53, 212, 136, 0.13);
+  --board-wanted-glow: rgba(255, 95, 116, 0.11);
+}
+
+.trade-board[data-theme="minimal"] {
+  --board-bg: #f2f0e9;
+  --board-panel: #fffdf8;
+  --board-panel-raised: #e8e4da;
+  --board-text: #1c211f;
+  --board-muted: #676d69;
+  --board-border: rgba(28, 33, 31, 0.18);
+  --board-trade: #178651;
+  --board-wanted: #c43f52;
+  --board-most-wanted: #d75631;
+}
+
+.trade-board *,
+.trade-board *::before,
+.trade-board *::after {
+  box-sizing: border-box;
+}
+
+.trade-board__hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  padding: 42px 52px 38px;
+  border-bottom: 1px solid var(--board-border);
+}
+
+.trade-board__brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.trade-board__brand-lockup > img {
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+}
+
+.trade-board__brand-lockup div,
+.trade-board__identity,
+.trade-board__footer-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.trade-board__brand-lockup span,
+.trade-board__identity > span,
+.trade-board__section-header span {
+  color: var(--board-muted);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.trade-board__brand-lockup strong {
+  margin-top: 4px;
+  font-size: 29px;
+  line-height: 1.05;
+}
+
+.trade-board__identity {
+  min-width: 320px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.trade-board__identity h1 {
+  max-width: 470px;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 38px;
+  line-height: 1.05;
+  text-align: right;
+}
+
+.trade-board__identity p {
+  margin: 7px 0 0;
+  color: var(--board-muted);
+  font-size: 19px;
+}
+
+.trade-board__summary {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 14px;
+}
+
+.trade-board__summary span {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 17px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.08);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.trade-board__summary strong {
+  font-size: 23px;
+}
+
+.trade-board__summary-trade { color: var(--board-trade); }
+.trade-board__summary-wanted { color: var(--board-wanted); }
+
+.trade-board__content {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding: 38px 42px 46px;
+}
+
+.trade-board__section {
+  overflow: hidden;
+  border: 2px solid var(--board-border);
+  border-radius: 25px;
+  background: var(--board-panel);
+}
+
+.trade-board__section--trade { border-color: var(--board-trade-border); }
+.trade-board__section--wanted { border-color: var(--board-wanted-border); }
+
+.trade-board__section-header {
+  display: flex;
+  min-height: 128px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 30px;
+  border-bottom: 1px solid var(--board-border);
+}
+
+.trade-board__section--trade .trade-board__section-header span,
+.trade-board__section--trade .trade-board__section-header > strong { color: var(--board-trade); }
+.trade-board__section--wanted .trade-board__section-header span,
+.trade-board__section--wanted .trade-board__section-header > strong { color: var(--board-wanted); }
+
+.trade-board__section-header h2 {
+  margin: 3px 0 2px;
+  color: var(--board-text);
+  font-size: 35px;
+  line-height: 1.05;
+}
+
+.trade-board__section-header p {
+  margin: 0;
+  color: var(--board-muted);
+  font-size: 17px;
+}
+
+.trade-board__section-header > strong {
+  display: grid;
+  min-width: 70px;
+  height: 70px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: rgba(127, 127, 127, 0.08);
+  font-size: 27px;
+}
+
+.trade-board__grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 13px;
+  padding: 24px;
+}
+
+.trade-board-pokemon {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 174px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 11px 8px 9px;
+  border: 1px solid var(--board-border);
+  border-radius: 16px;
+  background: var(--board-panel-raised);
+  text-align: center;
+}
+
+.trade-board-pokemon[data-most-wanted="true"] {
+  border-color: var(--board-most-wanted-border);
+  box-shadow: inset 0 0 0 2px var(--board-most-wanted-tint);
+}
+
+.trade-board-pokemon__artwork-shell {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex: 0 0 100px;
+}
+
+.trade-board-pokemon__location-background,
+.trade-board-pokemon__lucky-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.trade-board-pokemon__location-background {
+  z-index: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.trade-board-pokemon__lucky-background {
+  z-index: 1;
+  object-fit: contain;
+}
+
+.trade-board-pokemon__artwork {
+  z-index: 2;
+  --pokemon-artwork-width: 100px;
+  --pokemon-artwork-height: 100px;
+  --pokemon-max-badge-size: 27px;
+  --pokemon-max-badge-inset-block: 2px;
+  --pokemon-max-badge-inset-inline: 2px;
+}
+
+.trade-board-pokemon__most-wanted,
+.trade-board-pokemon__quantity {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--board-panel-raised);
+  border-radius: 999px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.24);
+}
+
+.trade-board-pokemon__most-wanted {
+  top: 1px;
+  left: 1px;
+  width: 31px;
+  height: 31px;
+  background: var(--board-most-wanted);
+  color: #fff;
+  font-size: 20px;
+}
+
+.trade-board-pokemon__quantity {
+  right: 1px;
+  bottom: 2px;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 7px;
+  background: var(--board-text);
+  color: var(--board-bg);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.trade-board-pokemon > strong {
+  display: -webkit-box;
+  width: 100%;
+  min-height: 35px;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--board-text);
+  font-size: 15px;
+  line-height: 1.16;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.trade-board-pokemon__number {
+  margin-top: auto;
+  color: var(--board-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.trade-board__empty {
+  display: grid;
+  min-height: 130px;
+  place-items: center;
+  padding: 28px;
+  color: var(--board-muted);
+  font-size: 19px;
+}
+
+.trade-board__footer {
+  display: flex;
+  min-height: 210px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 32px 52px;
+  border-top: 1px solid var(--board-border);
+  background: var(--board-panel);
+}
+
+.trade-board__footer-copy strong {
+  max-width: 660px;
+  font-size: 27px;
+  line-height: 1.15;
+}
+
+.trade-board__footer-copy > span {
+  margin-top: 9px;
+  color: var(--board-trade);
+  font-size: 20px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.trade-board__footer-copy small {
+  margin-top: 16px;
+  color: var(--board-muted);
+  font-size: 14px;
+}
+
+.trade-board__qr {
+  display: flex;
+  width: 175px;
+  flex: 0 0 175px;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.trade-board__qr img {
+  display: block;
+  width: 145px;
+  height: 145px;
+  border: 7px solid #fff;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.trade-board__qr strong {
+  color: var(--board-muted);
+  font-size: 13px;
+  text-align: center;
+}

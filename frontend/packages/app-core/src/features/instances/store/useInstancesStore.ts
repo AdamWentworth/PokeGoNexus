@@ -12,7 +12,12 @@ import { areInstancesEqual } from '@/features/instances/utils/instancesEquality'
 import { createScopedLogger } from '@/utils/logger';
 import { removeStorageKey, STORAGE_KEYS } from '@/utils/storage';
 
-import type { Instances, InstanceStatus } from '@/types/instances';
+import type {
+  Instances,
+  InstanceStatus,
+  InstanceStatusMutationOutcome,
+  InstanceStatusResultPatch,
+} from '@/types/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 
 type Patch = Partial<PokemonInstance>;
@@ -34,7 +39,8 @@ interface InstancesStore {
     instanceIds: string | string[],
     newStatus: InstanceStatus,
     onAlert?: (message: string) => void,
-  ): Promise<void>;
+    resultPatch?: InstanceStatusResultPatch,
+  ): Promise<InstanceStatusMutationOutcome[]>;
   updateInstanceDetails(keyOrKeysOrMap: string | string[] | PatchMap, patch?: Patch): Promise<void>;
   periodicUpdates(): void;
 }
@@ -142,7 +148,7 @@ export const useInstancesStore = create<InstancesStore>()((set, get) => {
       }
     },
 
-    async updateInstanceStatus(instanceIds, newStatus, onAlert) {
+    async updateInstanceStatus(instanceIds, newStatus, onAlert, resultPatch) {
       log.debug(
         `Updating status for ${Array.isArray(instanceIds) ? instanceIds.length : 1} records to "${newStatus}"`,
       );
@@ -177,8 +183,9 @@ export const useInstancesStore = create<InstancesStore>()((set, get) => {
         { current: get().instances },
       );
 
-      await fn(instanceIds, newStatus, onAlert);
+      const outcomes = await fn(instanceIds, newStatus, onAlert, resultPatch);
       get().periodicUpdates();
+      return outcomes;
     },
 
     async updateInstanceDetails(keyOrKeysOrMap, patch) {

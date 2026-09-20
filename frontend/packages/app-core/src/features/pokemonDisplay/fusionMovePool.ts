@@ -1,6 +1,5 @@
-import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { Move } from '@/types/pokemonSubTypes';
-import { createScopedLogger } from '@/utils/logger';
+import type { PokemonVariant } from '../../types/pokemonVariants';
+import type { Move } from '../../types/pokemonSubTypes';
 
 type FusionMoveState = {
   is_fused?: boolean;
@@ -22,7 +21,13 @@ export type ResolveFusionMovePoolResult = {
   fusionId: number | null;
 };
 
-const log = createScopedLogger('fusion.resolveMovePool');
+// This resolver is shared by Vite and native Metro bundles. Keep diagnostics
+// dependency-free so importing roster logic does not pull Vite's import.meta
+// environment into React Native.
+const log = {
+  debug: (..._args: unknown[]) => undefined,
+  warn: (..._args: unknown[]) => undefined,
+};
 
 const normalizeText = (value: unknown): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';

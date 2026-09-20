@@ -4,24 +4,28 @@ import { describe, expect, it, vi } from 'vitest';
 
 import PokemonPageOverlays from '@/pages/Pokemon/components/PokemonPageOverlays';
 import type { FusionSelectionData } from '@/types/fusion';
-import type { InstanceStatus } from '@/types/instances';
 import type { MegaSelectionData } from '@/pages/Pokemon/features/mega/hooks/useMegaPokemonHandler';
 
 vi.mock('@/pages/Pokemon/components/Menus/PokemonMenu/HighlightActionButton', () => ({
   default: ({
-    tagFilter,
-    handleConfirmChangeTags,
+    action,
+    count,
+    onOpen,
   }: {
-    tagFilter: string;
-    handleConfirmChangeTags: (filter: InstanceStatus) => Promise<void>;
+    action: string;
+    count: number;
+    onOpen: () => void;
   }) => (
-    <button
-      data-testid="highlight-action"
-      onClick={() => {
-        void handleConfirmChangeTags('Trade');
-      }}
-    >
-      highlight-{tagFilter}
+    <button data-testid="highlight-action" onClick={onOpen}>
+      {action}-{count}
+    </button>
+  ),
+}));
+
+vi.mock('@/features/tags/components/PokemonOrganizerSheet', () => ({
+  default: ({ onChangeStatus }: { onChangeStatus: (filter: 'Trade') => Promise<unknown> }) => (
+    <button data-testid="organizer-apply" onClick={() => void onChangeStatus('Trade')}>
+      organize
     </button>
   ),
 }));
@@ -33,12 +37,12 @@ vi.mock('@/pages/Pokemon/features/mega/components/MegaPokemonModal', () => ({
     onReject,
   }: {
     open: boolean;
-    onResolve: (option: string) => void;
+    onResolve: (option: { action: 'assignExisting'; instanceId: string }) => void;
     onReject: (reason?: unknown) => void;
   }) =>
     open ? (
       <div data-testid="mega-modal">
-        <button data-testid="mega-resolve" onClick={() => onResolve('assignExisting')}>
+        <button data-testid="mega-resolve" onClick={() => onResolve({ action: 'assignExisting', instanceId: 'mega-1' })}>
           mega resolve
         </button>
         <button data-testid="mega-reject" onClick={() => onReject('cancelled')}>
@@ -104,8 +108,8 @@ const baseFusionSelectionData = {
 const makeProps = (overrides: Partial<Props> = {}): Props => ({
   isEditable: true,
   highlightedCards: new Set(['inst-1']),
-  onConfirmChangeTags: vi.fn(async () => undefined),
-  activeStatusFilter: 'Caught',
+  onConfirmChangeTags: vi.fn(async () => []),
+  onClearSelection: vi.fn(),
   isUpdating: false,
   isMegaSelectionOpen: false,
   megaSelectionData: null,
@@ -127,6 +131,7 @@ describe('PokemonPageOverlays', () => {
 
     expect(screen.getByTestId('highlight-action')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('highlight-action'));
+    fireEvent.click(screen.getByTestId('organizer-apply'));
     expect(props.onConfirmChangeTags).toHaveBeenCalledWith('Trade');
 
     rerender(
@@ -157,7 +162,7 @@ describe('PokemonPageOverlays', () => {
     fireEvent.click(screen.getByTestId('fusion-create-left'));
     fireEvent.click(screen.getByTestId('fusion-create-right'));
 
-    expect(props.onMegaResolve).toHaveBeenCalledWith('assignExisting');
+    expect(props.onMegaResolve).toHaveBeenCalledWith({ action: 'assignExisting', instanceId: 'mega-1' });
     expect(props.onMegaReject).toHaveBeenCalledWith('cancelled');
     expect(props.onFusionResolve).toHaveBeenCalledWith('fuseThis', 'left', 'right');
     expect(props.onFusionCancel).toHaveBeenCalledTimes(1);

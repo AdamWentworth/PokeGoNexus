@@ -7,7 +7,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
-import XYZ from 'ol/source/XYZ';
+import { createMapTileSource } from '@/utils/createMapTileSource';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
@@ -23,12 +23,19 @@ import type { PokemonVariant } from '@/types/pokemonVariants';
 import { normalizeOwnershipMode } from '../utils/ownershipMode';
 import { findVariantForInstance } from '../utils/findVariantForInstance';
 import { createScopedLogger } from '@/utils/logger';
+import { buildPokemonCatalogPath } from '@/pages/Pokemon/utils/pokemonCatalogNavigation';
 import CaughtPopup from './MapViewComponents/CaughtPopup';
 import TradePopup from './MapViewComponents/TradePopup';
 import WantedPopup from './MapViewComponents/WantedPopup';
 import './MapView.css';
 
 const log = createScopedLogger('MapView');
+
+const ownershipColors = {
+  caught: '#2196f3',
+  trade: '#31b777',
+  wanted: '#ff5965',
+} as const;
 
 type MapDataItem = {
   longitude?: number | string | null;
@@ -41,6 +48,7 @@ type MapViewProps = {
   data: MapDataItem[];
   instanceData: 'caught' | 'trade' | 'wanted' | string;
   pokemonCache: PokemonVariant[] | null;
+  hasSearched?: boolean;
 };
 
 type FeatureLike = {
@@ -55,7 +63,12 @@ type FeatureLike = {
   };
 };
 
-const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) => {
+const MapView: React.FC<MapViewProps> = ({
+  data,
+  instanceData,
+  pokemonCache,
+  hasSearched = true,
+}) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
@@ -85,8 +98,27 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
       instanceId: string,
       selectedInstanceData: string,
     ) => {
-      navigate(`/pokemon/${username}`, {
-        state: { instanceId, instanceData: selectedInstanceData },
+      navigate(
+        buildPokemonCatalogPath({
+          username,
+          filter: selectedInstanceData as 'Caught' | 'Trade' | 'Wanted',
+        }),
+        {
+          state: {
+            instanceId,
+            instanceData: selectedInstanceData,
+            contextBackTo: '/search',
+          },
+        },
+      );
+    },
+    [navigate],
+  );
+
+  const navigateToUserProfile = useCallback(
+    (username: string) => {
+      navigate(`/profile/${encodeURIComponent(username)}`, {
+        state: { contextBackTo: '/search' },
       });
     },
     [navigate],
@@ -101,15 +133,13 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
     data.forEach((item) => {
       const { longitude, latitude, boundary } = item;
 
-      if (longitude && latitude) {
+      if (longitude != null && latitude != null) {
         const coordinates = fromLonLat([
           parseFloat(String(longitude)),
           parseFloat(String(latitude)),
         ]);
 
-        let pointColor = '#00AAFF';
-        if (ownershipMode === 'trade') pointColor = '#4cae4f';
-        else if (ownershipMode === 'wanted') pointColor = '#FF0000';
+        const pointColor = ownershipColors[ownershipMode];
 
         const pointFeature = new Feature({
           geometry: new Point(coordinates),
@@ -119,8 +149,9 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
         pointFeature.setStyle(
           new Style({
             image: new Circle({
-              radius: 7,
+              radius: 8,
               fill: new Fill({ color: pointColor }),
+              stroke: new Stroke({ color: '#fff', width: 2 }),
             }),
           }),
         );
@@ -133,9 +164,7 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
           featureProjection: 'EPSG:3857',
         });
 
-        let boundaryColor = '#00AAFF';
-        if (ownershipMode === 'trade') boundaryColor = '#4cae4f';
-        else if (ownershipMode === 'wanted') boundaryColor = '#FF0000';
+        const boundaryColor = ownershipColors[ownershipMode];
 
         polygonFeature.setStyle(
           new Style({
@@ -163,11 +192,7 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
     );
 
     const baseTileLayer = new TileLayer({
-      source: new XYZ({
-        url: isLightMode
-          ? 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-          : 'https://{1-4}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      }),
+      source: createMapTileSource(isLightMode),
     });
 
     const map = new Map({
@@ -194,6 +219,10 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
     const popupOverlay = new Overlay({
       element: popupRef.current ?? undefined,
       stopEvent: true,
+      autoPan: {
+        animation: { duration: 200 },
+        margin: 16,
+      },
     });
     map.addOverlay(popupOverlay);
 
@@ -223,6 +252,7 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
               <PopupComponent
                 item={featureItem}
                 navigateToUserCatalog={navigateToUserCatalog}
+                navigateToUserProfile={navigateToUserProfile}
                 findPokemonByKey={findPokemonByKey}
                 onClose={() => {
                   popupOverlay.setPosition(undefined);
@@ -265,15 +295,46 @@ const MapView: React.FC<MapViewProps> = ({ data, instanceData, pokemonCache }) =
     findPokemonByKey,
     isLightMode,
     navigateToUserCatalog,
+    navigateToUserProfile,
     ownershipMode,
     pokemonVariants,
   ]);
 
+  if (!data.length) {
+    return (
+      <section className="search-map-shell search-map-shell--empty">
+        <div className="search-map-empty">
+          <span aria-hidden="true">⌖</span>
+          <h2>{hasSearched ? 'No locations to map' : 'Map nearby results'}</h2>
+          <p>
+            {hasSearched
+              ? 'Try widening your distance or adjusting the active filters.'
+              : 'Run a Pokémon search, then use Map to explore where the results are.'}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <div>
-      <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />
+    <section className="search-map-shell">
+      <header className="search-map-header">
+        <div>
+          <span>Map results</span>
+          <h2>
+            {data.length} {data.length === 1 ? 'location' : 'locations'}
+          </h2>
+        </div>
+        <p>Select a marker to preview its listing.</p>
+      </header>
+      <div
+        aria-label="Pokémon search result map"
+        className="search-map-canvas"
+        ref={mapContainer}
+        role="application"
+      />
       <div ref={popupRef} className="ol-popup" />
-    </div>
+    </section>
   );
 };
 

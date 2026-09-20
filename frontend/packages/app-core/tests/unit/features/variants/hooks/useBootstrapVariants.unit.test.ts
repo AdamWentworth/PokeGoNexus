@@ -36,7 +36,6 @@ describe('🪝 useBootstrapVariants', () => {
       hydrateFromCache: mockHydrate,
       refreshVariants: mockRefresh,
       variants: [],
-      pokedexLists: {},
       variantsLoading: false,
       isRefreshing: false,
       isMovesLoading: false,

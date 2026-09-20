@@ -24,6 +24,8 @@ func defaultUserProfile(userID string) UserProfile {
 		CollectionVisibility:    "public",
 		FriendRequestPermission: "everyone",
 		TrainerCodeVisibility:   "friends",
+		CoordinationMethod:      "campfire",
+		ShareTradeContact:       true,
 		ShowPokemonGoName:       true,
 		ShowLocation:            false,
 	}

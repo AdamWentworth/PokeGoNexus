@@ -1,15 +1,16 @@
 // swipeNavigation.ts
 
-type View = 'pokedex' | 'pokemon' | 'tags';
+import type { ActiveView } from './pokemonPageHelpers';
+
 type Direction = 'left' | 'right';
 
-export function getNextActiveView(currentView: View, direction: Direction): View {
+export function getNextActiveView(currentView: ActiveView, direction: Direction): ActiveView {
   if (direction === 'left') {
-    if (currentView === 'pokedex') return 'pokemon';
-    if (currentView === 'pokemon') return 'tags';
+    if (currentView === 'inventory') return 'pokemon';
+    if (currentView === 'pokemon') return 'wishlist';
   } else if (direction === 'right') {
-    if (currentView === 'tags') return 'pokemon';
-    if (currentView === 'pokemon') return 'pokedex';
+    if (currentView === 'wishlist') return 'pokemon';
+    if (currentView === 'pokemon') return 'inventory';
   }
   // If no change, return the current view.
   return currentView;

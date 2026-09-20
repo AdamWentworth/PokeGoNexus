@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/performance-parity/capture-android-frame-timeline.mjs"]
+    },
+    "apps/web": {
+      "entry": ["scripts/**/*.mjs", "tests/browser/**/*.spec.ts"],
+      "project": ["**/*.{js,mjs,ts}"]
+    },
+    "apps/mobile": {
+      "entry": ["tests/**/*.{test,spec}.{ts,tsx}"],
+      "project": ["**/*.{ts,tsx}"]
+    },
+    "packages/app-core": {
+      "entry": ["src/index.tsx", "tests/**/*.{test,spec}.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}", "tests/**/*.{ts,tsx}"],
+      "paths": {
+        "@/*": ["src/*"],
+        "@tests/*": ["tests/*"],
+        "#tests/*": ["tests/*"]
+      }
+    },
+    "packages/shared-contracts": {
+      "entry": ["src/*.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/shared-ui-tokens": {
+      "entry": ["src/web.css"],
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

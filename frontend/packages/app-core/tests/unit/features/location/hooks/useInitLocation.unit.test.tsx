@@ -54,9 +54,9 @@ vi.mock('@/utils/storage', () => ({
   removeStorageKey: mocks.removeStorageKey,
 }));
 
-vi.mock('react-toastify', () => ({
-  toast: {
-    warn: mocks.toastWarn,
+vi.mock('@/components/feedback', () => ({
+  feedback: {
+    warning: mocks.toastWarn,
   },
 }));
 
@@ -184,7 +184,7 @@ describe('useInitLocation', () => {
     expect(mocks.toastWarn).toHaveBeenCalledWith(
       expect.stringContaining('Location access is blocked'),
       expect.objectContaining({
-        toastId: 'location-permission-unavailable',
+        id: 'location-permission-unavailable',
       }),
     );
     expect(mocks.setStatus).toHaveBeenCalledWith('unavailable');

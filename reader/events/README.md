@@ -172,7 +172,7 @@ Set `reader/events/.env`:
 
 ```env
 PORT=3008
-ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://pokegonexus.com,https://www.pokegonexus.com,https://pokemongonexus.com,https://www.pokemongonexus.com
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://pokegonexus.com,https://www.pokegonexus.com
 
 JWT_SECRET=...
 
@@ -237,18 +237,11 @@ Compose behavior:
 - healthcheck hits `/readyz`
 - joins external network `kafka_default`
 
-## 🛠️ CD Workflow
+## 🛠️ Production Deployment
 
-- workflow: `.github/workflows/deploy-events-prod.yml`
-- dispatch inputs:
-  - `image_ref` (`latest`, `sha-<commit>`, or full image ref)
-  - `deploy_root` (default `/srv/pokegonexus`)
-  - `service_name` (default `events_service`)
-- deploy behavior:
-  - sync git repo on prod runner
-  - preflight env/network checks
-  - rollout with readiness check (`http://127.0.0.1:3008/readyz`)
-  - auto rollback to previous image on failure
+The private HomeOps `deploy-pokegonexus-service` workflow performs preflight
+checks, validates the current revision-labelled image, deploys its immutable
+digest, checks `http://127.0.0.1:3008/readyz`, and rolls back on failure.
 
 ## 🔍 Quick Verification
 

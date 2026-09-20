@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import PageState from '@/components/layout/PageState';
 import TradeCard from '@/pages/Trades/TradeCard';
 
 import type {
@@ -11,6 +12,7 @@ import type {
 import type { Instances } from '@/types/instances';
 import type { PokemonVariant } from '@/types/pokemonVariants';
 import { getStoredUsername } from '@/utils/storage';
+import { tradeMatchesActivityFilter } from '@pokemongonexus/shared-domain/trade-activity';
 
 import './TradeList.css';
 
@@ -42,7 +44,7 @@ function TradeList({
 }: TradeListProps) {
   const resolvedInstances = (instances ?? {}) as Instances;
 
-  const currentUsername = useMemo(() => getStoredUsername(), []);
+  const currentUsername = useMemo(() => getStoredUsername() ?? '', []);
 
   const sortedTrades = useMemo<EnrichedTrade[]>(
     () =>
@@ -56,33 +58,32 @@ function TradeList({
   );
 
   const filteredTrades = useMemo(() => {
-    const normalizedSelectedStatus = selectedStatus.toLowerCase();
-
-    if (normalizedSelectedStatus === 'proposed') {
-      return sortedTrades.filter(
-        (trade) =>
-          normalizeStatus(trade.trade_status) === 'proposed' &&
-          trade.username_proposed === currentUsername,
-      );
-    }
-
-    if (normalizedSelectedStatus === 'accepting') {
-      return sortedTrades.filter(
-        (trade) =>
-          normalizeStatus(trade.trade_status) === 'proposed' &&
-          trade.username_accepting === currentUsername,
-      );
-    }
-
-    return sortedTrades.filter(
-      (trade) => normalizeStatus(trade.trade_status) === normalizedSelectedStatus,
-    );
+    return sortedTrades.filter((trade) => tradeMatchesActivityFilter(
+      trade,
+      selectedStatus,
+      currentUsername,
+    ));
   }, [currentUsername, selectedStatus, sortedTrades]);
 
   return (
     <div className="trades-list">
       {filteredTrades.length === 0 ? (
-        <p>No trades found for status: {selectedStatus}</p>
+        <PageState
+          className="trade-activity-empty"
+          description={
+            selectedStatus === 'Accepting'
+              ? 'New offers will appear here.'
+              : selectedStatus === 'Proposed'
+                ? 'Sent proposals will appear here.'
+                : selectedStatus === 'Pending'
+                  ? 'Accepted trades will stay here until completion.'
+                  : selectedStatus === 'Completed'
+                    ? 'Completed trades will appear here.'
+                    : 'Cancelled and denied trades appear here.'
+          }
+          icon={<span aria-hidden="true">↔</span>}
+          title="No trades here"
+        />
       ) : (
         filteredTrades.map((trade, index) => (
           <TradeCard

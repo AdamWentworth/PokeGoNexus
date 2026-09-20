@@ -6,16 +6,14 @@ import './MoveList.css';
 // Types
 import type { Move } from '@/types/pokemonSubTypes';
 import type { PokemonVariant } from '@/types/pokemonVariants';
+import { buildPokemonMoveTypeIconPath } from '@pokemongonexus/shared-domain/moves';
 
 export interface MoveListProps {
   moves: Move[];
   pokemon: PokemonVariant;
 }
 
-const getTypeIconPath = (typeName?: string | null): string => {
-  const safeType = String(typeName ?? '').trim().toLowerCase();
-  return safeType ? `/images/types/${safeType}.png` : '/images/types/normal.png';
-};
+const getTypeIconPath = buildPokemonMoveTypeIconPath;
 
 const formatMoveName = (name?: string | null, isLegacy?: boolean): React.ReactNode => {
   const safeName = String(name ?? '').trim() || 'Unknown Move';

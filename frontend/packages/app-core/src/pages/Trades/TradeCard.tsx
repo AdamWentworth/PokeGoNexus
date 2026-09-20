@@ -10,7 +10,6 @@ import ProposedTradeView from '@/pages/Trades/views/ProposedTradeView';
 import { handleAcceptTrade } from '@/pages/Trades/handlers/handleAcceptTrade';
 import { handleCancelTrade } from '@/pages/Trades/handlers/handleCancelTrade';
 import { handleCompleteTrade } from '@/pages/Trades/handlers/handleCompleteTrade';
-import { handleDeleteTrade } from '@/pages/Trades/handlers/handleDeleteTrade';
 import { handleDenyTrade } from '@/pages/Trades/handlers/handleDenyTrade';
 import { handleReProposeTrade } from '@/pages/Trades/handlers/handleReProposeTrade';
 import { handleThumbsUpTrade } from '@/pages/Trades/handlers/handleThumbsUpTrade';
@@ -18,6 +17,7 @@ import { usePokemonDetails } from '@/pages/Trades/hooks/usePokemonDetails';
 import type { RelatedInstancesMap, TradeStatusFilter } from '@/pages/Trades/types';
 import { getStoredUsername } from '@/utils/storage';
 import type { TradeRecord } from '@shared-contracts/trades';
+import type { ReactNode } from 'react';
 
 import './TradeCard.base.css';
 import './TradeCard.responsive.css';
@@ -46,7 +46,6 @@ type CanonicalTrade = TradeCardTrade & {
 
 type AcceptArgs = Parameters<typeof handleAcceptTrade>[0];
 type DenyArgs = Parameters<typeof handleDenyTrade>[0];
-type DeleteArgs = Parameters<typeof handleDeleteTrade>[0];
 type CompleteArgs = Parameters<typeof handleCompleteTrade>[0];
 type CancelArgs = Parameters<typeof handleCancelTrade>[0];
 type ReProposeArgs = Parameters<typeof handleReProposeTrade>[0];
@@ -115,15 +114,18 @@ function TradeCard({
   const trades = useTradeStore((state) => state.trades) as Record<string, TradeCardTrade>;
   const { alert, confirm } = useModal();
 
-  const runTradeAction = async (action: () => Promise<unknown>) => {
+  const runTradeAction = async (
+    action: () => Promise<unknown>,
+    failurePrefix?: string,
+  ) => {
     try {
       await action();
     } catch (error) {
-      const message =
+      const detail =
         error instanceof Error && error.message
           ? error.message
           : 'The trade could not be updated. Please try again.';
-      await alert(message);
+      await alert(failurePrefix ? `${failurePrefix} ${detail}` : detail);
     }
   };
 
@@ -196,21 +198,6 @@ function TradeCard({
     await runTradeAction(() => handleDenyTrade(args));
   };
 
-  const handleDelete = async () => {
-    const isConfirmed = await confirm('Are you sure you want to delete this trade?');
-    if (!isConfirmed) return;
-
-    const args: DeleteArgs = {
-      trade: canonicalTrade as unknown as DeleteArgs['trade'],
-      trades: canonicalTrades as unknown as DeleteArgs['trades'],
-      setTradeData: async (updatedTrades) => {
-        await persistTradeData(updatedTrades as unknown as Record<string, unknown>);
-      },
-      periodicUpdates,
-    };
-    await runTradeAction(() => handleDeleteTrade(args));
-  };
-
   const handleComplete = async () => {
     const isConfirmed = await confirm('Are you sure you want to complete this trade?');
     if (!isConfirmed) return;
@@ -247,7 +234,10 @@ function TradeCard({
       periodicUpdates,
       currentUsername,
     };
-    await runTradeAction(() => handleCancelTrade(args));
+    await runTradeAction(
+      () => handleCancelTrade(args),
+      'Cancellation failed. This proposal is still active.',
+    );
   };
 
   const handleRePropose = async () => {
@@ -283,9 +273,64 @@ function TradeCard({
   const isProposed = normalizedStatus === 'proposed';
   const offeringHeading = isProposed ? 'Offered:' : 'Offering:';
   const receivingHeading = isProposed ? 'For Trade:' : 'Receiving:';
+  const partnerUsername = isCurrentUserProposer
+    ? canonicalTrade.username_accepting
+    : canonicalTrade.username_proposed;
+  const currentUserConfirmed = isCurrentUserProposer
+    ? canonicalTrade.user_proposed_completion_confirmed
+    : canonicalTrade.user_accepting_completion_confirmed;
+  const activityCopy: Record<string, { label: string; title: string; description: string }> = {
+    accepting: {
+      label: 'Needs your response',
+      title: `Offer from ${partnerUsername || 'trainer'}`,
+      description: 'Review both Pokémon, then accept or deny this offer.',
+    },
+    proposed: {
+      label: 'Waiting for trainer',
+      title: `Sent to ${partnerUsername || 'trainer'}`,
+      description: 'Your proposal is waiting for a response.',
+    },
+    pending: {
+      label: currentUserConfirmed ? 'Waiting for final confirmation' : 'Ready to confirm',
+      title: `Active trade with ${partnerUsername || 'trainer'}`,
+      description: currentUserConfirmed
+        ? 'You confirmed completion. The other trainer still needs to confirm.'
+        : 'Coordinate the exchange, then confirm after it happens.',
+    },
+    completed: {
+      label: 'Completed',
+      title: `Traded with ${partnerUsername || 'trainer'}`,
+      description: 'This trade was completed successfully.',
+    },
+    cancelled: {
+      label: 'Closed',
+      title: `Trade with ${partnerUsername || 'trainer'}`,
+      description: 'This proposal was cancelled or denied.',
+    },
+  };
+  const copy = activityCopy[normalizedStatus] ?? {
+    label: selectedStatus,
+    title: `Trade with ${partnerUsername || 'trainer'}`,
+    description: '',
+  };
+  const wrapTradeView = (content: ReactNode) => (
+    <article className={`trade-activity-card-shell status-${normalizedStatus}`}>
+      <header className="trade-activity-card-header">
+        <div>
+          <span>{copy.label}</span>
+          <h2>{copy.title}</h2>
+          <p>{copy.description}</p>
+        </div>
+        <time dateTime={canonicalTrade.trade_proposal_date}>
+          {new Date(canonicalTrade.trade_proposal_date).toLocaleDateString()}
+        </time>
+      </header>
+      {content}
+    </article>
+  );
 
   if (normalizedStatus === 'accepting') {
-    return (
+    return wrapTradeView(
       <OffersTradeView
         trade={trade}
         currentUsername={currentUsername}
@@ -294,12 +339,12 @@ function TradeCard({
         loading={loading}
         handleAccept={handleAccept}
         handleDeny={handleDeny}
-      />
+      />,
     );
   }
 
   if (normalizedStatus === 'proposed') {
-    return (
+    return wrapTradeView(
       <ProposedTradeView
         trade={trade}
         currentUserDetails={currentUserDetails}
@@ -307,13 +352,13 @@ function TradeCard({
         loading={loading}
         offeringHeading={offeringHeading}
         receivingHeading={receivingHeading}
-        handleDelete={handleDelete}
-      />
+        handleCancel={handleCancel}
+      />,
     );
   }
 
   if (normalizedStatus === 'pending') {
-    return (
+    return wrapTradeView(
       <PendingTradeView
         trade={trade}
         currentUserDetails={currentUserDetails}
@@ -321,31 +366,31 @@ function TradeCard({
         loading={loading}
         handleComplete={handleComplete}
         handleCancel={handleCancel}
-      />
+      />,
     );
   }
 
   if (normalizedStatus === 'cancelled') {
-    return (
+    return wrapTradeView(
       <CancelledTradeView
         trade={trade}
         currentUserDetails={currentUserDetails}
         partnerDetails={partnerDetails}
         loading={loading}
         handleRePropose={handleRePropose}
-      />
+      />,
     );
   }
 
   if (normalizedStatus === 'completed') {
-    return (
+    return wrapTradeView(
       <CompletedTradeView
         trade={trade}
         currentUserDetails={currentUserDetails}
         partnerDetails={partnerDetails}
         loading={loading}
         handleThumbsUp={handleThumbsUp}
-      />
+      />,
     );
   }
 

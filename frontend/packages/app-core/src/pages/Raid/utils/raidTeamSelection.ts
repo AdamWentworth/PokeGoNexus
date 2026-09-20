@@ -1,4 +1,4 @@
-import type { PokemonVariant } from "@/types/pokemonVariants";
+import type { PokemonVariant } from "../../../types/pokemonVariants";
 import type { RaidCounterScore } from "./raidTypes";
 import { RAID_ATTACKER_TEAM_SIZE } from "./raidRules";
 import {

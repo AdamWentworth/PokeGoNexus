@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { FaArrowRight, FaMapMarkerAlt, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
+import { buildPokemonCatalogPath } from '@/pages/Pokemon/utils/pokemonCatalogNavigation';
 
-import ConfirmationOverlay from '../ConfirmationOverlay';
-import MiniMap from './MiniMap';
-
-type SearchResultMapInstance = 'caught' | 'trade' | 'wanted';
 type SearchResultNavigationInstance = 'Caught' | 'Trade' | 'Wanted';
 
 type SearchResultRowProps = {
@@ -12,9 +10,6 @@ type SearchResultRowProps = {
   username?: string;
   instanceId?: string;
   distance?: number;
-  latitude?: number;
-  longitude?: number;
-  mapInstanceData: SearchResultMapInstance;
   navigationInstanceData: SearchResultNavigationInstance;
   pokemonDisplayName: string;
   rightColumn?: React.ReactNode;
@@ -26,75 +21,103 @@ const SearchResultRow: React.FC<SearchResultRowProps> = ({
   username,
   instanceId,
   distance,
-  latitude,
-  longitude,
-  mapInstanceData,
   navigationInstanceData,
   pokemonDisplayName,
   rightColumn,
   children,
 }) => {
   const navigate = useNavigate();
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const encodedUsername = encodeURIComponent(username ?? '');
+  const listingType = navigationInstanceData.toLowerCase();
+  const listingLabel =
+    navigationInstanceData === 'Trade' ? 'For Trade' : navigationInstanceData;
 
-  const handleOpenConfirmation = () => {
-    setShowConfirmation(true);
-  };
-
-  const handleCenterColumnKeyDown = (
-    event: React.KeyboardEvent<HTMLDivElement>,
-  ) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleOpenConfirmation();
-    }
-  };
-
-  const handleConfirmNavigation = () => {
-    navigate(`/pokemon/${username ?? ''}`, {
-      state: {
-        instanceId: instanceId ?? '',
-        instanceData: navigationInstanceData,
+  const handleViewListing = () => {
+    navigate(
+      buildPokemonCatalogPath({
+        username: username ?? '',
+        filter: navigationInstanceData,
+      }),
+      {
+        state: {
+          instanceId: instanceId ?? '',
+          instanceData: navigationInstanceData,
+          contextBackTo: '/search',
+        },
       },
-    });
-    setShowConfirmation(false);
+    );
   };
 
-  const handleCloseConfirmation = () => {
-    setShowConfirmation(false);
+  const handleViewTrainer = () => {
+    navigate(`/profile/${encodedUsername}`, {
+      state: { contextBackTo: '/search' },
+    });
   };
 
   return (
-    <div className={['list-view-row', className].filter(Boolean).join(' ')}>
-      <div className="left-column">
-        {typeof distance === 'number' && distance > 0 && (
-          <p>Distance: {distance.toFixed(2)} km</p>
-        )}
-        <MiniMap latitude={latitude} longitude={longitude} instanceData={mapInstanceData} />
-      </div>
+    <article
+      className={[
+        'list-view-row',
+        'search-result-card',
+        `search-result-card--${listingType}`,
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <header className="search-result-card__header">
+        <div className="search-result-card__trainer">
+          <span className="search-result-card__trainer-icon" aria-hidden="true">
+            <FaUser />
+          </span>
+          <div>
+            <span className="search-result-card__listing-type">{listingLabel}</span>
+            <h3>{username || 'Unknown trainer'}</h3>
+          </div>
+        </div>
+        {typeof distance === 'number' && Number.isFinite(distance) ? (
+          <span className="search-result-card__distance">
+            <FaMapMarkerAlt aria-hidden="true" />
+            {distance <= 0.01 ? 'Nearby' : `${distance.toFixed(1)} km away`}
+          </span>
+        ) : null}
+      </header>
 
       <div
-        className="center-column"
-        onClick={handleOpenConfirmation}
-        onKeyDown={handleCenterColumnKeyDown}
-        role="button"
-        tabIndex={0}
+        className={`search-result-card__content${rightColumn ? ' has-related-content' : ''}`}
       >
-        {children}
+        <section
+          aria-label={`${pokemonDisplayName} listing`}
+          className="center-column search-result-card__listing"
+        >
+          {children}
+        </section>
+
+        {rightColumn ? (
+          <aside className="right-column search-result-card__related">
+            {rightColumn}
+          </aside>
+        ) : null}
       </div>
 
-      <div className="right-column">{rightColumn}</div>
-
-      {showConfirmation && (
-        <ConfirmationOverlay
-          username={username ?? ''}
-          pokemonDisplayName={pokemonDisplayName}
-          instanceId={instanceId ?? ''}
-          onConfirm={handleConfirmNavigation}
-          onClose={handleCloseConfirmation}
-        />
-      )}
-    </div>
+      <footer className="search-result-card__actions">
+        <button
+          className="search-result-card__trainer-action"
+          onClick={handleViewTrainer}
+          type="button"
+        >
+          View trainer
+        </button>
+        <button
+          className="search-result-card__listing-action"
+          onClick={handleViewListing}
+          type="button"
+        >
+          {navigationInstanceData === 'Caught' ? 'View Pokémon' : 'Open listing'}
+          <FaArrowRight aria-hidden="true" />
+        </button>
+      </footer>
+    </article>
   );
 };
 

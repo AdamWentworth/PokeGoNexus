@@ -12,6 +12,11 @@ import {
 } from '@/db/indexedDB';
 
 import { proposeTrade as proposeTradeService } from '@/features/trades/actions/proposeTrade';
+import {
+  incomingTradeIsStale,
+  reconcileConcurrentSnapshot,
+  reconcileTradeSnapshot,
+} from './tradeReconciliation';
 import type {
   RelatedInstanceRecord,
   TradeRecord,
@@ -61,37 +66,57 @@ export const useTradeStore = create<TradeStoreState>()(
     async setTradeData(newTradesObj) {
       if (!newTradesObj) return;
 
-      const mutableTrades = { ...newTradesObj };
+      const mutableTrades: Record<string, Trade> = {};
       const deletedTradeIds: string[] = [];
 
-      for (const [tradeId, trade] of Object.entries(mutableTrades)) {
-        if (trade?.trade_status === 'deleted') {
-          await deleteFromTradesDB(POKEMON_TRADES_STORE, tradeId);
-          deletedTradeIds.push(tradeId);
-          delete mutableTrades[tradeId];
+      // Canonical updates are visible immediately. Ignore an older response or
+      // event if a newer version of the same trade already reached the client.
+      set((state) => {
+        const trades = { ...state.trades };
+        for (const [tradeId, trade] of Object.entries(newTradesObj)) {
+          if (incomingTradeIsStale(trades[tradeId], trade)) continue;
+
+          if (trade?.trade_status === 'deleted') {
+            deletedTradeIds.push(tradeId);
+            delete trades[tradeId];
+          } else {
+            mutableTrades[tradeId] = trade;
+            trades[tradeId] = trade;
+          }
         }
-      }
+        return { trades };
+      });
 
       const rowsToPersist = Object.entries(mutableTrades).map(([tradeId, trade]) => ({
         ...trade,
         trade_id: tradeId,
       }));
 
-      if (rowsToPersist.length > 0) {
-        await setTradesinDB(POKEMON_TRADES_STORE, rowsToPersist);
+      try {
+        await Promise.all([
+          ...deletedTradeIds.map((tradeId) =>
+            deleteFromTradesDB(POKEMON_TRADES_STORE, tradeId),
+          ),
+          ...(rowsToPersist.length > 0
+            ? [setTradesinDB(POKEMON_TRADES_STORE, rowsToPersist)]
+            : []),
+        ]);
+      } catch (error) {
+        log.warn('Trade cache persistence failed; keeping authoritative in-memory state:', error);
       }
-
-      set((state) => {
-        const trades = { ...state.trades, ...mutableTrades };
-        deletedTradeIds.forEach((tradeId) => delete trades[tradeId]);
-        return { trades };
-      });
 
       return mutableTrades;
     },
 
     async setRelatedInstances(newInstancesObj) {
       if (!newInstancesObj) return;
+
+      // Related Pokemon from a command or event are authoritative too. Make
+      // them visible before touching the optional IndexedDB cache so a local
+      // persistence failure cannot leave the confirmed trade UI stale.
+      set((state) => ({
+        relatedInstances: { ...state.relatedInstances, ...newInstancesObj },
+      }));
 
       const rowsToPersist = Object.entries(newInstancesObj).map(
         ([instanceId, instance]) => ({
@@ -100,11 +125,14 @@ export const useTradeStore = create<TradeStoreState>()(
         }),
       );
 
-      await setTradesinDB(RELATED_INSTANCES_STORE, rowsToPersist);
-
-      set((state) => ({
-        relatedInstances: { ...state.relatedInstances, ...newInstancesObj },
-      }));
+      try {
+        await setTradesinDB(RELATED_INSTANCES_STORE, rowsToPersist);
+      } catch (error) {
+        log.warn(
+          'Related Pokemon cache persistence failed; keeping authoritative in-memory state:',
+          error,
+        );
+      }
 
       return newInstancesObj;
     },
@@ -195,6 +223,8 @@ export const useTradeStore = create<TradeStoreState>()(
 
     async hydrateFromDB() {
       try {
+        const tradesBeforeCacheRead = get().trades;
+        const instancesBeforeCacheRead = get().relatedInstances;
         const tradesFromDB = await getAllFromTradesDB<Trade>(POKEMON_TRADES_STORE);
         const tradesObj = tradesFromDB.reduce<Record<string, Trade>>((acc, trade) => {
           if (typeof trade.trade_id === 'string' && trade.trade_id.length > 0) {
@@ -218,8 +248,21 @@ export const useTradeStore = create<TradeStoreState>()(
           {},
         );
 
-        set({ trades: tradesObj, relatedInstances: instancesObj });
+        set((state) => ({
+          trades: reconcileTradeSnapshot(
+            tradesObj,
+            tradesBeforeCacheRead,
+            state.trades,
+          ),
+          relatedInstances: reconcileConcurrentSnapshot(
+            instancesObj,
+            instancesBeforeCacheRead,
+            state.relatedInstances,
+          ),
+        }));
 
+        const tradesAtRequestStart = get().trades;
+        const relatedInstancesAtRequestStart = get().relatedInstances;
         const server = await fetchTrades();
         const serverTrades = Object.fromEntries(
           server.trades.map((trade) => [trade.trade_id, trade]),
@@ -229,12 +272,35 @@ export const useTradeStore = create<TradeStoreState>()(
             .filter((tradeId) => !(tradeId in serverTrades))
             .map((tradeId) => deleteFromTradesDB(POKEMON_TRADES_STORE, tradeId)),
         );
-        await get().setTradeData(serverTrades);
-        await get().setRelatedInstances(server.related_instances);
-        set({
-          trades: serverTrades,
-          relatedInstances: server.related_instances,
-        });
+        set((state) => ({
+          trades: reconcileTradeSnapshot(
+            serverTrades,
+            tradesAtRequestStart,
+            state.trades,
+          ),
+          relatedInstances: reconcileConcurrentSnapshot(
+            server.related_instances,
+            relatedInstancesAtRequestStart,
+            state.relatedInstances,
+          ),
+        }));
+        const reconciledTrades = get().trades;
+        const reconciledInstances = get().relatedInstances;
+
+        const tradeRows = Object.entries(reconciledTrades).map(
+          ([tradeId, currentTrade]) => ({ ...currentTrade, trade_id: tradeId }),
+        );
+        const instanceRows = Object.entries(reconciledInstances).map(
+          ([instanceId, instance]) => ({ ...instance, instance_id: instanceId }),
+        );
+        await Promise.all([
+          ...(tradeRows.length > 0
+            ? [setTradesinDB(POKEMON_TRADES_STORE, tradeRows)]
+            : []),
+          ...(instanceRows.length > 0
+            ? [setTradesinDB(RELATED_INSTANCES_STORE, instanceRows)]
+            : []),
+        ]);
       } catch (error) {
         log.error('hydrateFromDB error:', error);
       }

@@ -1,0 +1,67 @@
+.app-page-shell {
+  --app-page-shell-background: var(--color-app-surface);
+  --app-page-shell-color: var(--color-text-primary);
+
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--app-page-shell-color);
+  background: var(--app-page-shell-background);
+}
+
+.app-page-shell--inset-comfortable {
+  padding:
+    clamp(0.8rem, 2vw, 1.5rem)
+    clamp(0.7rem, 2vw, 1.5rem)
+    calc(6.5rem + env(safe-area-inset-bottom));
+}
+
+.app-page-shell--inset-compact {
+  padding:
+    clamp(0.5rem, 1.4vw, 1rem)
+    clamp(0.5rem, 1.4vw, 1rem)
+    calc(6rem + env(safe-area-inset-bottom));
+}
+
+.app-page-shell--inset-none {
+  padding: 0;
+}
+
+.app-page-shell__content {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.app-page-shell__content--reading {
+  max-width: var(--layout-reading-max, 760px);
+}
+
+.app-page-shell__content--workspace {
+  max-width: 1060px;
+}
+
+.app-page-shell__content--standard {
+  max-width: var(--layout-page-max, 1180px);
+}
+
+.app-page-shell__content--wide {
+  max-width: 1320px;
+}
+
+.app-page-shell__content--full {
+  max-width: none;
+}
+
+@media (max-width: 640px) {
+  .app-page-shell--inset-comfortable,
+  .app-page-shell--inset-compact {
+    padding:
+      max(0.55rem, env(safe-area-inset-top))
+      0.55rem
+      calc(5.75rem + env(safe-area-inset-bottom));
+  }
+}

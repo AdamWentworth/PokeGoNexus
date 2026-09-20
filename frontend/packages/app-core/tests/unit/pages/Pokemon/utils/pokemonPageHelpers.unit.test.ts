@@ -13,9 +13,11 @@ import type { PokemonVariant } from '@/types/pokemonVariants';
 
 describe('pokemonPageHelpers', () => {
   it('validates active view values', () => {
-    expect(isActiveView('pokedex')).toBe(true);
+    expect(isActiveView('inventory')).toBe(true);
     expect(isActiveView('pokemon')).toBe(true);
-    expect(isActiveView('tags')).toBe(true);
+    expect(isActiveView('wishlist')).toBe(true);
+    expect(isActiveView('pokedex')).toBe(false);
+    expect(isActiveView('tags')).toBe(false);
     expect(isActiveView('unknown')).toBe(false);
   });
 
@@ -51,23 +53,45 @@ describe('pokemonPageHelpers', () => {
   });
 
   it('builds slider transform from active view index and drag offset', () => {
-    expect(buildSliderTransform('pokedex', 0, 1000)).toBe('translate3d(0px,0,0)');
+    expect(buildSliderTransform('inventory', 0, 1000)).toBe('translate3d(0px,0,0)');
     expect(buildSliderTransform('pokemon', 0, 1000)).toBe('translate3d(-1000px,0,0)');
-    expect(buildSliderTransform('tags', 100, 1000)).toBe('translate3d(-1900px,0,0)');
+    expect(buildSliderTransform('wishlist', 100, 1000)).toBe('translate3d(-1900px,0,0)');
   });
 
   it('returns expected sub-labels for inventory and wishlist tag panels', () => {
-    expect(getHaveTagsSubLabel('ownership', 'Caught')).toBe('(CAUGHT)');
-    expect(getHaveTagsSubLabel('ownership', 'Trade')).toBe('(TRADE)');
-    expect(getHaveTagsSubLabel('ownership', 'Favorites')).toBe('(FAVORITES)');
-    expect(getHaveTagsSubLabel('ownership', 'Wanted')).toBeUndefined();
-    expect(getHaveTagsSubLabel('pokedex', 'Caught')).toBeUndefined();
-    expect(getHaveTagsSubLabel('ownership', '')).toBeUndefined();
+    expect(getHaveTagsSubLabel('Caught')).toBe('(CAUGHT)');
+    expect(getHaveTagsSubLabel('Trade')).toBe('(TRADE)');
+    expect(getHaveTagsSubLabel('Favorites')).toBe('(FAVORITES)');
+    expect(getHaveTagsSubLabel('Wanted')).toBeUndefined();
+    expect(getHaveTagsSubLabel('')).toBeUndefined();
+    expect(
+      getHaveTagsSubLabel('custom:shadow', {
+        name: 'Shadow Shinies',
+        parent: 'caught',
+      }),
+    ).toBe('(SHADOW SHINIES)');
+    expect(
+      getHaveTagsSubLabel('custom:raid', {
+        name: 'Raid targets',
+        parent: 'wanted',
+      }),
+    ).toBeUndefined();
 
-    expect(getWishlistSubLabel('ownership', 'Wanted')).toBe('(WANTED)');
-    expect(getWishlistSubLabel('ownership', 'Most Wanted')).toBe('(MOST WANTED)');
-    expect(getWishlistSubLabel('ownership', 'Caught')).toBeUndefined();
-    expect(getWishlistSubLabel('pokedex', 'Wanted')).toBeUndefined();
-    expect(getWishlistSubLabel('ownership', '')).toBeUndefined();
+    expect(getWishlistSubLabel('Wanted')).toBe('(WANTED)');
+    expect(getWishlistSubLabel('Most Wanted')).toBe('(MOST WANTED)');
+    expect(getWishlistSubLabel('Caught')).toBeUndefined();
+    expect(getWishlistSubLabel('')).toBeUndefined();
+    expect(
+      getWishlistSubLabel('custom:raid', {
+        name: 'Raid targets',
+        parent: 'wanted',
+      }),
+    ).toBe('(RAID TARGETS)');
+    expect(
+      getWishlistSubLabel('custom:shadow', {
+        name: 'Shadow Shinies',
+        parent: 'caught',
+      }),
+    ).toBeUndefined();
   });
 });

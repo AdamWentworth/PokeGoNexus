@@ -1,0 +1,87 @@
+appId: ${APP_ID}
+name: Native trainer profile performance contract
+tags:
+  - android
+  - performance
+  - native-trainer-profile
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/profile?performance=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: YOUR TRAINER CARD
+    timeout: 60000
+- tapOn: Edit
+- extendedWaitUntil:
+    visible: Pokemon GO name
+    timeout: 10000
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 82%
+          end: 92%, 28%
+          duration: 450
+- scrollUntilVisible:
+    element:
+      text: Max Battler
+    direction: DOWN
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Max Battler
+- assertVisible: 3/3 selected
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 28%
+          end: 92%, 82%
+          duration: 450
+- scrollUntilVisible:
+    element:
+      id: native-profile-showcase-slot-4
+    direction: UP
+    speed: 70
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn:
+    id: native-profile-showcase-slot-4
+- extendedWaitUntil:
+    visible: Choose a caught Pokémon
+    timeout: 10000
+- tapOn: Shiny Suicune
+- extendedWaitUntil:
+    visible: "Shiny Suicune, edit showcase slot 4"
+    timeout: 10000
+- tapOn: Move showcase slot 4 left
+- extendedWaitUntil:
+    visible: "Shiny Suicune, edit showcase slot 3"
+    timeout: 10000
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 92%, 82%
+          end: 92%, 28%
+          duration: 450
+- scrollUntilVisible:
+    element:
+      text: Save profile
+    direction: DOWN
+    speed: 80
+    visibilityPercentage: 50
+    timeout: 30000
+- tapOn: Save profile
+- assertVisible: Profile updated.

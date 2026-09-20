@@ -62,15 +62,12 @@ export interface TradeReference {
   [key: string]: unknown;
 }
 
-export interface PartnerCoordinates {
-  latitude: number;
-  longitude: number;
-}
-
 export interface PartnerInfo {
+  sharingEnabled: boolean;
   trainerCode?: string | null;
   pokemonGoName?: string | null;
-  coordinates?: PartnerCoordinates | null;
+  coordinationMethod: 'campfire' | 'discord' | 'other' | 'none';
+  coordinationHandle?: string | null;
   location?: string | null;
 }
 
@@ -105,7 +102,7 @@ export interface TradeProposalRequest {
   is_registered_trade: boolean;
   is_lucky_trade: boolean;
   trade_dust_cost: number;
-  trade_friendship_level: 1 | 2 | 3 | 4;
+  trade_friendship_level: 1 | 2 | 3 | 4 | 5;
   user_1_trade_satisfaction: null;
   user_2_trade_satisfaction: null;
   pokemon: TradeProposalPokemonPayload;
@@ -126,5 +123,5 @@ export interface AuthoritativeTradeProposalRequest {
   is_registered_trade: boolean;
   is_lucky_trade: boolean;
   trade_dust_cost: number;
-  trade_friendship_level: 1 | 2 | 3 | 4;
+  trade_friendship_level: 1 | 2 | 3 | 4 | 5;
 }

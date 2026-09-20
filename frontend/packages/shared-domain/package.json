@@ -1,0 +1,33 @@
+{
+  "name": "@pokemongonexus/shared-domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./instances": "./src/instances.ts",
+    "./instance-variant": "./src/instance-variant.ts",
+    "./catalog": "./src/catalog.ts",
+    "./pokemon-data": "./src/pokemon-data.ts",
+    "./collection-sort": "./src/collection-sort.ts",
+    "./pokemon-display": "./src/pokemon-display.ts",
+    "./fusion-backgrounds": "./src/fusion-backgrounds.ts",
+    "./pokemon-balls": "./src/pokemon-balls.ts",
+    "./pokemon-gender": "./src/pokemon-gender.ts",
+    "./combat-power": "./src/combat-power.ts",
+    "./moves": "./src/moves.ts",
+    "./trade-proposal-candidates": "./src/trade-proposal-candidates.ts",
+    "./trade-cost": "./src/trade-cost.ts",
+    "./trade-activity": "./src/trade-activity.ts",
+    "./trade-preferences": "./src/trade-preferences.ts",
+    "./pvp-battle": "./src/pvp-battle.ts",
+    "./pvp-battle-protocol": "./src/pvp-battle-protocol.ts",
+    "./raid-rules": "./src/raid-rules.ts",
+    "./type-effectiveness": "./src/type-effectiveness.ts",
+    "./raid-combat": "./src/raid-combat.ts",
+    "./special-max-pokemon": "./src/special-max-pokemon.ts"
+  },
+  "dependencies": {
+    "@pokemongonexus/shared-contracts": "file:../shared-contracts"
+  }
+}

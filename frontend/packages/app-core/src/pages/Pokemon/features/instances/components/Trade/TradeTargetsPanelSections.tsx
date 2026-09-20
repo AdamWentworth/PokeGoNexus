@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaUndoAlt } from 'react-icons/fa';
 
 import { resolveTradeTargetsPanelCopy } from './tradeTargetsPanelState';
 
@@ -23,6 +24,7 @@ type TradeTargetsWantedPanelProps = {
   isEditable: boolean;
   editMode: boolean;
   visibleCount: number;
+  activeRuleCount?: number;
   onResetFilters: () => void;
   children: React.ReactNode;
 };
@@ -32,6 +34,7 @@ export const TradeTargetsWantedPanel: React.FC<TradeTargetsWantedPanelProps> = (
   isEditable,
   editMode,
   visibleCount,
+  activeRuleCount = 0,
   onResetFilters,
   children,
 }) => {
@@ -39,7 +42,9 @@ export const TradeTargetsWantedPanel: React.FC<TradeTargetsWantedPanelProps> = (
   const showResetFilters = !isMirror && isEditable;
   const countLabel = isMirror
     ? `${visibleCount} mirror ${visibleCount === 1 ? 'target' : 'targets'}`
-    : `${visibleCount} visible`;
+    : `${visibleCount} wanted · ${activeRuleCount === 0
+      ? 'no advanced rules'
+      : `${activeRuleCount} active ${activeRuleCount === 1 ? 'rule' : 'rules'}`}`;
 
   return (
     <div className="trade-details-container__wanted-panel">
@@ -52,9 +57,11 @@ export const TradeTargetsWantedPanel: React.FC<TradeTargetsWantedPanelProps> = (
           <button
             type="button"
             className={`trade-target-reset-button ${editMode ? 'editable' : ''}`}
+            disabled={!editMode}
             onClick={editMode ? onResetFilters : undefined}
           >
-            <img src="/images/reset.png" alt="Reset Filters" />
+            <FaUndoAlt aria-hidden="true" />
+            <span>Reset</span>
           </button>
         )}
       </div>

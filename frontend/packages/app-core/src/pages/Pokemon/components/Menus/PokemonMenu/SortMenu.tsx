@@ -1,9 +1,9 @@
 // src/pages/Pokemon/components/Menus/PokemonMenu/SortMenu.tsx
 import React, { useState, useEffect, CSSProperties } from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 import OverlayPortal from '@/components/OverlayPortal';
 import WindowOverlay from '@/components/WindowOverlay';
 import CloseButton from '@/components/CloseButton';
-import { useContextBackHandler } from '@/contexts/ContextBackContext';
 import { SortType, SortMode } from '@/types/sort';
 import './SortMenu.css';
 
@@ -83,18 +83,13 @@ const SortMenu: React.FC<SortMenuProps> = ({
 
   useEffect(() => {
     if (!isAnimating && isMenuVisible) {
-      const timer = setTimeout(() => setIsMenuVisible(false), 250);
+      const timer = setTimeout(
+        () => setIsMenuVisible(false),
+        collectionExperienceParityContract.sortMenuMotion.overlayTransitionMs,
+      );
       return () => clearTimeout(timer);
     }
   }, [isAnimating, isMenuVisible]);
-
-  useContextBackHandler(
-    isMenuVisible,
-    () => {
-      setIsAnimating(false);
-    },
-    'sort-menu',
-  );
 
   return (
     <>
@@ -121,7 +116,10 @@ const SortMenu: React.FC<SortMenuProps> = ({
 
       {/* Sort Menu */}
       {isMenuVisible && (
-        <OverlayPortal>
+        <OverlayPortal
+          backBehavior="mobile"
+          onClose={() => setIsAnimating(false)}
+        >
           <div
             className={`sort-menu-overlay ${isAnimating ? 'visible' : ''}`}
             onClick={handleBackdropClick}

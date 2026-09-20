@@ -67,16 +67,6 @@ export const updateTradeSatisfaction = (
     body: JSON.stringify({ satisfied }),
   });
 
-export async function removeTrade(tradeId: string): Promise<void> {
-  const response = await requestWithPolicy(
-    endpoint(tradesContract.endpoints.remove(tradeId)),
-    { method: 'DELETE' },
-  );
-  if (!response.ok && response.status !== 204) {
-    throw toHttpError(response.status, await parseJsonSafe(response));
-  }
-}
-
 export async function revealPartnerInfo(
   trade: TradeReference,
 ): Promise<PartnerInfo> {

@@ -1,0 +1,80 @@
+.trade-board-builder-page {
+  --app-page-shell-background:
+    radial-gradient(circle at 50% 0, rgba(52, 190, 145, 0.13), transparent 36rem),
+    var(--color-app-surface);
+}
+
+.trade-board-builder-page__header {
+  --product-header-label: color-mix(
+    in srgb,
+    var(--color-accent-primary) 78%,
+    var(--color-text-primary)
+  );
+
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-ui-border);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
+}
+
+.trade-board-builder-page__header .product-page-header__icon {
+  color: color-mix(in srgb, var(--color-accent-primary) 78%, var(--color-text-primary));
+}
+
+.trade-board-builder-page__live-link {
+  color: color-mix(in srgb, var(--color-accent-primary) 78%, var(--color-text-primary));
+}
+
+.trade-board-builder-page .trade-board-composer-page {
+  padding: 0;
+}
+
+.trade-board-builder-page__state,
+.trade-board-builder-page__empty {
+  min-height: min(420px, 62dvh);
+}
+
+.trade-board-builder-page__empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.trade-board-builder-page__empty-actions a {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 16px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  border-radius: 11px;
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.trade-board-builder-page__empty .trade-board-builder-page__primary {
+  border-color: #35c786;
+  background: #35c786;
+  color: #06130e;
+}
+
+@media (max-width: 600px) {
+  .trade-board-builder-page__header .product-page-header__trailing {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .trade-board-builder-page__header .product-page-header__action {
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
+
+  .trade-board-builder-page__empty-actions,
+  .trade-board-builder-page__empty-actions a {
+    width: 100%;
+  }
+}

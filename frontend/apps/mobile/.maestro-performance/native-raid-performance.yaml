@@ -1,0 +1,167 @@
+appId: ${APP_ID}
+name: Native Raid performance contract
+tags:
+  - android
+  - performance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/tools?tool=raid&owned=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Your top raid attackers
+    timeout: 60000
+- tapOn:
+    point: "26%,25%"
+- extendedWaitUntil:
+    visible: Top raid attackers
+    timeout: 30000
+- tapOn:
+    point: "74%,25%"
+- extendedWaitUntil:
+    visible: Your top raid attackers
+    timeout: 30000
+
+# Ranking result classes: type, text, moveset projection, settings, modifiers,
+# sorting, and mobile row expansion.
+- tapOn: Grass
+- extendedWaitUntil:
+    visible: Your top Grass raid attackers
+    timeout: 30000
+- tapOn: Search raid rankings
+- inputText: Bulbasaur
+- extendedWaitUntil:
+    visible: Bulbasaur
+    timeout: 10000
+- hideKeyboard
+- tapOn: ALL MOVESETS
+- extendedWaitUntil:
+    visible: ALL MOVESETS
+    timeout: 30000
+- tapOn:
+    id: raid-ranking-settings
+- extendedWaitUntil:
+    visible: Ranking conditions
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: '^Best \(1\.10x\)$'
+    direction: DOWN
+- tapOn: '^Best \(1\.10x\)$'
+- scrollUntilVisible:
+    element:
+      text: eDPS
+    direction: DOWN
+- tapOn: DPS
+- scrollUntilVisible:
+    element:
+      text: Show all raid stats for Bulbasaur
+    direction: DOWN
+    timeout: 30000
+- tapOn: Show all raid stats for Bulbasaur
+- extendedWaitUntil:
+    visible: Hide all raid stats for Bulbasaur
+    timeout: 10000
+
+# Boss picker and canonical counter recalculation.
+- scrollUntilVisible:
+    element:
+      id: raid-view-boss
+    direction: UP
+    timeout: 30000
+- tapOn:
+    id: raid-view-boss
+- extendedWaitUntil:
+    visible: RAID BOSS
+    timeout: 10000
+- extendedWaitUntil:
+    notVisible: Modeling raid timelines…
+    timeout: 45000
+- tapOn: Find boss
+- inputText: Ivysaur
+- extendedWaitUntil:
+    visible: Select Ivysaur raid boss
+    timeout: 10000
+- hideKeyboard
+- tapOn: Select Ivysaur raid boss
+- extendedWaitUntil:
+    notVisible: Modeling raid timelines…
+    timeout: 45000
+- extendedWaitUntil:
+    visible: Best counters vs Ivysaur
+    timeout: 10000
+
+# Raid setup, battle settings, party simulation/optimization, and calibration.
+- scrollUntilVisible:
+    element:
+      text: Raid setup
+    direction: DOWN
+    timeout: 30000
+- tapOn: Raid setup
+- extendedWaitUntil:
+    visible: BOSS HP
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: Battle settings
+    direction: DOWN
+    timeout: 30000
+- tapOn: Battle settings
+- scrollUntilVisible:
+    element:
+      text: Boss behavior
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: Custom raid party
+    direction: UP
+    timeout: 30000
+- tapOn: Custom raid party
+- extendedWaitUntil:
+    visible: 2 Trainers
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "^Simulate$"
+    direction: UP
+    timeout: 30000
+- tapOn: "^Simulate$"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "^(Clear|Likely clear|Risky|Time expired) · .*$"
+    direction: DOWN
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: "✦ Optimize"
+    direction: UP
+    centerElement: true
+    timeout: 30000
+- tapOn: "✦ Optimize"
+- scrollUntilVisible:
+    element:
+      text: Lobby optimized
+    direction: DOWN
+    centerElement: true
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      text: Battle calibration
+    direction: DOWN
+    timeout: 30000
+- tapOn: "◷  Log raid"
+- extendedWaitUntil:
+    visible: OBSERVED BATTLE
+    timeout: 10000

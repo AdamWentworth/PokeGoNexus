@@ -10,10 +10,8 @@ import {
 } from '@/services/pokemonDataService';
 import { queueVariantsPersist } from '@/db/variantsDB';
 import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { PokedexLists } from '@/types/pokedex';
 
 import variantsFixture from '@/../tests/__helpers__/fixtures/variants.json';
-import pokedexListsFixture from '@/../tests/__helpers__/fixtures/pokedexLists.json';
 
 vi.mock('@/features/variants/repositories/variantsRepository', () => ({
   variantsRepository: {
@@ -51,11 +49,6 @@ vi.mock('@/db/variantsDB', () => ({
 
 const cachedVariants = (variantsFixture as unknown as PokemonVariant[]).slice(0, 3);
 const freshVariants = (variantsFixture as unknown as PokemonVariant[]).slice(3, 8);
-const cachedLists = pokedexListsFixture as unknown as PokedexLists;
-const freshLists = {
-  ...(pokedexListsFixture as unknown as PokedexLists),
-  default: freshVariants,
-} as PokedexLists;
 
 describe.sequential('useVariantsStore (unit)', () => {
   beforeEach(() => {
@@ -64,7 +57,6 @@ describe.sequential('useVariantsStore (unit)', () => {
 
     useVariantsStore.setState({
       variants: [],
-      pokedexLists: {} as PokedexLists,
       variantsLoading: true,
       isRefreshing: false,
       isMovesLoading: false,
@@ -74,12 +66,10 @@ describe.sequential('useVariantsStore (unit)', () => {
 
     vi.mocked(variantsRepository.loadCache).mockResolvedValue({
       variants: cachedVariants,
-      pokedexLists: cachedLists,
     });
 
     vi.mocked(variantsRepository.fetchFresh).mockResolvedValue({
       variants: freshVariants,
-      pokedexLists: freshLists,
     });
 
     vi.mocked(getChunkVersion).mockReturnValue(null);
@@ -91,7 +81,7 @@ describe.sequential('useVariantsStore (unit)', () => {
   });
 
   it('hydrates from cache before the manifest-aware refresh completes', async () => {
-    let resolveFresh: (value: { variants: PokemonVariant[]; pokedexLists: PokedexLists }) => void;
+    let resolveFresh: (value: { variants: PokemonVariant[] }) => void;
     vi.mocked(variantsRepository.fetchFresh).mockReturnValueOnce(
       new Promise((resolve) => {
         resolveFresh = resolve;
@@ -102,12 +92,11 @@ describe.sequential('useVariantsStore (unit)', () => {
 
     expect(useVariantsStore.getState()).toMatchObject({
       variants: cachedVariants,
-      pokedexLists: cachedLists,
       variantsLoading: false,
     });
     expect(variantsRepository.fetchFresh).toHaveBeenCalledOnce();
 
-    resolveFresh!({ variants: freshVariants, pokedexLists: freshLists });
+    resolveFresh!({ variants: freshVariants });
     await vi.waitFor(() => {
       expect(useVariantsStore.getState().variants).toEqual(freshVariants);
     });
@@ -133,13 +122,12 @@ describe.sequential('useVariantsStore (unit)', () => {
     expect(state.isRefreshing).toBe(false);
   });
 
-  it('refreshVariants fetches fresh data and updates cache timestamps when stale', async () => {
+  it('refreshVariants fetches fresh data when stale', async () => {
     await useVariantsStore.getState().refreshVariants();
 
     const state = useVariantsStore.getState();
     expect(variantsRepository.fetchFresh).toHaveBeenCalled();
     expect(state.variants).toEqual(freshVariants);
-    expect(state.pokedexLists).toEqual(freshLists);
     expect(state.isRefreshing).toBe(false);
   });
 
@@ -289,7 +277,6 @@ describe.sequential('useVariantsStore (unit)', () => {
       crownForms: [],
     } as PokemonVariant;
     const refreshedVariant = { ...enrichedVariant, moves: [] } as PokemonVariant;
-    const refreshedLists = { ...freshLists, default: [refreshedVariant] } as PokedexLists;
     const manifest = {
       catalogVersion: 'catalog-v2',
       chunks: { moves: { version: 'moves-v2' } },
@@ -299,7 +286,6 @@ describe.sequential('useVariantsStore (unit)', () => {
     useVariantsStore.setState({ variants: [enrichedVariant], variantsLoading: false });
     vi.mocked(variantsRepository.fetchFresh).mockResolvedValueOnce({
       variants: [refreshedVariant],
-      pokedexLists: refreshedLists,
     });
     vi.mocked(getPokemonCatalogManifest).mockResolvedValue(manifest);
     vi.mocked(getChunkVersion).mockImplementation((_, chunk) =>
@@ -370,7 +356,6 @@ describe.sequential('useVariantsStore (unit)', () => {
     } as PokemonVariant;
     const refreshedVariant = { ...enrichedVariant };
     delete refreshedVariant.raid_boss;
-    const refreshedLists = { ...freshLists, default: [refreshedVariant] } as PokedexLists;
     const manifest = {
       catalogVersion: 'catalog-v2',
       chunks: { raidData: { version: 'raids-v2' } },
@@ -384,7 +369,6 @@ describe.sequential('useVariantsStore (unit)', () => {
     });
     vi.mocked(variantsRepository.fetchFresh).mockResolvedValueOnce({
       variants: [refreshedVariant],
-      pokedexLists: refreshedLists,
     });
     vi.mocked(getPokemonCatalogManifest).mockResolvedValue(manifest);
     vi.mocked(getChunkVersion).mockImplementation((_, chunk) =>
@@ -467,7 +451,6 @@ describe.sequential('useVariantsStore (unit)', () => {
       name: 'Bulbasaur',
       species_name: 'Bulbasaur',
     } as PokemonVariant;
-    const refreshedLists = { ...freshLists, default: [refreshedVariant] } as PokedexLists;
     const manifest = {
       catalogVersion: 'catalog-v2',
       chunks: { raidData: { version: 'raids-v2' } },
@@ -478,7 +461,6 @@ describe.sequential('useVariantsStore (unit)', () => {
 
     vi.mocked(variantsRepository.fetchFresh).mockResolvedValueOnce({
       variants: [refreshedVariant],
-      pokedexLists: refreshedLists,
     });
     vi.mocked(getPokemonCatalogManifest).mockResolvedValue(manifest);
     vi.mocked(getChunkVersion).mockImplementation((_, chunk) =>

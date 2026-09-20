@@ -1,0 +1,68 @@
+appId: ${APP_ID}
+name: Native registration workflow smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/public?page=register"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "Create your account"
+- assertVisible: "Sign up with Google"
+- assertVisible: "Sign up with Discord"
+- assertVisible: "Sign up with Facebook"
+- takeScreenshot: "native-registration-method"
+- tapOn: ".*Continue with email.*"
+- assertVisible: "YOUR ACCOUNT"
+- tapOn: "Username"
+- inputText: "VisualTrainer"
+- pressKey: ENTER
+- inputText: "visual@example.invalid"
+- pressKey: ENTER
+- extendedWaitUntil:
+    visible: "PROTECT YOUR ACCOUNT"
+    timeout: 15000
+- takeScreenshot: "native-registration-password-step"
+- tapOn: Password
+- inputText: "Strong_password_42!"
+- tapOn: Confirm password
+- inputText: "Strong_password_42!"
+- hideKeyboard
+- tapOn: "Continue ›"
+- assertVisible: "POKÉMON GO IDENTITY"
+- tapOn: "Use VisualTrainer as my Pokémon GO name"
+- assertVisible: "VisualTrainer"
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: "YOUR AREA"
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: "READY TO JOIN"
+- assertVisible: "VisualTrainer"
+- assertVisible: "visual@example.invalid"
+- scrollUntilVisible:
+    element:
+      text: "Create account ✓"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Create account ✓"
+- extendedWaitUntil:
+    visible: "Account created."
+    timeout: 10000
+- takeScreenshot: "native-registration-complete"

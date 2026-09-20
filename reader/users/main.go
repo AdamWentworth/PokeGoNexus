@@ -61,6 +61,11 @@ func newRateLimiter() fiber.Handler {
 }
 
 func registerProtectedSocialRoutes(app *fiber.App, prefix string, rateLimit fiber.Handler) {
+	app.Get(prefix+"/tags", verifyJWT, rateLimit, GetTagsHandler)
+	app.Post(prefix+"/tags", verifyJWT, rateLimit, CreateTagHandler)
+	app.Put(prefix+"/tags/order", verifyJWT, rateLimit, UpdateTagOrderHandler)
+	app.Put(prefix+"/tags/:tag_id", verifyJWT, rateLimit, UpdateTagHandler)
+	app.Delete(prefix+"/tags/:tag_id", verifyJWT, rateLimit, DeleteTagHandler)
 	app.Get(prefix+"/profile", verifyJWT, rateLimit, GetOwnProfileHandler)
 	app.Put(prefix+"/profile", verifyJWT, rateLimit, UpdateProfileHandler)
 	app.Get(prefix+"/preferences", verifyJWT, rateLimit, GetPreferencesHandler)
@@ -82,6 +87,17 @@ func registerProtectedSocialRoutes(app *fiber.App, prefix string, rateLimit fibe
 	app.Put(prefix+"/trades/:trade_id/satisfaction", verifyJWT, rateLimit, UpdateTradeSatisfactionHandler)
 	app.Delete(prefix+"/trades/:trade_id", verifyJWT, rateLimit, DeleteTradeHandler)
 	app.Get(prefix+"/trades/:trade_id/partner", verifyJWT, rateLimit, RevealTradePartnerHandler)
+}
+
+func registerProtectedAccountRoutes(app *fiber.App, rateLimit fiber.Handler) {
+	// Canonical routes used when the service receives the public /api/users prefix.
+	app.Put("/api/users/:user_id", verifyJWT, rateLimit, UpdateUserHandler)
+	app.Delete("/api/users/:user_id", verifyJWT, rateLimit, DeleteUserHandler)
+
+	// Compatibility routes used when the reverse proxy strips the /users prefix.
+	app.Get("/api/:user_id/overview", verifyJWT, rateLimit, GetUserOverviewHandler)
+	app.Put("/api/:user_id", verifyJWT, rateLimit, UpdateUserHandler)
+	app.Delete("/api/:user_id", verifyJWT, rateLimit, DeleteUserHandler)
 }
 
 func newApp() *fiber.App {
@@ -134,16 +150,15 @@ func newApp() *fiber.App {
 	app.Get("/api/users/:user_id/overview", verifyJWT, protectedLimiter, GetUserOverviewHandler)
 	app.Get("/api/instances/sync", verifyJWT, protectedLimiter, GetOwnInstanceSyncHandler)
 	app.Get("/api/users/instances/sync", verifyJWT, protectedLimiter, GetOwnInstanceSyncHandler)
+	app.Get("/api/collection/summary", verifyJWT, protectedLimiter, GetOwnCollectionSummaryHandler)
+	app.Get("/api/users/collection/summary", verifyJWT, protectedLimiter, GetOwnCollectionSummaryHandler)
 	app.Put("/api/update-user/:user_id", verifyJWT, protectedLimiter, UpdateUserHandler)
 	app.Put("/api/users/update-user/:user_id", verifyJWT, protectedLimiter, UpdateUserHandler)
 	registerProtectedSocialRoutes(app, "/api", protectedLimiter)
 	registerProtectedSocialRoutes(app, "/api/users", protectedLimiter)
 	// Compatibility paths for older clients. Keep generic parameters after every
 	// named route so values such as "profile" cannot shadow a real endpoint.
-	app.Put("/api/users/:user_id", verifyJWT, protectedLimiter, UpdateUserHandler)
-	app.Delete("/api/users/:user_id", verifyJWT, protectedLimiter, DeleteUserHandler)
-	app.Get("/api/:user_id/overview", verifyJWT, protectedLimiter, GetUserOverviewHandler)
-	app.Put("/api/:user_id", verifyJWT, protectedLimiter, UpdateUserHandler)
+	registerProtectedAccountRoutes(app, protectedLimiter)
 
 	return app
 }

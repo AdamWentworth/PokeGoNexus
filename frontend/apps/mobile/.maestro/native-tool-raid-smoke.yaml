@@ -1,0 +1,139 @@
+appId: ${APP_ID}
+name: Native Raid tool smoke
+---
+- openLink: "${APP_LINK_BASE}/device-smoke/tools?tool=raid&owned=1"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- assertVisible: "Raid Planner"
+- assertVisible: "Attacker rankings"
+- assertVisible: "ALL TYPES"
+- extendedWaitUntil:
+    visible: "Leafy.*Level 37.*87% IV"
+    timeout: 20000
+- assertVisible: "1 raid-ready entries from 1 caught.*"
+- assertVisible: "Your top raid attackers"
+- takeScreenshot: "native-tool-raid-owned-roster"
+- tapOn:
+    point: "26%,25%"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: "Top raid attackers"
+    timeout: 10000
+- takeScreenshot: "native-tool-raid-rankings"
+- tapOn:
+    id: raid-ranking-settings
+- assertVisible: "Ranking conditions"
+- assertVisible: "Attacker level"
+- takeScreenshot: "native-tool-raid-settings"
+- tapOn:
+    id: raid-ranking-settings
+- tapOn:
+    id: raid-view-boss
+- assertVisible: "RAID BOSS"
+- assertVisible: "Bulbasaur"
+- assertVisible: "Search raid bosses"
+- takeScreenshot: "native-tool-raid-boss"
+- scrollUntilVisible:
+    element:
+      text: "Raid setup"
+    direction: UP
+    timeout: 30000
+- tapOn: "Raid setup"
+- scrollUntilVisible:
+    element:
+      text: "BOSS HP"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "COMFORTABLE"
+    direction: DOWN
+- assertVisible: "COMFORTABLE"
+- takeScreenshot: "native-tool-raid-setup"
+- scrollUntilVisible:
+    element:
+      text: "Battle settings"
+    direction: DOWN
+- tapOn: "Battle settings"
+- scrollUntilVisible:
+    element:
+      text: "Dodging"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Boss behavior"
+    direction: DOWN
+- assertVisible: "Monte Carlo distribution (32+ trials)"
+- tapOn:
+    point: "18%,92%"
+- scrollUntilVisible:
+    element:
+      text: "Shadow boss state"
+    direction: DOWN
+- assertVisible: "Shadow boss state"
+- takeScreenshot: "native-tool-raid-boss-settings"
+- scrollUntilVisible:
+    element:
+      text: "Mega Rayquaza"
+    direction: DOWN
+    timeout: 45000
+- assertVisible: "Mega Rayquaza"
+- scrollUntilVisible:
+    element:
+      text: "Custom raid party"
+    direction: UP
+- tapOn: "Custom raid party"
+- scrollUntilVisible:
+    element:
+      text: "2 Trainers"
+    direction: DOWN
+    timeout: 30000
+- assertVisible: "2 Trainers"
+- scrollUntilVisible:
+    element:
+      text: "Trainer 1"
+    direction: DOWN
+- assertVisible: "Trainer 1"
+- scrollUntilVisible:
+    element:
+      text: "^Simulate$"
+    direction: UP
+- tapOn: "^Simulate$"
+- waitForAnimationToEnd
+- takeScreenshot: "native-tool-raid-after-simulate"
+- scrollUntilVisible:
+    element:
+      text: "^(Clear|Likely clear|Risky|Time expired) · .*$"
+    direction: DOWN
+- assertVisible: "^(Clear|Likely clear|Risky|Time expired) · .*$"
+- takeScreenshot: "native-tool-raid-party"
+- scrollUntilVisible:
+    element:
+      text: "Trainer 1 team slot 1"
+    direction: UP
+    timeout: 20000
+- assertVisible: "Trainer 1 team slot 1"
+- takeScreenshot: "native-tool-raid-party-trainer"
+- scrollUntilVisible:
+    element:
+      text: "Battle calibration"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "◷  Log raid"
+    direction: DOWN
+- tapOn: "◷  Log raid"
+- assertVisible: "OBSERVED BATTLE"
+- assertVisible: "BATTLE TIME (SECONDS)"
+- takeScreenshot: "native-tool-raid-log"
+- tapOn: "Close raid log"

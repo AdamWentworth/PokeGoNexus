@@ -61,7 +61,7 @@ func Load() Config {
 	redisBuildLockTTL := getDuration("REDIS_BUILD_LOCK_TTL", 2*time.Minute)
 	redisBuildWait := getDuration("REDIS_BUILD_WAIT", 5*time.Second)
 
-	origins := getString("ALLOWED_ORIGINS", "http://localhost:3000,https://pokegonexus.com,https://www.pokegonexus.com,https://pokemongonexus.com,https://www.pokemongonexus.com")
+	origins := getString("ALLOWED_ORIGINS", "http://localhost:3000,https://pokegonexus.com,https://www.pokegonexus.com")
 	allowed := splitCSV(origins)
 
 	allowCF := getBool("ALLOW_CLOUDFLARE_SUBDOMAINS", true)

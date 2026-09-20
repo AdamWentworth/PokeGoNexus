@@ -12,10 +12,10 @@ describe('TradeTargetsPanelSections', () => {
     const { rerender } = render(<TradeTargetsIntro isMirror={false} />);
 
     expect(screen.getByText('Desired Return')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Trade Targets' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wanted Pokémon' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Choose the Pokemon you would accept for this trade and fine-tune the filters below.',
+        'Choose the Pokémon you want in return for this For Trade listing.',
       ),
     ).toBeInTheDocument();
 
@@ -39,8 +39,8 @@ describe('TradeTargetsPanelSections', () => {
       </TradeTargetsWantedPanel>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Target List' })).toBeInTheDocument();
-    expect(screen.getByText('7 visible')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wanted Pokémon' })).toBeInTheDocument();
+    expect(screen.getByText('7 wanted · no advanced rules')).toBeInTheDocument();
     expect(screen.getByText('wanted-list')).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('TradeTargetsPanelSections', () => {
       </TradeTargetsWantedPanel>,
     );
 
-    fireEvent.click(screen.getByAltText('Reset Filters'));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(onResetFilters).not.toHaveBeenCalled();
 
     rerender(
@@ -73,7 +73,7 @@ describe('TradeTargetsPanelSections', () => {
       </TradeTargetsWantedPanel>,
     );
 
-    fireEvent.click(screen.getByAltText('Reset Filters'));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(onResetFilters).toHaveBeenCalledTimes(1);
   });
 
@@ -90,7 +90,7 @@ describe('TradeTargetsPanelSections', () => {
       </TradeTargetsWantedPanel>,
     );
 
-    expect(screen.queryByAltText('Reset Filters')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Available Mirror' })).toBeInTheDocument();
     expect(screen.getByText('1 mirror target')).toBeInTheDocument();
 
@@ -106,6 +106,6 @@ describe('TradeTargetsPanelSections', () => {
       </TradeTargetsWantedPanel>,
     );
 
-    expect(screen.queryByAltText('Reset Filters')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
   });
 });

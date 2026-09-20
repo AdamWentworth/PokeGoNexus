@@ -302,6 +302,49 @@ describe('pokedex registration projection', () => {
     });
   });
 
+  it('can project only base and exact registrations for compact consumers', () => {
+    const variant = makeVariant({
+      variant_id: '0001-shiny',
+      variantType: 'shiny',
+    });
+    const instance = makeInstance({
+      variant_id: '0001-shiny',
+      is_caught: true,
+      height: 1.2,
+      lucky: true,
+      gender: 'Female',
+      attack_iv: 15,
+      defense_iv: 15,
+      stamina_iv: 15,
+    });
+
+    const entries = projectPokedexRegistrations(
+      [variant],
+      { instance },
+      [],
+      {
+        includeCatalogRegistrations: false,
+        includeFacetSubsets: false,
+      },
+    );
+
+    expect(entries).toHaveLength(2);
+    expect(entries).not.toContainEqual(expect.objectContaining({ source: 'catalog' }));
+    expect(entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({ facets: { variant: 'shiny' }, level: 'base' }),
+      expect.objectContaining({
+        facets: {
+          appraisal: '4-star',
+          gender: 'Female',
+          lucky: true,
+          size: 'xxl',
+          variant: 'shiny',
+        },
+        level: 'exact',
+      }),
+    ]));
+  });
+
   it('does not count wishlist-only instances as registrations', () => {
     const entries = projectInstanceRegistrations(
       makeVariant(),

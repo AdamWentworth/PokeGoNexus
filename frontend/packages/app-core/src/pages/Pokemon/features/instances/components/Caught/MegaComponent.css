@@ -56,3 +56,8 @@
 .mega-action-text {
   white-space: nowrap;
 }
+
+.mega-action-button.btn-success,
+.mega-action-button.btn-success:disabled {
+  color: #061f17;
+}

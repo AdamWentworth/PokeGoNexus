@@ -1,0 +1,42 @@
+appId: ${APP_ID}
+name: Native Crowned form and special Max smoke
+tags:
+  - android
+  - native-instance
+  - crown-editing
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/collection?instance=smoke-zacian
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Shiny Zacian
+    timeout: 45000
+- tapOn: Edit Pokémon
+- assertVisible: Crowned Form
+- assertNotVisible: Max Move Levels
+- tapOn: "Power form: Crowned Sword"
+- assertVisible: Max Move Levels
+- swipe:
+    start: 50%, 82%
+    end: 50%, 58%
+    duration: 400
+- tapOn: "Max Attack: 3"
+- takeScreenshot: crown-01-special-max
+- swipe:
+    start: 50%, 58%
+    end: 50%, 82%
+    duration: 400
+- tapOn: Save Pokémon
+- assertNotVisible: Pokémon detail editor

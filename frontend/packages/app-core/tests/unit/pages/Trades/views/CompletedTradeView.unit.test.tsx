@@ -64,7 +64,7 @@ describe('CompletedTradeView', () => {
     expect(screen.getByText(/Completed on:/i)).toBeInTheDocument();
     expect(screen.getByText('Satisfied with your trade?')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '??' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as satisfying' }));
     expect(handleThumbsUp).toHaveBeenCalledTimes(1);
   });
 
@@ -80,7 +80,7 @@ describe('CompletedTradeView', () => {
     );
 
     expect(screen.getByText('Thanks for the feedback!')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '??' })).toHaveClass('active');
+    expect(screen.getByRole('button', { name: 'Feedback saved' })).toHaveClass('active');
   });
 
   it('renders loading state when details are unavailable', () => {

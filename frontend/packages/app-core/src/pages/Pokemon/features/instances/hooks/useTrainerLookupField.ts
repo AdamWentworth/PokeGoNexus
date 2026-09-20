@@ -35,6 +35,18 @@ export const useTrainerLookupField = ({
   const [trainerLookupError, setTrainerLookupError] = useState<string | null>(null);
   const [trainerHasFocus, setTrainerHasFocus] = useState<boolean>(false);
   const trainerLookupRequestRef = useRef(0);
+  const suggestionClearTimeoutRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      trainerLookupRequestRef.current += 1;
+      if (suggestionClearTimeoutRef.current !== null) {
+        window.clearTimeout(suggestionClearTimeoutRef.current);
+        suggestionClearTimeoutRef.current = null;
+      }
+    },
+    [],
+  );
 
   const showTrainerSuggestions = useMemo(
     () =>
@@ -141,6 +153,10 @@ export const useTrainerLookupField = ({
   );
 
   const handleTrainerNameFocus = useCallback(() => {
+    if (suggestionClearTimeoutRef.current !== null) {
+      window.clearTimeout(suggestionClearTimeoutRef.current);
+      suggestionClearTimeoutRef.current = null;
+    }
     setTrainerHasFocus(true);
   }, []);
 
@@ -151,7 +167,13 @@ export const useTrainerLookupField = ({
     onOriginalTrainerNameChange(committedName);
     onOriginalTrainerIdChange(null);
     void resolveTrainerByUsername(committedName);
-    window.setTimeout(() => setTrainerSuggestions([]), suggestionClearDelayMs);
+    if (suggestionClearTimeoutRef.current !== null) {
+      window.clearTimeout(suggestionClearTimeoutRef.current);
+    }
+    suggestionClearTimeoutRef.current = window.setTimeout(() => {
+      setTrainerSuggestions([]);
+      suggestionClearTimeoutRef.current = null;
+    }, suggestionClearDelayMs);
   }, [
     onOriginalTrainerIdChange,
     onOriginalTrainerNameChange,

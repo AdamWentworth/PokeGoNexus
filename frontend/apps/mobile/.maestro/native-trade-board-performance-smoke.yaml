@@ -1,0 +1,42 @@
+appId: ${APP_ID}
+name: Native Trade Board production-mode performance probe
+tags:
+  - android
+  - native-trade-board
+  - performance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=trade-board&performance=1
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: 21 Pokémon
+    timeout: 45000
+- tapOn:
+    id: native-trade-board-section-wanted
+- tapOn:
+    id: native-trade-board-theme-brand-light
+- scrollUntilVisible:
+    element:
+      id: native-trade-board-show-pokemon-go-name
+    direction: DOWN
+    centerElement: true
+    timeout: 10000
+- tapOn:
+    id: native-trade-board-show-pokemon-go-name
+- tapOn: Copy live link
+- extendedWaitUntil:
+    visible: Live Trade Board link copied.
+    timeout: 10000
+- takeScreenshot: native-trade-board-performance-result

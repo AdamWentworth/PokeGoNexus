@@ -367,7 +367,7 @@ export interface VariantBackground {
   background_id: number;
   image_url: string;
   name: string;
-  costume_id: number;
+  costume_id: number | null;
   date: string;
   location: string;
 }

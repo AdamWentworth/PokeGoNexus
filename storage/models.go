@@ -75,6 +75,7 @@ type PokemonInstance struct {
 	TraceID             *string    `gorm:"column:trace_id"`
 	TradeFilters        *string    `gorm:"column:trade_filters;type:json"`
 	WantedFilters       *string    `gorm:"column:wanted_filters;type:json"`
+	WantedSizes         *string    `gorm:"column:wanted_size_preferences;type:json"`
 	Mega                bool       `gorm:"column:mega;default:false"`
 	MegaForm            *string    `gorm:"column:mega_form"`
 	IsMega              bool       `gorm:"column:is_mega;default:false"`

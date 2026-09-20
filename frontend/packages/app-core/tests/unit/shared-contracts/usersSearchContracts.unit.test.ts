@@ -37,6 +37,9 @@ describe('shared contracts', () => {
     expect(authContract.endpoints.login).toBe('/login');
     expect(authContract.endpoints.logout).toBe('/logout');
     expect(authContract.endpoints.refresh).toBe('/refresh');
+    expect(authContract.endpoints.mobileLogin).toBe('/mobile/login');
+    expect(authContract.endpoints.mobileRefresh).toBe('/mobile/refresh');
+    expect(authContract.endpoints.mobileLogout).toBe('/mobile/logout');
     expect(authContract.endpoints.resetPassword).toBe('/reset-password');
     expect(authContract.endpoints.updateUser('u/1')).toBe('/update/u%2F1');
     expect(authContract.endpoints.deleteUser('u/1')).toBe('/delete/u%2F1');

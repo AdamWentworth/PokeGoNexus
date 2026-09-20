@@ -5,68 +5,74 @@ import './TradeStatusButtons.css';
 interface TradeStatusButtonsProps {
   selectedStatus: TradeStatusFilter;
   setSelectedStatus: (status: TradeStatusFilter) => void;
+  counts?: Partial<Record<TradeStatusFilter, number>>;
 }
 
-const leftStatuses: ReadonlyArray<{ value: TradeStatusFilter; label: string }> = [
-  { value: 'Accepting', label: 'Offers' },
-  { value: 'Proposed', label: 'Proposed' },
+const statuses: ReadonlyArray<{
+  value: TradeStatusFilter;
+  label: string;
+  mobileLabel: string;
+  description: string;
+}> = [
+  {
+    value: 'Accepting',
+    label: 'Needs response',
+    mobileLabel: 'Offers',
+    description: 'Received offers',
+  },
+  {
+    value: 'Proposed',
+    label: 'Sent',
+    mobileLabel: 'Sent',
+    description: 'Awaiting a reply',
+  },
+  {
+    value: 'Pending',
+    label: 'Active',
+    mobileLabel: 'Active',
+    description: 'In progress',
+  },
+  {
+    value: 'Completed',
+    label: 'Completed',
+    mobileLabel: 'Done',
+    description: 'Successful',
+  },
+  {
+    value: 'Cancelled',
+    label: 'Closed',
+    mobileLabel: 'Closed',
+    description: 'Cancelled or denied',
+  },
 ];
-
-const middleStatus: TradeStatusFilter = 'Pending';
-const rightStatuses: ReadonlyArray<TradeStatusFilter> = ['Completed', 'Cancelled'];
 
 function TradeStatusButtons({
   selectedStatus,
   setSelectedStatus,
+  counts = {},
 }: TradeStatusButtonsProps) {
   return (
-    <div className="status-buttons">
-      <div className="button-group vertical-group">
-        {leftStatuses.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setSelectedStatus(value)}
-            className={
-              selectedStatus === value
-                ? `status-button active ${value.toLowerCase()}`
-                : 'status-button'
-            }
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="button-group middle-group">
+    <nav className="status-buttons" aria-label="Trade activity stage">
+      {statuses.map(({ value, label, mobileLabel, description }) => (
         <button
-          key={middleStatus}
-          onClick={() => setSelectedStatus(middleStatus)}
-          className={
-            selectedStatus === middleStatus
-              ? `status-button active ${middleStatus.toLowerCase()}`
-              : 'status-button'
-          }
+          type="button"
+          key={value}
+          onClick={() => setSelectedStatus(value)}
+          className={`status-button ${selectedStatus === value ? 'active' : ''} ${value.toLowerCase()}`}
+          aria-current={selectedStatus === value ? 'page' : undefined}
+          aria-label={`${label}, ${counts[value] ?? 0}`}
         >
-          {middleStatus}
+          <span>
+            <strong className="status-label-desktop">{label}</strong>
+            <strong className="status-label-mobile" aria-hidden="true">
+              {mobileLabel}
+            </strong>
+            <small>{description}</small>
+          </span>
+          <b>{counts[value] ?? 0}</b>
         </button>
-      </div>
-
-      <div className="button-group vertical-group right-group">
-        {rightStatuses.map((status) => (
-          <button
-            key={status}
-            onClick={() => setSelectedStatus(status)}
-            className={
-              selectedStatus === status
-                ? `status-button active ${status.toLowerCase()}`
-                : 'status-button'
-            }
-          >
-            {status}
-          </button>
-        ))}
-      </div>
-    </div>
+      ))}
+    </nav>
   );
 }
 

@@ -15,6 +15,8 @@
 .top-row .cp-component-container {
   position: absolute;
   left: 50%;
+  width: min(18rem, calc(100% - 112px));
+  max-width: calc(100vw - 112px);
   transform: translate(-50%, -10px);
   z-index: 10; /* ensure above arc/sprite */
 }
@@ -45,7 +47,7 @@
   height: 40px;
 }
 
-.top-row .favorite-component img {
+.top-row .favorite-component .collection-priority-star {
   width: 44px;
   height: 44px;
 }
@@ -55,8 +57,12 @@
   font-size: clamp(16px, 3.2vw, 24px);
 }
 
-.top-row .cp-value,
-.top-row .cp-editable-content {
+.top-row .cp-value {
   font-size: clamp(32px, 5.6vw, 46px);
   line-height: 1.1;
+}
+
+.top-row .cp-editable-content {
+  font-size: clamp(20px, 4.5vw, 28px);
+  line-height: 1;
 }

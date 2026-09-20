@@ -5,21 +5,26 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import SearchModeToggle, { type SearchMode } from '@/pages/Search/SearchModeToggle';
 
 describe('SearchModeToggle', () => {
-  it('renders welcome style modifiers when isWelcome is true', () => {
+  it('renders accessible persistent search tabs', () => {
     const setSearchMode = vi.fn();
-    const { container } = render(
+    render(
       <SearchModeToggle
-        searchMode={null}
+        searchMode="pokemon"
         setSearchMode={
           setSearchMode as React.Dispatch<React.SetStateAction<SearchMode>>
         }
-        isWelcome
       />,
     );
 
-    expect(container.querySelector('.search-toggle-container.welcome')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Trainer' })).toHaveClass('large');
-    expect(screen.getByRole('button', { name: 'Pokemon' })).toHaveClass('large');
+    expect(screen.getByRole('tablist', { name: 'Search category' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Pokémon' })).toHaveAttribute(
+      'aria-controls',
+      'search-panel-pokemon',
+    );
+    expect(screen.getByRole('tab', { name: 'Trainers' })).toHaveAttribute(
+      'aria-controls',
+      'search-panel-trainer',
+    );
   });
 
   it('marks only the active mode button', () => {
@@ -33,9 +38,9 @@ describe('SearchModeToggle', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Trainer' })).toHaveClass('active');
-    expect(screen.getByRole('button', { name: 'Pokemon' })).not.toHaveClass(
-      'active',
+    expect(screen.getByRole('tab', { name: 'Trainers' })).toHaveClass('is-active');
+    expect(screen.getByRole('tab', { name: 'Pokémon' })).not.toHaveClass(
+      'is-active',
     );
 
     rerender(
@@ -47,9 +52,9 @@ describe('SearchModeToggle', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Pokemon' })).toHaveClass('active');
-    expect(screen.getByRole('button', { name: 'Trainer' })).not.toHaveClass(
-      'active',
+    expect(screen.getByRole('tab', { name: 'Pokémon' })).toHaveClass('is-active');
+    expect(screen.getByRole('tab', { name: 'Trainers' })).not.toHaveClass(
+      'is-active',
     );
   });
 
@@ -58,15 +63,15 @@ describe('SearchModeToggle', () => {
 
     render(
       <SearchModeToggle
-        searchMode={null}
+        searchMode="pokemon"
         setSearchMode={
           setSearchMode as React.Dispatch<React.SetStateAction<SearchMode>>
         }
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Trainer' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Pokemon' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Trainers' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Pokémon' }));
 
     expect(setSearchMode).toHaveBeenNthCalledWith(1, 'trainer');
     expect(setSearchMode).toHaveBeenNthCalledWith(2, 'pokemon');

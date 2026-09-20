@@ -1,60 +1,21 @@
 // src/features/variants/utils/loadVariants.ts
 
 import { getAllVariants } from '@/db/variantsDB';
-import {
-  getAllPokedex,
-  putPokedexCategory,
-} from '@/db/pokedexDB';
-import sortPokedexLists from './sortPokedexLists';
 import { isDataFresh } from '@/utils/cacheHelpers';
 import { formatTimeAgo } from '@/utils/formattingHelpers';
 import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { PokedexLists } from '@/types/pokedex';
 import { logSize } from '@/utils/loggers';
 import { fetchAndProcessVariants } from './fetchAndProcessVariants';
-import { POKEDEX_STORES } from '@/db/constants';
 import { createScopedLogger } from '@/utils/logger';
 import { getCatalogDataVersion, getPokemonCatalogManifest } from '@/services/pokemonDataService';
 import {
   getStorageNumber,
   getStorageString,
-  setStorageNumber,
-  setStorageString,
   STORAGE_KEYS,
 } from '@/utils/storage';
 import type { PokemonCatalogManifest } from '@shared-contracts/pokemon';
 
-let derivedListsMemo: { key: string; lists: PokedexLists } | null = null;
 const log = createScopedLogger('loadVariants');
-
-/**
- * Store all generated Pokedex lists in IndexedDB (one object-store per category).
- */
-async function storePokedexLists(lists: PokedexLists): Promise<void> {
-  const ops: Promise<void>[] = [];
-  for (const category of POKEDEX_STORES) {
-    ops.push(
-      putPokedexCategory(category, lists[category as keyof PokedexLists]),
-    );
-  }
-  await Promise.all(ops);
-}
-
-function getDerivedListsMemoKey(variants: PokemonVariant[], variantsTimestamp: number): string {
-  // Timestamp changes whenever variants are refreshed; length is a cheap safety discriminator.
-  return `${variantsTimestamp}:${variants.length}`;
-}
-
-function getOrBuildPokedexLists(variants: PokemonVariant[], variantsTimestamp: number): PokedexLists {
-  const memoKey = getDerivedListsMemoKey(variants, variantsTimestamp);
-  if (derivedListsMemo?.key === memoKey) {
-    return derivedListsMemo.lists;
-  }
-
-  const lists = sortPokedexLists(variants);
-  derivedListsMemo = { key: memoKey, lists };
-  return lists;
-}
 
 function getForcedRefreshCutoff(): number {
   const raw = import.meta.env.VITE_FORCED_REFRESH_TIMESTAMP || '0';
@@ -94,23 +55,13 @@ export async function loadVariants() {
   log.debug('Fetching data from API or cache...');
 
   const variantsTimestamp = getStorageNumber(STORAGE_KEYS.variantsTimestamp, 0);
-  const pokedexListsTimestamp = getStorageNumber(
-    STORAGE_KEYS.pokedexListsTimestamp,
-    0,
-  );
   const manifest = await getManifestOrNull();
   const currentCatalogVersion = getCatalogDataVersion(manifest);
   const variantsCatalogVersion = getStorageString(STORAGE_KEYS.pokemonCatalogVersion);
-  const pokedexListsCatalogVersion = getStorageString(STORAGE_KEYS.pokedexListsCatalogVersion);
 
   const variantsFresh = isVersionedCacheFresh(
     variantsTimestamp,
     variantsCatalogVersion,
-    currentCatalogVersion,
-  );
-  const pokedexFresh = isVersionedCacheFresh(
-    pokedexListsTimestamp,
-    pokedexListsCatalogVersion,
     currentCatalogVersion,
   );
 
@@ -118,71 +69,25 @@ export async function loadVariants() {
     log.debug(t ? `${label} Age: ${formatTimeAgo(t)}` : `${label} data is missing.`);
 
   logAge('Cached Variants', variantsTimestamp);
-  logAge('Cached PokedexLists', pokedexListsTimestamp);
   if (currentCatalogVersion) {
     log.debug(
-      `Pokemon catalog version: current=${currentCatalogVersion}, variants=${variantsCatalogVersion ?? 'missing'}, pokedex=${pokedexListsCatalogVersion ?? 'missing'}`,
+      `Pokemon catalog version: current=${currentCatalogVersion}, variants=${variantsCatalogVersion ?? 'missing'}`,
     );
   }
 
   let variants: PokemonVariant[];
-  let pokedexLists: PokedexLists;
-  let listsBuiltNow = false;
 
-  if (variantsFresh && pokedexFresh) {
-    log.debug('Using cached variants and PokedexLists...');
+  if (variantsFresh) {
+    log.debug('Using cached variants...');
     const t0 = Date.now();
-
-    const [variantsFromDB, pokedexFromDB] = await Promise.all([
-      getAllVariants<PokemonVariant>(),
-      getAllPokedex(),
-    ]);
-
-    log.debug(`Retrieved both from IndexedDB in ${Date.now() - t0} ms`);
-
-    variants     = variantsFromDB;
-    pokedexLists = pokedexFromDB;
-
+    variants = await getAllVariants<PokemonVariant>();
+    log.debug(`Retrieved variants from IndexedDB in ${Date.now() - t0} ms`);
     logSize('cached variants', variants);
-    logSize('pokedex lists', pokedexLists);
   } else {
-    /* -------------------------------------------------------------- */
-    /*  Variants                                                      */
-    /* -------------------------------------------------------------- */
-    if (variantsFresh) {
-      log.debug('Using cached variants');
-      const t0   = Date.now();
-      variants   = await getAllVariants();
-      log.debug(`Retrieved variants from IndexedDB in ${Date.now() - t0} ms`);
-      logSize('cached variants', variants);
-    } else {
-      log.debug('Variants are stale or missing, updating...');
-      variants = await fetchAndProcessVariants({ manifest });
-    }
-
-    /* -------------------------------------------------------------- */
-    /*  Pokedex lists                                                 */
-    /* -------------------------------------------------------------- */
-    log.debug('PokedexLists are stale or variants updated, regenerating...');
-    const currentVariantsTimestamp =
-      getStorageNumber(STORAGE_KEYS.variantsTimestamp, variantsTimestamp || 0);
-    pokedexLists = getOrBuildPokedexLists(variants, currentVariantsTimestamp);
-
-    try {
-      await storePokedexLists(pokedexLists);
-      setStorageNumber(STORAGE_KEYS.pokedexListsTimestamp, Date.now());
-      if (currentCatalogVersion) {
-        setStorageString(STORAGE_KEYS.pokedexListsCatalogVersion, currentCatalogVersion);
-      }
-      listsBuiltNow = true;
-      log.debug('Successfully stored new PokedexLists in IndexedDB');
-    } catch (error) {
-      log.error('Failed to store PokedexLists', error);
-    }
-
-    logSize('new pokedex lists', pokedexLists);
+    log.debug('Variants are stale or missing, updating...');
+    variants = await fetchAndProcessVariants({ manifest });
   }
 
-  log.debug(`Returning ${variants.length} variants and corresponding pokedex lists.`);
-  return { variants, pokedexLists, listsBuiltNow };
+  log.debug(`Returning ${variants.length} variants.`);
+  return { variants };
 }

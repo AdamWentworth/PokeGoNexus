@@ -1,8 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-import TradeImageStage from '@/pages/Pokemon/features/instances/sections/TradeImageStage';
 import TradeBackgroundModal from '@/pages/Pokemon/features/instances/sections/TradeBackgroundModal';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import type { VariantBackground } from '@/types/pokemonSubTypes';
@@ -32,31 +31,7 @@ vi.mock('@/components/pokemonComponents/BackgroundLocationCard', () => ({
 }));
 
 describe('Trade sections', () => {
-  it('TradeImageStage renders image, background, and max badges', () => {
-    render(
-      <TradeImageStage
-        selectedBackground={{
-          background_id: 99,
-          image_url: 'bg-99.png',
-          name: 'Special',
-          costume_id: 0,
-          date: '2026-02-17',
-          location: 'test',
-        }}
-        currentImage="pokemon.png"
-        name="Pikachu"
-        dynamax
-        gigantamax
-      />,
-    );
-
-    expect(screen.getByAltText('Pikachu')).toHaveAttribute('src', 'pokemon.png');
-    expect(screen.getByAltText('Dynamax Badge')).toBeInTheDocument();
-    expect(screen.getByAltText('Gigantamax Badge')).toBeInTheDocument();
-    expect(document.querySelector('.background-image')).toBeTruthy();
-  });
-
-  it('TradeBackgroundModal opens/closes and relays background selections', () => {
+  it('TradeBackgroundModal opens/closes and relays background selections', async () => {
     const onClose = vi.fn();
     const onSelectBackground = vi.fn();
 
@@ -88,6 +63,6 @@ describe('Trade sections', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 });

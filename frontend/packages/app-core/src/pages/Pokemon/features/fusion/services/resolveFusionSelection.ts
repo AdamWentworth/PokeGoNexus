@@ -2,6 +2,7 @@
 
 import type { Instances } from '@/types/instances';
 import { Fusion } from '@/types/pokemonSubTypes';
+import type { FusionSelectionResult } from '@/types/fusion';
 import { createScopedLogger } from '@/utils/logger';
 
 const log = createScopedLogger('resolveFusionSelection');
@@ -15,7 +16,7 @@ type ResolveFusionParams = {
   fusionData: Fusion;
   instances: Instances;
   updateDetails: (updates: FusionUpdatePatch) => Promise<void>;
-  resolve?: (result: string) => void;
+  resolve?: (result: FusionSelectionResult) => void;
 };
 
 export async function resolveFusionSelection({
@@ -55,11 +56,11 @@ export async function resolveFusionSelection({
       };
 
       await updateDetails(changes);
-      resolve?.('fuseThis');
+      resolve?.({ action: 'fuseThis', instanceId: leftInstanceId });
     } catch (error) {
       log.error('Error during fusion resolution:', error);
     }
   } else {
-    resolve?.('cancel');
+    resolve?.({ action: 'cancel', instanceId: null });
   }
 }

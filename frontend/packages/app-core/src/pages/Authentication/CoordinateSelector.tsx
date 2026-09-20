@@ -6,7 +6,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import TileLayer from 'ol/layer/Tile';
-import XYZ from 'ol/source/XYZ';
+import { createMapTileSource } from '@/utils/createMapTileSource';
 import { Style, Circle, Fill } from 'ol/style';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
@@ -16,6 +16,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useModal } from '../../contexts/ModalContext';
 import './CoordinateSelector.css';
 import CloseButton from '../../components/CloseButton';
+import OverlayPortal from '../../components/OverlayPortal';
 import LocationOptionsOverlay from './LocationOptionsOverlay';
 import { fetchLocationOptions } from '../../services/locationServices';
 import type { LocationSuggestion } from '../../types/location';
@@ -67,11 +68,7 @@ const CoordinateSelector: FC<CoordinateSelectorProps> = ({
   useEffect(() => {
     // Base layer based on the current theme.
     const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: isLightMode
-          ? 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-          : 'https://{1-4}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      }),
+      source: createMapTileSource(isLightMode),
     });
 
     // Layer to display the marker.
@@ -140,7 +137,8 @@ const CoordinateSelector: FC<CoordinateSelectorProps> = ({
   };
 
   return (
-    <div className="coordinate-selector-overlay">
+    <OverlayPortal onClose={onClose}>
+      <div className="coordinate-selector-overlay">
       <div className="coordinate-selector-map" ref={mapContainer} />
       <CloseButton onClick={onClose} />
 
@@ -157,7 +155,8 @@ const CoordinateSelector: FC<CoordinateSelectorProps> = ({
       {!loading && locationOptions.length === 0 && !showOptionsOverlay && (
         <p className="no-locations-text">Click on the map to set coordinates.</p>
       )}
-    </div>
+      </div>
+    </OverlayPortal>
   );
 };
 

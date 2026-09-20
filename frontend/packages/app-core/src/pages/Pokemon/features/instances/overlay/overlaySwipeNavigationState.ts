@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { collectionExperienceParityContract } from '@pokemongonexus/shared-ui-tokens';
 
 import { resolveSwipeAxis } from './overlaySwipe';
 
@@ -17,9 +18,8 @@ export type SwipeMoveResult = {
   offsetX: number;
 };
 
-const MAX_SWIPE_OFFSET_X = 180;
-const MIN_NAVIGATION_DELTA_X = 56;
-const OVERLAY_MOTION_TRANSITION = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
+const { instanceOverlaySwipe } = collectionExperienceParityContract;
+const OVERLAY_MOTION_TRANSITION = `transform ${instanceOverlaySwipe.entryTransitionMs}ms cubic-bezier(${instanceOverlaySwipe.transitionEasing.join(', ')})`;
 
 export const createInactiveSwipeState = (): SwipeState => ({
   active: false,
@@ -34,7 +34,10 @@ export const createActiveSwipeState = (clientX: number, clientY: number): SwipeS
 });
 
 export const clampSwipeOffsetX = (deltaX: number): number =>
-  Math.max(-MAX_SWIPE_OFFSET_X, Math.min(MAX_SWIPE_OFFSET_X, deltaX));
+  Math.max(
+    -instanceOverlaySwipe.maxDragOffset,
+    Math.min(instanceOverlaySwipe.maxDragOffset, deltaX),
+  );
 
 export const getSwipeMoveResult = (
   swipeState: SwipeState,
@@ -69,7 +72,7 @@ export const getSwipeEndDirection = (
   if (!swipeState.active) return null;
 
   const deltaX = clientX - swipeState.startX;
-  if (currentAxis !== 'x' || Math.abs(deltaX) < MIN_NAVIGATION_DELTA_X) {
+  if (currentAxis !== 'x' || Math.abs(deltaX) < instanceOverlaySwipe.navigationDelta) {
     return null;
   }
 
@@ -79,8 +82,12 @@ export const getSwipeEndDirection = (
 export const getNavigationOffsets = (
   direction: SwipeDirection,
 ): { exitOffset: number; enterOffset: number } => ({
-  exitOffset: direction === 'next' ? -140 : 140,
-  enterOffset: direction === 'next' ? 110 : -110,
+  exitOffset: direction === 'next'
+    ? -instanceOverlaySwipe.exitOffset
+    : instanceOverlaySwipe.exitOffset,
+  enterOffset: direction === 'next'
+    ? instanceOverlaySwipe.enterOffset
+    : -instanceOverlaySwipe.enterOffset,
 });
 
 export const getOverlayMotionStyle = ({

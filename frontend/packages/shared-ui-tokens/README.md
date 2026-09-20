@@ -1,6 +1,6 @@
 # shared-ui-tokens
 
-Shared platform-agnostic design tokens for PokeGo Nexus clients.
+Shared platform-agnostic design tokens for Pokémon Go Nexus clients.
 
 Current exports:
 

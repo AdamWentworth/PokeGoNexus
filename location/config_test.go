@@ -45,3 +45,17 @@ func TestReadEnvIntWithDefault(t *testing.T) {
 		t.Fatalf("expected fallback 9, got %d", got)
 	}
 }
+
+func TestReadEnvInt32WithDefault(t *testing.T) {
+	t.Setenv("X_INT32", "42")
+	if got := readEnvInt32WithDefault("X_INT32", 9); got != 42 {
+		t.Fatalf("expected 42, got %d", got)
+	}
+
+	for _, invalid := range []string{"bad", "0", "-1", "2147483648"} {
+		t.Setenv("X_INT32", invalid)
+		if got := readEnvInt32WithDefault("X_INT32", 9); got != 9 {
+			t.Fatalf("expected fallback for %q, got %d", invalid, got)
+		}
+	}
+}

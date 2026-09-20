@@ -1,5 +1,20 @@
 export type PokemonMaxMoveValue = string | number | null;
 
+export type PokemonSizeClass = 'XXS' | 'XS' | 'XL' | 'XXL';
+
+export interface WantedSizeRange {
+  category: PokemonSizeClass;
+  min: number | null;
+  max: number | null;
+  min_inclusive: boolean;
+  max_inclusive: boolean;
+}
+
+export interface WantedSizePreferences {
+  weight: WantedSizeRange | null;
+  height: WantedSizeRange | null;
+}
+
 export interface PokemonInstance {
   // identity
   instance_id?: string;
@@ -69,6 +84,7 @@ export interface PokemonInstance {
   not_wanted_list: Record<string, unknown> | null;
   trade_filters: Record<string, unknown> | null;
   wanted_filters: Record<string, unknown> | null;
+  wanted_size_preferences?: WantedSizePreferences | null;
 
   // misc flags
   mirror: boolean;

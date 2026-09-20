@@ -84,6 +84,7 @@ type PokemonInstance struct {
 	IsCaught        bool     `gorm:"column:is_caught" json:"is_caught"`
 	IsForTrade      bool     `gorm:"column:is_for_trade" json:"is_for_trade"`
 	IsWanted        bool     `gorm:"column:is_wanted" json:"is_wanted"`
+	MostWanted      bool     `gorm:"column:most_wanted" json:"most_wanted"`
 	NotTradeList    RawJSON  `gorm:"column:not_trade_list;type:json" json:"not_trade_list"`
 	NotWantedList   RawJSON  `gorm:"column:not_wanted_list;type:json" json:"not_wanted_list"`
 	TraceID         *string  `gorm:"column:trace_id" json:"trace_id"`
@@ -94,6 +95,7 @@ type PokemonInstance struct {
 	DateCaught      *string  `gorm:"column:date_caught" json:"date_caught"`
 	DateAdded       *string  `gorm:"column:date_added" json:"date_added"`
 	WantedFilters   JSON     `gorm:"column:wanted_filters;type:json" json:"wanted_filters"`
+	WantedSizes     RawJSON  `gorm:"column:wanted_size_preferences;type:json" json:"wanted_size_preferences"`
 	TradeFilters    JSON     `gorm:"column:trade_filters;type:json" json:"trade_filters"`
 	Mega            bool     `gorm:"column:mega;default:false"`
 	MegaForm        *string  `gorm:"column:mega_form"`

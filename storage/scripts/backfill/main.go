@@ -536,7 +536,7 @@ func filterValidUserTagIDs(db *gorm.DB, userID string, tagIDs []string) ([]strin
 	var valid []string
 	if err := db.
 		Table("tags").
-		Where("user_id = ? AND tag_id IN ?", userID, tagIDs).
+		Where("user_id = ? AND deleted_at IS NULL AND tag_id IN ?", userID, tagIDs).
 		Pluck("tag_id", &valid).
 		Error; err != nil {
 		return nil, err

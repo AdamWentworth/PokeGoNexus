@@ -11,16 +11,11 @@ import {
 
 import { useVariantsStore } from '@/features/variants/store/useVariantsStore';
 import { variantsRepository } from '@/features/variants/repositories/variantsRepository';
-import { CACHE_TTL_MS } from '@/features/variants/utils/cache';
-
 import type { PokemonVariant } from '@/types/pokemonVariants';
-import type { PokedexLists } from '@/types/pokedex';
 
 import variantsFixture from '@/../tests/__helpers__/fixtures/variants.json';
-import pokedexListsFixture from '@/../tests/__helpers__/fixtures/pokedexLists.json';
 
 const dummyVariants = variantsFixture as unknown as PokemonVariant[];
-const dummyPokedexLists = pokedexListsFixture as unknown as PokedexLists;
 
 let loadCacheSpy: MockInstance;
 let fetchFreshSpy: MockInstance;
@@ -31,25 +26,22 @@ describe.sequential('useVariantsStore integration', () => {
 
     const now = Date.now();
     localStorage.setItem('variantsTimestamp', now.toString());
-    localStorage.setItem('pokedexListsTimestamp', now.toString());
 
     loadCacheSpy = vi
       .spyOn(variantsRepository, 'loadCache')
       .mockResolvedValue({
         variants: dummyVariants,
-        pokedexLists: dummyPokedexLists,
       });
 
     fetchFreshSpy = vi
       .spyOn(variantsRepository, 'fetchFresh')
-      .mockResolvedValue({ variants: dummyVariants, pokedexLists: dummyPokedexLists });
+      .mockResolvedValue({ variants: dummyVariants });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     useVariantsStore.setState({
       variants: [],
-      pokedexLists: {} as PokedexLists,
       variantsLoading: true,
       isRefreshing: false,
     });
@@ -63,9 +55,8 @@ describe.sequential('useVariantsStore integration', () => {
   });
 
   it('fetches fresh variants when cache is stale', async () => {
-    const stale = Date.now() - CACHE_TTL_MS - 1_000;
+    const stale = Date.now() - 1000 * 60 * 60 * 48;
     localStorage.setItem('variantsTimestamp', stale.toString());
-    localStorage.setItem('pokedexListsTimestamp', stale.toString());
 
     await useVariantsStore.getState().refreshVariants();
 
@@ -73,11 +64,7 @@ describe.sequential('useVariantsStore integration', () => {
     expect(useVariantsStore.getState().variants).toEqual(dummyVariants);
   });
 
-  it('triggers background refresh during hydrate when only one cache is stale', async () => {
-    const stale = Date.now() - CACHE_TTL_MS - 1_000;
-    localStorage.setItem('variantsTimestamp', stale.toString());
-    localStorage.setItem('pokedexListsTimestamp', Date.now().toString());
-
+  it('triggers a background manifest-aware refresh after cache hydration', async () => {
     const refreshSpy = vi
       .spyOn(useVariantsStore.getState(), 'refreshVariants')
       .mockResolvedValue();
@@ -97,9 +84,8 @@ describe.sequential('useVariantsStore integration', () => {
   });
 
   it('falls back to cached variants when fetchFresh throws', async () => {
-    const stale = Date.now() - CACHE_TTL_MS - 1_000;
+    const stale = Date.now() - 1000 * 60 * 60 * 48;
     localStorage.setItem('variantsTimestamp', stale.toString());
-    localStorage.setItem('pokedexListsTimestamp', stale.toString());
 
     vi.spyOn(variantsRepository, 'fetchFresh').mockRejectedValue(new Error('network down'));
 
@@ -111,13 +97,12 @@ describe.sequential('useVariantsStore integration', () => {
 
   it('ignores a second refresh call while one is already running', async () => {
     // Stale timestamps so refreshVariants will attempt the network
-    const stale = Date.now() - CACHE_TTL_MS - 1_000;
+    const stale = Date.now() - 1000 * 60 * 60 * 48;
     localStorage.setItem('variantsTimestamp', stale.toString());
-    localStorage.setItem('pokedexListsTimestamp', stale.toString());
 
     // Create a deferred promise to keep the first fetch busy
-    let resolveFetch!: (v: { variants: PokemonVariant[]; pokedexLists: PokedexLists }) => void;
-    const fetchPromise = new Promise<{ variants: PokemonVariant[]; pokedexLists: PokedexLists }>(
+    let resolveFetch!: (v: { variants: PokemonVariant[] }) => void;
+    const fetchPromise = new Promise<{ variants: PokemonVariant[] }>(
       (r) => (resolveFetch = r),
     );
     const fetchFreshSpy = vi
@@ -133,7 +118,7 @@ describe.sequential('useVariantsStore integration', () => {
     await Promise.resolve();
 
     // Complete the network request
-    resolveFetch({ variants: dummyVariants, pokedexLists: dummyPokedexLists });
+    resolveFetch({ variants: dummyVariants });
     await Promise.all([first, second]);
 
     // Only one network call should have been made

@@ -1,212 +1,400 @@
-/* WantedInstance.css */  
-
 .wanted-instance {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  --wanted-accent: #ff7189;
+  --wanted-accent-soft: color-mix(in srgb, var(--wanted-accent) 10%, transparent);
+  --wanted-border: color-mix(in srgb, var(--wanted-accent) 35%, #48605d);
+  --caught-divider-color: color-mix(in srgb, var(--wanted-accent) 45%, #65716f);
+  --caught-image-stage-size: 238px;
+  --caught-stage-lift: 18px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.wanted-instance .top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0 1rem;
-  position: relative;
+.wanted-instance > .instance-details-body {
+  gap: 0;
+  padding: 10px 0 4px;
+  box-sizing: border-box;
 }
 
-.wanted-instance .top-row h2 {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+.wanted-instance .identity-name-slot .identity-name-eyebrow {
+  color: var(--wanted-accent);
+}
+
+.wanted-instance .identity-name-slot .name-editable-content {
+  max-width: min(78vw, 520px);
+  overflow-wrap: anywhere;
+  white-space: normal;
+  font-size: clamp(27px, 4vw, 40px);
+  line-height: 1.08;
+}
+
+.wanted-instance .purify-name-shadow-container {
+  min-height: 2.9rem;
+}
+
+.wanted-instance .purify-name-shadow-container > .lucky-component,
+.wanted-instance .purify-name-shadow-container > .purify-component {
+  margin-inline: 0;
+}
+
+.wanted-instance__conditions {
+  display: grid;
+  grid-template-columns: minmax(104px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 24px);
+  max-width: 650px;
+  margin: 6px auto 9px;
+  padding: 9px 10px;
+  border: var(--border-instance-panel);
+  border-radius: 12px;
+  background: var(--background-instance-panel);
+  box-shadow: var(--shadow-instance-panel);
+  box-sizing: border-box;
+}
+
+.wanted-instance__conditions.has-actions {
+  grid-template-columns: auto minmax(104px, auto) minmax(0, 1fr);
+}
+
+.wanted-instance__conditions.has-priority {
+  grid-template-columns: minmax(104px, 1fr) auto;
+}
+
+.wanted-instance__conditions.has-actions.has-priority {
+  grid-template-columns: auto minmax(104px, 1fr) auto;
+}
+
+.wanted-instance__conditions.has-priority .friendship-level-container {
+  grid-column: 1 / -1;
+}
+
+.wanted-instance__conditions-label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  text-align: left;
+}
+
+.wanted-instance__conditions-label > strong {
+  color: var(--wanted-accent);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.wanted-instance__conditions-label > span {
+  color: var(--color-text-secondary, #a9b8b5);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.wanted-instance__conditions .friendship-level-container {
+  gap: 3px;
+}
+
+.wanted-instance__condition-actions {
+  display: flex;
+  align-items: center;
+  align-self: start;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.wanted-instance__condition-actions .edit-save-container,
+.wanted-instance__condition-actions .icon-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
   margin: 0;
-  text-align: center;
+  padding: 0;
+  border-radius: 10px;
 }
 
-.wanted-instance .edit-save-container {
-  margin-right: auto;
+.wanted-instance__condition-actions .icon-button:hover,
+.wanted-instance__condition-actions .icon-button:focus-visible {
+  background: var(--color-icon-button-hover);
 }
 
-.wanted-instance .favorite-container {
-  margin-left: auto;
+.wanted-instance__condition-actions .icon-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wanted-accent) 72%, white);
+  outline-offset: 1px;
+}
+
+.wanted-instance__condition-actions .edit-save-container .icon-button img {
+  width: 32px;
+  height: 32px;
+}
+
+.wanted-instance__condition-right-actions {
   display: flex;
-  justify-content: flex-end;
+  min-width: 0;
   align-items: center;
-}
-
-.wanted-instance .background-select-container {
-  width: 100%;
-  position: relative;
-  display: flex;
   justify-content: flex-end;
-  margin-bottom: -40px;
-  margin-top: 10px;
+  gap: 4px;
 }
 
-.wanted-instance .background-select-row {
-  position: relative;
-  display: inline-flex;  /* Changed to inline-flex */
-  justify-content: flex-end;
-  z-index: 10;
+.wanted-instance__condition-right-actions .background-select-row {
+  margin: 0;
 }
 
-.wanted-instance .background-icon {
-  width: 25px;  /* Or whatever size you want */
-  height: 25px;  /* Or whatever size you want */
-  z-index: 11;
+.wanted-instance__condition-right-actions .background-select-row--header,
+.wanted-instance__condition-right-actions .background-select-button {
+  width: 40px;
+  height: 40px;
 }
 
-.wanted-instance .background-select-row.active .background-icon {
-  cursor: pointer;
+.wanted-instance__condition-right-actions .background-select-button {
+  border: 1px solid color-mix(in srgb, var(--wanted-border) 48%, transparent);
+  border-radius: 10px;
+  background: var(--wanted-accent-soft);
 }
 
-.wanted-instance .image-container {
-  position: relative;
-  width: 240px;
-  height: 240px;
+.wanted-instance__condition-right-actions .background-select-button:hover,
+.wanted-instance__condition-right-actions .background-select-button:focus-visible {
+  background: color-mix(in srgb, var(--wanted-accent) 17%, transparent);
 }
 
-.wanted-instance .max-badge {
-  position: absolute;
-  top: 2%; /* Position at the top */
-  right: 2%; /* Position at the right */
-  width: 35%;
-  height: auto;
-  z-index: 4;
-  max-width: 100%;
-  height: auto;
+.wanted-instance__condition-right-actions .background-icon {
+  width: 30px;
+  height: 30px;
 }
 
+.wanted-instance__conditions .heart-button:focus-visible,
+.wanted-instance__conditions .lucky-icon:focus-visible {
+  outline-color: var(--wanted-accent);
+}
 
-.wanted-instance .background-container {
-  position: absolute;
-  top: 0;
-  left: 0;
+.wanted-instance__conditions .friendship-slider {
+  accent-color: var(--wanted-accent);
+}
+
+.wanted-instance__conditions .friendship-status span {
+  border-color: color-mix(in srgb, var(--wanted-accent) 28%, transparent);
+  background: var(--wanted-accent-soft);
+}
+
+.wanted-instance__requirements {
+  width: calc(100% - 24px);
+  max-width: 700px;
+  margin: 8px auto 0;
+  padding: 0 8px 4px;
+  box-sizing: border-box;
+}
+
+.wanted-instance__requirements > .level-gender-row {
+  min-height: 30px;
+  margin-bottom: 2px;
+}
+
+.wanted-instance__moves {
   width: 100%;
-  height: 100%;
+  min-width: 0;
   overflow: hidden;
-  z-index: 1;
 }
 
-.wanted-instance .background-image {
+.wanted-instance__moves:empty {
+  display: none;
+}
+
+.wanted-instance__moves .moves-container {
+  --moves-page-inline-pad: 5px;
   width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.7) 50%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);
-  mask-image: radial-gradient(circle, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0.3) 65%, transparent 70%);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--wanted-border) 72%, transparent);
+  box-sizing: border-box;
 }
 
-.wanted-instance .brightness-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 70%);
-  z-index: 2;
-}
-
-.wanted-instance .pokemon-image-container {
-  position: relative;
-  display: inline-block;  /* Adjust size to fit the image */
-  /* Remove or comment out fixed dimensions if present:
-  width: 100%;
-  height: 100%;
-  */
-  z-index: 3;
-}
-
-.wanted-instance .pokemon-image-container img {
-  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.2));
-}
-
-.wanted-instance .lucky-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;  /* Ensure backdrop scales nicely */
-  z-index: 4;
-}
-
-.wanted-instance .pokemon-image {
-  position: relative;
-  z-index: 5;
+.wanted-instance__moves .moves-pages-viewport,
+.wanted-instance__moves .moves-page,
+.wanted-instance__moves .move-section,
+.wanted-instance__moves .move-info,
+.wanted-instance__moves .move-option-container {
+  min-width: 0;
   max-width: 100%;
-  height: auto;
+  box-sizing: border-box;
 }
 
-.wanted-instance .name-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
+.wanted-instance__moves .move-section {
+  margin-bottom: 1px;
+  padding: 2px 4px;
+  overflow: hidden;
 }
 
-.wanted-instance .gender-container {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
+.wanted-instance__moves .move-left {
+  min-width: 0;
+  overflow: hidden;
 }
 
-.wanted-instance .stats-container {
-  display: flex;
-  width: 100%;
+.wanted-instance__moves .type-icon {
+  flex: 0 0 22px;
+  margin-inline-start: 0;
 }
 
-.wanted-instance .type-container {
-  flex: 1;
+.wanted-instance__moves .move-name {
+  min-width: 0;
 }
 
-.wanted-instance .moves-container {
-  width: 100%;
+.wanted-instance__moves .move-power-value {
+  flex: 0 0 44px;
+}
+
+.wanted-instance--catalog-view {
+  --caught-image-stage-size: 196px;
+  --caught-stage-lift: 0px;
+}
+
+.wanted-instance--catalog-view > .instance-details-body {
+  padding: 10px 0 4px;
+}
+
+.wanted-instance--catalog-view .purify-name-shadow-container {
+  min-height: 2.55rem;
+}
+
+.wanted-instance--catalog-view .identity-name-slot .name-editable-content {
+  font-size: clamp(25px, 4vw, 34px);
+}
+
+.wanted-instance--catalog-view .wanted-instance__conditions,
+.wanted-instance--catalog-view .wanted-instance__requirements {
+  width: calc(100% - 20px);
+}
+
+:root[data-theme='light'] .wanted-instance {
+  --wanted-accent: #b0003b;
+  --wanted-border: color-mix(in srgb, var(--wanted-accent) 35%, var(--light-caught-card-border, #b9c8c4));
+  color: var(--light-text-primary);
+}
+
+:root[data-theme='light'] .wanted-instance__conditions-label > span {
+  color: var(--light-text-secondary);
+}
+
+@media (max-width: 600px) {
+  .wanted-instance {
+    --caught-image-stage-size: 185px;
+    --caught-stage-lift: 8px;
+  }
+
+  .wanted-instance > .instance-details-body {
+    padding-top: 6px;
+  }
+
+  .wanted-instance .identity-name-slot .name-editable-content {
+    max-width: 76vw;
+    font-size: clamp(25px, 8vw, 32px);
+  }
+
+  .wanted-instance__conditions {
+    width: calc(100% - 16px);
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 4px;
+    margin: 4px auto 7px;
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .wanted-instance__conditions.has-actions {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .wanted-instance__conditions.has-priority {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .wanted-instance__conditions.has-actions.has-priority {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .wanted-instance__conditions-label {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-align: center;
+  }
+
+  .wanted-instance__conditions.has-actions .wanted-instance__conditions-label {
+    justify-self: start;
+  }
+
+  .wanted-instance__conditions .friendship-level-container {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .wanted-instance__condition-actions {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .wanted-instance__conditions.has-actions.has-priority .wanted-instance__conditions-label {
+    justify-self: center;
+  }
+
+  .wanted-instance__requirements {
+    width: calc(100% - 16px);
+    margin-top: 6px;
+    padding-inline: 4px;
+  }
+
+  .wanted-instance--catalog-view {
+    --caught-image-stage-size: 164px;
+    --caught-stage-lift: 0px;
+  }
+
+  .wanted-instance--catalog-view > .instance-details-body {
+    padding-top: 6px;
+  }
+}
+
+@media (max-width: 370px) {
+  .wanted-instance {
+    --caught-image-stage-size: 168px;
+  }
+
+  .wanted-instance__conditions .heart-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .wanted-instance__conditions .hearts img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .wanted-instance__conditions .lucky-icon,
+  .wanted-instance__conditions .remote-trade-icon {
+    width: 39px;
+    height: 39px;
+    margin-left: 2px;
+  }
+
+  .wanted-instance__conditions.has-actions.has-priority {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .wanted-instance__conditions.has-actions.has-priority
+    .wanted-instance__condition-right-actions {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .wanted-instance__conditions.has-actions.has-priority .friendship-level-container {
+    grid-row: 3;
+  }
 }
 
 @media (max-width: 480px) {
   .wanted-instance-window {
-    margin-bottom: 70px;
     overflow-x: hidden;
   }
 }
-
-@media (min-width: 481px) and (max-width: 767px){
-  .wanted-instance-window {
-    margin-bottom: 80px;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-}
-
-@media (min-width: 1024px) and (max-width: 1439px) {
-  .wanted-instance-overlay {
-    transform: scale(.75);
-    transform-origin: center;
-    overflow-y: visible;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .wanted-details-container .trade-item img.trade-item-img {
-    width: 100px !important;
-  }
-  .wanted-instance-overlay .overlay-row {
-    flex-wrap: nowrap;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-}
-
-@media (min-width: 1440px) {
-  .wanted-instance-overlay .overlay-row {
-    flex-wrap: nowrap;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-} 

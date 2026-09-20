@@ -12,7 +12,7 @@ var allowedOrigins map[string]struct{}
 func initAllowedOrigins() {
 	originsCSV := strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS"))
 	if originsCSV == "" {
-		originsCSV = "http://localhost:3000,http://127.0.0.1:3000,https://pokegonexus.com,https://www.pokegonexus.com,https://pokemongonexus.com,https://www.pokemongonexus.com"
+		originsCSV = "http://localhost:3000,http://127.0.0.1:3000,https://pokegonexus.com,https://www.pokegonexus.com"
 	}
 
 	allowedOrigins = make(map[string]struct{})

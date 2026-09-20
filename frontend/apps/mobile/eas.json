@@ -1,0 +1,59 @@
+{
+  "cli": {
+    "appVersionSource": "local",
+    "requireCommit": true
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development",
+        "EXPO_PUBLIC_MOBILE_EXPERIENCE": "native-preview"
+      }
+    },
+    "device-preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_MOBILE_EXPERIENCE": "native-preview"
+      }
+    },
+    "android-beta": {
+      "extends": "device-preview",
+      "environment": "preview",
+      "credentialsSource": "remote",
+      "developmentClient": false,
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "beta",
+        "EXPO_PUBLIC_MOBILE_EXPERIENCE": "native-preview",
+        "EXPO_PUBLIC_DEVICE_SMOKE_MODE": "false"
+      }
+    },
+    "performance-android": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_DEVICE_SMOKE_MODE": "true",
+        "EXPO_PUBLIC_DEVICE_SMOKE_COLOR_SCHEME": "dark",
+        "EXPO_PUBLIC_DEVICE_SMOKE_HOST": "127.0.0.1",
+        "EXPO_PUBLIC_MOBILE_EXPERIENCE": "native-preview"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_MOBILE_EXPERIENCE": "webview"
+      }
+    }
+  }
+}

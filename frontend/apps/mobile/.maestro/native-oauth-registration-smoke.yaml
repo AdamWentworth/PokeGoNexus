@@ -1,0 +1,60 @@
+appId: ${APP_ID}
+name: Native OAuth registration continuation smoke
+tags:
+  - android
+  - native-auth
+  - oauth
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/public?page=register
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: Create your account
+    timeout: 45000
+- tapOn: Sign up with Google
+- extendedWaitUntil:
+    visible: visual@example.invalid
+    timeout: 10000
+- assertNotVisible: Create a password
+- tapOn: Username
+- inputText: "OAuthTrainer"
+- hideKeyboard
+- tapOn: "Continue ›"
+- assertVisible: POKÉMON GO IDENTITY
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: YOUR AREA
+- scrollUntilVisible:
+    element:
+      text: "Continue ›"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Continue ›"
+- assertVisible: READY TO JOIN
+- assertVisible: visual@example.invalid
+- scrollUntilVisible:
+    element:
+      text: "Create account ✓"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Create account ✓"
+- extendedWaitUntil:
+    visible: "Account created."
+    timeout: 10000
+- takeScreenshot: native-oauth-registration-complete

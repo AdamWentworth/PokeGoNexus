@@ -143,7 +143,7 @@ const PokedexOverlay: React.FC<PokedexOverlayProps> = ({ pokemon, onClose, setSe
   );
 
   return (
-    <OverlayPortal>
+    <OverlayPortal onClose={onClose}>
       <div className="pokemon-overlay">
         <div className="close-button-container">
           <CloseButton onClick={onClose} />

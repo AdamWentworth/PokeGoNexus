@@ -21,8 +21,6 @@ export const STORAGE_KEYS = {
   pokemonRaidDataVersion: 'pokemonRaidDataVersion',
   raidCalibrationObservations: 'raidCalibrationObservations',
   pvpTeams: 'pvpTeams',
-  pokedexListsTimestamp: 'pokedexListsTimestamp',
-  pokedexListsCatalogVersion: 'pokedexListsCatalogVersion',
   tagsTimestamp: 'tagsTimestamp',
   pokemonEtag: 'pokemonEtag',
 } as const;

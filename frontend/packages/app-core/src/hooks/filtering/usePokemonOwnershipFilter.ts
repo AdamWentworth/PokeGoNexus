@@ -5,6 +5,8 @@ import type { Instances } from '@/types/instances';
 import type { TagBuckets } from '@/types/tags';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import { createScopedLogger } from '@/utils/logger';
+import { fromCustomTagFilter, toCustomTagFilter } from '@/features/tags/utils/customTagSelectors';
+import { getInstanceVariantResolver } from '@pokemongonexus/shared-domain/instance-variant';
 
 const log = createScopedLogger('usePokemonOwnershipFilter');
 
@@ -26,11 +28,7 @@ export function getFilteredPokemonsByOwnership(
     return [] as Array<PokemonVariant & { instanceData: PokemonInstance }>;
   }
 
-  const variantsByKey = new Map<string, PokemonVariant>();
-  for (const variant of variants) {
-    const key = String(variant.variant_id ?? '');
-    if (key) variantsByKey.set(key, variant);
-  }
+  const resolveVariant = getInstanceVariantResolver(variants);
 
   // helper: instance_ids -> hydrated rows
   const mapIds = (ids: string[]) => {
@@ -38,12 +36,8 @@ export function getFilteredPokemonsByOwnership(
 
     for (const instanceId of ids) {
       const instance = instancesData[instanceId];
-      if (!instance) continue;
-
-      const variantKey = String(instance.variant_id ?? '');
-      if (!variantKey) continue;
-
-      const variant = variantsByKey.get(variantKey);
+      if (!instance || instance.disabled) continue;
+      const variant = resolveVariant(instance);
       if (!variant) continue;
 
       mapped.push({
@@ -54,6 +48,15 @@ export function getFilteredPokemonsByOwnership(
 
     return mapped;
   };
+
+  const customTagId = fromCustomTagFilter(filter);
+  if (customTagId) {
+    const bucket =
+      tagBuckets[toCustomTagFilter(customTagId)] ??
+      tagBuckets[toCustomTagFilter(customTagId.toLowerCase())] ??
+      {};
+    return mapIds(Object.keys(bucket));
+  }
 
   // ---- derived children ----
   if ((normalizedFilter as SpecialFilter) === 'favorites') {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import './TradeTargetsList.css';
 import useSortManager from '@/hooks/sort/useSortManager';
 import { useViewportBelow, VIEWPORT_BREAKPOINTS } from '@/hooks/useViewport';
@@ -28,6 +28,7 @@ interface TradeTargetsListProps {
   sortType: SortType;
   sortMode: SortMode;
   onPokemonClick?: (key: string) => void;
+  compact?: boolean;
 }
 
 const TradeTargetsList = ({
@@ -42,9 +43,13 @@ const TradeTargetsList = ({
   sortType,
   sortMode,
   onPokemonClick,
+  compact = false,
 }: TradeTargetsListProps) => {
   const isSmallScreen = useViewportBelow(VIEWPORT_BREAKPOINTS.desktop);
   const notWantedMap = localNotWantedList || {};
+  const [query, setQuery] = useState('');
+  const [allowedOnly, setAllowedOnly] = useState(false);
+  const [undoSelection, setUndoSelection] = useState<BooleanMap | null>(null);
 
   const handleNotWantedToggle = (key: string) => {
     if (!editMode) {
@@ -85,12 +90,21 @@ const TradeTargetsList = ({
     sortMode,
   ) as unknown as TradeTargetDisplayItem[];
 
-  const finalWantedListToDisplay = isMirror
+  const finalWantedListToDisplay = (isMirror
     ? transformedWantedList
-    : sortedWantedListToDisplay;
-
-  if (!lists || finalWantedListToDisplay.length === 0) {
-    return <div>No trade targets currently selected.</div>;
+    : sortedWantedListToDisplay).filter((item) => {
+      if (allowedOnly && notWantedMap[item.key]) return false;
+      const normalizedQuery = query.trim().toLocaleLowerCase();
+      if (!normalizedQuery) return true;
+      return `${item.name ?? ''} ${item.species_name ?? ''}`
+        .toLocaleLowerCase()
+        .includes(normalizedQuery);
+    });
+  if (!lists || wantedEntries.length === 0) {
+    return <div>No Wanted Pokémon are currently selected.</div>;
+  }
+  if (!editMode && !query.trim() && finalWantedListToDisplay.length === 0) {
+    return <div>No Wanted Pokémon are currently selected.</div>;
   }
 
   const containerClass = resolveTradeTargetContainerClass(
@@ -100,18 +114,71 @@ const TradeTargetsList = ({
   const gridClass = isSmallScreen ? 'max-3-per-row' : '';
 
   return (
-    <div className={`wanted-list-container ${containerClass} ${gridClass}`}>
-      {finalWantedListToDisplay.map((wantedPokemon) => (
-        <TradeTargetListItem
-          key={wantedPokemon.key}
-          wantedPokemon={wantedPokemon}
-          isNotWanted={Boolean(notWantedMap[wantedPokemon.key])}
-          editMode={editMode}
-          onPokemonClick={onPokemonClick}
-          onNotWantedToggle={handleNotWantedToggle}
-        />
-      ))}
-    </div>
+    <>
+      {!compact ? <div className="preference-candidate-tools">
+        <label>
+          <input
+            type="search"
+            aria-label="Search Wanted Pokémon"
+            value={query}
+            placeholder="Search Pokémon"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        {editMode ? (
+          <>
+            <button type="button" onClick={() => setAllowedOnly((value) => !value)}>
+              {allowedOnly ? 'Show all' : 'Allowed only'}
+            </button>
+            <button type="button" onClick={() => {
+              setUndoSelection({ ...notWantedMap });
+              setLocalNotWantedList({});
+            }}>
+              Allow all
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setUndoSelection({ ...notWantedMap });
+                setLocalNotWantedList(
+                  Object.fromEntries(wantedEntries.map(([key]) => [key, true])),
+                );
+              }}
+            >
+              Clear all
+            </button>
+            {undoSelection ? (
+              <button
+                type="button"
+                className="preference-undo-action"
+                onClick={() => {
+                  setLocalNotWantedList(undoSelection);
+                  setUndoSelection(null);
+                }}
+              >
+                Undo
+              </button>
+            ) : null}
+          </>
+        ) : null}
+      </div> : null}
+      {finalWantedListToDisplay.length > 0 ? (
+        <div className={`wanted-list-container ${containerClass} ${gridClass}${compact ? ' preference-target-summary__list' : ''}`}>
+          {finalWantedListToDisplay.map((wantedPokemon) => (
+            <TradeTargetListItem
+              key={wantedPokemon.key}
+              wantedPokemon={wantedPokemon}
+              isNotWanted={Boolean(notWantedMap[wantedPokemon.key])}
+              editMode={editMode}
+              onPokemonClick={onPokemonClick}
+              onNotWantedToggle={handleNotWantedToggle}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="preference-candidate-empty">No Pokémon match this view.</p>
+      )}
+    </>
   );
 };
 

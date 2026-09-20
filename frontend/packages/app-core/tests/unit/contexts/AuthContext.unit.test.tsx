@@ -7,7 +7,7 @@ import type { User } from '@/types/auth';
 import {
   refreshTokenService,
 } from '@/services/authService';
-import { toast } from 'react-toastify';
+import { feedback } from '@/components/feedback';
 import {
   clearInstancesStore,
   clearAllTagsDB,
@@ -80,12 +80,12 @@ vi.mock('@/db/indexedDB', async () => {
   };
 });
 
-vi.mock('react-toastify', () => ({
-  toast: {
+vi.mock('@/components/feedback', () => ({
+  feedback: {
     info: vi.fn(),
     error: vi.fn(),
     success: vi.fn(),
-    warn: vi.fn(),
+    warning: vi.fn(),
   },
 }));
 
@@ -140,7 +140,7 @@ describe('AuthContext', () => {
     );
     await waitFor(
       () =>
-        expect(toast.info).toHaveBeenCalledWith(
+        expect(feedback.info).toHaveBeenCalledWith(
           'Your session has expired, please log in again.',
         ),
       { timeout: 1500 },

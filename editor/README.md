@@ -1,6 +1,6 @@
 # Pokemon Catalog Editor
 
-This Tkinter application is the internal authoring tool for the PokeGo Nexus
+This Tkinter application is the internal authoring tool for the Pokémon Go Nexus
 reference catalog. It edits Pokemon, moves, evolutions, shadows, costumes,
 forms, backgrounds, and size data directly in the dedicated PostgreSQL
 catalog.

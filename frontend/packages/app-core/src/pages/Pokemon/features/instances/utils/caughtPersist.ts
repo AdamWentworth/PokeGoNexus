@@ -6,7 +6,7 @@ import {
   type MegaData,
   type MovesState,
 } from './buildInstanceChanges';
-import { collectInstanceRefCandidates } from '@/features/instances/utils/instanceIdentity';
+import { collectInstanceRefCandidates } from '@pokemongonexus/shared-domain/instances';
 
 export type CaughtComputedValues = {
   cp?: number | null;

@@ -39,6 +39,11 @@ const baseTrades: TradeMap = {
     username_proposed: 'misty',
     username_accepting: 'ash',
   },
+  t5: {
+    trade_status: 'denied',
+    username_proposed: 'misty',
+    username_accepting: 'ash',
+  },
 };
 
 const baseProps = {
@@ -75,10 +80,11 @@ describe('TradeList', () => {
     expect(screen.queryByText('t3')).not.toBeInTheDocument();
   });
 
-  it('shows the empty-state message when no trades match status', () => {
+  it('groups denied trades into Closed', () => {
     render(<TradeList {...baseProps} selectedStatus="Cancelled" />);
 
-    expect(screen.getByText('No trades found for status: Cancelled')).toBeInTheDocument();
+    expect(screen.getByText('t5')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No trades here' })).not.toBeInTheDocument();
   });
 
   it('passes a safe empty instances object to trade cards when instances are missing', () => {

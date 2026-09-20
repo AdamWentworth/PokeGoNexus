@@ -1,0 +1,92 @@
+appId: ${APP_ID}
+name: Native signed-in dashboard parity smoke
+tags:
+  - android
+  - native-home
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/home
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: TRAINER DASHBOARD
+    timeout: 45000
+- assertVisible: "Welcome back,.*VisualTrainerGO"
+- assertVisible: Find Pokémon
+- assertVisible: QUICK NAVIGATION
+- takeScreenshot: home-01-top
+- tapOn: Dismiss action menu tip
+- assertNotVisible: QUICK NAVIGATION
+- scrollUntilVisible:
+    element:
+      text: At a glance
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: 2,255
+    direction: DOWN
+    timeout: 10000
+- assertVisible: 2,255
+- scrollUntilVisible:
+    element:
+      text: 208
+    direction: DOWN
+    timeout: 10000
+- assertVisible: 208
+- scrollUntilVisible:
+    element:
+      text: Trade workspace
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Trade preferences
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Trade preferences
+- scrollUntilVisible:
+    element:
+      text: Trade activity
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Trade activity
+- scrollUntilVisible:
+    element:
+      text: Your latest Pokémon
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Shiny Gigantamax Charizard
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: More trainer tools
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Pokédex
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Pokédex
+- scrollUntilVisible:
+    element:
+      text: Max Battles
+    direction: DOWN
+    timeout: 10000
+- assertVisible: Max Battles
+- takeScreenshot: home-02-dashboard

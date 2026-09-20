@@ -78,4 +78,30 @@ describe('useCalculateStardustCost', () => {
     expect(result.current.isSpecialTrade).toBe(true);
     expect(result.current.isRegisteredTrade).toBe(false);
   });
+
+  it('uses Best Friends stardust pricing for Forever Friends', async () => {
+    const passedInPokemon = {
+      variant_id: '0150-default',
+      rarity: 'Legendary',
+    } as any;
+    const selectedMatchedInstance = {
+      instance_id: '0006-default_55555555-5555-4555-8555-555555555555',
+      shiny: false,
+      rarity: 'Common',
+    } as any;
+
+    const { result } = renderHook(() =>
+      useCalculateStardustCost(
+        5,
+        passedInPokemon,
+        selectedMatchedInstance,
+        {} as any,
+        {} as any,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(result.current.stardustCost).toBe(40_000);
+    });
+  });
 });

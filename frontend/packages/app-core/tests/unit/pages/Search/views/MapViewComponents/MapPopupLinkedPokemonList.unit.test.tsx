@@ -5,66 +5,55 @@ import { describe, expect, it, vi } from 'vitest';
 import MapPopupLinkedPokemonList from '@/pages/Search/views/MapViewComponents/MapPopupLinkedPokemonList';
 
 describe('MapPopupLinkedPokemonList', () => {
-  it('renders matched images and no-match placeholders', () => {
-    const findPokemonByKey = vi
-      .fn()
-      .mockReturnValueOnce({
-        currentImage: '/images/bulbasaur.png',
-        name: 'Bulbasaur',
-        form: 'Fall',
-      })
-      .mockReturnValueOnce(null);
-
+  it('shows three resolved entries, the total, and a concise remainder', () => {
+    const findPokemonByKey = vi.fn((key?: string | null) => ({
+      currentImage: `/images/${key ?? 'unknown'}.png`,
+      name: key ?? 'Unknown',
+      form: null,
+    }));
     const entries = {
-      'variant-1_uuid-1': { match: true },
-      'variant-2_uuid-2': { match: false },
+      Bulbasaur: { match: true },
+      Charmander: { match: false },
+      Squirtle: { match: false },
+      Pikachu: { match: false },
     };
 
-    const { container } = render(
+    render(
       <MapPopupLinkedPokemonList
-        title="Wanted Pokemon:"
-        sectionClassName="wanted-list-section"
-        listClassName="wanted-list"
-        imageClassName="wanted-pokemon-image"
         entries={entries}
         findPokemonByKey={findPokemonByKey}
+        title="Trainer wants"
       />,
     );
 
-    expect(container.querySelector('.wanted-list-section')).toBeInTheDocument();
-    expect(container.querySelector('.wanted-list')).toBeInTheDocument();
-    expect(screen.getByText('Wanted Pokemon:')).toBeInTheDocument();
-    const image = screen.getByAltText('Bulbasaur');
-    expect(image).toHaveAttribute('src', '/images/bulbasaur.png');
-    expect(image).toHaveClass('wanted-pokemon-image');
-    expect(image).toHaveClass('glowing-pokemon');
-    expect(image).toHaveAttribute('title', 'Fall Bulbasaur');
-    expect(screen.getByText('No match found')).toBeInTheDocument();
-    expect(findPokemonByKey).toHaveBeenCalledWith(
-      'variant-1_uuid-1',
-      entries['variant-1_uuid-1'],
-    );
-    expect(findPokemonByKey).toHaveBeenCalledWith(
-      'variant-2_uuid-2',
-      entries['variant-2_uuid-2'],
-    );
+    expect(screen.getByText('Trainer wants')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByAltText('Bulbasaur')).toHaveClass('glowing-pokemon');
+    expect(screen.getByAltText('Charmander')).toBeInTheDocument();
+    expect(screen.getByAltText('Squirtle')).toBeInTheDocument();
+    expect(screen.queryByAltText('Pikachu')).not.toBeInTheDocument();
+    expect(screen.getByText('+1 more')).toBeInTheDocument();
   });
 
-  it('renders nothing when there are no entries', () => {
-    const findPokemonByKey = vi.fn();
-
-    const { container } = render(
+  it('omits unresolved or absent entries cleanly', () => {
+    const findPokemonByKey = vi.fn().mockReturnValue(null);
+    const { container, rerender } = render(
       <MapPopupLinkedPokemonList
-        title="Trade Pokemon:"
-        sectionClassName="trade-list-section"
-        listClassName="trade-list"
-        imageClassName="trade-pokemon-image"
-        entries={null}
+        entries={{ missing: { match: false } }}
         findPokemonByKey={findPokemonByKey}
+        title="Trainer can offer"
       />,
     );
 
     expect(container.firstChild).toBeNull();
-    expect(findPokemonByKey).not.toHaveBeenCalled();
+
+    rerender(
+      <MapPopupLinkedPokemonList
+        entries={null}
+        findPokemonByKey={findPokemonByKey}
+        title="Trainer can offer"
+      />,
+    );
+    expect(container.firstChild).toBeNull();
   });
 });

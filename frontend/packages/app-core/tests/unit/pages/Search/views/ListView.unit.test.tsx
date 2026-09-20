@@ -93,7 +93,7 @@ describe('ListView', () => {
     );
 
     expect(
-      screen.getByText(/Use the Toolbar above to Discover Pokemon near you/i),
+      screen.getByRole('heading', { name: 'Find your next Pokémon' }),
     ).toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe('ListView', () => {
     );
 
     expect(
-      screen.getByText(/No Pokemon found matching your criteria/i),
+      screen.getByRole('heading', { name: 'No listings fit these filters' }),
     ).toBeInTheDocument();
   });
 
@@ -129,6 +129,9 @@ describe('ListView', () => {
       />,
     );
     expect(caught.getAllByTestId('caught-item')).toHaveLength(2);
+    expect(caught.getByText('2 results')).toBeInTheDocument();
+    expect(caught.getByText('Search complete')).toBeInTheDocument();
+    expect(caught.getByRole('heading', { name: 'Caught Pokémon' })).toBeInTheDocument();
     caught.unmount();
 
     const trade = render(

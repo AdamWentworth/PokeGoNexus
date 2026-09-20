@@ -1,0 +1,17 @@
+.collection-priority-star {
+  display: block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.collection-priority-star--favorite {
+  color: #ffd21c;
+  filter: drop-shadow(0 0 0.2em rgba(255, 210, 28, 0.34));
+}
+
+.collection-priority-star--most-wanted {
+  color: #ff7043;
+  filter: drop-shadow(0 0 0.2em rgba(255, 112, 67, 0.42));
+}

@@ -45,6 +45,7 @@ func requiredMissingInstanceColumns() []string {
 		"not_wanted_list",
 		"trade_filters",
 		"wanted_filters",
+		"wanted_size_preferences",
 		"fusion",
 		"disabled",
 		"last_update",

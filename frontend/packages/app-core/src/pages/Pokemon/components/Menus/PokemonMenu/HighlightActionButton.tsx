@@ -1,82 +1,27 @@
-// HighlightActionButton.jsx
+import React from 'react';
+import { FaPlus, FaTags } from 'react-icons/fa';
 
-import React, { useState } from 'react';
 import './HighlightActionButton.css';
-import type { InstanceStatus } from '@/types/instances';
 
 export interface HighlightActionButtonProps {
-  highlightedCards: Set<string>;
-  handleConfirmChangeTags: (filter: InstanceStatus) => void;
-  tagFilter: InstanceStatus | '';
+  action: 'add' | 'organize';
+  count: number;
   isUpdating: boolean;
+  onOpen: () => void;
 }
 
 const HighlightActionButton: React.FC<HighlightActionButtonProps> = ({
-  highlightedCards,
-  handleConfirmChangeTags,
-  tagFilter,
+  action,
+  count,
   isUpdating,
-}) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-
-  const handleMainButtonClick = (): void => {
-    setIsExpanded(prev => !prev);
-  };
-
-  const handleFilterClick = (filter: InstanceStatus): void => {
-    handleConfirmChangeTags(filter);
-    setIsExpanded(false);
-  };
-
-  return (
-    <div className="highlight-action-container">
-      <div className={`action-buttons ${isExpanded ? 'expanded' : ''}`}>
-        {isExpanded && (
-          <div className="filter-buttons">
-            <button
-              className="filter-button Caught"
-              onClick={() => handleFilterClick('Caught')}
-              disabled={isUpdating}
-            >
-              Caught
-            </button>
-            <button
-              className="filter-button Trade"
-              onClick={() => handleFilterClick('Trade')}
-              disabled={isUpdating}
-            >
-              Trade
-            </button>
-            <button
-              className="filter-button Wanted"
-              onClick={() => handleFilterClick('Wanted')}
-              disabled={isUpdating}
-            >
-              Wanted
-            </button>
-          </div>
-        )}
-
-        <button
-          className="main-button"
-          onClick={handleMainButtonClick}
-          disabled={isUpdating}
-        >
-          Tag ({highlightedCards.size})
-        </button>
-
-        {tagFilter !== '' && (
-          <button
-            className="transfer-button"
-            onClick={() => handleFilterClick('Missing')}
-            disabled={isUpdating}
-          >
-            Transfer ({highlightedCards.size})
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
+  onOpen,
+}) => (
+  <div className="highlight-action-container">
+    <button className="main-button" disabled={isUpdating} onClick={onOpen} type="button">
+      {action === 'add' ? <FaPlus aria-hidden="true" /> : <FaTags aria-hidden="true" />}
+      <span>{action === 'add' ? 'Add' : 'Organize'} ({count})</span>
+    </button>
+  </div>
+);
 
 export default React.memo(HighlightActionButton);

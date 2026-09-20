@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS tag_orders (
+  user_id VARCHAR(255) NOT NULL,
+  parent VARCHAR(16) NOT NULL,
+  tag_keys JSON NOT NULL,
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (user_id, parent)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

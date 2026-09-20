@@ -12,4 +12,4 @@ export type {
   VariantBackground,
   RaidBoss,
   Move,
-} from '@shared-contracts/pokemon';
+} from '@pokemongonexus/shared-contracts/pokemon';

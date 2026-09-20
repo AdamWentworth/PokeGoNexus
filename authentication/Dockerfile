@@ -2,10 +2,15 @@
 
 FROM node:24-alpine3.23
 
+ARG POKEGONEXUS_BUILD_SHA=unknown
+LABEL org.opencontainers.image.source="https://github.com/AdamWentworth/PokeGoNexus" \
+      org.opencontainers.image.revision="${POKEGONEXUS_BUILD_SHA}"
+
 WORKDIR /usr/src/app
 
 # mongodump is used by backup tasks.
-RUN apk add --no-cache mongodb-tools \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache mongodb-tools \
     && addgroup -S adam \
     && adduser -S -D -H -G adam adam
 

@@ -28,6 +28,7 @@ func TestRequiredMissingInstanceColumns(t *testing.T) {
 		"last_update":     true,
 		"date_added":      true,
 	}
+	instanceColumns["wanted_size_preferences"] = true
 
 	missing := requiredMissingInstanceColumns()
 	if len(missing) != 0 {
@@ -85,6 +86,7 @@ func TestRequiredMissingInstanceColumnsDetectsIsCaught(t *testing.T) {
 		"last_update":     true,
 		"date_added":      true,
 	}
+	instanceColumns["wanted_size_preferences"] = true
 
 	missing := requiredMissingInstanceColumns()
 	found := false

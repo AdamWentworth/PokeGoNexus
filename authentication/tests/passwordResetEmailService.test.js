@@ -21,10 +21,10 @@ describe('password reset email service', () => {
       resetUrl
     });
 
-    expect(email.subject).toBe('Reset your PokeGoNexus password');
+    expect(email.subject).toBe('Reset your Pokémon Go Nexus password');
     expect(email.html).toContain('Reset my password');
     expect(email.html).toContain('30 minutes');
-    expect(email.html).toContain(resetUrl.replace('&', '&amp;'));
+    expect(email.html).toContain(resetUrl.replaceAll('&', '&amp;'));
     expect(email.text).toContain(resetUrl);
     expect(email.text).toContain('can only be used once');
     expect(email.html).not.toMatch(/click|track/i);
@@ -58,10 +58,10 @@ describe('password reset email service', () => {
     );
     const payload = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(payload).toMatchObject({
-      from: 'PokeGoNexus Accounts <accounts@mail.pokegonexus.com>',
+      from: 'Pokémon Go Nexus Accounts <accounts@mail.pokegonexus.com>',
       reply_to: 'accounts@pokegonexus.com',
       to: ['trainer@example.com'],
-      subject: 'Reset your PokeGoNexus password'
+      subject: 'Reset your Pokémon Go Nexus password'
     });
     expect(payload.html).toContain('Reset my password');
     expect(payload.text).toContain('Reset your password:');

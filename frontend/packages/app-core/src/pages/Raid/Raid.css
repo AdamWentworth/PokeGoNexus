@@ -7,6 +7,14 @@
     radial-gradient(circle at 90% 12%, rgba(255, 188, 69, 0.14), transparent 26rem), var(--color-background, #0d1011);
 }
 
+.raid-product-header {
+  --product-header-border: rgba(102, 220, 220, 0.24);
+  --product-header-label: #8fc6cb;
+
+  max-width: var(--layout-page-max);
+  margin: 0 auto 0.65rem;
+}
+
 .raid-panel,
 .raid-empty-state {
   border: 1px solid rgba(102, 220, 220, 0.24);
@@ -24,20 +32,18 @@
   text-transform: uppercase;
 }
 
-.raid-mode-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem;
+.raid-view-switcher {
+  --segmented-accent: #2fd6d0;
+  --segmented-active-text: #071214;
+  --segmented-border: rgba(102, 220, 220, 0.22);
+  --segmented-surface: rgba(15, 19, 20, 0.76);
+  --segmented-text: rgba(244, 255, 255, 0.9);
+
   max-width: 1180px;
   margin: 0 auto 0.65rem;
-  padding: 0.35rem;
-  border: 1px solid rgba(102, 220, 220, 0.22);
-  border-radius: 14px;
-  background: rgba(15, 19, 20, 0.76);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
 }
 
-.raid-mode-tabs button,
 .raid-ranking-all,
 .raid-ranking-type-options button {
   min-height: 2.55rem;
@@ -52,12 +58,6 @@
   cursor: pointer;
 }
 
-.raid-mode-tabs button {
-  min-height: 2.35rem;
-  padding: 0.5rem 0.75rem;
-}
-
-.raid-mode-tabs button.active,
 .raid-ranking-all.active,
 .raid-ranking-type-options button.active {
   border-color: rgba(47, 214, 208, 0.75);
@@ -2384,7 +2384,6 @@
 :root[data-theme="light"] .raid-toggle-button,
 :root[data-theme="light"] .raid-ranking-settings-toggle,
 :root[data-theme="light"] .raid-segmented-control button,
-:root[data-theme="light"] .raid-mode-tabs button,
 :root[data-theme="light"] .raid-ranking-all,
 :root[data-theme="light"] .raid-ranking-type-options button {
   border-color: rgba(21, 139, 154, 0.2);
@@ -2392,7 +2391,7 @@
   background: rgba(255, 255, 255, 0.7);
 }
 
-:root[data-theme="light"] .raid-mode-tabs {
+:root[data-theme="light"] .raid-view-switcher {
   border-color: rgba(21, 139, 154, 0.2);
   background: rgba(255, 255, 255, 0.68);
   box-shadow: 0 18px 42px rgba(36, 104, 116, 0.12);
@@ -2423,7 +2422,6 @@
   color: rgba(16, 83, 91, 0.78);
 }
 
-:root[data-theme="light"] .raid-mode-tabs button.active,
 :root[data-theme="light"] .raid-ranking-all.active,
 :root[data-theme="light"] .raid-ranking-type-options button.active {
   color: var(--raid-type-contrast, #071214);
@@ -2846,11 +2844,11 @@
     padding: 0.75rem;
   }
 
-  .raid-mode-tabs {
+  .raid-view-switcher {
     margin-bottom: 0.5rem;
   }
 
-  .raid-mode-tabs button {
+  .raid-view-switcher > button {
     min-height: 2.2rem;
     padding: 0.45rem 0.25rem;
     font-size: 0.7rem;

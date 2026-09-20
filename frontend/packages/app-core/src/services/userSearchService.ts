@@ -95,7 +95,7 @@ export async function fetchTrainerAutocomplete(query: string): Promise<TrainerAu
   if (!Array.isArray(body)) {
     return {
       type: 'error',
-      message: "Looks like this trainer hasn't signed up for PokeGo Nexus yet.",
+      message: "Looks like this trainer hasn't signed up for Pokémon Go Nexus yet.",
     };
   }
 

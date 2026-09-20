@@ -16,10 +16,6 @@ vi.mock('react-router', async () => {
   };
 });
 
-vi.mock('@/pages/Search/views/ListViewComponents/MiniMap', () => ({
-  default: () => <div data-testid="mini-map" />,
-}));
-
 vi.mock('@/components/pokemonComponents/MoveDisplay', () => ({
   default: () => <div data-testid="move-display" />,
 }));
@@ -80,8 +76,9 @@ describe('WantedListView', () => {
 
     render(<WantedListView item={baseItem} findPokemonByKey={findPokemonByKey} />);
 
-    expect(screen.getByTestId('mini-map')).toBeInTheDocument();
-    expect(screen.getByText('Distance: 2.51 km')).toBeInTheDocument();
+    expect(screen.getByText('2.5 km away')).toBeInTheDocument();
+    expect(screen.getByText('Wanted')).toBeInTheDocument();
+    expect(screen.getByText('Trainer can offer')).toBeInTheDocument();
     expect(screen.getByTestId('cp')).toHaveTextContent('CP:1200');
     expect(screen.getByTestId('friendship-level')).toHaveTextContent('FL:3');
     const bulbasaurImages = screen.getAllByAltText('Bulbasaur');
@@ -97,46 +94,37 @@ describe('WantedListView', () => {
     );
   });
 
-  it('navigates to wanted catalog on confirmation Yes', () => {
+  it('navigates directly to the wanted listing', () => {
     const findPokemonByKey = vi.fn(() => null);
-    const { container } = render(
+    render(
       <WantedListView item={baseItem} findPokemonByKey={findPokemonByKey} />,
     );
-
-    fireEvent.click(container.querySelector('.center-column') as Element);
-    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
-
-    expect(navigateMock).toHaveBeenCalledWith('/pokemon/ash', {
-      state: { instanceId: 'inst-1', instanceData: 'Wanted' },
+    fireEvent.click(screen.getByRole('button', { name: 'Open listing' }));
+    expect(navigateMock).toHaveBeenCalledWith('/pokemon/ash?filter=wanted', {
+      state: {
+        instanceId: 'inst-1',
+        instanceData: 'Wanted',
+        contextBackTo: '/search',
+      },
     });
   });
 
-  it('closes confirmation on No without navigating', () => {
+  it('navigates directly to the trainer profile', () => {
     const findPokemonByKey = vi.fn(() => null);
-    const { container } = render(
+    render(
       <WantedListView item={baseItem} findPokemonByKey={findPokemonByKey} />,
     );
-
-    fireEvent.click(container.querySelector('.center-column') as Element);
-    expect(
-      screen.getByText(/Would you like to see ash's Bulbasaur in their catalog/i),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'No' }));
-    expect(
-      screen.queryByText(/Would you like to see ash's Bulbasaur in their catalog/i),
-    ).not.toBeInTheDocument();
-    expect(navigateMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'View trainer' }));
+    expect(navigateMock).toHaveBeenCalledWith('/profile/ash', {
+      state: { contextBackTo: '/search' },
+    });
   });
 
-  it('opens confirmation from keyboard activation on center column', () => {
+  it('keeps wanted conditions collapsed until requested', () => {
     const findPokemonByKey = vi.fn(() => null);
     render(<WantedListView item={baseItem} findPokemonByKey={findPokemonByKey} />);
-    const centerColumn = screen.getByRole('button');
-    fireEvent.keyDown(centerColumn, { key: 'Enter' });
-    expect(
-      screen.getByText(/Would you like to see ash's Bulbasaur in their catalog/i),
-    ).toBeInTheDocument();
+    const details = screen.getByText('Wanted conditions').closest('details');
+    expect(details).not.toHaveAttribute('open');
   });
 
   it('shows Unknown date when date_caught is invalid instead of crashing', () => {

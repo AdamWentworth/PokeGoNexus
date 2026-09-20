@@ -188,3 +188,27 @@ func TestVerifyJWT_ValidToken(t *testing.T) {
 		t.Fatalf("unexpected device_id: got %q", body["device_id"])
 	}
 }
+
+func TestVerifyJWT_ValidAuthorizationHeader(t *testing.T) {
+	jwtSecret = []byte("test-secret")
+	app := newProtectedApp()
+
+	token := makeAccessToken(t, jwtSecret, AccessTokenClaims{
+		UserID:   "user-mobile",
+		Username: "misty",
+		DeviceID: "device-mobile",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := app.Test(req, fiber.TestConfig{Timeout: 0})
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: got %d, want 200", resp.StatusCode)
+	}
+}

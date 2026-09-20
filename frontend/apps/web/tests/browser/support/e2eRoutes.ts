@@ -4,18 +4,30 @@ import path from 'node:path';
 import type { Page, Route } from '@playwright/test';
 
 export type E2eRouteOptions = {
+  baseUrl?: string;
   mockImages?: boolean;
+  preserveBrowserConnectivity?: boolean;
   searchResults?: unknown[];
   communityRankings?: unknown;
   locationSuggestions?: unknown[];
   trainerSuggestions?: unknown[];
   trainerProfile?: unknown;
+  friendsOverview?: unknown;
+  trainerPreferences?: unknown;
   userInstances?: unknown;
+  syncInstances?: Record<string, unknown>;
   publicUser?: unknown;
   userOverview?: unknown;
   trades?: unknown;
   pokedexSpecies?: unknown[];
+  pokemonCatalogDelayMs?: number;
+  pvpData?: unknown;
   raidDataDelayMs?: number;
+  customTags?: unknown[];
+  tagOrders?: {
+    caught: string[];
+    wanted: string[];
+  };
 };
 
 const fixturePath = (relativePath: string) =>
@@ -95,7 +107,7 @@ const makePvPEntry = (
   name,
   pokemonId,
   variantKind: 'pokemon',
-  imageUrl: `/images/pokemon/${rank}.png`,
+  imageUrl: `/images/default/pokemon_${pokemonId}.png`,
   types: [type],
   moveset: [
     {
@@ -163,7 +175,7 @@ const makePvPEntry = (
   statProduct: (100 + rank) * (130 - rank) * (140 + rank),
 });
 
-const pvpDataFixture = {
+export const pvpDataFixture = {
   source: {
     name: 'PvPoke',
     version: 'e2e-pvpoke',
@@ -178,8 +190,8 @@ const pvpDataFixture = {
       label: 'Great League',
       cpLimit: 1_500,
       entries: [
-        makePvPEntry(1, 'clodsire', 'Clodsire', 'poison', 'Earthquake'),
-        makePvPEntry(2, 'azumarill', 'Azumarill', 'water', 'Play Rough'),
+        makePvPEntry(1, 'clodsire', 'Clodsire', 'poison', 'Earthquake', 980),
+        makePvPEntry(2, 'azumarill', 'Azumarill', 'water', 'Play Rough', 184),
         makePvPEntry(3, 'bulbasaur', 'Bulbasaur', 'grass', 'Seed Bomb', 1),
       ],
     },
@@ -340,6 +352,10 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
       },
     ),
   ) as Record<string, unknown>;
+  const tagOrders = options.tagOrders ?? {
+    caught: ['system:caught', 'system:favorites', 'system:trade'],
+    wanted: ['system:wanted', 'system:most-wanted'],
+  };
 
   if (options.mockImages ?? true) {
     await page.route('**/images/**', async (route) => {
@@ -351,7 +367,25 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
     });
   }
 
+  for (const pathPattern of ['**/api/events/getUpdates**', '**/__e2e/events/getUpdates**']) {
+    await page.route(pathPattern, async (route) => {
+      await fulfillJson(route, {});
+    });
+  }
+
+  if (!options.preserveBrowserConnectivity) {
+    // Mocked browser tests are intentionally self-contained and should not inherit a
+    // transient offline signal from the host or a neighboring Chromium context.
+    await page.addInitScript(() => {
+      Object.defineProperty(Navigator.prototype, 'onLine', {
+        configurable: true,
+        get: () => true,
+      });
+    });
+  }
+
   await page.addInitScript(() => {
+    const eventSources = new Set<MockEventSource>();
     class MockEventSource extends EventTarget {
       static readonly CONNECTING = 0;
       static readonly OPEN = 1;
@@ -370,6 +404,7 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
       constructor(url: string | URL) {
         super();
         this.url = String(url);
+        eventSources.add(this);
         queueMicrotask(() => {
           if (this.readyState === MockEventSource.CLOSED) return;
           this.readyState = MockEventSource.OPEN;
@@ -381,10 +416,27 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
 
       close() {
         this.readyState = MockEventSource.CLOSED;
+        eventSources.delete(this);
       }
     }
 
     window.EventSource = MockEventSource as typeof EventSource;
+    Object.assign(window, {
+      __emitE2eEventSourceMessage: (payload: unknown) => {
+        const event = new MessageEvent('message', { data: JSON.stringify(payload) });
+        let delivered = 0;
+        eventSources.forEach((source) => {
+          if (source.readyState !== MockEventSource.OPEN) return;
+          source.dispatchEvent(event);
+          source.onmessage?.(event);
+          if (source.onmessage) delivered += 1;
+        });
+        return delivered;
+      },
+      __e2eEventSourceCount: () => Array.from(eventSources).filter(
+        (source) => source.readyState === MockEventSource.OPEN,
+      ).length,
+    });
   });
 
   await page.route('**/api/pokemon/pokemons', async (route) => {
@@ -413,6 +465,9 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
 
   for (const pathPattern of ['**/api/pokemon/catalog', '**/__e2e/pokemon/catalog']) {
     await page.route(pathPattern, async (route) => {
+      if (options.pokemonCatalogDelayMs) {
+        await new Promise((resolve) => setTimeout(resolve, options.pokemonCatalogDelayMs));
+      }
       await fulfillJson(route, catalogFixture);
     });
   }
@@ -446,7 +501,7 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
 
   for (const pathPattern of ['**/api/pokemon/pvp-data', '**/__e2e/pokemon/pvp-data']) {
     await page.route(pathPattern, async (route) => {
-      await fulfillJson(route, pvpDataFixture);
+      await fulfillJson(route, options.pvpData ?? pvpDataFixture);
     });
   }
 
@@ -499,6 +554,41 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
     await fulfillJson(route, options.trainerSuggestions ?? []);
   });
 
+  for (const pathPattern of ['**/api/users/profiles/*', '**/__e2e/users/profiles/*']) {
+    await page.route(pathPattern, async (route) => {
+      await fulfillJson(route, trainerProfileState);
+    });
+  }
+
+  for (const pathPattern of ['**/api/users/friends', '**/__e2e/users/friends']) {
+    await page.route(pathPattern, async (route) => {
+      await fulfillJson(
+        route,
+        options.friendsOverview ?? { friends: [], incoming: [], outgoing: [], blocked: [] },
+      );
+    });
+  }
+
+  let trainerPreferences = options.trainerPreferences ?? {
+    profile_visibility: 'public',
+    collection_visibility: 'public',
+    friend_request_permission: 'everyone',
+    trainer_code_visibility: 'friends',
+    show_location: true,
+    show_pokemon_go_name: true,
+  };
+  for (const pathPattern of ['**/api/users/preferences', '**/__e2e/users/preferences']) {
+    await page.route(pathPattern, async (route) => {
+      if (route.request().method() === 'PUT') {
+        trainerPreferences = {
+          ...(trainerPreferences as Record<string, unknown>),
+          ...(route.request().postDataJSON() as Record<string, unknown>),
+        };
+      }
+      await fulfillJson(route, trainerPreferences);
+    });
+  }
+
   for (const pathPattern of ['**/api/users/trades', '**/__e2e/users/trades']) {
     await page.route(pathPattern, async (route) => {
       const url = new URL(route.request().url());
@@ -512,6 +602,37 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
       await fulfillJson(route, {
         message: `Unhandled trade route: ${route.request().method()} ${url.pathname}`,
       }, 404);
+    });
+  }
+
+  for (const pathPattern of ['**/api/users/tags', '**/__e2e/users/tags']) {
+    await page.route(pathPattern, async (route) => {
+      if (route.request().method() === 'GET') {
+        await fulfillJson(route, {
+          tags: options.customTags ?? [],
+          orders: tagOrders,
+        });
+        return;
+      }
+      await fulfillJson(route, {
+        message: `Unhandled tag route: ${route.request().method()}`,
+      }, 404);
+    });
+  }
+
+  for (const pathPattern of ['**/api/users/tags/order', '**/__e2e/users/tags/order']) {
+    await page.route(pathPattern, async (route) => {
+      const request = route.request().postDataJSON() as {
+        parent?: 'caught' | 'wanted';
+        tag_keys?: string[];
+      };
+      const parent = request.parent;
+      if (route.request().method() !== 'PUT' || !parent) {
+        await fulfillJson(route, { message: 'Invalid tag order request' }, 400);
+        return;
+      }
+      tagOrders[parent] = [...(request.tag_keys ?? [])];
+      await fulfillJson(route, { parent, tag_keys: tagOrders[parent] });
     });
   }
 
@@ -539,6 +660,18 @@ export async function installE2eRoutes(page: Page, options: E2eRouteOptions = {}
   await page.route('**/__e2e/users/instances/by-username/**', async (route) => {
     await fulfillJson(route, options.userInstances ?? defaultUserInstances);
   });
+
+  for (const pathPattern of ['**/api/users/instances/sync**', '**/__e2e/users/instances/sync**']) {
+    await page.route(pathPattern, async (route) => {
+      await fulfillJson(route, options.syncInstances
+        ? {
+            checkpoint: 'e2e-performance-checkpoint',
+            instances: options.syncInstances,
+            not_modified: false,
+          }
+        : { checkpoint: 'e2e-checkpoint', not_modified: true });
+    });
+  }
 
   await page.route('**/api/users/public/users/**', async (route) => {
     await fulfillJson(route, options.publicUser ?? defaultPublicUser);

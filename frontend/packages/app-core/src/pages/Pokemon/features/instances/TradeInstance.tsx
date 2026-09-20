@@ -32,9 +32,17 @@ const log = createScopedLogger('TradeInstance');
 interface TradeInstanceProps {
   pokemon: TradePokemon;
   isEditable: boolean;
+  catalogView?: boolean;
+  compactListingView?: boolean;
 }
 
-const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) => {
+const TradeInstance: React.FC<TradeInstanceProps> = ({
+  pokemon,
+  isEditable,
+  catalogView = false,
+  compactListingView = false,
+}) => {
+  const hideCollectionMetadata = catalogView || compactListingView;
   const updateDetails = useInstancesStore((s) => s.updateInstanceDetails);
   const { alert } = useModal();
   const entityKey = getEntityKey(pokemon);
@@ -102,6 +110,9 @@ const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) =>
     isCrown: crownData.isCrown,
     crownForm: crownData.crownForm,
   });
+  const showLevelMetadata =
+    !catalogView && (!compactListingView || editMode || level != null);
+  const showLevelArc = !catalogView && level != null;
 
   const isShadow = Boolean(pokemon.instanceData.shadow);
   const isPurified = Boolean(pokemon.instanceData.purified);
@@ -295,7 +306,9 @@ const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) =>
 
   return (
     <InstanceDetailsLayout
-      className="caught-instance trade-instance trade-instance--caught-layout"
+      className={`caught-instance trade-instance trade-instance--caught-layout${
+        catalogView ? ' trade-instance--catalog-view' : ''
+      }`}
       dateCaught={dateCaught}
       headerRow={{
         editMode,
@@ -305,7 +318,7 @@ const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) =>
         onCPChange: handleCPChange,
         onFavoriteChange: () => undefined,
         showFavorite: false,
-        rightSlot: (
+        rightSlot: catalogView || !editMode ? null : (
           <BackgroundSelector
             canPick={pokemon.backgrounds.length > 0}
             editMode={editMode}
@@ -319,7 +332,7 @@ const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) =>
         editMode,
         onToggle: () => setShowBackgrounds((prev) => !prev),
       }}
-      levelArcLevel={level}
+      levelArcLevel={showLevelArc ? level : null}
       imageStage={{
         selectedBackground,
         isLucky,
@@ -340,6 +353,7 @@ const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) =>
         onTogglePurify: () => undefined,
         showLucky: false,
         showPurify: false,
+        eyebrow: compactListingView || catalogView ? 'For Trade' : undefined,
       }}
       levelGenderRow={{
         pokemon,
@@ -349,11 +363,13 @@ const TradeInstance: React.FC<TradeInstanceProps> = ({ pokemon, isEditable }) =>
         gender,
         onGenderChange: handleGenderChange,
       }}
+      showLevelGenderRow={showLevelMetadata}
       statsRow={{
         pokemon: statsPokemon,
         editMode,
         onWeightChange: (value) => handleWeightChange(String(value)),
         onHeightChange: (value) => handleHeightChange(String(value)),
+        showTypes: !hideCollectionMetadata,
       }}
       addStatsBottomGap={addStatsBottomGap}
       showStatsDivider={showStatsDivider}

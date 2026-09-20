@@ -1,60 +1,9 @@
-/* SearchModeToggle.css */
+.search-mode-toggle {
+  --segmented-accent: #0069d2;
 
-.search-toggle-container {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin: 1.5rem 0;
-  flex-wrap: wrap;
+  width: min(100%, 430px);
 }
 
-/* Large button mode for welcome screen */
-.search-toggle-container.welcome {
-  gap: 2rem;
-}
-
-.toggle-btn {
-  padding: 0.6rem 1.5rem;
-  border-radius: 9999px;
-  border: none;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  min-width: 140px;
-}
-
-/* Enlarged buttons for welcome screen */
-.toggle-btn.large {
-  font-size: 1.5rem;
-  padding: 1.25rem 2rem;
-  min-width: 220px;
-}
-
-/* Trainer button styling */
-.trainer-btn {
-  background-color: #bfdbfe; /* Tailwind blue-200 */
-  color: #1e3a8a; /* Tailwind blue-900 */
-}
-
-.trainer-btn:hover {
-  background-color: #93c5fd; /* Tailwind blue-300 */
-}
-
-.trainer-btn.active {
-  background-color: #2563eb; /* Tailwind blue-600 */
-  color: white;
-}
-
-/* Pokemon button styling */
-.pokemon-btn {
-  background-color: #fecaca; /* Tailwind red-200 */
-  color: #7f1d1d;
-}
-.pokemon-btn:hover {
-  background-color: #fca5a5; /* Tailwind red-300 */
-}
-.pokemon-btn.active {
-  background-color: #dc2626; /* Tailwind red-600 */
-  color: white;
+:root[data-theme='light'] .search-mode-toggle {
+  --segmented-active-text: #fff;
 }

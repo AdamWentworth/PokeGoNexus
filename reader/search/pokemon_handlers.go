@@ -262,7 +262,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 			logrus.Error("Invalid friendship_level value: ", err)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid friendship_level value"})
 		}
-		if fl >= 1 && fl <= 4 {
+		if fl >= 1 && fl <= 5 {
 			friendshipLevel = &fl
 		} else if fl == 0 {
 			// Treat as null (do not filter)
@@ -479,6 +479,34 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 		}
 	}
 
+	// Search results commonly contain several listings from the same trainer. Load
+	// each trainer's related collection once instead of querying it again for every
+	// result row. Besides avoiding an N+1 query pattern, these maps also let the
+	// matching and response-building paths share the exact same snapshot.
+	resultUserIDs := uniqueInstanceUserIDs(instances)
+	wantedInstancesByUser := make(map[string][]PokemonInstance)
+	tradeInstancesByUser := make(map[string][]PokemonInstance)
+	if ownership == "trade" && len(resultUserIDs) > 0 {
+		var wantedInstances []PokemonInstance
+		if err := db.Model(&PokemonInstance{}).
+			Where("user_id IN ? AND is_wanted = ?", resultUserIDs, true).
+			Find(&wantedInstances).Error; err != nil {
+			logrus.Error("Error retrieving wanted instances for search result users: ", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve wanted instances"})
+		}
+		wantedInstancesByUser = groupInstancesByUser(wantedInstances)
+	}
+	if ownership == "wanted" && len(resultUserIDs) > 0 {
+		var tradeInstances []PokemonInstance
+		if err := db.Model(&PokemonInstance{}).
+			Where("user_id IN ? AND is_for_trade = ?", resultUserIDs, true).
+			Find(&tradeInstances).Error; err != nil {
+			logrus.Error("Error retrieving trade instances for search result users: ", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve trade instances"})
+		}
+		tradeInstancesByUser = groupInstancesByUser(tradeInstances)
+	}
+
 	// Prepare the response data
 	responseData := make(map[string]interface{})
 	for _, instance := range instances {
@@ -501,15 +529,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 
 		// New logic for ownership == "trade" and only_matching_trades == true
 		if ownership == "trade" && onlyMatchingTrades && userID != "" {
-			// Retrieve the wanted instances for the user associated with this instance
-			var wantedInstances []PokemonInstance
-			err := db.Model(&PokemonInstance{}).
-				Where("instances.user_id = ? AND is_wanted = ?", instanceUserID, true).
-				Find(&wantedInstances).Error
-			if err != nil {
-				logrus.Error("Error retrieving wanted instances for user ", instanceUserID, ": ", err)
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve wanted instances"})
-			}
+			wantedInstances := wantedInstancesByUser[instanceUserID]
 
 			// Compare current user's 'for trade' instances with the wanted instances
 			matchFound := false
@@ -560,15 +580,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 
 		// New logic for ownership == "wanted" and trade_in_wanted_list == true
 		if ownership == "wanted" && tradeInWantedList && userID != "" {
-			// Retrieve the 'for trade' instances for the user associated with this instance
-			var tradeInstances []PokemonInstance
-			err := db.Model(&PokemonInstance{}).
-				Where("instances.user_id = ? AND is_for_trade = ?", instanceUserID, true).
-				Find(&tradeInstances).Error
-			if err != nil {
-				logrus.Error("Error retrieving trade instances for user ", instanceUserID, ": ", err)
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve trade instances"})
-			}
+			tradeInstances := tradeInstancesByUser[instanceUserID]
 
 			// Compare current user's 'wanted' instances with the trade instances
 			matchFound := false
@@ -644,6 +656,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 			"is_caught":        instance.IsCaught,
 			"is_for_trade":     instance.IsForTrade,
 			"is_wanted":        instance.IsWanted,
+			"most_wanted":      instance.MostWanted,
 			"location_caught":  instance.LocationCaught,
 			"location_card":    instance.LocationCard,
 			"friendship_level": instance.FriendshipLevel,
@@ -656,6 +669,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 			"dynamax":          instance.Dynamax,
 			"gigantamax":       instance.Gigantamax,
 		}
+		instanceData["wanted_size_preferences"] = instance.WantedSizes
 
 		if instanceUserID != "" && username != "" {
 			instanceData["user_id"] = instanceUserID
@@ -669,15 +683,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 		// New logic to add trade_list when ownership is "wanted"
 		if ownership == "wanted" {
 			if instanceUserID != "" {
-				// Retrieve all 'for trade' instances for this user
-				var tradeInstances []PokemonInstance
-				err := db.Model(&PokemonInstance{}).
-					Where("instances.user_id = ? AND is_for_trade = ?", instanceUserID, true).
-					Find(&tradeInstances).Error
-				if err != nil {
-					logrus.Error("Error retrieving trade instances for user ", instanceUserID, ": ", err)
-					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve trade instances"})
-				}
+				tradeInstances := tradeInstancesByUser[instanceUserID]
 
 				// Parse the not_trade_list
 				notTradeList := make(map[string]bool)
@@ -726,6 +732,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 						"is_caught":        tradeInstance.IsCaught,
 						"is_for_trade":     tradeInstance.IsForTrade,
 						"is_wanted":        tradeInstance.IsWanted,
+						"most_wanted":      tradeInstance.MostWanted,
 						"location_caught":  tradeInstance.LocationCaught,
 						"location_card":    tradeInstance.LocationCard,
 						"friendship_level": tradeInstance.FriendshipLevel,
@@ -737,6 +744,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 						"dynamax":          tradeInstance.Dynamax,
 						"gigantamax":       tradeInstance.Gigantamax,
 					}
+					tradeInstanceData["wanted_size_preferences"] = tradeInstance.WantedSizes
 					// Add 'match' field based on tradeInWantedList
 					if tradeInWantedList && userID != "" {
 						// Determine if any of the user's 'wanted' instances match this tradeInstance
@@ -764,15 +772,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 		// New logic for ownership == "trade"
 		if ownership == "trade" {
 			if instanceUserID != "" {
-				// Retrieve all 'wanted' instances for this user
-				var wantedInstances []PokemonInstance
-				err := db.Model(&PokemonInstance{}).
-					Where("instances.user_id = ? AND is_wanted = ?", instanceUserID, true).
-					Find(&wantedInstances).Error
-				if err != nil {
-					logrus.Error("Error retrieving wanted instances for user ", instanceUserID, ": ", err)
-					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve wanted instances"})
-				}
+				wantedInstances := wantedInstancesByUser[instanceUserID]
 
 				// Parse the not_wanted_list
 				notWantedList := make(map[string]bool)
@@ -832,6 +832,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 						"is_caught":        wantedInstance.IsCaught,
 						"is_for_trade":     wantedInstance.IsForTrade,
 						"is_wanted":        wantedInstance.IsWanted,
+						"most_wanted":      wantedInstance.MostWanted,
 						"location_caught":  wantedInstance.LocationCaught,
 						"location_card":    wantedInstance.LocationCard,
 						"friendship_level": wantedInstance.FriendshipLevel,
@@ -842,6 +843,7 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 						"dynamax":          wantedInstance.Dynamax,
 						"gigantamax":       wantedInstance.Gigantamax,
 					}
+					wantedInstanceData["wanted_size_preferences"] = wantedInstance.WantedSizes
 
 					// Add 'match' field based on onlyMatchingTrades
 					if onlyMatchingTrades && userID != "" {
@@ -872,6 +874,33 @@ func SearchPokemonInstances(c fiber.Ctx) error {
 
 	logrus.Infof("Returning %d Pokemon instances", len(responseData))
 	return c.Status(fiber.StatusOK).JSON(responseData)
+}
+
+func uniqueInstanceUserIDs(instances []PokemonInstance) []string {
+	seen := make(map[string]struct{}, len(instances))
+	userIDs := make([]string, 0, len(instances))
+	for _, instance := range instances {
+		if instance.UserID == "" {
+			continue
+		}
+		if _, exists := seen[instance.UserID]; exists {
+			continue
+		}
+		seen[instance.UserID] = struct{}{}
+		userIDs = append(userIDs, instance.UserID)
+	}
+	return userIDs
+}
+
+func groupInstancesByUser(instances []PokemonInstance) map[string][]PokemonInstance {
+	grouped := make(map[string][]PokemonInstance)
+	for _, instance := range instances {
+		if instance.UserID == "" {
+			continue
+		}
+		grouped[instance.UserID] = append(grouped[instance.UserID], instance)
+	}
+	return grouped
 }
 
 // Helper function to compare two PokemonInstances based on specified criteria
@@ -926,6 +955,17 @@ func instancesMatch(a, b PokemonInstance) (bool, string) {
 
 	if !chargedMovesMatch {
 		return false, "ChargedMoveID mismatch"
+	}
+
+	if a.IsWanted && !b.IsWanted {
+		if matched, reason := matchesWantedSizePreferences(a, b); !matched {
+			return false, reason
+		}
+	}
+	if b.IsWanted && !a.IsWanted {
+		if matched, reason := matchesWantedSizePreferences(b, a); !matched {
+			return false, reason
+		}
 	}
 
 	return true, ""

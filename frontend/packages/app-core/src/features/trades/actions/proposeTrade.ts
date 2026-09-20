@@ -52,8 +52,8 @@ export async function proposeTrade(tradeData: TradeData): Promise<{
     throw new Error('"pokemon_instance_id_user_accepting" must be a string or null.');
   }
 
-  if (![1, 2, 3, 4].includes(trade_friendship_level)) {
-    throw new Error('"trade_friendship_level" must be an integer between 1 and 4.');
+  if (![1, 2, 3, 4, 5].includes(trade_friendship_level)) {
+    throw new Error('"trade_friendship_level" must be an integer between 1 and 5.');
   }
 
   const response = await createTrade({

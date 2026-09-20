@@ -40,6 +40,7 @@ interface InstanceDetailsLayoutProps {
   showMetaDivider?: boolean;
   showMetaPanel?: boolean;
   showBackgroundSelectorRow?: boolean;
+  showLevelGenderRow?: boolean;
   addStatsBottomGap?: boolean;
 }
 
@@ -64,6 +65,7 @@ const InstanceDetailsLayout: React.FC<InstanceDetailsLayoutProps> = ({
   showMetaDivider = true,
   showMetaPanel = true,
   showBackgroundSelectorRow = true,
+  showLevelGenderRow = true,
   addStatsBottomGap = false,
 }) => (
   <div className={className}>
@@ -86,7 +88,7 @@ const InstanceDetailsLayout: React.FC<InstanceDetailsLayoutProps> = ({
 
       <IdentityRow {...identityRow} />
 
-      <LevelGenderRow {...levelGenderRow} />
+      {showLevelGenderRow ? <LevelGenderRow {...levelGenderRow} /> : null}
 
       <StatsRow {...statsRow} addBottomGap={addStatsBottomGap} />
 

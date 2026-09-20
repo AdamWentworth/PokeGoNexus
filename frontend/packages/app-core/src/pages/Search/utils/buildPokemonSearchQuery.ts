@@ -5,6 +5,10 @@ import {
   toOwnershipApiValue,
   type SearchOwnershipMode,
 } from './ownershipMode';
+import {
+  backgroundMatchesCostume,
+  normalizeCostumeId,
+} from '@/utils/backgroundCostume';
 
 export type SelectedMoves = {
   fastMove: number | '' | null;
@@ -137,6 +141,37 @@ export const findMatchingPokemonVariant = (
         (variant.form ?? '').toLowerCase() === selectedForm.toLowerCase()),
   );
 
+export const validateBackgroundCostumePair = (
+  matchingPokemon: PokemonVariant,
+  costume: string | null,
+  selectedBackgroundId: number | null,
+): string | null => {
+  if (selectedBackgroundId == null) {
+    return null;
+  }
+
+  const background = matchingPokemon.backgrounds?.find(
+    (entry) => Number(entry.background_id) === Number(selectedBackgroundId),
+  );
+  if (!background) {
+    return 'The selected background is not available for this Pokémon.';
+  }
+
+  const matchingCostume = costume
+    ? matchingPokemon.costumes?.find((entry) => entry.name === costume)
+    : undefined;
+  if (costume && !matchingCostume) {
+    return 'The selected costume is not available for this Pokémon.';
+  }
+
+  const costumeId = normalizeCostumeId(matchingCostume?.costume_id);
+  if (!backgroundMatchesCostume(background, costumeId)) {
+    return 'The selected background and costume do not form a valid Pokémon combination.';
+  }
+
+  return null;
+};
+
 export const buildPokemonSearchQueryParams = ({
   matchingPokemon,
   costume,
@@ -260,6 +295,19 @@ export const preparePokemonSearchQuery = ({
     return {
       ok: false,
       errorMessage: 'No matching Pokemon found in the default list.',
+      shouldExpandSearchBar: true,
+    };
+  }
+
+  const backgroundCostumeError = validateBackgroundCostumePair(
+    matchingPokemon,
+    costume,
+    selectedBackgroundId,
+  );
+  if (backgroundCostumeError) {
+    return {
+      ok: false,
+      errorMessage: backgroundCostumeError,
       shouldExpandSearchBar: true,
     };
   }

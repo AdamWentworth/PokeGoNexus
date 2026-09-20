@@ -25,6 +25,7 @@ const TradeTargetListItem: React.FC<TradeTargetListItemProps> = ({
   onPokemonClick,
   onNotWantedToggle,
 }) => {
+  const isInteractive = !editMode && Boolean(onPokemonClick);
   const imageClasses = `wanted-item-img ${isNotWanted ? 'grey-out' : ''}`;
   const backdropClasses = `lucky-backdrop ${isNotWanted ? 'grey-out' : ''}`;
   const displayName = resolveTradeTargetDisplayName(wantedPokemon);
@@ -40,10 +41,10 @@ const TradeTargetListItem: React.FC<TradeTargetListItemProps> = ({
     <div
       className={`wanted-item ${isNotWanted ? 'is-not-wanted' : ''}`}
       onClick={handleOpenTarget}
-      role={!editMode ? 'button' : undefined}
-      tabIndex={!editMode ? 0 : undefined}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
       onKeyDown={(event) => {
-        if (!editMode && (event.key === 'Enter' || event.key === ' ')) {
+        if (isInteractive && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onPokemonClick?.(wantedPokemon.key);
         }
@@ -83,7 +84,7 @@ const TradeTargetListItem: React.FC<TradeTargetListItemProps> = ({
         <img
           src={wantedPokemon.currentImage}
           className={imageClasses}
-          alt={`Trade Target ${wantedPokemon.name}`}
+          alt={`Wanted Pokémon ${wantedPokemon.name}`}
           title={displayName}
           draggable={false}
           onDragStart={preventImageDrag}
@@ -93,12 +94,18 @@ const TradeTargetListItem: React.FC<TradeTargetListItemProps> = ({
           <button
             type="button"
             className="toggle-not-wanted"
+            aria-label={
+              isNotWanted
+                ? `Allow ${displayName}`
+                : `Remove ${displayName}`
+            }
             onClick={(event) => {
               event.stopPropagation();
               onNotWantedToggle(wantedPokemon.key);
             }}
           >
-            {isNotWanted ? '\u2713' : 'X'}
+            <span aria-hidden="true">{isNotWanted ? '+' : '\u2713'}</span>
+            <span>{isNotWanted ? 'Allow' : 'Allowed'}</span>
           </button>
         )}
       </div>

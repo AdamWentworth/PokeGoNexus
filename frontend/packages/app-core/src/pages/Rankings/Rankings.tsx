@@ -19,6 +19,8 @@ import {
   FaUsers,
 } from 'react-icons/fa';
 import type { PokemonCommunityRanking } from '@shared-contracts/search';
+import ProductPageHeader from '@/components/layout/ProductPageHeader';
+import SegmentedControl from '@/components/layout/SegmentedControl';
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
 import { useBootstrapVariants } from '@/features/variants/hooks/useBootstrapVariants';
 import { useVariantsStore } from '@/features/variants/store/useVariantsStore';
@@ -38,6 +40,21 @@ import {
 import './Rankings.css';
 
 type RankingMode = 'wanted' | 'rarest';
+const RANKING_MODE_ITEMS = [
+  {
+    ariaControls: 'community-ranking-results',
+    icon: <FaHeart />,
+    label: 'Most wanted',
+    value: 'wanted',
+  },
+  {
+    ariaControls: 'community-ranking-results',
+    icon: <FaMedal />,
+    label: 'Rarest owned',
+    value: 'rarest',
+  },
+] as const;
+
 type RankingCategory = 'all' | 'shiny' | 'costume' | 'shadow' | 'max';
 
 interface JoinedRanking extends PokemonCommunityRanking {
@@ -540,8 +557,6 @@ const Rankings: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState(INITIAL_RESULT_COUNT);
   const [showQuickControls, setShowQuickControls] = useState(false);
   const filterSummaryRef = useRef<HTMLDivElement | null>(null);
-  const wantedTabRef = useRef<HTMLButtonElement | null>(null);
-  const rarestTabRef = useRef<HTMLButtonElement | null>(null);
   const { data, error, loading, refresh } = useCommunityRankings(true);
   const mode: RankingMode =
     searchParams.get('view') === 'rarest' ? 'rarest' : 'wanted';
@@ -712,23 +727,6 @@ const Rankings: React.FC = () => {
     });
     setVisibleCount(INITIAL_RESULT_COUNT);
   };
-  const handleModeTabKeyDown = (
-    event: React.KeyboardEvent<HTMLButtonElement>,
-  ) => {
-    let nextMode: RankingMode | null = null;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
-      nextMode = mode === 'wanted' ? 'rarest' : 'wanted';
-    } else if (event.key === 'Home') {
-      nextMode = 'wanted';
-    } else if (event.key === 'End') {
-      nextMode = 'rarest';
-    }
-    if (!nextMode) return;
-
-    event.preventDefault();
-    selectMode(nextMode);
-    (nextMode === 'wanted' ? wantedTabRef : rarestTabRef).current?.focus();
-  };
   const hasActiveFilters =
     category !== 'all' ||
     personalFilter !== 'all' ||
@@ -753,62 +751,37 @@ const Rankings: React.FC = () => {
   return (
     <div className="community-rankings-page">
       <div className="community-rankings-inner">
-        <header className="community-rankings-header">
-          <img src="/images/btn_rankings.png" alt="" />
-          <div>
-            <span>Trainer collections</span>
-            <h1>Community Rankings</h1>
-          </div>
-          {data && (
-            <div className="community-rankings-population">
-              <FaUsers aria-hidden="true" />
-              <strong>
-                {Math.max(
-                  data.snapshot.collector_users,
-                  data.snapshot.wishlist_users,
-                ).toLocaleString()}
-              </strong>
-              <small>trainers</small>
-            </div>
-          )}
-        </header>
+        <ProductPageHeader
+          className="rankings-product-header"
+          eyebrow="Trainer collections"
+          icon={<img src="/images/btn_rankings.png" alt="" />}
+          meta={
+            data ? (
+              <div className="community-rankings-population">
+                <FaUsers aria-hidden="true" />
+                <strong>
+                  {Math.max(
+                    data.snapshot.collector_users,
+                    data.snapshot.wishlist_users,
+                  ).toLocaleString()}
+                </strong>
+                <small>trainers</small>
+              </div>
+            ) : null
+          }
+          title="Community Rankings"
+        />
 
         <>
             <section className="community-ranking-controls">
-              <div
-                className="community-ranking-tabs"
-                role="tablist"
-                aria-label="Community ranking"
-              >
-                <button
-                  ref={wantedTabRef}
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === 'wanted'}
-                  aria-controls="community-ranking-results"
-                  tabIndex={mode === 'wanted' ? 0 : -1}
-                  className={mode === 'wanted' ? 'active' : ''}
-                  onClick={() => selectMode('wanted')}
-                  onKeyDown={handleModeTabKeyDown}
-                >
-                  <FaHeart aria-hidden="true" />
-                  Most wanted
-                </button>
-                <button
-                  ref={rarestTabRef}
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === 'rarest'}
-                  aria-controls="community-ranking-results"
-                  tabIndex={mode === 'rarest' ? 0 : -1}
-                  className={mode === 'rarest' ? 'active' : ''}
-                  onClick={() => selectMode('rarest')}
-                  onKeyDown={handleModeTabKeyDown}
-                >
-                  <FaMedal aria-hidden="true" />
-                  Rarest owned
-                </button>
-              </div>
+              <SegmentedControl
+                ariaLabel="Community ranking"
+                className="community-ranking-switcher"
+                items={RANKING_MODE_ITEMS}
+                mode="tabs"
+                onChange={selectMode}
+                value={mode}
+              />
 
               <label className="community-ranking-search">
                 <FaSearch aria-hidden="true" />

@@ -1,76 +1,161 @@
-/* TradeListDisplay.css */
-
 .trade-item {
-    position: relative;
-    overflow: hidden;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 164px;
+  height: 100%;
+  padding: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(191, 212, 203, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+  box-sizing: border-box;
+}
+
+.trade-item[role='button'] {
+  cursor: pointer;
+}
+
+.trade-item[role='button']:hover {
+  border-color: rgba(191, 212, 203, 0.38);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+}
+
+.trade-item:focus-visible {
+  outline: 2px solid rgba(191, 212, 203, 0.68);
+  outline-offset: 2px;
+}
+
+.trade-item.is-not-trade {
+  opacity: 0.78;
+}
+
+.trade-item__media {
+  position: relative;
+  display: flex;
+  min-height: 92px;
+  flex: 0 0 92px;
+  align-items: center;
+  justify-content: center;
 }
 
 .trade-item .trade-item-img {
-    position: relative;
-    z-index: 2; /* Ensure the image is in front of the backdrop */
-    filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.2)); /* Adds a more prominent shadow to the non-transparent parts */
-    cursor: pointer;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 88px;
+  max-height: 92px;
+  height: auto;
+  object-fit: contain;
+  cursor: inherit;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.24));
 }
 
 .trade-item .trade-item-img.grey-out {
-    filter: grayscale(100%) !important; /* Apply grayscale to the image and force it with !important */
+  filter: grayscale(100%) !important;
 }
 
-.trade-item .toggle-not-trade {
-    position: absolute;
-    z-index: 3; /* Ensure the button is in front of the image */
-    bottom: 10px; /* Position the button near the bottom of the image */
-    right: 10px; /* Position the button near the right side of the image */
+.trade-item__max-badge {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 2%;
+  width: 30%;
+  height: auto;
 }
 
-.trade-list-container.large-list {
-    grid-template-columns: repeat(5, 1fr); /* 5 items per row if the list is large */
+.trade-item__body {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  text-align: center;
 }
 
-.trade-list-container.xlarge-list {
-    grid-template-columns: repeat(6, 1fr); /* 6 items per row if the list exceeds 15 */
+.trade-item__name {
+  width: 100%;
+  min-height: 2.4em;
+  color: #e0f0e5;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
-.trade-list-container.xxlarge-list {
-    grid-template-columns: repeat(9, 1fr); /* 9 items per row if the list exceeds 30 */
+.trade-item__meta {
+  color: #a9c0ba;
+  font-size: 0.73rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 .toggle-not-trade {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    background-color: white;
-    border: 1px solid black;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 10; /* Ensure it is on top of the image */
-}
-
-.toggle-not-trade:focus {
-    outline: none;
+  position: absolute;
+  z-index: 4;
+  right: 2px;
+  bottom: 0;
+  display: inline-flex;
+  width: auto;
+  height: 28px;
+  gap: 4px;
+  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(191, 212, 203, 0.34);
+  border-radius: 7px;
+  background: rgba(25, 83, 70, 0.94);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .toggle-not-trade:hover {
-    background-color: lightgray;
+  background: rgba(52, 128, 125, 0.82);
 }
 
-/* Styles for small screens */
-@media (max-width: 1023px) {
-    .trade-list-container.max-3-per-row {
-        grid-template-columns: repeat(3, 1fr); /* Max 3 items per row on small screens */
-    }
+.trade-item.is-not-trade .toggle-not-trade {
+  background: rgba(17, 17, 17, 0.88);
 }
 
-@media (min-width: 1024px) and (max-width: 1439px) {
-    .trade-list-container.xxlarge-list {
-        grid-template-columns: repeat(6, 1fr);
-    }
+.toggle-not-trade:focus-visible {
+  outline: 2px solid rgba(191, 212, 203, 0.72);
+  outline-offset: 2px;
+}
 
+:root[data-theme='light'] .trade-item {
+  border-color: var(--light-caught-soft-border);
+  background: var(--light-caught-soft-bg);
+  box-shadow: var(--light-caught-soft-shadow);
+}
+
+:root[data-theme='light'] .trade-item[role='button']:hover {
+  border-color: var(--light-background-card-hover-border);
+  box-shadow: var(--light-background-card-hover-shadow);
+}
+
+:root[data-theme='light'] .trade-item__name {
+  color: var(--light-text-primary);
+}
+
+:root[data-theme='light'] .trade-item__meta {
+  color: var(--light-text-secondary);
+}
+
+:root[data-theme='light'] .toggle-not-trade {
+  border-color: var(--light-caught-soft-border);
+  background: var(--light-caught-toggle-bg);
+  color: var(--light-text-primary);
 }

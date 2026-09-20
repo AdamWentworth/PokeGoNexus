@@ -122,8 +122,8 @@ kafka/
   - validates compose rendering
   - blocks legacy `wurstmeister/*` images
   - enforces loopback-only external listener and health checks
-- Deploy (manual CD): `.github/workflows/deploy-kafka-prod.yml`
-  - syncs prod repo to selected branch
+- Deploy: private HomeOps `manage-pokegonexus-infrastructure`
+  - supports read-only verification before deployment
   - verifies `kafka_default` network and data dir permissions
   - recreates `zookeeper`, `kafka`, and `kafka_init`
   - verifies broker health and required topic `batchedUpdates`

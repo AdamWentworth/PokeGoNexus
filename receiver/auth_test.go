@@ -45,6 +45,37 @@ func TestVerifyAccessToken_Success(t *testing.T) {
 	}
 }
 
+func TestVerifyAccessToken_AcceptsAuthorizationHeader(t *testing.T) {
+	jwtSecret = "test-secret"
+	token := newAccessTokenForTest(t, jwt.SigningMethodHS256, AccessTokenClaims{
+		UserID:   "user-mobile",
+		Username: "misty",
+		DeviceID: "device-mobile",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+		},
+	})
+
+	app := fiber.New()
+	app.Get("/", func(c fiber.Ctx) error {
+		userID, _, _, err := verifyAccessToken(c)
+		if err != nil {
+			return err
+		}
+		return c.SendString(userID)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+}
+
 func TestVerifyAccessToken_RejectsWrongAlgorithm(t *testing.T) {
 	jwtSecret = "test-secret"
 	token := newAccessTokenForTest(t, jwt.SigningMethodHS512, AccessTokenClaims{

@@ -146,6 +146,39 @@ async function dragShowcaseSlot(
 }
 
 test.describe("Trainer profile card", () => {
+  test("keeps a public trainer profile and its collection links available while signed out", async ({
+    page,
+  }, testInfo) => {
+    const diagnostics = attachBrowserDiagnostics(page, testInfo);
+
+    try {
+      await installE2eRoutes(page, { trainerProfile });
+      await page.goto(`/profile/${trainerUser.username}`, { waitUntil: "domcontentloaded" });
+
+      const card = page.getByRole("region", {
+        name: `${trainerUser.username}'s trainer card`,
+      });
+      await expect(card).toBeVisible();
+      await expect(card.getByText("Buddy")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Action Menu" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Add friend" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Block trainer" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
+
+      await card.getByRole("button", {
+        name: `View ${trainerUser.username}'s caught Pokemon`,
+      }).click();
+      await expect(page).toHaveURL(new RegExp(
+        `/pokemon/${trainerUser.username}\\?filter=caught$`,
+        "i",
+      ));
+    } finally {
+      await diagnostics.flush();
+    }
+
+    expect(diagnostics.blockingErrors()).toEqual([]);
+  });
+
   test("keeps trainer identity, showcase, and collection facts visible without horizontal overflow", async ({
     page,
   }, testInfo) => {

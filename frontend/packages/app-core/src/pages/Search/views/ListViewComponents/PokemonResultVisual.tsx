@@ -47,7 +47,9 @@ const PokemonResultVisual: React.FC<PokemonResultVisualProps> = ({
   );
 
   return (
-    <div className="pokemon-image-container">
+    <div
+      className={`pokemon-image-container${beforeImage ? ' pokemon-image-container--with-detail' : ''}`}
+    >
       {beforeImage}
       {lucky &&
         (wrapLuckyBackdrop ? (
@@ -55,8 +57,10 @@ const PokemonResultVisual: React.FC<PokemonResultVisualProps> = ({
         ) : (
           luckyImage
         ))}
-      {imageUrl && (
+      {imageUrl ? (
         <img src={imageUrl} alt={pokemonDisplayName} className="pokemon-image" />
+      ) : (
+        <span className="pokemon-image-unavailable">Image unavailable</span>
       )}
       {dynamax && (
         <img src="/images/dynamax.png" alt="Dynamax Badge" className="max-badge" />
@@ -71,13 +75,13 @@ const PokemonResultVisual: React.FC<PokemonResultVisualProps> = ({
       {nameLayout === 'stacked' ? (
         <div className="pokemon-name">
           <p>{pokemonDisplayName}</p>
-          <Gender gender={genderValue} />
+          {genderValue ? <Gender gender={genderValue} /> : null}
         </div>
       ) : (
-        <p className="pokemon-name">
+        <div className="pokemon-name">
           {pokemonDisplayName}
-          <Gender gender={genderValue} />
-        </p>
+          {genderValue ? <Gender gender={genderValue} /> : null}
+        </div>
       )}
     </div>
   );

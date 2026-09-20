@@ -1,0 +1,311 @@
+appId: ${APP_ID}
+name: Native PvP performance contract
+tags:
+  - android
+  - performance
+---
+- openLink:
+    link: ${APP_LINK_BASE}/device-smoke/tools?tool=pvp&owned=1
+- runFlow:
+    when:
+      visible: "^Continue$"
+    commands:
+      - tapOn:
+          text: "^Continue$"
+          optional: true
+- runFlow:
+    when:
+      visible: React Native dev menu
+    commands:
+      - tapOn: Close
+- extendedWaitUntil:
+    visible: PvP Rankings
+    timeout: 60000
+
+# Cup selection and its collapsed rules disclosure.
+- tapOn: Current PvP cup
+- tapOn: Jungle Cup
+- extendedWaitUntil:
+    visible: 20 ranked
+    timeout: 15000
+- tapOn: Format rules
+- assertVisible: Only Normal, Grass, Electric, Poison, Ground, Flying, Bug, and Dark types
+- tapOn: "Great, 1,500 CP"
+- extendedWaitUntil:
+    visible: 60 ranked
+    timeout: 15000
+
+# Roster, role, query, pagination, and expanded evidence.
+- tapOn: My Pokémon
+- extendedWaitUntil:
+    visible: 1 ready
+    timeout: 30000
+- tapOn: All Pokémon
+- extendedWaitUntil:
+    visible: 60 ranked
+    timeout: 15000
+- tapOn: "^Lead$"
+- assertVisible: LEAD RANKINGS
+- tapOn: "^Overall$"
+- tapOn: Search PvP rankings
+- inputText: play rough
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Azumarill
+    timeout: 10000
+- tapOn: Search PvP rankings
+- eraseText: 20
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: Show next 10 PvP rankings
+    direction: DOWN
+    timeout: 60000
+- tapOn: Show next 10 PvP rankings
+- scrollUntilVisible:
+    element:
+      text: Meta Pokémon 60
+    direction: DOWN
+    timeout: 30000
+- extendedWaitUntil:
+    visible: Meta Pokémon 60
+    timeout: 30000
+- tapOn: Show details for Meta Pokémon 60
+- scrollUntilVisible:
+    element:
+      text: Role profile
+    direction: DOWN
+    timeout: 15000
+- assertVisible: Battle build
+- scrollUntilVisible:
+    element:
+      text: Strong matchups
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: pvp-ranking-detail
+
+# Team Builder selection, search, exact local evaluation, and source evidence.
+- scrollUntilVisible:
+    element:
+      text: "^Team Builder$"
+    direction: UP
+    timeout: 120000
+- tapOn: "^Team Builder$"
+- extendedWaitUntil:
+    visible: THREE-POKÉMON TEAM
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: Search Team Builder Pokémon
+    direction: DOWN
+    timeout: 30000
+- tapOn: Search Team Builder Pokémon
+- inputText: Azumarill
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Select Lead with Azumarill
+    timeout: 10000
+- tapOn: Search Team Builder Pokémon
+- eraseText: 20
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Select Lead with Clodsire
+    timeout: 10000
+- tapOn: Select Lead with Clodsire
+- scrollUntilVisible:
+    element:
+      text: Select Safe Swap with Azumarill
+    direction: DOWN
+    timeout: 30000
+- tapOn: Select Safe Swap with Azumarill
+- scrollUntilVisible:
+    element:
+      text: Select Closer with Bulbasaur
+    direction: DOWN
+    timeout: 30000
+- tapOn: Select Closer with Bulbasaur
+- scrollUntilVisible:
+    element:
+      text: FIELD COVERAGE
+    direction: UP
+    timeout: 30000
+- assertVisible: "^12-0$"
+- assertVisible: "^4-4$"
+- assertVisible: "^8-4$"
+- scrollUntilVisible:
+    element:
+      text: Published matchup evidence
+    direction: UP
+    timeout: 30000
+- tapOn: Published matchup evidence
+- scrollUntilVisible:
+    element:
+      text: Lanturn
+    direction: DOWN
+    timeout: 15000
+- takeScreenshot: pvp-team-builder
+
+# Focused Battle Lab picker, swap, conditions, and deterministic result.
+- scrollUntilVisible:
+    element:
+      text: "^Battle Lab$"
+    direction: UP
+    timeout: 60000
+- tapOn: "^Battle Lab$"
+- extendedWaitUntil:
+    visible: Simulate a focused matchup
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: Find Side A Pokemon
+    direction: DOWN
+    timeout: 30000
+- tapOn: Find Side A Pokemon
+- inputText: Azumarill
+- hideKeyboard
+- tapOn: Choose Azumarill for Side A
+- tapOn: Find Side A Pokemon
+- eraseText: 20
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: Choose Bulbasaur as opponent
+    direction: DOWN
+    timeout: 30000
+- tapOn: Choose Bulbasaur as opponent
+- tapOn: Swap battle sides
+- scrollUntilVisible:
+    element:
+      text: Side A shields 2
+    direction: DOWN
+    timeout: 30000
+- tapOn: Side A shields 2
+- scrollUntilVisible:
+    element:
+      text: Run battle
+    direction: DOWN
+    timeout: 30000
+- tapOn: Run battle
+- extendedWaitUntil:
+    visible: Simulated result
+    timeout: 30000
+- assertVisible: "^Bulbasaur wins$"
+- assertVisible: "^70.0s$"
+- assertVisible: "^804$"
+- assertVisible: "^195$"
+- takeScreenshot: pvp-battle-focused
+
+# Team Battle lineup editing, policy, conditions, simulation, and meta field.
+- scrollUntilVisible:
+    element:
+      text: "^Team battle$"
+    direction: UP
+    timeout: 60000
+- tapOn: "^Team battle$"
+- extendedWaitUntil:
+    visible: Switching
+    timeout: 15000
+- tapOn: "Edit Side A Safe Swap.*"
+- scrollUntilVisible:
+    element:
+      text: Search Team Battle Pokémon
+    direction: DOWN
+    timeout: 30000
+- tapOn: Search Team Battle Pokémon
+- inputText: Meta Pokémon 4
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Choose Meta Pokémon 4 for Side A Safe Swap
+    timeout: 15000
+- tapOn: Choose Meta Pokémon 4 for Side A Safe Swap
+- tapOn: Search Team Battle Pokémon
+- eraseText: 30
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "^Fixed order$"
+    direction: UP
+    timeout: 30000
+- tapOn: "^Fixed order$"
+- scrollUntilVisible:
+    element:
+      text: Side A shields 1
+    direction: DOWN
+    timeout: 30000
+- tapOn: Side A shields 1
+- scrollUntilVisible:
+    element:
+      text: Run team battle
+    direction: DOWN
+    timeout: 30000
+- tapOn: Run team battle
+- extendedWaitUntil:
+    visible: FIXED-ORDER 3V3 RESULT
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Test .* meta teams"
+    direction: UP
+    timeout: 30000
+- tapOn: "Test .* meta teams"
+- scrollUntilVisible:
+    element:
+      text: ROLE-BALANCED META FIELD
+    direction: DOWN
+    timeout: 60000
+- assertVisible: "^6-0-0$"
+- takeScreenshot: pvp-battle-team
+
+# IV source, query, selection, appraisal, and level-ceiling interactions.
+- scrollUntilVisible:
+    element:
+      text: "^IV Rank$"
+    direction: UP
+    timeout: 120000
+- tapOn: "^IV Rank$"
+- extendedWaitUntil:
+    visible: Find the strongest IV spread for this league
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "My Pokémon.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "My Pokémon.*"
+- extendedWaitUntil:
+    visible: 1 eligible for Great League
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: All Pokémon
+    direction: UP
+    timeout: 30000
+- tapOn: All Pokémon
+- scrollUntilVisible:
+    element:
+      text: Search IV Rank Pokémon
+    direction: DOWN
+    timeout: 30000
+- tapOn: Search IV Rank Pokémon
+- inputText: Bulbasaur
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Select #0001 Bulbasaur"
+    timeout: 15000
+- tapOn: "Select #0001 Bulbasaur"
+- scrollUntilVisible:
+    element:
+      text: Increase Attack IV
+    direction: DOWN
+    timeout: 30000
+- tapOn: Increase Attack IV
+- extendedWaitUntil:
+    visible: "^1$"
+    timeout: 15000
+- tapOn: "★ Best Buddy 51"
+- scrollUntilVisible:
+    element:
+      text: IV Rank result
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: pvp-iv-rank

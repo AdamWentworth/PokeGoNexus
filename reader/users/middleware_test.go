@@ -36,14 +36,15 @@ func TestInitAllowedOrigins_DefaultsWhenUnset(t *testing.T) {
 		"http://127.0.0.1:3000",
 		"https://pokegonexus.com",
 		"https://www.pokegonexus.com",
-		"https://pokemongonexus.com",
-		"https://www.pokemongonexus.com",
 	}
 
 	for _, origin := range defaults {
 		if _, ok := allowedOrigins[origin]; !ok {
 			t.Fatalf("expected default origin %s in allow list", origin)
 		}
+	}
+	if _, ok := allowedOrigins["https://pokemongonexus.com"]; ok {
+		t.Fatal("legacy origin must not be enabled by default")
 	}
 }
 

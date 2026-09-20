@@ -21,7 +21,7 @@
 }
 
 .legal-document header > span {
-  color: var(--color-accent-primary);
+  color: #268cff;
   font-size: 0.75rem;
   font-weight: 900;
   letter-spacing: 0.09em;
@@ -58,7 +58,12 @@
 }
 
 .legal-document a {
-  color: var(--color-accent-primary);
+  color: #268cff;
+}
+
+:root[data-theme='light'] .legal-document header > span,
+:root[data-theme='light'] .legal-document a {
+  color: #005fbd;
 }
 
 .legal-document footer {

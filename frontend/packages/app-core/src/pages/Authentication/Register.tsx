@@ -20,8 +20,7 @@ import {
 } from '../../services/authService';
 import './Register.css';
 import { useAuth } from '../../contexts/AuthContext';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { feedback as appFeedback } from '@/components/feedback';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { isApiError } from '../../utils/errors';
 import { updateUserInSecondaryDB } from "@/services/authService";
@@ -80,7 +79,7 @@ const Register: FC = () => {
 
   useEffect(() => {
     if (oauthStatus === 'account-not-found') {
-      toast.info('No account exists for that provider email yet. Choose a sign-up method to register.');
+      appFeedback.info('No account exists for that provider email yet. Choose a sign-up method to register.');
     }
   }, [oauthStatus]);
 
@@ -93,7 +92,7 @@ const Register: FC = () => {
         : getPendingFacebookRegistration;
     getPending()
       .then((pending) => setOauthEmail(pending.email))
-      .catch(() => toast.error(
+      .catch(() => appFeedback.error(
         `${oauthProvider === 'google' ? 'Google' : oauthProvider === 'discord' ? 'Discord' : 'Facebook'} registration expired. Please try again.`,
       ))
       .finally(() => setOauthLoading(false));
@@ -167,7 +166,7 @@ const Register: FC = () => {
           finishLogin(loginResponse, sanitizedFormValues);
         } catch (loginError) {
           log.error('Login error:', loginError);
-          toast.error('Registration successful, but login failed. Please try to log in.');
+          appFeedback.error('Registration successful, but login failed. Please try to log in.');
         } finally {
           // Set loading to false after login attempt.
           setIsLoading(false);
@@ -186,9 +185,9 @@ const Register: FC = () => {
           trainerCode: message.includes('Trainer Code') ? 'This Trainer Code is already in use.' : ''
         });
     
-        toast.error('Registration failed: ' + message);
+        appFeedback.error('Registration failed: ' + message);
       } else {
-        toast.error('Registration failed: Please check your input and try again.');
+        appFeedback.error('Registration failed: Please check your input and try again.');
       }
     
       setIsLoading(false);
@@ -233,7 +232,6 @@ const Register: FC = () => {
           onFacebookClick={() => startFacebookAuthentication('register')}
         />
       )}
-      <ToastContainer />
     </div>
   );
 };

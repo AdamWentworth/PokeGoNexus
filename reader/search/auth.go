@@ -3,6 +3,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -17,6 +18,19 @@ type AccessTokenClaims struct {
 	jwt.RegisteredClaims
 }
 
+func readAccessToken(c fiber.Ctx) string {
+	if token := strings.TrimSpace(c.Cookies("accessToken")); token != "" {
+		return token
+	}
+
+	authorization := strings.TrimSpace(c.Get("Authorization"))
+	parts := strings.SplitN(authorization, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return ""
+	}
+	return strings.TrimSpace(parts[1])
+}
+
 // Middleware to verify the JWT
 func verifyJWT(c fiber.Ctx) error {
 	if len(jwtSecret) == 0 {
@@ -24,9 +38,9 @@ func verifyJWT(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Server configuration error"})
 	}
 
-	tokenString := c.Cookies("accessToken")
+	tokenString := readAccessToken(c)
 	if tokenString == "" {
-		logrus.Warn("Authentication failed: accessToken cookie missing")
+		logrus.Warn("Authentication failed: access token missing")
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Authentication failed"})
 	}
 	if len(tokenString) > 8192 {

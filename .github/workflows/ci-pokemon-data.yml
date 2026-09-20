@@ -8,8 +8,6 @@ on:
       - "nginx/**"
       - "ops/pokemon-catalog/**"
       - ".github/workflows/ci-pokemon-data.yml"
-      - ".github/workflows/deploy-pokemon-catalog-db-prod.yml"
-      - ".github/workflows/deploy-pokemon-prod.yml"
   push:
     branches: ["main", "master"]
     paths:
@@ -18,8 +16,6 @@ on:
       - "nginx/**"
       - "ops/pokemon-catalog/**"
       - ".github/workflows/ci-pokemon-data.yml"
-      - ".github/workflows/deploy-pokemon-catalog-db-prod.yml"
-      - ".github/workflows/deploy-pokemon-prod.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -38,7 +34,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           # Use a patched toolchain so govulncheck is not blocked by stdlib CVEs.
-          go-version: "1.26.5"
+          go-version: "1.26.6"
           cache: true
           cache-dependency-path: pokemon/go.sum
 
@@ -113,7 +109,10 @@ jobs:
 
       - name: Build Container Image
         run: |
-          docker build -t pokemon_data:ci-${{ github.sha }} ./pokemon
+          docker build \
+            --build-arg POKEGONEXUS_BUILD_SHA=${{ github.sha }} \
+            -t pokemon_data:ci-${{ github.sha }} \
+            ./pokemon
 
       - name: Trivy Filesystem Scan
         shell: bash

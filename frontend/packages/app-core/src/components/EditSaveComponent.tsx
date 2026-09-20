@@ -7,9 +7,15 @@ type Props = {
   editMode: boolean;
   toggleEditMode: () => void;
   isEditable: boolean;
+  label?: string;
 };
 
-const EditSaveComponent: React.FC<Props> = ({ editMode, toggleEditMode, isEditable }) => {
+const EditSaveComponent: React.FC<Props> = ({
+  editMode,
+  toggleEditMode,
+  isEditable,
+  label,
+}) => {
   if (!isEditable) return null;
 
   const editIcon = `/images/edit-icon.png`;
@@ -17,7 +23,13 @@ const EditSaveComponent: React.FC<Props> = ({ editMode, toggleEditMode, isEditab
 
   return (
     <div className="edit-save-container">
-      <button onClick={toggleEditMode} className="icon-button">
+      <button
+        type="button"
+        onClick={toggleEditMode}
+        className="icon-button"
+        aria-label={label}
+        title={label}
+      >
         <img src={editMode ? saveIcon : editIcon} alt={editMode ? 'Save' : 'Edit'} />
       </button>
     </div>

@@ -21,6 +21,7 @@ interface StatsRowProps {
   onWeightChange: (value: string | number) => void;
   onHeightChange: (value: string | number) => void;
   addBottomGap?: boolean;
+  showTypes?: boolean;
 }
 
 const StatsRow: React.FC<StatsRowProps> = ({
@@ -29,11 +30,15 @@ const StatsRow: React.FC<StatsRowProps> = ({
   onWeightChange,
   onHeightChange,
   addBottomGap = false,
+  showTypes = true,
 }) => {
   const showWeight = editMode || Boolean(pokemon.instanceData?.weight);
   const showHeight = editMode || Boolean(pokemon.instanceData?.height);
+  if (!showWeight && !showTypes && !showHeight) return null;
+
   const containerClassName = `weight-type-height-container${
-    !showWeight && !showHeight ? ' only-type' : ''
+    !showWeight && !showHeight && showTypes ? ' only-type' : ''
+  }${!showTypes ? ' without-types' : ''
   }${addBottomGap ? ' terminal-spacing' : ''}`;
 
   return (
@@ -47,13 +52,13 @@ const StatsRow: React.FC<StatsRowProps> = ({
           />
         </div>
       ) : null}
-      {showWeight ? (
+      {showWeight && showTypes ? (
         <span className="stats-pipe" aria-hidden="true">
           |
         </span>
       ) : null}
-      <Types pokemon={pokemon} />
-      {showHeight ? (
+      {showTypes ? <Types pokemon={pokemon} /> : null}
+      {showTypes && showHeight ? (
         <span className="stats-pipe" aria-hidden="true">
           |
         </span>
@@ -72,4 +77,3 @@ const StatsRow: React.FC<StatsRowProps> = ({
 };
 
 export default StatsRow;
-

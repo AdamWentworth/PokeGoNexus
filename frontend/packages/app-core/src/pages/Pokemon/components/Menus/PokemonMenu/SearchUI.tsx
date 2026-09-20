@@ -81,6 +81,7 @@ const SearchUI: React.FC<SearchUIProps> = ({
             <input
               type="text"
               value={inputValue}
+              aria-label="Search Pokémon"
               onFocus={handleFocus}
               onChange={handleInputChange}
               className="search-input"

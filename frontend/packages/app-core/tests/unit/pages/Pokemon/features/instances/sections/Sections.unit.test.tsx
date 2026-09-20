@@ -177,7 +177,7 @@ describe('instances section components', () => {
     expect(screen.queryByAltText('Background Selector')).not.toBeInTheDocument();
 
     rerender(<BackgroundSelector canPick={true} editMode={true} onToggle={onToggle} />);
-    fireEvent.click(screen.getByAltText('Background Selector'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose special background' }));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
@@ -204,6 +204,25 @@ describe('instances section components', () => {
     expect(toggleEditMode).toHaveBeenCalledTimes(1);
     expect(onCPChange).toHaveBeenCalledWith('2500');
     expect(onFavoriteChange).toHaveBeenCalledWith(true);
+  });
+
+  it('HeaderRow can omit CP and favorite controls for non-caught listings', () => {
+    render(
+      <HeaderRow
+        editMode={false}
+        toggleEditMode={() => undefined}
+        isEditable={true}
+        cp="100"
+        onCPChange={() => undefined}
+        onFavoriteChange={() => undefined}
+        showCP={false}
+        showFavorite={false}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'cp-100' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'favorite' })).not.toBeInTheDocument();
+    expect(document.querySelector('.top-row-favorite-spacer')).not.toBeNull();
   });
 
   it('IdentityRow forwards lucky/name/purify callbacks', () => {
@@ -329,6 +348,26 @@ describe('instances section components', () => {
 
     expect(screen.getByText('level-')).toBeInTheDocument();
     expect(screen.queryByText('gender')).not.toBeInTheDocument();
+  });
+
+  it('LevelGenderRow can preserve the caught gender rail without a level field', () => {
+    render(
+      <LevelGenderRow
+        pokemon={{}}
+        editMode={true}
+        level={null}
+        onLevelChange={vi.fn()}
+        gender={null}
+        onGenderChange={vi.fn()}
+        showLevel={false}
+        showGenderWhenUnset
+        searchMode
+      />,
+    );
+
+    expect(screen.queryByText('level-')).not.toBeInTheDocument();
+    expect(screen.getByText('gender')).toBeInTheDocument();
+    expect(screen.getByText('gender').closest('.gender-wrapper')).not.toBeNull();
   });
 
   it('MetaPanel renders location/date/ball controls', () => {

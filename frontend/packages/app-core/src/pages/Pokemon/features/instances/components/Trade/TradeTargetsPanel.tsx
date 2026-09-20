@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TradeTargetsPanel.css';
 import { useInstancesStore } from '@/features/instances/store/useInstancesStore';
-import { useModal } from '@/contexts/ModalContext';
 import type { Instances } from '@/types/instances';
 import type { PokemonInstance } from '@/types/pokemonInstance';
 import type { PokemonVariant } from '@/types/pokemonVariants';
@@ -10,8 +9,8 @@ import type { SortMode, SortType } from '@/types/sort';
 import TradeTargetsList from './TradeTargetsList';
 
 import TradeTargetsHeader from './TradeTargetsHeader';
-import TradeFilterDropdowns from './TradeFilterDropdowns';
-import TradeOverlaysPanel from './TradeOverlaysPanel';
+import TradePreferenceFilters from './TradePreferenceFilters';
+import MirrorManager from './MirrorManager';
 import {
   TradeTargetsIntro,
   TradeTargetsWantedPanel,
@@ -33,9 +32,7 @@ import {
   buildWantedOverlayPokemon,
   countVisibleWantedItems,
   initializeSelection,
-  type SelectedPokemon,
 } from './tradeTargetsHelpers';
-import useTradeProposalFlow from './useTradeProposalFlow';
 import { createScopedLogger } from '@/utils/logger';
 import { useViewportBelow, VIEWPORT_BREAKPOINTS } from '@/hooks/useViewport';
 import {
@@ -60,9 +57,8 @@ interface TradeTargetsPanelProps {
   openTradeTargetOverlay: (pokemon: Record<string, unknown>) => void;
   variants: PokemonVariant[];
   isEditable: boolean;
-  username: string;
-  onClose?: () => void;
-  swipeCaptureHandlers?: React.HTMLAttributes<HTMLDivElement>;
+  onEditingChange?: (editing: boolean) => void;
+  summaryMode?: boolean;
 }
 
 const log = createScopedLogger('TradeTargetsPanel');
@@ -76,11 +72,10 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
   openTradeTargetOverlay,
   variants,
   isEditable,
-  username,
-  swipeCaptureHandlers,
+  onEditingChange,
+  summaryMode = false,
 }) => {
   const instancesMap = (instances ?? {}) as Record<string, PokemonInstance>;
-  const { alert } = useModal();
   const { not_wanted_list = {}, wanted_filters = {} } = pokemon.instanceData;
   const [localNotWantedList, setLocalNotWantedList] = useState({
     ...not_wanted_list,
@@ -95,6 +90,9 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
     () => normalizeListsState(lists),
   );
   const [, setPendingUpdates] = useState<Record<string, boolean>>({});
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'dirty' | 'saving' | 'saved' | 'error'
+  >('idle');
   const isSmallScreen = useViewportBelow(VIEWPORT_BREAKPOINTS.desktop);
 
   const {
@@ -108,29 +106,6 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
     toggleImageSelection: toggleIncludeOnlyImageSelection,
     setSelectedImages: setSelectedIncludeOnlyImages,
   } = useImageSelection(INCLUDE_IMAGES_wanted);
-
-  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-  const [selectedPokemon, setSelectedPokemon] = useState<SelectedPokemon | null>(null);
-
-  const closeOverlay = () => {
-    setIsOverlayOpen(false);
-  };
-
-  const {
-    myInstances,
-    isTradeProposalOpen,
-    tradeClickedPokemon,
-    isUpdateForTradeModalOpen,
-    caughtInstancesToTrade,
-    currentBaseKey,
-    proposeTrade,
-    closeTradeProposal,
-    closeTradeSelectionModal,
-  } = useTradeProposalFlow({
-    selectedPokemon,
-    closeOverlay,
-    alert,
-  });
 
   useEffect(() => {
     if (wanted_filters) {
@@ -177,6 +152,17 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
     setLocalNotWantedList({ ...(pokemon.instanceData.not_wanted_list ?? {}) });
   }, [pokemon.instanceData.not_wanted_list]);
 
+  const persistDetails: typeof updateDetails = async (...args) => {
+    setSaveStatus('saving');
+    try {
+      await updateDetails(...args);
+      setSaveStatus('saved');
+    } catch (error) {
+      setSaveStatus('error');
+      throw error;
+    }
+  };
+
   const { editMode, toggleEditMode } = useToggleEditModeTrade(
     pokemon,
     isMirror,
@@ -189,9 +175,20 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
     localNotWantedList,
     setLocalNotWantedList,
     localWantedFilters,
-    updateDetails,
+    persistDetails,
     filteredOutPokemon
   );
+
+  useEffect(() => {
+    onEditingChange?.(editMode);
+    if (editMode) setSaveStatus('dirty');
+  }, [editMode, onEditingChange]);
+
+  useEffect(() => {
+    if (saveStatus !== 'saved') return undefined;
+    const timeout = window.setTimeout(() => setSaveStatus('idle'), 1600);
+    return () => window.clearTimeout(timeout);
+  }, [saveStatus]);
 
   const toggleReciprocalUpdates = (key: string, updatedNotTrade: boolean) => {
     setPendingUpdates((prev) => ({ ...prev, [key]: updatedNotTrade }));
@@ -206,30 +203,6 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
       mirrorKey,
     },
   );
-
-  const handleViewTargetList = () => {
-    if (selectedPokemon) {
-      handlePokemonClick(String(selectedPokemon.key ?? ''));
-      closeOverlay();
-    }
-  };
-
-  const handleProposeTrade = async () => {
-    await proposeTrade();
-  };
-
-  const handlePokemonClickModified = (
-    instanceId: string,
-    pokemonData: SelectedPokemon,
-  ) => {
-    if (!pokemonData) return;
-    if (isEditable) {
-      handlePokemonClick(instanceId);
-    } else {
-      setSelectedPokemon(pokemonData);
-      setIsOverlayOpen(true);
-    }
-  };
 
   const handlePokemonClick = (instanceId: string) => {
     const merged = buildWantedOverlayPokemon(instanceId, variants, instancesMap);
@@ -262,8 +235,32 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
     );
   };
 
+  if (summaryMode) {
+    return (
+      <section className="preference-target-summary preference-target-summary--trade">
+        <header>
+          <strong>Wanted Pokémon</strong>
+          <span>{filteredWantedListCount}</span>
+        </header>
+        <TradeTargetsList
+          pokemon={pokemon}
+          lists={{ wanted: filteredWantedList }}
+          localNotWantedList={localNotWantedList}
+          isMirror={isMirror}
+          mirrorKey={mirrorKey}
+          setLocalNotWantedList={setLocalNotWantedList}
+          editMode={false}
+          toggleReciprocalUpdates={toggleReciprocalUpdates}
+          sortType={sortType}
+          sortMode={sortMode}
+          compact
+        />
+      </section>
+    );
+  }
+
   return (
-    <div className="trade-details-root" {...swipeCaptureHandlers}>
+    <div className="trade-details-root">
       <div className="trade-details-container">
         <TradeTargetsIntro isMirror={isMirror} />
 
@@ -273,24 +270,32 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
             isEditable={isEditable}
             editMode={editMode}
             shouldShowFewLayout={shouldShowFewLayout}
-            filtersSlot={
-              <TradeFilterDropdowns
-                isMirror={isMirror}
+            filtersSlot={(
+              <TradePreferenceFilters
+                context="wanted"
                 editMode={editMode}
+                isMirror={Boolean(isMirror)}
+                mirrorControl={(
+                  <MirrorManager
+                    pokemon={pokemon}
+                    instances={instancesMap}
+                    lists={lists}
+                    isMirror={Boolean(isMirror)}
+                    setIsMirror={setIsMirror}
+                    setMirrorKey={setMirrorKey}
+                    editMode={editMode}
+                    updateDisplayedList={handleMirrorDisplayedListUpdate}
+                    updateDetails={updateDetails}
+                  />
+                )}
                 selectedExcludeImages={selectedExcludeImages}
                 selectedIncludeOnlyImages={selectedIncludeOnlyImages}
                 toggleExcludeImageSelection={toggleExcludeImageSelection}
                 toggleIncludeOnlyImageSelection={toggleIncludeOnlyImageSelection}
               />
-            }
+            )}
             toggleEditMode={toggleEditMode}
-            pokemon={pokemon}
-            instancesMap={instancesMap}
-            lists={lists}
-            setIsMirror={setIsMirror}
-            setMirrorKey={setMirrorKey}
-            updateMirrorDisplayedList={handleMirrorDisplayedListUpdate}
-            updateDetails={updateDetails}
+            saveStatus={saveStatus}
           />
         </div>
 
@@ -299,6 +304,7 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
           isEditable={isEditable}
           editMode={editMode}
           visibleCount={filteredWantedListCount}
+          activeRuleCount={Object.values(localWantedFilters).filter(Boolean).length}
           onResetFilters={handleResetFilters}
         >
           <TradeTargetsList
@@ -313,32 +319,13 @@ const TradeTargetsPanel: React.FC<TradeTargetsPanelProps> = ({
             sortType={sortType}
             sortMode={sortMode}
             onPokemonClick={(key) => {
-              const pokemonData = filteredWantedList[key] as SelectedPokemon | undefined;
-              if (!pokemonData) return;
-              handlePokemonClickModified(key, pokemonData);
+              if (!filteredWantedList[key]) return;
+              handlePokemonClick(key);
             }}
           />
         </TradeTargetsWantedPanel>
       </div>
 
-      <TradeOverlaysPanel
-        isOverlayOpen={isOverlayOpen}
-        closeOverlay={closeOverlay}
-        handleViewTargetList={handleViewTargetList}
-        handleProposeTrade={handleProposeTrade}
-        selectedPokemon={selectedPokemon}
-        isTradeProposalOpen={isTradeProposalOpen}
-        pokemon={pokemon}
-        tradeClickedPokemon={tradeClickedPokemon}
-        onCloseTradeProposal={closeTradeProposal}
-        myInstances={myInstances}
-        instancesMap={instancesMap}
-        username={username}
-        isUpdateForTradeModalOpen={isUpdateForTradeModalOpen}
-        caughtInstancesToTrade={caughtInstancesToTrade}
-        currentBaseKey={currentBaseKey}
-        handleCancelTradeUpdate={closeTradeSelectionModal}
-      />
     </div>
   );
 };

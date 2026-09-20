@@ -40,8 +40,8 @@ const baseDetails = {
 };
 
 describe('ProposedTradeView', () => {
-  it('renders both pokemon sections and invokes delete action', () => {
-    const handleDelete = vi.fn();
+  it('renders both pokemon sections and invokes cancel action', () => {
+    const handleCancel = vi.fn();
 
     render(
       <ProposedTradeView
@@ -51,7 +51,7 @@ describe('ProposedTradeView', () => {
         loading={false}
         offeringHeading="Offering"
         receivingHeading="Receiving"
-        handleDelete={handleDelete}
+        handleCancel={handleCancel}
       />,
     );
 
@@ -61,8 +61,8 @@ describe('ProposedTradeView', () => {
     expect(screen.getByText('misty')).toBeInTheDocument();
     expect(screen.getByText('12,345')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(handleDelete).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel proposal' }));
+    expect(handleCancel).toHaveBeenCalledTimes(1);
   });
 
   it('shows no-details fallback only when section is expanded', () => {
@@ -74,7 +74,7 @@ describe('ProposedTradeView', () => {
         loading={false}
         offeringHeading="Offering"
         receivingHeading="Receiving"
-        handleDelete={vi.fn()}
+        handleCancel={vi.fn()}
       />,
     );
 
@@ -96,7 +96,7 @@ describe('ProposedTradeView', () => {
         loading={true}
         offeringHeading="Offering"
         receivingHeading="Receiving"
-        handleDelete={vi.fn()}
+        handleCancel={vi.fn()}
       />,
     );
 
