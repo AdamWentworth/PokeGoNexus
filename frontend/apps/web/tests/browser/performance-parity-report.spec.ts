@@ -14,6 +14,7 @@ import {
   type Route,
 } from '@playwright/test';
 import type { BasePokemon } from '@pokemongonexus/shared-contracts/pokemon';
+import type { AccountSecuritySummary } from '@pokemongonexus/shared-contracts/auth';
 
 import { installE2eRoutes, pvpDataFixture } from './support/e2eRoutes';
 import type { E2eRouteOptions } from './support/e2eRoutes';
@@ -570,14 +571,18 @@ const waitUntilVisuallyReady = async (page: Page) => {
     const root = document.querySelector('#root');
     const overlay = document.querySelector('.app-loading-overlay');
     const content = root?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-    const pendingStatus = Array.from(document.querySelectorAll('[role="status"]')).some(
+    // PageState announces loading through aria-live without role="status".
+    // Its shell is not a ready page or a valid performance result.
+    const pendingStatus = Array.from(document.querySelectorAll(
+      '[role="status"], .page-state[aria-live="polite"], .page-state[aria-live="assertive"]',
+    )).some(
       (element) => /^(Loading|Preparing|Opening|Syncing)\b/i.test(
         element.textContent?.replace(/\s+/g, ' ').trim() ?? '',
       ),
     );
     return !overlay && !pendingStatus && content.length >= 12;
   }, null, { timeout: 30_000 }).catch(async (cause: unknown) => {
-    const statuses = await page.locator('[role="status"]').allTextContents();
+    const statuses = await page.locator('[role="status"], .page-state').allTextContents();
     await test.info().attach('route-not-ready', {
       body: await page.screenshot(),
       contentType: 'image/png',
@@ -587,6 +592,7 @@ const waitUntilVisuallyReady = async (page: Page) => {
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   }));
+  await expect(page.locator('.app-error-fallback'), `Render failure on ${page.url()}`).toHaveCount(0);
 };
 
 const resetBrowserProbe = async (page: Page) => page.evaluate(() => {
@@ -708,6 +714,20 @@ const createMeasuredPage = async (
   // foreground every measured page; this is a no-op for the desktop proxy.
   await page.bringToFront();
   await installE2eRoutes(page, routeOptions);
+  // Route measurements visit account security before its interactive workflow
+  // installs the mutable provider fixture. Supply its actual response contract
+  // here too; an error boundary must never count as a successful route paint.
+  for (const pattern of ['**/api/auth/account/security', '**/__e2e/auth/account/security']) {
+    await page.route(pattern, (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        email: signedInUser.email,
+        hasPassword: true,
+        activeSessions: 2,
+        providers: [],
+      } satisfies AccountSecuritySummary),
+    }));
+  }
   await setAuthAndTheme(page, auth, theme);
   await installBrowserProbe(page);
   return page;
