@@ -326,3 +326,12 @@ If you're contributing:
 This monorepo is built by a passionate trainer/dev and is not affiliated with Niantic or Pokémon.
 
 **Gotta catch 'em all!** 🧢✨
+
+---
+
+## License
+
+Original source code and text documentation are licensed under the
+[Apache License 2.0](LICENSE). Pokémon imagery, game data, project branding,
+and other third-party materials retain their respective rights; see
+[NOTICE.md](NOTICE.md).
