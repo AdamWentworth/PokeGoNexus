@@ -28,7 +28,19 @@ sudo apt-get update
 sudo apt-get install -y libevent-2.1-7t64 libavif16
 ```
 
-## Daily commands
+## GitHub Actions
+
+Browser checks run when relevant source or workflow files change, with no
+scheduled runs:
+
+- Pull requests and pushes to `master` or `main` run desktop Chromium and
+  mobile Chrome smoke tests, plus the Chromium performance budget checks.
+- A manual `ci-frontend` run also includes Firefox, WebKit, and mobile Safari
+  emulation. Use **Actions → ci-frontend → Run workflow** for the full matrix.
+- The separate `smoke-frontend-prod` workflow is manual only and checks the
+  deployed site without requiring production credentials.
+
+## Local commands
 
 Run the full local browser matrix:
 
@@ -106,5 +118,5 @@ npm --workspace apps/web run smoke:production
 ```
 
 Use `PRODUCTION_SMOKE_BASE_URL` to target another HTTPS deployment. The
-scheduled `smoke-frontend-prod` workflow runs this check daily and uploads its
-JSON report without requiring production credentials.
+manual `smoke-frontend-prod` workflow accepts a `base_url` input and uploads its
+JSON report. Use **Actions → smoke-frontend-prod → Run workflow** when needed.
