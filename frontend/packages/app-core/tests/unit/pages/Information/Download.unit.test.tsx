@@ -20,13 +20,14 @@ describe('Android beta download', () => {
   });
 
   it('links directly to the reviewed version and includes that version in feedback', async () => {
-    const downloadUrl = 'https://github.com/AdamWentworth/PokeGoNexus/releases/download/android-beta-26091901/PokeGoNexus-Android-26091901.apk';
+    const downloadUrl = '/downloads/android/PokeGoNexus-Android-26091901.apk';
     vi.mocked(getAndroidBetaRelease).mockReturnValue({
       version: '1.0.3', versionCode: 26091901, publishedAt: '2026-09-19', sizeBytes: 80 * 1024 * 1024,
       downloadUrl, releaseNotesUrl: 'https://github.com/AdamWentworth/PokeGoNexus/releases/tag/android-beta-26091901', sha256: 'a'.repeat(64),
     });
     const { container } = render(<MemoryRouter><Download /></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'Download Android APK' })).toHaveAttribute('href', downloadUrl);
+    expect(screen.getByRole('link', { name: 'Download Android APK' })).toHaveAttribute('download', 'PokeGoNexus-Android-26091901.apk');
     const feedback = new URL(screen.getByRole('link', { name: /Send beta feedback/ }).getAttribute('href')!);
     expect(feedback.searchParams.get('title')).toContain('1.0.3, build 26091901');
     expect(screen.getByText(/Updates are manual/)).toBeInTheDocument();

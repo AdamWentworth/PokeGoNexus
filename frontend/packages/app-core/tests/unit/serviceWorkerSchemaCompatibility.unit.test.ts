@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { runInNewContext } from 'node:vm';
+import { describe, expect, it, vi } from 'vitest';
 
 const workerPath = [
   resolve(process.cwd(), 'public/sw.js'),
@@ -15,6 +16,31 @@ if (!workerPath) {
 const workerSource = readFileSync(workerPath, 'utf8');
 
 describe('service worker update queue compatibility', () => {
+  it('leaves APK downloads to the browser while preserving ordinary fetch handling', () => {
+    const listeners: Record<string, (event: unknown) => void> = {};
+    const fetch = vi.fn().mockResolvedValue({ ok: true });
+    runInNewContext(workerSource, {
+      self: {
+        location: { origin: 'https://pokegonexus.com' },
+        addEventListener: (name: string, handler: (event: unknown) => void) => { listeners[name] = handler; },
+      },
+      URL, fetch,
+    });
+    for (const url of [
+      'https://pokegonexus.com/downloads/android/PokeGoNexus-Android-26092001.apk',
+      'https://github.com/AdamWentworth/PokeGoNexus/releases/download/android-beta-26092001/PokeGoNexus-Android-26092001.apk',
+    ]) {
+      const respondWith = vi.fn();
+      listeners.fetch({ request: { url }, respondWith });
+      expect(respondWith).not.toHaveBeenCalled();
+    }
+    expect(fetch).not.toHaveBeenCalled();
+    const respondWith = vi.fn();
+    listeners.fetch({ request: { url: 'https://pokegonexus.com/api/pokemon/manifest' }, respondWith });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(respondWith).toHaveBeenCalledOnce();
+  });
+
   it('opens the current updatesDB schema instead of requesting a stale version', () => {
     expect(workerSource).toContain("indexedDB.open('updatesDB')");
     expect(workerSource).not.toMatch(
