@@ -36,6 +36,7 @@ const htmlRoutes = [
   "/terms",
   "/privacy",
   "/data-deletion",
+  "/download",
   "/pokedex",
   "/raid",
   "/max",
@@ -182,6 +183,28 @@ await recordCheck("service worker", async () => {
   if (!response.ok) throw new Error(`received HTTP ${response.status}`);
   return { status: response.status };
 });
+
+const betaManifest = JSON.parse(await fs.readFile(new URL('../../../packages/app-core/src/pages/Download/android-beta.json', import.meta.url), 'utf8'));
+if (betaManifest.release) {
+  await recordCheck('Android APK download headers and resume', async () => {
+    const release = betaManifest.release;
+    const filename = `PokeGoNexus-Android-${release.versionCode}.apk`;
+    const pathname = `/downloads/android/${filename}`;
+    const { response } = await fetchWithTimeout(pathname, { method: 'HEAD', redirect: 'error' });
+    assertResponse(response, 'application/vnd.android.package-archive');
+    if (Number(response.headers.get('content-length')) !== release.sizeBytes) throw new Error('APK length differs from the release');
+    if (response.headers.get('content-disposition') !== `attachment; filename="${filename}"`) throw new Error('APK filename/disposition is missing');
+    const { response: range } = await fetchWithTimeout(pathname, { headers: { Range: 'bytes=0-3' }, redirect: 'error' });
+    if (range.status !== 206 || range.headers.get('content-range') !== `bytes 0-3/${release.sizeBytes}`) throw new Error('APK download cannot resume using byte ranges');
+    if (!Buffer.from(await range.arrayBuffer()).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))) throw new Error('Download does not begin with an APK/ZIP header');
+    return { status: response.status, sizeBytes: release.sizeBytes, rangeStatus: range.status };
+  });
+  await recordCheck('missing APK returns 404 instead of the web app', async () => {
+    const { response } = await fetchWithTimeout('/downloads/android/PokeGoNexus-Android-0.apk', { method: 'HEAD', redirect: 'error' });
+    if (response.status !== 404) throw new Error(`expected 404 but received ${response.status}`);
+    return { status: response.status };
+  });
+}
 
 await recordCheck("public Pokémon catalog manifest", async () => {
   const { response } = await fetchWithTimeout("/api/pokemon/manifest");

@@ -46,7 +46,11 @@ const Download = () => {
               Released <time dateTime={release.publishedAt}>{release.publishedAt}</time>
             </p>
             <div className="download-release__actions">
-              <a className="information-button information-button--primary" href={release.downloadUrl}>
+              <a
+                className="information-button information-button--primary"
+                href={release.downloadUrl}
+                download={`PokeGoNexus-Android-${release.versionCode}.apk`}
+              >
                 <FaDownload aria-hidden="true" /> Download Android APK
               </a>
               <a className="information-button" href={release.releaseNotesUrl}>What changed</a>
@@ -78,7 +82,8 @@ const Download = () => {
         <header className="information-section__header"><h2 id="android-install-title">Install and update</h2></header>
         <ol className="download-steps">
           <li>Open this page on your Android phone and download the APK.</li>
-          <li>Open the downloaded file. If Android asks, allow your browser to install apps from this source, then tap Install.</li>
+          <li>If Chrome asks you to confirm the APK download, choose Download anyway. Wait for it to finish in Chrome’s Downloads, then open the file.</li>
+          <li>If Android asks, allow Chrome to install apps from this source, then tap Install or Update.</li>
           <li>Open Pokémon Go Nexus and sign in. You can turn off the browser’s installation permission afterward.</li>
         </ol>
         <p>

@@ -22,6 +22,7 @@
     "audit:game-master": "node scripts/audit-game-master.mjs",
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/stage-android-beta.mjs",
     "build:budget": "node scripts/check-bundle-budget.mjs",
     "preview": "vite preview",
     "test": "cd ../../packages/app-core && cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --config ../../apps/web/vite.config.mjs",

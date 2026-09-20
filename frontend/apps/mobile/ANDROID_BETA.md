@@ -6,8 +6,8 @@ invitation, automatic APK publication, or over-the-air updates are configured.
 ## Branch and release policy
 
 The native migration has merged into `master`, alongside the Vite website, and
-the completed `mobile/native-migration` branch has been retired. Use short-lived
-feature branches and reviewed PRs to `master` for both clients. Web,
+the completed `mobile/native-migration` branch has been retired. Work directly on
+`master` for both clients unless the owner explicitly requests a branch. Web,
 shared-package, authentication, and mobile CI checks apply to their affected code.
 
 Merging source, deploying the web image through HomeOps, and publishing an Android
@@ -88,7 +88,11 @@ installs cannot be updated in place with the release key: sync pending changes
 first and plan that one-time migration explicitly; never silently uninstall them.
 
 Publish the tested draft as a GitHub **prerelease**, leaving “latest” disabled.
-The public APK is hosted by GitHub Releases; Vite provides the download page.
+GitHub Releases preserves the signed source artifact. Website CI downloads that
+exact APK, verifies its size and SHA-256, and includes it in the frontend image.
+Nginx serves it directly from `/downloads/android/` with an APK filename, MIME
+type, attachment disposition, and byte-range support. The button stays on the
+website, and the service worker leaves APK downloads to the browser.
 Then enable that exact release on the website:
 
 ```sh
@@ -113,9 +117,14 @@ change; retain its signing fingerprint and highest version to protect upgrades.
 ```sh
 node --test scripts/android-beta/release.test.mjs
 cd ../web
+node --test scripts/stage-android-beta.test.mjs
 npm run test:file -- tests/unit/pages/Information/Download.unit.test.tsx
 npm run test:browsers:ci -- tests/browser/android-beta.spec.ts --project chromium-desktop --project mobile-chrome
 ```
+
+Also test the actual browser download through completion and opening the saved
+APK in Android's installer; checking only the link or fetching the asset outside
+the browser does not cover that handoff.
 
 The complete migration CI gates and outstanding device parity/lifecycle checks
 still apply. Preparing distribution does not certify all native routes or iOS.

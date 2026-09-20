@@ -88,6 +88,9 @@ self.addEventListener('activate', (event) => {
 /* ------------------------------ Fetch passthru --------------------------- */
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  // Leave APK streaming, completion, and resume to the browser's downloader.
+  // This also covers older pages that still link to the GitHub release asset.
+  if (url.pathname.startsWith('/downloads/') || /\.apk$/i.test(url.pathname)) return;
   if (url.origin === self.location.origin) {
     event.respondWith(
       fetch(event.request).catch((err) => {
