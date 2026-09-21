@@ -16,10 +16,8 @@ on:
       - "nginx/**"
       - ".github/workflows/ci-frontend.yml"
       - ".github/workflows/smoke-frontend-prod.yml"
-  schedule:
-    # Full Firefox/WebKit/Safari proofing runs nightly; pushes keep the two
-    # Chromium viewports that catch application and responsive regressions.
-    - cron: "27 9 * * *"
+  # Manual runs include the full browser matrix; pushes and pull requests use
+  # desktop Chromium and mobile Chrome for application/responsive checks.
   workflow_dispatch: {}
 
 permissions:
@@ -136,7 +134,7 @@ jobs:
       - name: Install Browser Runtimes
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             npx playwright install --with-deps chromium firefox webkit
           else
             npx playwright install --with-deps chromium
@@ -156,7 +154,7 @@ jobs:
           POKEGONEXUS_PERFORMANCE_SAMPLES: "1"
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             npm run test:browsers:ci -- --grep-invert '@performance'
           else
             npm run test:browsers:ci -- \
