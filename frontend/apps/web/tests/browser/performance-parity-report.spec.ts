@@ -2572,6 +2572,44 @@ const writeReport = () => {
   }, null, 2)}\n`);
 };
 
+test.describe('Trade preference drafts', () => {
+  test.use({ viewport: { width: 412, height: 915 } });
+  test.skip(performanceProfile === 'physical-android', 'Uses an isolated browser fixture context.');
+
+  for (const mode of ['trade', 'wanted'] as const) {
+    test(`keeps the ${mode} rule draft when opening and closing the Pokemon picker`, async ({ context }) => {
+      await seedPerformanceInstances(context);
+      const page = await createMeasuredPage(context, 'signed-in', 'dark');
+      try {
+        await page.goto(`${webBaseUrl}/trades?section=preferences&mode=${mode}`, {
+          waitUntil: 'domcontentloaded',
+        });
+        await waitUntilVisuallyReady(page);
+        await page.getByRole('button', { name: 'Edit preferences', exact: true }).click();
+        await expect(page.getByRole('button', { name: /^Save changes/ })).toBeVisible();
+
+        const advanced = page.locator('.trade-preference-rules__toggle');
+        if (await advanced.getAttribute('aria-expanded') !== 'true') await advanced.click();
+        const rule = page.locator('.preference-rule-group--require button').first();
+        await expect(rule).toHaveAttribute('aria-pressed', 'false');
+        await rule.click();
+        await expect(rule).toHaveAttribute('aria-pressed', 'true');
+
+        const picker = page.locator('.trade-target-mobile-picker');
+        await picker.click();
+        await expect(picker).toHaveAttribute('aria-expanded', 'true');
+        await expect(rule).toHaveAttribute('aria-pressed', 'true');
+        await page.locator('.trade-target-mobile-picker-panel')
+          .getByRole('button', { name: 'Close', exact: true }).click();
+        await expect(picker).toHaveAttribute('aria-expanded', 'false');
+        await expect(rule).toHaveAttribute('aria-pressed', 'true');
+      } finally {
+        await closeMeasuredPage(page);
+      }
+    });
+  }
+});
+
 test.describe('Vite performance parity report', () => {
   test.setTimeout(15 * 60_000);
 

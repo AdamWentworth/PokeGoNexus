@@ -1,8 +1,6 @@
 name: smoke-frontend-prod
 
 on:
-  schedule:
-    - cron: "17 10 * * *"
   workflow_dispatch:
     inputs:
       base_url:

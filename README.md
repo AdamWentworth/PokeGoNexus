@@ -1,337 +1,204 @@
-# 🌐 Pokémon Go Nexus — Full Stack Monorepo
+<p align="center">
+  <a href="https://pokegonexus.com">
+    <img src="docs/branding/nexus-lockup-v2-transparent.png" alt="Pokémon Go Nexus" width="640" />
+  </a>
+</p>
 
-Welcome to **Pokémon Go Nexus** — a full-stack web application and data ecosystem for tracking, managing, and trading Pokémon Go collections. This monorepo includes all services required for the platform: from a React frontend and Express/Go backends, to Kafka-based event syncing, to location intelligence and database editors.
+# Pokémon Go Nexus
 
----
+**Your collection. Your community. Your next trade.**
 
-## 📦 Monorepo Structure
+Pokémon Go Nexus is a Pokémon GO collection and trade platform for web and
+mobile. Track Pokémon and their variants, discover trainers nearby, plan trades,
+and explore raid, PvP, and Max Battle tools. Collection edits use local caching
+and queued sync, with live updates connecting clients and backend services.
 
-```plaintext
-Go/
-├── authentication/     # JWT auth microservice with MongoDB
-├── editor/             # Tkinter GUI for the PostgreSQL reference catalog
-├── frontend/           # React 18+ app with SSE & IndexedDB
-├── location/           # Go + PostGIS location microservice
-├── nginx/              # Reverse proxy config and SSL setup
-├── notes/              # Technical notes and architecture
-├── pokemon/            # Pokémon API (Go) backed by dedicated PostgreSQL
-├── reader/             # Read microservices: search, users, events
-├── receiver/           # Kafka producer, ingest client updates
-├── storage/            # Kafka consumer, persist to MySQL, backup jobs
-├── tests/              # Data mocks, fake user generators
+[Open Nexus](https://pokegonexus.com) · [Frontend guide](frontend/README.md) ·
+[Android beta](frontend/apps/mobile/ANDROID_BETA.md) ·
+[GitHub Actions](https://github.com/AdamWentworth/PokeGoNexus/actions)
+
+![Status: active development](https://img.shields.io/badge/status-active_development-F5A623?style=flat-square)
+[![Source license: Apache 2.0](https://img.shields.io/badge/source_license-Apache_2.0-00A8E8?style=flat-square)](LICENSE)
+
+## Tech stack
+
+![React 19](https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white)
+![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![Expo](https://img.shields.io/badge/Expo-000020?style=flat-square&logo=expo&logoColor=white)
+
+![Go](https://img.shields.io/badge/Go-00ADD8?style=flat-square&logo=go&logoColor=white)
+![Node.js 24](https://img.shields.io/badge/Node.js-24-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white)
+
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-FF4438?style=flat-square&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![NGINX](https://img.shields.io/badge/NGINX-009639?style=flat-square&logo=nginx&logoColor=white)
+
+| Layer | Technologies |
+| --- | --- |
+| Web | React 19, TypeScript 6, Vite 8, Zustand, IndexedDB, OpenLayers |
+| Mobile | Expo, React Native, Expo Router, SQLite, shared contracts and domain packages |
+| Authentication | Node.js 24, Express, MongoDB, JWT and per-device sessions |
+| Pokémon catalog | Go, `net/http`, chi, PostgreSQL, in-process and optional Redis caching |
+| Discovery and location | Go, MySQL, PostgreSQL/PostGIS |
+| Collection and trade sync | Go, Kafka, MySQL, Server-Sent Events |
+| Catalog authoring | Python, Tkinter, PostgreSQL |
+| Delivery and quality | Docker, NGINX, GitHub Actions, Vitest, Jest, Playwright, Go tests |
+
+## What you can do
+
+- **Manage a collection:** caught, trade, and wanted lists; tags; owned instances;
+  shiny, costume, background, regional, Mega, fusion, and other variant details.
+- **Find trainers and trades:** public collections, location-aware search, map
+  results, trade proposals, status tracking, and shareable Trade Boards.
+- **Plan battles:** raid attacker rankings, PvP analysis, and Max Battle tools
+  with documented [raid](docs/raid-ranking-methodology.md) and
+  [PvP](https://pokegonexus.com/pvp/methodology) methodologies.
+- **Keep collection state available:** IndexedDB on web and SQLite in the native
+  preview support local recovery and queued collection edits. Trade commands
+  remain online and server-authoritative.
+
+The platform is under active development. The mobile workspace includes a
+WebView restore point and native preview workflows; see the
+[mobile guide](frontend/apps/mobile/README.md) for current rollout details.
+
+## Repository map
+
+| Path | Responsibility |
+| --- | --- |
+| [frontend/](frontend/README.md) | Web/mobile workspaces and shared packages |
+| [frontend/packages/app-core/](frontend/packages/app-core/README.md) | Canonical web source, routes, components, stores, and tests |
+| [authentication/](authentication/README.md) | Accounts, authentication, and sessions |
+| [pokemon/](pokemon/README.md) | Go Pokémon API and PostgreSQL reference catalog |
+| [location/](location/README.md) | Geocoding, reverse lookup, and autocomplete with PostGIS |
+| [reader/](reader/) | [Search](reader/search/README.md), [users](reader/users/README.md), and [events/SSE](reader/events/README.md) services |
+| [receiver/](receiver/README.md) | Authenticated client-update ingestion into Kafka |
+| [storage/](storage/README.md) | Kafka consumers and MySQL persistence |
+| [editor/](editor/README.md) | Python catalog authoring tools |
+| [assets/](assets/) | Shared media served under `/media/` |
+| [kafka/](kafka/README.md), [nginx/](nginx/), [monitoring/](monitoring/README.md) | Queue, routing, and observability configuration |
+| [ops/](ops/), [docs/](docs/) | Operational guides, architecture, and methodology |
+
+Use `pokemon/` for current catalog development. The legacy Node `pokemon_data`
+service has been archived outside this repository.
+
+## Local development
+
+Use Node **24** from [.nvmrc](.nvmrc), npm, and the Go version declared by the
+service's `go.mod`. Docker Compose is used for local infrastructure. The editor
+also requires Python and its service dependencies.
+
+Install frontend dependencies at the workspace root:
+
+```sh
+git clone https://github.com/AdamWentworth/PokeGoNexus.git
+cd PokeGoNexus/frontend
+npm ci
+npm --workspace apps/web run dev
 ```
 
-Legacy Node `pokemon_data` service has been moved to archive outside this repo.
-Use `pokemon/` for all current Pokemon API development and deployment.
+Configure web API endpoints with `VITE_*` variables as described in the
+[web guide](frontend/apps/web/README.md). Mobile configuration uses
+`EXPO_PUBLIC_*`; see the [mobile guide](frontend/apps/mobile/README.md).
+Environment files, credentials, and private runtime state stay outside version
+control. Each backend service documents its own database and environment needs.
 
----
+From `frontend/`, start mobile development with:
 
-## 🧰 Tech Stack Overview
-
-| Layer         | Tech                                              |
-|---------------|---------------------------------------------------|
-| Frontend      | React 18, Context API, SSE, IndexedDB             |
-| Auth          | Node.js + Express + MongoDB + JWT                 |
-| Pokémon API   | Go (`net/http` + `chi`) + PostgreSQL + Redis/L1 caching |
-| Location      | Go + PostgreSQL/PostGIS                           |
-| Event Sync    | Kafka (Docker) + Go consumers/producers           |
-| Search        | Go + MySQL + Haversine filters                    |
-| Users         | Go + MySQL + JWT                                  |
-| Trades/SSE    | Go + Kafka + Server-Sent Events                   |
-| Storage       | Go + Kafka + MySQL                                |
-| Reverse Proxy | NGINX + SSL + Route rewriting                     |
-
----
-
-## 🚀 Getting Started (Local Development)
-
-### 🔐 1. Authentication
-
-```bash
-cd Go/authentication
-npm install
-npm start
+```sh
+npm --workspace apps/mobile run start
 ```
 
-- MongoDB required  
-- Tokens set via secure cookies  
-- Uses `.env.development` for config
+To start the local Pokémon catalog stack, run from the repository root:
 
----
-
-### 📦 2. Pokémon Data API (Go)
-
-```bash
-cd Go/pokemon
-go mod tidy
-go run ./cmd/pokemon
+```sh
+cd pokemon
+docker compose up --build pokemon_catalog_db pokemon_cache pokemon_data
 ```
 
-- Powered by the dedicated PostgreSQL reference catalog
-- Uses Redis as an optional cross-replica L2 while retaining PostgreSQL fallback
-- Runs on port `3001`  
-- Supports mega, shiny, costumes, evolutions
+Follow the [catalog guide](pokemon/README.md) for migrations, test fixtures,
+cache behavior, and running the API against an existing local database. Other
+services have independent startup instructions in the repository map above.
 
----
+## Checks and CI
 
-### 🌍 3. Location Service
+Run the frontend workspace checks from `frontend/`:
 
-```bash
-cd Go/location
-go mod tidy
-go run .
+```sh
+npm run lint
+npm run lint:dead-code
+npm run typecheck
+npm run test
 ```
 
-- Needs PostGIS database  
-- `.env` contains DB info
+Web tests use Vitest and Playwright; mobile and authentication tests use Jest.
+Go services have their own test suites. Use the affected service's README and
+[CI workflow](.github/workflows/) for the complete checks, including database,
+container, security, and contract tests where applicable.
 
----
+Repository-defined workflows have **no cron schedules**:
 
-### ⚡ 4. Kafka (Event Queue)
+| Workflow | When it runs |
+| --- | --- |
+| Service CI | Relevant pull requests, relevant pushes to `master`/`main`, and manual runs |
+| `ci-frontend` browser checks | Desktop Chromium and mobile Chrome on relevant changes; the full browser matrix on manual runs |
+| `smoke-frontend-prod` | Manual only; checks public production routes and assets using GET/HEAD requests |
 
-```bash
-cd Go/kafka
-docker-compose up -d
+GitHub-managed CodeQL default setup is configured separately and retains its
+weekly security scans.
+
+For full browser coverage, select **Actions → ci-frontend → Run workflow**.
+Firefox, WebKit, and mobile Safari emulation remain available there and locally.
+See the [browser proofing guide](frontend/docs/BROWSER_PROOFING_WORKFLOW.md) for
+commands, performance checks, and failure artifacts.
+
+## Collection sync
+
+```mermaid
+flowchart LR
+    Client[Web / mobile client] --> Local[Local cache and queued edits]
+    Local --> Receiver[Authenticated receiver]
+    Receiver --> Kafka[Kafka]
+    Kafka --> Storage[Storage consumer]
+    Storage --> MySQL[(MySQL)]
+    Kafka --> Events[Events service]
+    Events -->|SSE updates| Client
 ```
 
-- Kafka + Zookeeper  
-- Topic: `batchedUpdates`
-
----
-
-### 🛰️ 5. Receiver (Kafka Producer)
-
-```bash
-cd Go/receiver
-go run .
-```
-
-- Auth required  
-- Forwards batched payloads to Kafka
-
----
-
-### 🗃 6. Storage (Kafka Consumer)
-
-```bash
-cd Go/storage
-go run .
-```
-
-- Stores Pokémon + Trade updates in MySQL  
-- Scheduled SQL backups at midnight
-
----
-
-### 🔎 7. Search
-
-```bash
-cd Go/reader/search
-go run .
-```
-
-- Filter-based Pokémon search  
-- Uses user coordinates
-
----
-
-### 📡 8. Events (SSE + Kafka Consumer)
-
-```bash
-cd Go/reader/events
-go run .
-```
-
-- Live updates via `/api/sse`  
-- Pushes updates from Kafka to frontend
-
----
-
-### 👤 9. Users Service
-
-```bash
-cd Go/reader/users
-go run .
-```
-
-- Fetch Pokémon ownership data  
-- Supports ETag caching
-
----
-
-### 🧠 10. Editor (Data GUI)
-
-```bash
-cd Go/editor
-python main.py
-```
-
-- Tkinter GUI  
-- Opens a protected production PostgreSQL authoring session
-- Creates a private dump before changes
-
----
-
-### 💻 11. Frontend
-
-```bash
-cd Go/frontend
-npm install
-npm start
-```
-
-- React 18+  
-- Uses `.env.development` to point to local APIs  
-- Features: Pokédex, trade proposals, filtering, variant management, map-based search
-- Publishes the [raid attacker ranking methodology](docs/raid-ranking-methodology.md), including formulas, assumptions, limitations, and comparisons with other tools
-
----
-
-## ⚙️ Environment Overview
-
-Each service has its own `.env` or `.env.development`. Some important shared configs:
-
-| Key                  | Description                                     |
-|----------------------|-------------------------------------------------|
-| JWT_SECRET           | Shared across auth, receiver, reader, etc       |
-| FRONTEND_URL         | For CORS config and cookies                     |
-| REACT_APP_*          | Frontend uses these to reach APIs               |
-| DATABASE_URL         | Used in services with persistent storage        |
-
----
-
-## 🔁 Kafka Event Flow
-
-```plaintext
-Frontend → Sends updates via /api/batchedUpdates
-Receiver Service → Validates + forwards to Kafka
-Storage Service → Consumes Kafka messages → writes to MySQL
-Events Service → Notifies connected clients via SSE
-```
-
----
-
-## 📚 API Services
-
-| Service         | Port  | Language | Notes                                                  |
-|-----------------|-------|----------|--------------------------------------------------------|
-| Pokémon API     | 3001  | Go       | Shiny, Mega, IV, moves, costume, fusion data          |
-| Auth            | 3002  | Node.js  | JWT, cookie-based auth, per-device sessions           |
-| Receiver        | 3003  | Go       | Kafka producer, client update ingest                  |
-| Storage         | 3004  | Go       | Kafka consumer, MySQL writer, backup jobs             |
-| Users           | 3005  | Go       | Pokémon ownership per user                            |
-| Search          | 3006  | Go       | Pokémon matchmaking and filters                       |
-| Location        | 3007  | Go       | Geocoding, reverse, autocomplete                      |
-| Events (SSE)    | 3008  | Go       | SSE feed, Kafka consumer, diff push                   |
-
----
-
-## 🧪 Testing
-
-- **Frontend:** `npm test` (Jest + React Testing Library)  
-- **Backend:** Currently ad-hoc using the `tests/` service for generating fake data
-
----
-
-## 🔐 Security
-
-- HTTPS enforced via NGINX + Certbot  
-- Tokens stored in `httpOnly` cookies  
-- SSE streams only accept verified JWTs  
-- SQL + XSS pattern detection in Receiver  
-- Rate limiting per IP  
-- Multiple layers of CORS enforcement
-
----
-
-## 🗃️ Backups
-
-| System         | Method                                  |
-|----------------|------------------------------------------|
-| Pokémon Data   | Manual backups via Editor or scripts     |
-| Auth Service   | Daily gzipped MongoDB dumps              |
-| Storage Service| Daily MySQL `.sql` backups               |
-| Location       | SQL + .dump backups via Python scripts   |
-
----
-
-## 🧭 Admin Tools
-
-| Tool         | Purpose                                    |
-|--------------|--------------------------------------------|
-| Editor GUI   | Modify the PostgreSQL catalog visually     |
-| Kafka        | Monitor message flow (`batchedUpdates`)    |
-| NGINX        | Central API router + TLS termination       |
-| Notes/       | Includes design docs, plans, and ideas     |
-
----
-
-## 🌐 Production Deployment
-
-- Served by **NGINX containers on Ubuntu**
-- TLS certificates are renewed by **Certbot** on the production host
-- GitHub-hosted CI tests the public repository and publishes immutable images tagged by commit
-- The private **HomeOps** repository owns frontend, backend, database, Kafka, and monitoring production controls
-- HomeOps accepts only the current `master` SHA, verifies each application image's embedded source revision, deploys its immutable digest, health-checks it, and rolls back failed replacements
-- The production runner does not check out or execute deployment code from this public repository
-- Reverse proxy maps `/api/*` routes to correct services
-- SSE and CORS handled in proxy config
-
----
-
-## 🧠 Author Notes
-
-This project is built with scalability, structure, and flexibility in mind. It supports deeply nested Pokémon variants, live sync across devices, and advanced trade filtering. Designed to evolve with the game, the stack supports rich editing, fast search, and cross-platform usage.
-
-If you're contributing:
-
-- Start with `frontend/apps/web/src/pages/Pokemon/` or `pokemon/internal/`
-- Kafka event schema is your friend
-- For data changes, use the Editor or scripts carefully
-- Always **back up** before making major changes
-
----
-
-## 📌 Future Enhancements
-
-### 🖼️ Frontend & UI/UX
-- Major UI/UX enhancements including styling, transitions, animations
-- Continued development on Pokédex, Home page, and new feature pages
-- Better onboarding, how-it-works guides, and visual polish
-
-### 👥 Social Features
-- Friends list and user profiles
-- Trade history visibility and partner interactions
-
-### 🔐 Authentication & Accounts
-- Password reset functionality
-- Social login support (Auth0 integration)
-
-### 📱 Mobile Support
-- React Native wrapper for iOS/Android
-- Mobile-first optimizations across all components
-
-### 📊 Admin & Moderation
-- Admin dashboard monitoring with Prometheus
-- Metrics tracking, audit logs, and system insights
-
-### 🧠 Backend & Infra
-- Horizontal service scaling and managed-cache deployment experiments
-- Selective catalog delivery and client-side incremental synchronization
-
----
-
-## 👨‍💻 Author Notes
-
-This monorepo is built by a passionate trainer/dev and is not affiliated with Niantic or Pokémon.
-
-**Gotta catch 'em all!** 🧢✨
-
----
-
-## License
+Shared contracts keep clients and services aligned. Collection synchronization
+and server-authoritative trade commands have different offline behavior; start
+with the [frontend guide](frontend/README.md) when changing either flow.
+
+## Production and catalog operations
+
+The public repository runs CI on GitHub-hosted runners and publishes immutable
+application images. Production runs behind NGINX containers on Ubuntu; the
+private **HomeOps** repository owns deployment controls, validates source
+revisions and image digests, health-checks replacements, and rolls back failed
+deployments. The production runner does not execute deployment code from this
+public checkout.
+
+Start with the [production state guide](ops/prod/README.md). Catalog authoring
+uses protected PostgreSQL sessions and creates a private backup before changes;
+read the [catalog runbook](ops/pokemon-catalog/README.md) before operating on real
+data. Durable volumes, credentials, backups, and runtime state remain outside
+the checkout.
+
+## License and credits
+
+Built by [Adam Wentworth](https://github.com/AdamWentworth).
 
 Original source code and text documentation are licensed under the
 [Apache License 2.0](LICENSE). Pokémon imagery, game data, project branding,
 and other third-party materials retain their respective rights; see
-[NOTICE.md](NOTICE.md).
+[NOTICE.md](NOTICE.md). The README uses the existing Nexus branding from the
+Phlosion product showcase.
+
+Pokémon Go Nexus is an independent fan project and is not affiliated with or
+endorsed by Niantic, Nintendo, Creatures, GAME FREAK, or The Pokémon Company.
