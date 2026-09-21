@@ -128,6 +128,16 @@ function TradeTargetsWorkspace() {
   const requestedInstanceId = searchParams.get('instance');
   const [mode, setMode] = useState<TargetMode>(requestedMode);
   const [selectedPokemon, setSelectedPokemon] = useState<TargetPokemon | null>(null);
+  // Editors initialize draft filters from these props, so preserve their
+  // identity while picker and other workspace state changes.
+  const tradeTargetPokemon = useMemo(
+    () => selectedPokemon ? toTradeTargetsPokemon(selectedPokemon) : null,
+    [selectedPokemon],
+  );
+  const wantedDetailsPokemon = useMemo(
+    () => selectedPokemon ? toWantedDetailsPokemon(selectedPokemon) : null,
+    [selectedPokemon],
+  );
   const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
@@ -394,10 +404,10 @@ function TradeTargetsWorkspace() {
                 </div>
               </div>
             ) : null}
-            {selectedPokemon && mode === 'trade' ? (
+            {selectedPokemon && tradeTargetPokemon && mode === 'trade' ? (
               <TradeTargetsPanel
                 key={`trade:${getInstanceId(selectedPokemon)}`}
-                pokemon={toTradeTargetsPokemon(selectedPokemon)}
+                pokemon={tradeTargetPokemon}
                 lists={tags}
                 instances={instances}
                 sortType="number"
@@ -408,10 +418,10 @@ function TradeTargetsWorkspace() {
                 onEditingChange={setIsEditingPreferences}
               />
             ) : null}
-            {selectedPokemon && mode === 'wanted' ? (
+            {selectedPokemon && wantedDetailsPokemon && mode === 'wanted' ? (
               <WantedDetails
                 key={`wanted:${getInstanceId(selectedPokemon)}`}
-                pokemon={toWantedDetailsPokemon(selectedPokemon)}
+                pokemon={wantedDetailsPokemon}
                 lists={tags}
                 instances={instances}
                 sortType="number"
