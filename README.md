@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://pokegonexus.com">
-    <img src="docs/branding/nexus-lockup-with-mark-transparent.png" alt="Pokémon Go Nexus" width="640" />
+    <img src="docs/branding/nexus-lockup-v2-transparent.png" alt="Pokémon Go Nexus" width="640" />
   </a>
 </p>
 
