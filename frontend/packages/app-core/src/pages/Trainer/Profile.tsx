@@ -64,6 +64,7 @@ import {
 
 import TrainerPageShell from "./TrainerPageShell";
 import TrainerShowcasePicker from "./TrainerShowcasePicker";
+import ProfileLocationEditor from "./ProfileLocationEditor";
 import {
   normalizeTrainerShowcaseSlots,
   reorderTrainerShowcaseSlots,
@@ -1130,12 +1131,10 @@ const Profile = () => {
                   <dt>Location</dt>
                   <dd>
                     {editing ? (
-                      <input
-                        aria-label="Location"
+                      <ProfileLocationEditor
                         value={form.location}
-                        onChange={(event) =>
-                          updateField("location", event.target.value)
-                        }
+                        disabled={saving}
+                        onChange={(location) => updateField("location", location)}
                       />
                     ) : (
                       profile.location || "Not shared"

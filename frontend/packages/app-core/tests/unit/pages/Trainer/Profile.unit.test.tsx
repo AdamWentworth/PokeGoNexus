@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => ({
   blockTrainer: vi.fn(),
   updateProfile: vi.fn(),
   updateUserDetails: vi.fn(),
+  fetchLocationSuggestions: vi.fn(),
 }));
 
 vi.mock("@/services/socialService", () => ({
@@ -42,6 +43,11 @@ vi.mock("@/services/socialService", () => ({
   removeFriend: mocks.removeFriend,
   blockTrainer: mocks.blockTrainer,
   updateTrainerProfile: mocks.updateProfile,
+}));
+
+vi.mock("@/services/locationServices", () => ({
+  fetchSuggestions: mocks.fetchLocationSuggestions,
+  fetchLocationOptions: vi.fn(),
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -325,6 +331,54 @@ describe("Trainer Profile", () => {
     await waitFor(() =>
       expect(mocks.sendRequest).toHaveBeenCalledWith("Misty"),
     );
+  });
+
+  it("keeps location selection in the draft until Save and discards it on Cancel", async () => {
+    const ownProfile = {
+      ...profile,
+      location: "Vernon",
+      user: { ...profile.user, user_id: "user-adam", username: "Adam", pokemonGoName: "Adam" },
+      viewer: { relationship: "self", can_view_profile: true, can_view_collection: true },
+    };
+    mocks.updateProfile.mockClear().mockResolvedValue({ success: true });
+    mocks.updateUserDetails.mockClear().mockResolvedValue({ success: true });
+    mocks.fetchOwnProfile.mockResolvedValue(ownProfile);
+    mocks.fetchLocationSuggestions.mockResolvedValue([
+      { displayName: "Kelowna, British Columbia, Canada" },
+    ]);
+    render(
+      <MemoryRouter initialEntries={["/profile"]}>
+        <Routes><Route path="/profile" element={<Profile />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /^edit$/i }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Location" }), {
+      target: { value: "Kelowna" },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Kelowna, British Columbia, Canada" }));
+    expect(mocks.updateUserDetails).not.toHaveBeenCalled();
+    expect(mocks.updateProfile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+    expect(screen.getByRole("textbox", { name: "Location" })).toHaveValue("Vernon");
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Location" }), {
+      target: { value: "Kelowna" },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Kelowna, British Columbia, Canada" }));
+    mocks.fetchOwnProfile.mockResolvedValue({ ...ownProfile, location: "Kelowna, British Columbia, Canada" });
+    fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
+    await waitFor(() => expect(mocks.updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ location: "Kelowna, British Columbia, Canada" }),
+    ));
+    expect(mocks.updateUserDetails).toHaveBeenCalledWith("user-adam", {
+      pokemonGoName: "Adam",
+      trainerCode: "",
+      location: "Kelowna, British Columbia, Canada",
+    });
+    expect(await screen.findByText("Kelowna, British Columbia, Canada")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Location" })).not.toBeInTheDocument();
   });
 
   it("saves caught Pokemon selected for the owner showcase", async () => {

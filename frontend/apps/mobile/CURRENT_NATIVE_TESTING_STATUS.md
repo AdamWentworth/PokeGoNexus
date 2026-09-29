@@ -1,15 +1,50 @@
 # Current Native Testing Status
 
-Last targeted revalidation: 2026-09-14 (instance location backgrounds)
+Last targeted revalidation: 2026-09-29 (profile location)
 
 This is the short source of truth for continuing the Vite-to-native migration.
 The canonical Vite application defines user-visible behavior. Native may use
 different implementation details, but it must preserve the same content,
 navigation outcomes, interaction order, terminology, and perceived motion.
 
-The current standalone Android build, artifact identity, and historical
-public-information performance result are documented in
-`STRONG_MACHINE_ANDROID_HANDOFF.md`.
+Earlier standalone Android build identities and public-information performance
+evidence are documented in `STRONG_MACHINE_ANDROID_HANDOFF.md`. The latest
+targeted build and validation are recorded below.
+
+## Profile location selection — 2026-09-29
+
+Source candidate: `22770744e3ae447fc0a936d9985ad386875cb324`. Vite and native
+profile editing now offer place autocomplete and an explicit device-location
+request to choose a city/region label. Both update only the draft until Save;
+Cancel restores the original label. Matching coordinates are unchanged. Native
+uses a one-shot GPS request with permission handling, a 15-second acquisition
+timeout, recent-coordinate validation, and listener/provider cleanup.
+
+Validation: 63 native tests, 19 Vite unit tests, two browser checks, and all 41
+performance-parity contract tests pass. Both frontend typechecks and targeted
+lint pass. Gradle completed in 30m19s (984 tasks). Expo Doctor reports 20/21
+checks passing with existing SDK patch-version mismatches.
+
+Private standalone APK:
+`.artifacts/profile-location-2026-09-29/PokeGoNexus-profile-location-22770744-arm64.apk`.
+SHA-256: `47a5b676478f5ff40f018cf6788beff977066af7bd2534ad2f70ca142ca8021b`.
+Version `1.0.4`, version code `26092001`. The in-place phone install has the
+expected checksum and signing identity; its original installation time is
+preserved. The public website and published APK are unchanged.
+
+The Pixel 8 Pro passes typed autocomplete, suggestion selection, repeated
+explicit device-location lookup, detected-place selection, and Cancel. Each
+selection stays in the draft; Cancel restores the saved Vernon label. The
+signed-in session remains intact. No account edits were submitted or app data
+cleared, and the final flows report zero fatal, Fabric, view ownership/removal,
+or ANR failures. An initial GPS flow missed Cancel using Maestro's default
+scroll; direct vertical swipes resolved the test gesture, and the full flow
+passed. Earlier evidence is retained beside the final results.
+
+Private evidence is in `.artifacts/profile-location-2026-09-29/`, including
+`verification.json`, `autocomplete-device/result.json`, and
+`gps-final-device/result.json`. This targeted validation does not close the
+full-migration performance, lifecycle, or rollout gates.
 
 ## Instance location backgrounds — 2026-09-14
 

@@ -1,0 +1,58 @@
+.profile-location-editor {
+  display: grid;
+  gap: 6px;
+  white-space: normal;
+}
+
+.profile-location-editor small,
+.profile-location-editor [role='status'] {
+  color: var(--trainer-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.profile-location-editor button {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px;
+  border: 1px solid var(--trainer-border);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.73rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-location-editor button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.profile-location-editor button:focus-visible {
+  outline: 2px solid var(--trainer-team);
+  outline-offset: -2px;
+}
+
+.profile-location-editor .profile-location-current {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-location-editor .profile-location-current svg {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+}
+
+.profile-location-editor ul {
+  display: grid;
+  gap: 4px;
+  max-height: 210px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

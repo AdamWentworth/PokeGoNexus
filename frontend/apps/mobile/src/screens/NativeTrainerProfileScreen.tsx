@@ -28,6 +28,7 @@ import type { NativeTrainerProfileDraft } from '../features/social/nativeTrainer
 import { NativeTrainerShowcasePicker } from '../features/social/NativeTrainerShowcasePicker';
 import { NativeConfirmationDialog } from '../components/NativeConfirmationDialog';
 import { NativeOptionPicker } from '../components/NativeOptionPicker';
+import { NativeLocationAutocompleteInput } from '../components/NativeLocationAutocompleteInput';
 import { NativeTrainerWorkspaceNav } from '../components/NativeTrainerWorkspaceNav';
 import { NativeUiIcon, type NativeUiIconName } from '../components/NativeUiIcon';
 import { useNativeColorScheme } from '../features/settings/useNativeColorScheme';
@@ -668,6 +669,7 @@ export const NativeTrainerProfileScreen = ({
   return (
     <View style={[styles.screenRoot, light && styles.screenLight]}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, { paddingTop: embedded ? 14 : 24 + insets.top, paddingBottom: 116 + insets.bottom }]}
         ref={scrollRef}
         style={styles.screen}
@@ -910,22 +912,35 @@ export const NativeTrainerProfileScreen = ({
                 <View style={styles.factCopy}>
                   <Text style={[styles.factLabel, light && styles.mutedLight]}>{label}</Text>
                   {editorDraft && onChangeEditorDraft ? (
-                    <TextInput
-                      accessibilityLabel={label === 'STARTED' ? 'Started playing' : label === 'LOCATION' ? 'Location' : 'Trainer code'}
-                      autoCapitalize={label === 'LOCATION' ? 'words' : 'none'}
-                      keyboardType={label === 'TRAINER CODE' ? 'number-pad' : 'default'}
-                      maxLength={label === 'TRAINER CODE' ? 14 : label === 'STARTED' ? 10 : 255}
-                      onChangeText={(nextValue) => {
-                        if (label === 'STARTED') updateEditorField('startedOn', nextValue);
-                        else if (label === 'LOCATION') updateEditorField('location', nextValue);
-                        else updateEditorField('trainerCode', nextValue);
-                      }}
-                      placeholder={label === 'STARTED' ? 'YYYY-MM-DD' : label === 'LOCATION' ? 'City or region' : '0000 0000 0000'}
-                      placeholderTextColor={light ? '#66777d' : '#718087'}
-                      selectionColor="#35a8ff"
-                      style={[styles.factInput, light && styles.factInputLight]}
-                      value={label === 'STARTED' ? editorDraft.startedOn : label === 'LOCATION' ? editorDraft.location : editorDraft.trainerCode}
-                    />
+                    label === 'LOCATION' ? (
+                      <NativeLocationAutocompleteInput
+                        accessibilityLabel="Location"
+                        allowDeviceLocation
+                        compact
+                        disabled={isProfileSaving}
+                        light={light}
+                        onChangeText={(nextValue) => updateEditorField('location', nextValue)}
+                        placeholder="Search for a city"
+                        suggestOnMount={false}
+                        value={editorDraft.location}
+                      />
+                    ) : (
+                      <TextInput
+                        accessibilityLabel={label === 'STARTED' ? 'Started playing' : 'Trainer code'}
+                        autoCapitalize="none"
+                        keyboardType={label === 'TRAINER CODE' ? 'number-pad' : 'default'}
+                        maxLength={label === 'TRAINER CODE' ? 14 : label === 'STARTED' ? 10 : 255}
+                        onChangeText={(nextValue) => {
+                          if (label === 'STARTED') updateEditorField('startedOn', nextValue);
+                          else updateEditorField('trainerCode', nextValue);
+                        }}
+                        placeholder={label === 'STARTED' ? 'YYYY-MM-DD' : '0000 0000 0000'}
+                        placeholderTextColor={light ? '#66777d' : '#718087'}
+                        selectionColor="#35a8ff"
+                        style={[styles.factInput, light && styles.factInputLight]}
+                        value={label === 'STARTED' ? editorDraft.startedOn : editorDraft.trainerCode}
+                      />
+                    )
                   ) : (
                     <Text numberOfLines={2} style={[styles.factValue, light && styles.textLight]}>{value}</Text>
                   )}

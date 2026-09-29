@@ -8,11 +8,15 @@ import {
   View,
 } from 'react-native';
 import type { LocationSuggestion } from '@pokemongonexus/shared-contracts/location';
-import { getNativeLocationSuggestions } from '../services/locationApi';
+import { getNativeLocationOptions, getNativeLocationSuggestions } from '../services/locationApi';
+import { getNativeCurrentCoordinates } from '../services/deviceLocation';
 import { NativeUiIcon } from './NativeUiIcon';
 
 type Props = {
   accessibilityLabel: string;
+  allowDeviceLocation?: boolean;
+  disabled?: boolean;
+  suggestOnMount?: boolean;
   compact?: boolean;
   light: boolean;
   maxLength?: number;
@@ -23,6 +27,9 @@ type Props = {
 
 export const NativeLocationAutocompleteInput = ({
   accessibilityLabel,
+  allowDeviceLocation = false,
+  disabled = false,
+  suggestOnMount = true,
   compact = false,
   light,
   maxLength = 255,
@@ -32,23 +39,27 @@ export const NativeLocationAutocompleteInput = ({
 }: Props) => {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [suggestionsEnabled, setSuggestionsEnabled] = useState(suggestOnMount);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   const requestRef = useRef(0);
-  const acceptedLocationRef = useRef<string | null>(null);
+  const detectionRequestRef = useRef(0);
+
+  useEffect(() => () => {
+    requestRef.current += 1;
+    detectionRequestRef.current += 1;
+  }, []);
 
   useEffect(() => {
     const query = value.trim();
     const requestId = ++requestRef.current;
 
-    if (acceptedLocationRef.current === value) {
-      acceptedLocationRef.current = null;
-      return undefined;
-    }
-    if (query.length < 3) {
+    if (!suggestionsEnabled || query.length < 3) {
       return undefined;
     }
 
     const timeout = setTimeout(() => {
+      if (requestId !== requestRef.current) return;
       setIsLoading(true);
       void getNativeLocationSuggestions(query)
         .then((nextSuggestions) => {
@@ -66,12 +77,17 @@ export const NativeLocationAutocompleteInput = ({
         });
     }, 250);
 
-    return () => clearTimeout(timeout);
-  }, [value]);
+    return () => {
+      clearTimeout(timeout);
+      requestRef.current += 1;
+    };
+  }, [suggestionsEnabled, value]);
 
   const changeValue = (nextValue: string) => {
     requestRef.current += 1;
-    acceptedLocationRef.current = null;
+    detectionRequestRef.current += 1;
+    setSuggestionsEnabled(true);
+    setIsDetecting(false);
     setSuggestions([]);
     setSuggestionError(null);
     setIsLoading(false);
@@ -80,11 +96,41 @@ export const NativeLocationAutocompleteInput = ({
 
   const chooseSuggestion = (suggestion: LocationSuggestion) => {
     requestRef.current += 1;
-    acceptedLocationRef.current = suggestion.displayName;
+    detectionRequestRef.current += 1;
+    setSuggestionsEnabled(false);
+    setIsDetecting(false);
     setSuggestions([]);
     setSuggestionError(null);
     setIsLoading(false);
     onChangeText(suggestion.displayName);
+  };
+
+  const detectLocation = async () => {
+    if (disabled || isDetecting) return;
+    requestRef.current += 1;
+    const requestId = ++detectionRequestRef.current;
+    setSuggestionsEnabled(false);
+    setSuggestions([]);
+    setSuggestionError(null);
+    setIsLoading(false);
+    setIsDetecting(true);
+    try {
+      const coordinates = await getNativeCurrentCoordinates();
+      if (requestId !== detectionRequestRef.current) return;
+      const locations = await getNativeLocationOptions(coordinates.latitude, coordinates.longitude).catch(() => {
+        throw new Error('Nearby places are unavailable. You can still type a location.');
+      });
+      if (requestId !== detectionRequestRef.current) return;
+      setSuggestions(locations);
+      if (locations.length === 0) {
+        setSuggestionError('No nearby place names were found. You can still type a location.');
+      }
+    } catch (error) {
+      if (requestId !== detectionRequestRef.current) return;
+      setSuggestionError(error instanceof Error ? error.message : 'Your current location is unavailable. You can still type a location.');
+    } finally {
+      if (requestId === detectionRequestRef.current) setIsDetecting(false);
+    }
   };
 
   return (
@@ -93,6 +139,7 @@ export const NativeLocationAutocompleteInput = ({
         accessibilityLabel={accessibilityLabel}
         autoCapitalize="words"
         autoComplete="off"
+        editable={!disabled}
         maxLength={maxLength}
         onChangeText={changeValue}
         placeholder={placeholder}
@@ -104,6 +151,19 @@ export const NativeLocationAutocompleteInput = ({
         ]}
         value={value}
       />
+      {allowDeviceLocation ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Use current location"
+          accessibilityState={{ disabled: disabled || isDetecting, busy: isDetecting }}
+          disabled={disabled || isDetecting}
+          onPress={() => void detectLocation()}
+          style={({ pressed }) => [styles.detectButton, (pressed || disabled || isDetecting) && styles.buttonDimmed]}
+        >
+          {isDetecting ? <ActivityIndicator color="#2098ff" size="small" /> : <NativeUiIcon color="#2098ff" name="map" size={16} />}
+          <Text style={[styles.detectText, light && styles.detectTextLight]}>{isDetecting ? 'Finding your location…' : 'Use current location'}</Text>
+        </Pressable>
+      ) : null}
       {isLoading ? (
         <View accessibilityLabel="Loading location suggestions" style={styles.status}>
           <ActivityIndicator color="#2098ff" size="small" />
@@ -116,6 +176,7 @@ export const NativeLocationAutocompleteInput = ({
             <Pressable
               accessibilityLabel={`Use location ${suggestion.displayName}`}
               accessibilityRole="button"
+              disabled={disabled}
               key={`${suggestion.displayName}-${index}`}
               onPress={() => chooseSuggestion(suggestion)}
               style={({ pressed }) => [
@@ -137,6 +198,10 @@ export const NativeLocationAutocompleteInput = ({
 
 const styles = StyleSheet.create({
   root: { gap: 6 },
+  detectButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
+  detectText: { flexShrink: 1, color: '#74bdff', fontSize: 13, fontWeight: '700' },
+  detectTextLight: { color: '#005eac' },
+  buttonDimmed: { opacity: 0.6 },
   input: {
     minHeight: 52,
     borderWidth: 1,
