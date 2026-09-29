@@ -69,9 +69,11 @@ vi.mock('@/features/variants/store/useVariantsStore', () => ({
 vi.mock('@/hooks/filtering/usePokemonOwnershipFilter', () => ({
   getFilteredPokemonsByOwnership: (
     _variants: unknown,
-    _instances: unknown,
+    instances: typeof mocks.instancesState.instances,
     filter: string,
-  ) => filter === 'trade' ? [laterTradePokemon, tradePokemon] : [wantedPokemon],
+  ) => filter === 'trade'
+    ? [laterTradePokemon, { ...tradePokemon, instanceData: instances.trade1 }]
+    : [wantedPokemon],
 }));
 
 vi.mock('@/pages/Pokemon/features/instances/components/Trade/TradeTargetsPanel', () => ({
@@ -126,6 +128,32 @@ describe('TradeTargetsWorkspace', () => {
     expect(screen.queryByTestId('existing-trade-targets')).not.toBeInTheDocument();
     expect(mocks.wantedPanelProps.at(-1)?.instances).toBe(mocks.instancesState.instances);
     expect(mocks.wantedPanelProps.at(-1)?.lists).toBe(mocks.tagsState.tags);
+  });
+
+  it('keeps the selected editor draft while instance data refreshes', () => {
+    const originalInstances = mocks.instancesState.instances;
+    try {
+      const view = render(<TradeTargetsWorkspace />, { wrapper: MemoryRouter });
+      const originalPokemon = mocks.tradePanelProps.at(-1)?.pokemon;
+
+      act(() => {
+        (mocks.tradePanelProps.at(-1)?.onEditingChange as (editing: boolean) => void)(true);
+      });
+      mocks.instancesState.instances = {
+        ...originalInstances,
+        trade1: { ...originalInstances.trade1, cp: 101 },
+      };
+      view.rerender(<TradeTargetsWorkspace />);
+      expect(mocks.tradePanelProps.at(-1)?.pokemon).toBe(originalPokemon);
+
+      act(() => {
+        (mocks.tradePanelProps.at(-1)?.onEditingChange as (editing: boolean) => void)(false);
+      });
+      expect(mocks.tradePanelProps.at(-1)?.pokemon).not.toBe(originalPokemon);
+      expect((mocks.tradePanelProps.at(-1)?.pokemon as typeof tradePokemon).instanceData.cp).toBe(101);
+    } finally {
+      mocks.instancesState.instances = originalInstances;
+    }
   });
 
   it('opens a URL-selected preference mode and instance directly', async () => {
