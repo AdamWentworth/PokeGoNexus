@@ -292,6 +292,7 @@ describe('NativeTrainerProfileScreen', () => {
       highlightInstanceIds: ['highlight-1'],
     };
     const closed = renderScreen({ onBeginEdit });
+    expect(closed.queryByRole('button', { name: 'Use current location' })).toBeNull();
     fireEvent.press(closed.getByRole('button', { name: 'Edit' }));
     expect(onBeginEdit).toHaveBeenCalledTimes(1);
     closed.unmount();
@@ -303,6 +304,7 @@ describe('NativeTrainerProfileScreen', () => {
       onChangeEditorDraft,
       onSaveProfile,
     });
+    expect(view.getByRole('button', { name: 'Use current location' })).toBeTruthy();
     expect(view.getByLabelText('Pokemon GO name')).toBeTruthy();
     fireEvent.changeText(view.getByLabelText('Pokemon GO name'), 'UpdatedAdam');
     expect(onChangeEditorDraft).toHaveBeenCalledWith({
@@ -329,6 +331,7 @@ describe('NativeTrainerProfileScreen', () => {
       ...editorDraft,
       location: 'Vancouver, BC',
     });
+    expect(onSaveProfile).not.toHaveBeenCalled();
     fireEvent.changeText(view.getByLabelText('Trainer code'), '987654321098');
     expect(onChangeEditorDraft).toHaveBeenCalledWith({
       ...editorDraft,

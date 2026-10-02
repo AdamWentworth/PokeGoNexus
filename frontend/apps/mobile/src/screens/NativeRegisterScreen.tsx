@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  PermissionsAndroid,
   Platform,
   Pressable,
   ScrollView,
@@ -10,10 +9,8 @@ import {
   Text,
   TextInput,
   View,
-  TurboModuleRegistry,
   useWindowDimensions,
 } from 'react-native';
-import type { TurboModule } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { OAuthProvider } from '@pokemongonexus/shared-contracts/auth';
 import type { Coordinates, LocationSuggestion } from '@pokemongonexus/shared-contracts/location';
@@ -32,6 +29,7 @@ import {
   NativeRegistrationLocationOptions,
   NativeRegistrationLocationPicker,
 } from '../components/NativeRegistrationLocationPicker';
+import { getNativeCurrentCoordinates } from '../services/deviceLocation';
 import { getNativeLocationOptions } from '../services/locationApi';
 import { markNativeUiPerformanceAfterPaint } from '../observability/nativeUiInteractionTiming';
 
@@ -50,38 +48,6 @@ type Props = {
   onRegistered: () => void;
   getCurrentCoordinates?: () => Promise<Coordinates>;
   getLocationOptions?: (latitude: number, longitude: number) => Promise<LocationSuggestion[]>;
-};
-
-type NativeLocationTurboModule = TurboModule & {
-  getCurrentPosition: () => Promise<{
-    coords: { latitude: number; longitude: number };
-  }>;
-  requestPermissions: () => Promise<void>;
-};
-
-const getNativeCurrentCoordinates = async (): Promise<Coordinates> => {
-  if (Platform.OS === 'web') throw new Error('Device location is available in the installed app.');
-  if (Platform.OS === 'android') {
-    const result = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-    ]);
-    const allowed = result[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED
-      || result[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
-    if (!allowed) throw new Error('Location permission was not granted. You can type a place or choose it on the map.');
-  }
-  // Use MapLibre's already-linked location TurboModule directly. Importing
-  // the package index on demand also evaluates every code-generated map view,
-  // which Fast Refresh can attempt to register a second time.
-  const locationModule = TurboModuleRegistry.get<NativeLocationTurboModule>('MLRNLocationModule');
-  if (!locationModule) throw new Error('Device location is unavailable. You can type a place or choose it on the map.');
-  if (Platform.OS === 'ios') await locationModule.requestPermissions();
-  const position = await locationModule.getCurrentPosition();
-  if (!position) throw new Error('Your current location is unavailable. You can type a place or choose it on the map.');
-  return {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-  };
 };
 
 const SOCIAL_PROVIDERS: { provider: OAuthProvider; label: string }[] = [

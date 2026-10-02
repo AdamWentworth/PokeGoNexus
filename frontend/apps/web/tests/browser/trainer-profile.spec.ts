@@ -248,6 +248,41 @@ test.describe("Trainer profile card", () => {
     expect(diagnostics.blockingErrors()).toEqual([]);
   });
 
+  test("offers city autocomplete and device location without saving a draft", async ({
+    page, context,
+  }, testInfo) => {
+    const diagnostics = attachBrowserDiagnostics(page, testInfo);
+    try {
+      await installE2eRoutes(page, { trainerProfile });
+      const city = { name: "Kelowna", state_or_province: "British Columbia", country: "Canada" };
+      const label = "Kelowna, British Columbia, Canada";
+      await page.route("**/__e2e/location/autocomplete?**", (route) => route.fulfill({ json: [city] }));
+      await page.route("**/__e2e/location/reverse?**", (route) => route.fulfill({ json: { locations: [city] } }));
+      await context.grantPermissions(["geolocation"]);
+      await context.setGeolocation({ latitude: 49.8, longitude: -119.5 });
+      await seedTrainerLogin(page);
+      await page.goto("/profile", { waitUntil: "domcontentloaded" });
+      await page.getByRole("button", { name: "Edit", exact: true }).click();
+      const location = page.getByRole("textbox", { name: "Location", exact: true });
+      await location.fill("Kel");
+      await expect(page.getByRole("button", { name: label })).toBeVisible();
+      await page.getByRole("button", { name: label }).click();
+      await expect(location).toHaveValue(label);
+      await page.getByRole("button", { name: "Use current location" }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Choose the location to show" })).toBeVisible();
+      await expect(page.getByRole("button", { name: label })).toBeVisible();
+      await page.locator(".profile-location-editor").screenshot({ path: testInfo.outputPath("profile-location-editor.png") });
+      await page.getByRole("button", { name: label }).click();
+      await page.getByRole("button", { name: "Cancel", exact: true }).click();
+      await expect(page.getByText(trainerProfile.location, { exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Edit", exact: true }).click();
+      await expect(location).toHaveValue(trainerProfile.location);
+    } finally {
+      await diagnostics.flush();
+    }
+    expect(diagnostics.blockingErrors()).toEqual([]);
+  });
+
   test("edits and reorders featured Pokemon slots", async ({
     page,
   }, testInfo) => {

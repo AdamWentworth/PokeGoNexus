@@ -179,22 +179,24 @@ function TradeTargetsWorkspace() {
 
   useEffect(() => {
     setSelectedPokemon((current) => {
+      let next: TargetPokemon | undefined;
       if (requestedInstanceId) {
-        const requested = visiblePokemon.find(
+        next = visiblePokemon.find(
           (pokemon) => getInstanceId(pokemon) === requestedInstanceId,
         );
-        if (requested) return requested;
       }
-      if (current) {
+      if (!next && current) {
         const currentId = getInstanceId(current);
-        const refreshed = visiblePokemon.find(
+        next = visiblePokemon.find(
           (pokemon) => getInstanceId(pokemon) === currentId,
         );
-        if (refreshed) return refreshed;
       }
-      return visiblePokemon[0] ?? null;
+      next ??= visiblePokemon[0];
+      if (isEditingPreferences && current && next &&
+          getInstanceId(current) === getInstanceId(next)) return current;
+      return next ?? null;
     });
-  }, [requestedInstanceId, visiblePokemon]);
+  }, [isEditingPreferences, requestedInstanceId, visiblePokemon]);
 
   const updatePreferenceLocation = (
     nextMode: TargetMode,
