@@ -6,7 +6,7 @@ import {
   buildWantedSizePreferences,
   getWantedSizePreference,
   getStoredWantedSizePreference,
-} from '@/pages/Pokemon/features/instances/components/Wanted/wantedSizePreferences';
+} from '@/pages/Pokemon/features/instances/components/Wanted/wantedSizePreferenceUtils';
 
 const sizes = {
   pokedex_height: 1,

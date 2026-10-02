@@ -19,7 +19,7 @@ import {
   buildWantedSizePreferences,
   getStoredWantedSizePreference,
   type WantedSizePreference,
-} from './components/Wanted/wantedSizePreferences';
+} from './components/Wanted/wantedSizePreferenceUtils';
 import BackgroundSelector from './sections/BackgroundSelector';
 import IdentityRow from './sections/IdentityRow';
 import ImageStage from './sections/ImageStage';

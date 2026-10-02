@@ -9,7 +9,7 @@
       "project": ["**/*.{js,mjs,ts}"]
     },
     "apps/mobile": {
-      "entry": ["tests/**/*.{test,spec}.{ts,tsx}"],
+      "entry": ["tests/**/*.{test,spec}.{ts,tsx}", "tests/setupTests.ts"],
       "project": ["**/*.{ts,tsx}"]
     },
     "packages/app-core": {

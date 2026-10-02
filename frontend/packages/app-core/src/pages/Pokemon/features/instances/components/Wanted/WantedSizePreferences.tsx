@@ -1,7 +1,7 @@
 import React from 'react';
 import './WantedSizePreferences.css';
 
-import type { WantedSizePreference } from './wantedSizePreferences';
+import type { WantedSizePreference } from './wantedSizePreferenceUtils';
 
 const SIZE_OPTIONS: Array<{
   value: WantedSizePreference;
