@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           # Use a patched toolchain so govulncheck is not blocked by stdlib CVEs.
-          go-version: "1.26.6"
+          go-version: "1.26.11"
           cache: true
           cache-dependency-path: pokemon/go.sum
 

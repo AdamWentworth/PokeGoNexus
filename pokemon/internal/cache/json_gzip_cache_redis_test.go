@@ -86,13 +86,13 @@ func TestJSONGzipCacheKeepsServingWarmMemoryWhenRedisStops(t *testing.T) {
 		return map[string]any{"move": "Vine Whip"}, nil
 	})
 	cfg.StoreOperationTimeout = 50 * time.Millisecond
-	cfg.StoreRevalidateInterval = time.Nanosecond
 	c := NewJSONGzipCache(cfg)
 
 	if err := c.EnsureBuilt(context.Background()); err != nil {
 		t.Fatalf("initial EnsureBuilt: %v", err)
 	}
 	warmETag := c.Stats().ETag
+	c.lastStoreCheck = time.Time{}
 	server.Close()
 
 	if err := c.EnsureBuilt(context.Background()); err != nil {
@@ -121,7 +121,6 @@ func TestJSONGzipCacheInvalidationReachesAnotherReplica(t *testing.T) {
 		secondBuilds.Add(1)
 		return map[string]any{"version": 2}, nil
 	})
-	cfg.StoreRevalidateInterval = time.Nanosecond
 	second := NewJSONGzipCache(cfg)
 	if err := second.EnsureBuilt(context.Background()); err != nil {
 		t.Fatalf("second Redis restore: %v", err)
@@ -129,6 +128,7 @@ func TestJSONGzipCacheInvalidationReachesAnotherReplica(t *testing.T) {
 	oldETag := second.Stats().ETag
 
 	first.Invalidate()
+	second.lastStoreCheck = time.Time{}
 	if err := second.EnsureBuilt(context.Background()); err != nil {
 		t.Fatalf("second rebuild after cross-replica invalidation: %v", err)
 	}
