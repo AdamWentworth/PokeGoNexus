@@ -57,7 +57,7 @@ describe('NativeRaidCalibrationPanel', () => {
       expect.stringContaining('raid-observations.v2'),
       expect.stringContaining('102.5'),
     ));
-    expect(screen.queryByText('OBSERVED BATTLE')).toBeNull();
+    await waitFor(() => expect(screen.queryByText('OBSERVED BATTLE')).toBeNull());
   });
 
   it('captures timed-out boss HP and rejects impossible dodge evidence', async () => {

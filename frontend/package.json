@@ -29,6 +29,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/react": "19.2.10",
     "@types/react-dom": "19.2.3",
+    "expo": "~57.0.33",
     "expo-modules-core": "~57.0.18",
     "knip": "^6.32.2",
     "patch-package": "^8.0.1",
@@ -48,35 +49,36 @@
       "ws": "8.21.0"
     },
     "cookie": "^1.1.1",
-    "fast-uri": "3.1.8",
+    "fast-uri": "3.1.9",
     "form-data": "^4.0.6",
     "jsdom": {
-      "undici": "7.29.1",
+      "undici": "7.30.1",
       "ws": "8.21.0"
     },
     "js-yaml": "^4.3.1",
     "minimatch@3.1.5": {
       "brace-expansion": "1.1.21"
     },
-    "minimatch@10.2.5": {
-      "brace-expansion": "5.0.12"
-    },
+    "minimatch@>=7 <11.0.1": "^11.0.9",
     "nanoid": "^3.3.18",
-    "node-forge": "1.4.0",
+    "node-forge": "1.4.3",
     "postcss": "8.5.23",
-    "postcss-selector-parser@>=7.1.0 <7.1.3": "7.1.3",
+    "postcss-selector-parser@>=7.0.0 <7.1.6": "7.1.6",
     "query-string": {
-      "decode-uri-component": "0.5.0"
+      "decode-uri-component": "0.5.1"
     },
     "react-native-reanimated": "$react-native-reanimated",
     "react-native-worklets": "$react-native-worklets",
-    "shell-quote": "^1.9.0",
+    "shell-quote": "^1.11.0",
     "tar": "7.5.11",
     "tmp": "^0.2.5",
-    "undici": "7.29.1",
+    "undici": "7.30.1",
     "ws": "8.21.0",
     "xcode": {
       "uuid": "11.1.1"
-    }
+    },
+    "smol-toml": "^1.9.0",
+    "source-map-js": "^1.2.2",
+    "zod@^4": "^4.6.6"
   }
 }

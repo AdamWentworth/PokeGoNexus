@@ -5,13 +5,13 @@ Install from `frontend/` with `npm ci`. The root postinstall runs
 `npm run test:dependency-security` exercises the installed dependencies and is
 required by the web and mobile CI workflows.
 
-## node-forge 1.4.0
+## node-forge 1.4.3
 
-`node-forge+1.4.0.patch` backports the `lib/rsa.js` change from
+`node-forge+1.4.3.patch` backports the `lib/rsa.js` change from
 [forge PR #1152](https://github.com/digitalbazaar/forge/pull/1152), commit
 `ceba34402e329f0365134f23fe19898756527d65`, for
 [GHSA-86w9-cpqp-85rv / CVE-2026-85393](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
-The upstream PR is open and there is no published fixed release as of 2026-10-02.
+Upstream 1.4.3 fixes other Forge advisories and still needs this backport.
 
 The check rejects extra children inside the nested RSA DigestAlgorithm ASN.1
 sequence. It preserves valid algorithm identifiers with an optional NULL
@@ -19,10 +19,9 @@ parameter and leaves the existing outer DigestInfo validation in place. Tests
 cover malformed structures, valid signatures, and Expo certificate/signing use.
 The malformed cases were confirmed to fail against the unpatched package.
 
-The override pins 1.4.0 so this backport cannot silently drift onto another
-release. Version-based audits still report the advisory despite the local
-mitigation; no audit finding is suppressed or package version falsified.
-Installations that skip lifecycle scripts do not receive this patch.
+The override pins 1.4.3 so the backport applies to a known release. The
+postinstall script applies the patch and the regression suite verifies the
+installed package.
 
 When an upstream release fixes this advisory, update the override and lockfile,
 remove the patch, and rerun the security regression suite plus the frontend and

@@ -1,8 +1,8 @@
 diff --git a/node_modules/node-forge/lib/rsa.js b/node_modules/node-forge/lib/rsa.js
-index a426482..4309054 100644
+index 65f6e84..935e133 100644
 --- a/node_modules/node-forge/lib/rsa.js
 +++ b/node_modules/node-forge/lib/rsa.js
-@@ -1171,8 +1171,13 @@ pki.setRsaPublicKey = pki.rsa.setPublicKey = function(n, e) {
+@@ -1200,8 +1200,13 @@ pki.setRsaPublicKey = pki.rsa.setPublicKey = function(n, e) {
 -          // validate DigestInfo structure and element count
 +          // validate DigestInfo structure and element counts (outer DigestInfo
 +          // and nested DigestAlgorithm). asn1.validate ignores extra children,
